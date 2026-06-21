@@ -16,48 +16,48 @@ const API_BASE = "";  // Xuddi shu serverda ishlaydi (uvicorn)
 
 const LEAGUE_CLUBS = {
   "LaLiga": [
-    { name: "Almería",          logo: "https://upload.wikimedia.org/wikipedia/en/0/09/UD_Almer%C3%ADa_logo.svg" },
-    { name: "Athletic Club",    logo: "https://upload.wikimedia.org/wikipedia/en/9/98/Club_Athletic_de_Bilbao_logo.svg" },
-    { name: "Atlético Madrid",  logo: "https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_de_madrid_crest.svg" },
-    { name: "Barcelona",        logo: "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" },
-    { name: "Betis",            logo: "https://upload.wikimedia.org/wikipedia/en/1/13/Real_betis_logo.svg" },
-    { name: "Cádiz",            logo: "https://upload.wikimedia.org/wikipedia/en/3/39/C%C3%A1diz_CF_logo.svg" },
-    { name: "Celta Vigo",       logo: "https://upload.wikimedia.org/wikipedia/en/3/30/RC_Celta_de_Vigo_logo.svg" },
-    { name: "Getafe",           logo: "https://upload.wikimedia.org/wikipedia/en/3/35/Getafe_CF_logo.svg" },
-    { name: "Girona",           logo: "https://upload.wikimedia.org/wikipedia/en/6/60/Girona_FC_logo.svg" },
-    { name: "Granada",          logo: "https://upload.wikimedia.org/wikipedia/en/6/6a/Granada_CF_logo.svg" },
-    { name: "Las Palmas",       logo: "https://upload.wikimedia.org/wikipedia/en/7/75/UD_Las_Palmas_logo.svg" },
-    { name: "Mallorca",         logo: "https://upload.wikimedia.org/wikipedia/en/9/9f/Real_Mallorca.svg" },
-    { name: "Osasuna",          logo: "https://upload.wikimedia.org/wikipedia/en/d/db/Osasuna_logo.svg" },
-    { name: "Rayo Vallecano",   logo: "https://upload.wikimedia.org/wikipedia/en/2/27/Rayo_Vallecano_logo.svg" },
-    { name: "Real Madrid",      logo: "https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg" },
-    { name: "Real Sociedad",    logo: "https://upload.wikimedia.org/wikipedia/en/f/f1/Real_Sociedad_logo.svg" },
-    { name: "Sevilla",          logo: "https://upload.wikimedia.org/wikipedia/en/3/3b/Sevilla_FC_logo.svg" },
-    { name: "Valencia",         logo: "https://upload.wikimedia.org/wikipedia/en/c/ce/Valenciacf.svg" },
-    { name: "Valladolid",       logo: "https://upload.wikimedia.org/wikipedia/en/6/6d/Real_Valladolid_logo.svg" },
-    { name: "Villarreal",       logo: "https://upload.wikimedia.org/wikipedia/en/b/b9/Villarreal_CF_logo.svg" },
+    { name: "Almería",         logo: "https://media.api-sports.io/football/teams/723.png" },
+    { name: "Athletic Club",   logo: "https://media.api-sports.io/football/teams/531.png" },
+    { name: "Atlético Madrid", logo: "https://media.api-sports.io/football/teams/530.png" },
+    { name: "Barcelona",       logo: "https://media.api-sports.io/football/teams/529.png" },
+    { name: "Betis",           logo: "https://media.api-sports.io/football/teams/543.png" },
+    { name: "Cádiz",           logo: "https://media.api-sports.io/football/teams/724.png" },
+    { name: "Celta Vigo",      logo: "https://media.api-sports.io/football/teams/538.png" },
+    { name: "Getafe",          logo: "https://media.api-sports.io/football/teams/546.png" },
+    { name: "Girona",          logo: "https://media.api-sports.io/football/teams/547.png" },
+    { name: "Granada",         logo: "https://media.api-sports.io/football/teams/715.png" },
+    { name: "Las Palmas",      logo: "https://media.api-sports.io/football/teams/534.png" },
+    { name: "Mallorca",        logo: "https://media.api-sports.io/football/teams/798.png" },
+    { name: "Osasuna",         logo: "https://media.api-sports.io/football/teams/727.png" },
+    { name: "Rayo Vallecano",  logo: "https://media.api-sports.io/football/teams/728.png" },
+    { name: "Real Madrid",     logo: "https://media.api-sports.io/football/teams/541.png" },
+    { name: "Real Sociedad",   logo: "https://media.api-sports.io/football/teams/548.png" },
+    { name: "Sevilla",         logo: "https://media.api-sports.io/football/teams/536.png" },
+    { name: "Valencia",        logo: "https://media.api-sports.io/football/teams/532.png" },
+    { name: "Valladolid",      logo: "https://media.api-sports.io/football/teams/720.png" },
+    { name: "Villarreal",      logo: "https://media.api-sports.io/football/teams/533.png" },
   ],
   "Premier Liga": [
-    { name: "Arsenal",          logo: "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg" },
-    { name: "Aston Villa",      logo: "https://upload.wikimedia.org/wikipedia/en/f/f9/Aston_Villa_FC_crest_%282016%29.svg" },
-    { name: "Bournemouth",      logo: "https://upload.wikimedia.org/wikipedia/en/e/e5/AFC_Bournemouth_%282013%29.svg" },
-    { name: "Brentford",        logo: "https://upload.wikimedia.org/wikipedia/en/2/2a/Brentford_FC_crest.svg" },
-    { name: "Brighton",         logo: "https://upload.wikimedia.org/wikipedia/en/f/fd/Brighton_%26_Hove_Albion_logo.svg" },
-    { name: "Burnley",          logo: "https://upload.wikimedia.org/wikipedia/en/6/62/Burnley_F.C._Logo.svg" },
-    { name: "Chelsea",          logo: "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg" },
-    { name: "Crystal Palace",   logo: "https://upload.wikimedia.org/wikipedia/en/a/a2/Crystal_Palace_FC_logo_%282022%29.svg" },
-    { name: "Everton",          logo: "https://upload.wikimedia.org/wikipedia/en/7/7c/Everton_FC_logo.svg" },
-    { name: "Fulham",           logo: "https://upload.wikimedia.org/wikipedia/en/e/eb/Fulham_FC_%28shield%29.svg" },
-    { name: "Liverpool",        logo: "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg" },
-    { name: "Luton Town",       logo: "https://upload.wikimedia.org/wikipedia/en/9/9d/Luton_Town_FC_logo.svg" },
-    { name: "Man City",         logo: "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg" },
-    { name: "Man United",       logo: "https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg" },
-    { name: "Newcastle",        logo: "https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg" },
-    { name: "Nottm Forest",     logo: "https://upload.wikimedia.org/wikipedia/en/e/e5/Nottingham_Forest_F.C._logo.svg" },
-    { name: "Sheffield Utd",    logo: "https://upload.wikimedia.org/wikipedia/en/9/9c/Sheffield_United_FC_logo.svg" },
-    { name: "Tottenham",        logo: "https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg" },
-    { name: "West Ham",         logo: "https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg" },
-    { name: "Wolves",           logo: "https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg" },
+    { name: "Arsenal",         logo: "https://media.api-sports.io/football/teams/42.png" },
+    { name: "Aston Villa",     logo: "https://media.api-sports.io/football/teams/66.png" },
+    { name: "Bournemouth",     logo: "https://media.api-sports.io/football/teams/35.png" },
+    { name: "Brentford",       logo: "https://media.api-sports.io/football/teams/55.png" },
+    { name: "Brighton",        logo: "https://media.api-sports.io/football/teams/51.png" },
+    { name: "Burnley",         logo: "https://media.api-sports.io/football/teams/44.png" },
+    { name: "Chelsea",         logo: "https://media.api-sports.io/football/teams/49.png" },
+    { name: "Crystal Palace",  logo: "https://media.api-sports.io/football/teams/52.png" },
+    { name: "Everton",         logo: "https://media.api-sports.io/football/teams/45.png" },
+    { name: "Fulham",          logo: "https://media.api-sports.io/football/teams/36.png" },
+    { name: "Liverpool",       logo: "https://media.api-sports.io/football/teams/40.png" },
+    { name: "Luton Town",      logo: "https://media.api-sports.io/football/teams/1359.png" },
+    { name: "Man City",        logo: "https://media.api-sports.io/football/teams/50.png" },
+    { name: "Man United",      logo: "https://media.api-sports.io/football/teams/33.png" },
+    { name: "Newcastle",       logo: "https://media.api-sports.io/football/teams/34.png" },
+    { name: "Nottm Forest",    logo: "https://media.api-sports.io/football/teams/65.png" },
+    { name: "Sheffield Utd",   logo: "https://media.api-sports.io/football/teams/62.png" },
+    { name: "Tottenham",       logo: "https://media.api-sports.io/football/teams/47.png" },
+    { name: "West Ham",        logo: "https://media.api-sports.io/football/teams/48.png" },
+    { name: "Wolves",          logo: "https://media.api-sports.io/football/teams/39.png" },
   ],
 };
 
@@ -333,7 +333,13 @@ function renderProfile(data) {
   const leagueEl = document.getElementById("profile-league");
   if (data.league_id) {
     const league = (APP.leagues || []).find(l => l.id === data.league_id);
-    leagueEl.textContent = league ? league.name : `Liga #${data.league_id}`;
+    const leagueName = league ? league.name : `Liga #${data.league_id}`;
+    const username = APP.currentUser?.username || null;
+    if (username) {
+      leagueEl.innerHTML = `${escHtml(leagueName)}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>`;
+    } else {
+      leagueEl.textContent = leagueName;
+    }
   } else {
     leagueEl.textContent = t.not_registered || "Ro'yxatdan o'tilmagan";
   }
@@ -487,6 +493,7 @@ async function registerToLeague() {
     );
     showToast(APP.t.registered_ok || "✅ Ro'yxatdan o'tdingiz!");
     APP.selectedClub = null;
+    document.getElementById("clubs-section").classList.add("hidden");
     await loadHome();
     await loadProfile();
   } catch (e) {

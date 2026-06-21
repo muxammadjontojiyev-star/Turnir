@@ -853,3 +853,20 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-primary);
   line-height: 1.2;
 }
+
+/* ============================================================
+   PROFILE USERNAME LINK
+   ============================================================ */
+.profile-username {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cyan);
+  text-decoration: none;
+  opacity: 0.85;
+}
+.profile-username:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
