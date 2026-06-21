@@ -6,7 +6,7 @@ CRUD amallari uchun queries.py ga qarang.
 """
 
 import sqlite3
-from bot.config import DB_PATH
+from config import DB_PATH
 
 
 def get_connection():

@@ -6,8 +6,8 @@ Liga 20 kishiga to'lganda, har bir o'yinchi qolgan 19 tasi bilan
 taqsimlangan holda.
 """
 
-from bot.db.models import get_connection
-from bot.config import MATCH_STATUS_PENDING
+from models import get_connection
+from config import MATCH_STATUS_PENDING
 
 
 def _generate_round_robin_pairs(player_ids: list[int]) -> list[list[tuple[int, int]]]:

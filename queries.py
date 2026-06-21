@@ -5,8 +5,8 @@ Match generatsiyasi va jadval (schedule) bilan bog'liq funksiyalar
 uchun schedule.py ga qarang.
 """
 
-from bot.db.models import get_connection
-from bot.config import LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE
+from models import get_connection
+from config import LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE
 
 
 # ============ USERS ============

@@ -5,11 +5,11 @@ QOIDA: Yangi matn kerak bo'lganda — shu faylga TEXTS dict'iga qo'shiladi,
 handlerlarda hardcode string yozilmaydi.
 
 Ishlatilishi:
-    from bot.texts import t
+    from texts import t
     t("menu_main", language)
 """
 
-from bot.config import LANGUAGE_UZ, LANGUAGE_RU, LANGUAGE_EN
+from config import LANGUAGE_UZ, LANGUAGE_RU, LANGUAGE_EN
 
 TEXTS = {
     # === Pastki asosiy tugmalar (4 ta) ===
@@ -49,6 +49,11 @@ TEXTS = {
         LANGUAGE_UZ: "Til muvaffaqiyatli o'zgartirildi ✅",
         LANGUAGE_RU: "Язык успешно изменён ✅",
         LANGUAGE_EN: "Language changed successfully ✅",
+    },
+    "enter_webapp": {
+        LANGUAGE_UZ: "🚀 Kirish",
+        LANGUAGE_RU: "🚀 Войти",
+        LANGUAGE_EN: "🚀 Enter",
     },
 
     # === Asosiy bo'lim ===

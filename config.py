@@ -42,6 +42,10 @@ DEFAULT_LANGUAGE = LANGUAGE_UZ
 # === Ma'lumotlar bazasi ===
 DB_PATH = os.getenv("DB_PATH", "efootball_bot.db")
 
+# === WebApp ===
+# ⚠️ PLACEHOLDER — WebApp hostingga joylashgach, haqiqiy URL bilan almashtirilishi kerak
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://example.com/webapp")
+
 # === Sovrinlar ===
 PRIZE_TOP_SCORER = "golden_boot"   # Eng ko'p gol urgan — Oltin Butsa
 PRIZE_WINNER = "golden_ball"       # Turnir g'olibi — Oltin To'p znachogi
