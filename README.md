@@ -1,7 +1,7 @@
 # 🎮 eFootball Turnir Bot — Loyiha Xaritasi
 
 > Bu fayl loyihaning "xaritasi". Har bir o'zgarishdan keyin shu fayl ham yangilanadi.
-> Versiya: v0.2 (struktura: flat — static/ papkadan tashqari hammasi ildizda)
+> Versiya: v0.3 (struktura: flat — static/ papkadan tashqari hammasi ildizda)
 
 ---
 
@@ -30,15 +30,15 @@ repo/
 ├── queries.py                  ✅ yaratilgan — users/leagues/registrations CRUD
 ├── schedule.py                 ✅ yaratilgan — round-robin (circle method) generatsiya
 ├── rating.py                   ✅ yaratilgan — liga reyting jadvalini hisoblash
-├── api.py                      ✅ yaratilgan — FastAPI backend (1-bosqich: 4 ta GET endpoint)
+├── api.py                      ✅ yaratilgan — FastAPI backend (1- va 2-bosqich: 9 ta endpoint)
 ├── requirements.txt             ✅ yaratilgan — python-telegram-bot, fastapi, uvicorn
 ├── main_menu.py                ✅ yaratilgan — /start, til tanlash, WebApp kirish tugmasi
 ├── main.py                     ✅ yaratilgan — bot ishga tushish nuqtasi (entrypoint)
-├── api.py                      ← FastAPI backend (hali yo'q)
 └── static/
-    ├── index.html              ← Web App HTML — barcha 4 bo'lim shu yerda (hali yo'q)
-    ├── style.css                ← Web App stillari (hali yo'q)
-    └── script.js                 ← Web App JS mantig'i (hali yo'q)
+    ├── index.html              ✅ yaratilgan — Web App HTML, barcha 4 bo'lim shu yerda
+    ├── style.css                ✅ yaratilgan — Web App stillari
+    ├── app.js                   ✅ yaratilgan — init, i18n (til tizimi), navigatsiya, eventlar
+    └── api.js                   ✅ yaratilgan — backend API chaqiruvlari
 ```
 
 **Ishga tushirish:**
@@ -60,14 +60,14 @@ repo/
 - Qoidalar/yo'riqnoma
 - E'lonlar/yangiliklar
 
-**Bog'liq fayllar:** `api.py` (`GET /leagues` ✅ tayyor, `POST /register` ⏳ 2-bosqich), `queries.py`, `static/index.html` + `script.js` (Asosiy bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /leagues` ✅, `POST /register` ✅), `queries.py`, `static/index.html` + `app.js` + `api.js` (Asosiy bo'lim)
 
 ### 🏆 Reyting
 - Umumiy reyting jadvali (barcha o'yinchilar)
 - Faqat joriy turnir reytingi
 - G'oliblar tarixi (oldingi turnirlar)
 
-**Bog'liq fayllar:** `api.py` (`GET /rating/{league_id}` ✅ tayyor), `rating.py` (ball/gol farqi hisoblash), `static/index.html` + `script.js` (Reyting bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /rating/{league_id}` ✅ tayyor), `rating.py` (ball/gol farqi hisoblash), `static/index.html` + `app.js` + `api.js` (Reyting bo'lim)
 
 ### 👤 Profil
 - Mening joriy reyting o'rnim
@@ -75,14 +75,14 @@ repo/
 - Ism/nickname tahrirlash
 - Shaxsiy statistika (g'alaba/mag'lubiyat)
 
-**Bog'liq fayllar:** `api.py` (`GET /profile` ✅ tayyor, `POST /profile/nickname` ⏳ 2-bosqich), `queries.py`, `rating.py`, `static/index.html` + `script.js` (Profil bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /profile` ✅, `POST /profile/nickname` ✅, `GET /matches/my` ✅, `POST /match/submit-result` ✅, `POST /match/confirm` ✅), `queries.py`, `rating.py`, `static/index.html` + `app.js` + `api.js` (Profil bo'lim)
 
 ### 🎁 Sovrinlar
 - Eng ko'p gol urgan ishtirokchiga — 🥇 Oltin Butsa
 - Turnir g'olibiga — 🏆 Oltin To'p znachogi
 - Pul emas, ramziy/jismoniy sovrinlar
 
-**Bog'liq fayllar:** `api.py` (`GET /prizes/{league_id}` ✅ tayyor), `rating.py`, `static/index.html` + `script.js` (Sovrinlar bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /prizes/{league_id}` ✅ tayyor), `rating.py`, `static/index.html` + `app.js` + `api.js` (Sovrinlar bo'lim)
 
 ---
 
@@ -127,8 +127,9 @@ Foydalanuvchi tanlagan til DB'da saqlanadi (`users.language` maydoni) va WebApp 
 - [x] `main_menu.py` yaratildi — /start, til tanlash, WebApp kirish tugmasi (test qilindi)
 - [x] `rating.py` yaratildi — reyting hisoblash mantig'i (test qilindi)
 - [x] `api.py` — 1-bosqich: `GET /leagues`, `/rating/{id}`, `/profile`, `/prizes/{id}` + initData auth (test qilindi)
-- [ ] `api.py` — 2-bosqich: `POST /register`, `/profile/nickname`, `GET /matches/my`, `POST /match/submit-result`
-- [ ] `static/index.html`, `style.css`, `script.js` yaratildi
+- [x] `api.py` — 2-bosqich: `POST /register`, `/profile/nickname`, `GET /matches/my`, `POST /match/submit-result`, `POST /match/confirm`
+- [x] `static/index.html`, `style.css`, `app.js`, `api.js` yaratildi
+- [x] Til almashtirish tugmasi (`#header-lang`) ishlaydigan qilindi — bosilganda UZ→RU→EN ketma-ket almashadi (`app.js`)
 
 ---
 
@@ -157,3 +158,5 @@ Foydalanuvchi tanlagan til DB'da saqlanadi (`users.language` maydoni) va WebApp 
 | 2026-06-21 | **STRUKTURA O'ZGARDI (GitHub'dagi haqiqiy holatga moslash):** `bot/`, `bot/db/`, `bot/handlers/` ichki papkalari olib tashlandi. Endi barcha backend fayllari (`config.py`, `texts.py`, `models.py`, `queries.py`, `schedule.py`, `main_menu.py`, `main.py`) repo ildizida, flat holda. Faqat `static/` alohida papka. Barcha import qatorlari (`from bot.config import` → `from config import` va h.k.) shunga moslab to'g'rilandi va qayta test qilindi. `keyboards.py` foydalanuvchi tomonidan GitHub'dan o'chiriladi. |
 | 2026-06-21 | `rating.py` yaratildi — reyting hisoblash (3 ball g'alaba, 1 ball durang, gol farqi bo'yicha saralash), test ma'lumotlari bilan tekshirildi |
 | 2026-06-21 | `api.py` yaratildi (1-bosqich): Telegram `initData` HMAC-SHA256 autentifikatsiyasi + `GET /leagues`, `/rating/{league_id}`, `/profile`, `/prizes/{league_id}`. To'g'ri va soxta initData bilan test qilindi (soxta → 401). `requirements.txt` yaratildi. |
+| 2026-06-21 | `api.py` 2-bosqichi yakunlandi: `POST /register`, `/profile/nickname`, `GET /matches/my`, `POST /match/submit-result`, `POST /match/confirm` qo'shildi. `static/index.html`, `style.css`, `app.js`, `api.js` yaratildi (4 ta WebApp bo'limi to'liq ishlaydi). README xarita shu haqiqiy holatga moslab yangilandi (v0.2 → v0.3). |
+| 2026-06-21 | Bug fix: header'dagi til belgisi (`#header-lang`, masalan "UZ") bosilganda hech narsa qilmayotgan edi — `click` handler yo'q edi. `app.js`ga `cycleLanguage()` funksiyasi qo'shildi, `bindEvents()` orqali ulandi. Endi bosilganda UZ→RU→EN→UZ ketma-ket almashadi (faqat ekranda, DB'ga saqlanmaydi). |
