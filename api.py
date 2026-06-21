@@ -6,8 +6,9 @@ Ishga tushirish: uvicorn api:app --reload
 Autentifikatsiya: Telegram WebApp initData orqali (HMAC-SHA256, bot tokeni bilan
 imzolangan). Har bir so'rovda "X-Telegram-Init-Data" header yuborilishi kerak.
 
-1-BOSQICH: faqat o'qish (GET) endpointlari.
-2-BOSQICH (keyingi): register, profile/nickname, matches/my, match/submit-result.
+1-BOSQICH: faqat o'qish (GET) endpointlari. ✅
+2-BOSQICH: POST /register, POST /profile/nickname, GET /matches/my,
+           POST /match/submit-result, POST /match/confirm. ✅
 """
 
 import hashlib
@@ -19,7 +20,12 @@ from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import BOT_TOKEN
-from queries import get_all_leagues, get_user_by_telegram_id, get_league_by_id, count_league_players, get_user_registration
+from queries import (
+    get_all_leagues, get_user_by_telegram_id, get_league_by_id,
+    count_league_players, get_user_registration,
+    register_user_to_league, update_user_nickname,
+    get_user_matches, submit_match_result, confirm_or_reject_match,
+)
 from rating import calculate_league_rating, get_player_position
 
 app = FastAPI(title="eFootball Turnir Bot API")
@@ -159,3 +165,88 @@ def get_prizes(league_id: int):
         "top_scorer": top_scorer,
         "current_leader": leader,
     }
+
+
+# ============ POST /register ============
+
+@app.post("/register")
+def register(league_id: int, user: dict = Depends(get_authenticated_user)):
+    """
+    Foydalanuvchini ligaga ro'yxatdan o'tkazadi.
+
+    Query param: league_id (int)
+    Xato holatlari: already_registered, league_full, league_not_found → 400
+    """
+    success, reason = register_user_to_league(user["id"], league_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "league_id": league_id}
+
+
+# ============ POST /profile/nickname ============
+
+@app.post("/profile/nickname")
+def change_nickname(nickname: str, user: dict = Depends(get_authenticated_user)):
+    """
+    Foydalanuvchi nickname'ini yangilaydi.
+
+    Query param: nickname (str, 2-20 belgi)
+    """
+    nickname = nickname.strip()
+    if len(nickname) < 2 or len(nickname) > 20:
+        raise HTTPException(status_code=400, detail="nickname_invalid_length")
+    update_user_nickname(user["id"], nickname)
+    return {"status": "ok", "nickname": nickname}
+
+
+# ============ GET /matches/my ============
+
+@app.get("/matches/my")
+def get_my_matches(user: dict = Depends(get_authenticated_user)):
+    """Joriy foydalanuvchining barcha matchlarini qaytaradi."""
+    matches = get_user_matches(user["id"])
+    return {"user_id": user["id"], "matches": matches}
+
+
+# ============ POST /match/submit-result ============
+
+@app.post("/match/submit-result")
+def submit_result(
+    match_id: int,
+    score1: int,
+    score2: int,
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    Match natijasini kiritadi.
+
+    Query params: match_id, score1, score2
+    Faqat o'sha matchning player1 yoki player2 kira oladi.
+    Xato holatlari: match_not_found, not_participant, already_submitted → 400
+    """
+    if score1 < 0 or score2 < 0:
+        raise HTTPException(status_code=400, detail="score_negative")
+    success, reason = submit_match_result(match_id, score1, score2, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+# ============ POST /match/confirm ============
+
+@app.post("/match/confirm")
+def confirm_result(
+    match_id: int,
+    action: str,
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    Raqib tomonidan natijani tasdiqlaydi yoki rad etadi.
+
+    Query params: match_id, action ("confirm" yoki "reject")
+    Xato holatlari: match_not_found, not_opponent, wrong_status, invalid_action → 400
+    """
+    success, reason = confirm_or_reject_match(match_id, action, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id, "action": action}

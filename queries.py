@@ -143,3 +143,102 @@ def register_user_to_league(user_id: int, league_id: int) -> tuple[bool, str]:
     conn.commit()
     conn.close()
     return True, "ok"
+
+
+# ============ MATCHES ============
+
+def get_user_matches(user_id: int) -> list[dict]:
+    """Foydalanuvchi ishtirok etgan barcha matchlarni qaytaradi (player1 yoki player2)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT * FROM matches
+        WHERE player1_id = ? OR player2_id = ?
+        ORDER BY matchday ASC
+        """,
+        (user_id, user_id),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def get_match_by_id(match_id: int) -> dict | None:
+    """ID bo'yicha matchni qaytaradi."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM matches WHERE id = ?", (match_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def submit_match_result(match_id: int, score1: int, score2: int, submitted_by: int) -> tuple[bool, str]:
+    """
+    Match natijasini kiritadi (faqat o'sha matchning player1 yoki player2 kira oladi).
+
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "match_not_found", "not_participant", "already_submitted"
+    """
+    match = get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+
+    if submitted_by not in (match["player1_id"], match["player2_id"]):
+        return False, "not_participant"
+
+    if match["status"] != "pending":
+        return False, "already_submitted"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE matches
+        SET score1 = ?, score2 = ?, submitted_by = ?, status = 'awaiting_confirmation'
+        WHERE id = ?
+        """,
+        (score1, score2, submitted_by, match_id),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tuple[bool, str]:
+    """
+    Raqib tomonidan natijani tasdiqlaydi yoki rad etadi.
+
+    action: "confirm" yoki "reject"
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "match_not_found", "not_opponent", "wrong_status", "invalid_action"
+    """
+    match = get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+
+    if match["status"] != "awaiting_confirmation":
+        return False, "wrong_status"
+
+    # Faqat natija kiritmagan tomon tasdiqlashi mumkin
+    if confirmed_by == match["submitted_by"]:
+        return False, "not_opponent"
+
+    if confirmed_by not in (match["player1_id"], match["player2_id"]):
+        return False, "not_opponent"
+
+    if action not in ("confirm", "reject"):
+        return False, "invalid_action"
+
+    new_status = "confirmed" if action == "confirm" else "rejected"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE matches SET status = ? WHERE id = ?",
+        (new_status, match_id),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
