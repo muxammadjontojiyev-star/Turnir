@@ -344,6 +344,15 @@ function renderProfile(data) {
   const leagueEl = document.getElementById("profile-league");
   const avatarEl = document.getElementById("profile-avatar-letter");
   const nicknameEl = document.getElementById("profile-nickname");
+  const clubBadgeEl = document.getElementById("profile-club-badge");
+
+  // Avatar: telegram profil rasmi (bo'lmasa — ism harfi)
+  const photoUrl = APP.currentUser?.photo_url || null;
+  if (photoUrl) {
+    avatarEl.innerHTML = `<img src="${escHtml(photoUrl)}" alt="${escHtml(data.nickname || "")}" style="width:56px;height:56px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.textContent='${(data.nickname || "?")[0].toUpperCase()}'" />`;
+  } else {
+    avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
+  }
 
   if (data.league_id) {
     const league = (APP.leagues || []).find(l => l.id === data.league_id);
@@ -354,11 +363,11 @@ function renderProfile(data) {
     const clubName = data.club_name || APP.selectedClub || null;
     const clubObj  = clubs.find(c => c.name === clubName) || null;
 
-    // Avatar: klub logosi yoki harf
+    // O'ng tomondagi belgi: tanlangan klub logosi (faqat ko'rsatish uchun)
     if (clubObj) {
-      avatarEl.innerHTML = `<img src="${escHtml(clubObj.logo)}" alt="${escHtml(clubObj.name)}" style="width:56px;height:56px;object-fit:contain;border-radius:50%;background:transparent;" onerror="this.style.display='none';this.parentElement.textContent='${clubObj.name[0].toUpperCase()}'" />`;
+      clubBadgeEl.innerHTML = `<img src="${escHtml(clubObj.logo)}" alt="${escHtml(clubObj.name)}" style="width:32px;height:32px;object-fit:contain;" onerror="this.style.display='none'" />`;
     } else {
-      avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
+      clubBadgeEl.innerHTML = "";
     }
 
     // profile-nickname — klub nomi
@@ -374,7 +383,7 @@ function renderProfile(data) {
     }
   } else {
     // Ro'yxatdan o'tmagan
-    avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
+    clubBadgeEl.innerHTML = "";
     nicknameEl.textContent = data.nickname || "—";
     leagueEl.textContent = t.not_registered || "Ro'yxatdan o'tilmagan";
   }

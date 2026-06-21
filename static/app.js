@@ -371,8 +371,6 @@ function bindEvents() {
     .addEventListener("click", registerToLeague);
 
   // Nickname modal
-  document.getElementById("btn-edit-nickname")
-    .addEventListener("click", openNicknameModal);
   document.getElementById("btn-nickname-cancel")
     .addEventListener("click", closeNicknameModal);
   document.getElementById("btn-nickname-save")
