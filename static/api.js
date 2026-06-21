@@ -166,7 +166,7 @@ function renderLeagues(leagues) {
       renderHeroCard(league);
       // Allaqachon ro'yxatdan o'tgan bo'lsa klublarni ko'rsatmaymiz
       if (!APP.profileData?.league_id) {
-        renderClubsForLeague(league);
+        void renderClubsForLeague(league);
       }
     });
 
@@ -176,14 +176,14 @@ function renderLeagues(leagues) {
   // Birinchi tanlangan liga uchun klublarni ko'rsat — faqat ro'yxatdan o'tmagan bo'lsa
   const selected = leagues.find(l => l.id === APP.selectedLeagueId);
   if (selected && !APP.profileData?.league_id) {
-    renderClubsForLeague(selected);
+    void renderClubsForLeague(selected);
   } else {
     document.getElementById("clubs-section").classList.add("hidden");
   }
 }
 
 // Foydalanuvchi bu mavsumda tanlagan klub (local state) — app.js dagi APP.selectedClub
-function renderClubsForLeague(league) {
+async function renderClubsForLeague(league) {
   const section = document.getElementById("clubs-section");
   const list    = document.getElementById("clubs-list");
   const t       = APP.t;
@@ -201,15 +201,27 @@ function renderClubsForLeague(league) {
   // Foydalanuvchi allaqachon ro'yxatdan o'tganmi?
   const alreadyRegistered = !!(APP.profileData && APP.profileData.league_id);
 
+  // Boshqa foydalanuvchilar tomonidan band qilingan klublar ro'yxatini olamiz
+  let takenClubs = [];
+  if (!alreadyRegistered) {
+    try {
+      const data = await apiFetch(`/leagues/${league.id}/clubs`);
+      takenClubs = data.taken_clubs || [];
+    } catch (e) {
+      takenClubs = [];
+    }
+  }
+
   // Alifbo tartibida (allaqachon alifbo tartibida, lekin sort qilamiz xavfsizlik uchun)
   const sorted = [...clubs].sort((a, b) => a.name.localeCompare(b.name));
 
   sorted.forEach(club => {
     const item = document.createElement("div");
     const isSelected = APP.selectedClub === club.name;
+    const isTaken = takenClubs.includes(club.name);
     item.className = "club-item" +
       (isSelected ? " selected" : "") +
-      (alreadyRegistered ? " disabled" : "");
+      (alreadyRegistered || isTaken ? " disabled" : "");
 
     item.innerHTML = `
       <img
@@ -222,12 +234,12 @@ function renderClubsForLeague(league) {
       <span class="club-name">${escHtml(club.name)}</span>
     `;
 
-    if (!alreadyRegistered) {
+    if (!alreadyRegistered && !isTaken) {
       item.addEventListener("click", () => {
         APP.selectedClub     = club.name;
         APP.selectedClubLogo = club.logo;
-        // Klublar bo'limini to'liq yashirish
-        document.getElementById("clubs-section").classList.add("hidden");
+        // Tanlangan klubni belgilash uchun ro'yxatni qayta chizamiz (yashirmaymiz)
+        void renderClubsForLeague(league);
         // Register tugmasini faollashtirish
         const btn = document.getElementById("btn-register");
         btn.disabled = false;
@@ -544,9 +556,16 @@ async function registerToLeague() {
     const msg = {
       already_registered: APP.t.already_registered || "Siz allaqachon ro'yxatdansiz",
       league_full:        APP.t.league_full_err    || "Liga to'liq",
+      club_taken:         APP.t.club_taken          || "Bu klub allaqachon band qilingan",
     }[e.message] || e.message;
     showToast("❌ " + msg);
     btn.disabled = false;
+    // Klub band bo'lib chiqsa — ro'yxatni yangilab, band holatini ko'rsatamiz
+    if (e.message === "club_taken") {
+      APP.selectedClub = null;
+      const league = (APP.leagues || []).find(l => l.id === leagueId);
+      if (league) void renderClubsForLeague(league);
+    }
   }
 }
 

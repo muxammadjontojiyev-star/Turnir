@@ -91,6 +91,7 @@ const TEXTS = {
     registered_ok:      "✅ Ro'yxatdan o'tdingiz!",
     already_registered: "Siz allaqachon ro'yxatdansiz",
     league_full_err:    "Liga to'liq",
+    club_taken:          "Bu klub allaqachon band qilingan",
     // Prizes
     prizes_title:       "SOVRINLAR",
     golden_boot:        "Oltin Butsa",
@@ -160,6 +161,7 @@ const TEXTS = {
     registered_ok:      "✅ Вы зарегистрированы!",
     already_registered: "Вы уже зарегистрированы",
     league_full_err:    "Лига заполнена",
+    club_taken:          "Этот клуб уже занят",
     prizes_title:       "ПРИЗЫ",
     golden_boot:        "Золотая Бутса",
     golden_boot_desc:   "Лучший бомбардир турнира",
@@ -228,6 +230,7 @@ const TEXTS = {
     registered_ok:      "✅ You are registered!",
     already_registered: "You are already registered",
     league_full_err:    "League is full",
+    club_taken:          "This club is already taken",
     prizes_title:       "PRIZES",
     golden_boot:        "Golden Boot",
     golden_boot_desc:   "Top scorer of the tournament",
