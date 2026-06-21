@@ -130,7 +130,7 @@ table { border-collapse: collapse; width: 100%; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 10px;
+  padding: 14px 16px 10px;
   background: var(--bg-base);
   border-bottom: 1px solid var(--border);
   position: sticky;

@@ -338,9 +338,6 @@ function init() {
   if (tg) {
     tg.ready();
     tg.expand();
-    if (typeof tg.requestFullscreen === "function") {
-      tg.requestFullscreen();
-    }
     APP.currentUser = tg.initDataUnsafe?.user || null;
 
     // Telegram dan tilni olish (foydalanuvchi DB'da saqlangan tilga mos kelishi kerak)
