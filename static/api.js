@@ -211,9 +211,10 @@ function renderClubsForLeague(league) {
 
     if (!alreadyRegistered) {
       item.addEventListener("click", () => {
-        APP.selectedClub = club.name;
-        document.querySelectorAll(".club-item").forEach(el => el.classList.remove("selected"));
-        item.classList.add("selected");
+        APP.selectedClub     = club.name;
+        APP.selectedClubLogo = club.logo;
+        // Klublar bo'limini to'liq yashirish
+        document.getElementById("clubs-section").classList.add("hidden");
         // Register tugmasini faollashtirish
         const btn = document.getElementById("btn-register");
         btn.disabled = false;
@@ -324,23 +325,44 @@ async function loadProfile() {
 
 function renderProfile(data) {
   const t = APP.t;
-  document.getElementById("profile-nickname").textContent = data.nickname || "—";
-  document.getElementById("header-nickname").textContent  = data.nickname || "—";
-
-  const letter = (data.nickname || "?")[0].toUpperCase();
-  document.getElementById("profile-avatar-letter").textContent = letter;
+  // Header nickname o'zgarmaydi
+  document.getElementById("header-nickname").textContent = data.nickname || "—";
 
   const leagueEl = document.getElementById("profile-league");
+  const avatarEl = document.getElementById("profile-avatar-letter");
+  const nicknameEl = document.getElementById("profile-nickname");
+
   if (data.league_id) {
     const league = (APP.leagues || []).find(l => l.id === data.league_id);
     const leagueName = league ? league.name : `Liga #${data.league_id}`;
-    const username = APP.currentUser?.username || null;
-    if (username) {
-      leagueEl.innerHTML = `${escHtml(leagueName)}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>`;
+
+    // Klub logosi — DB dan club_name kelar, LEAGUE_CLUBS dan logoni topamiz
+    const clubs = LEAGUE_CLUBS[leagueName] || [];
+    const clubName = data.club_name || APP.selectedClub || null;
+    const clubObj  = clubs.find(c => c.name === clubName) || null;
+
+    // Avatar: klub logosi yoki harf
+    if (clubObj) {
+      avatarEl.innerHTML = `<img src="${escHtml(clubObj.logo)}" alt="${escHtml(clubObj.name)}" style="width:56px;height:56px;object-fit:contain;border-radius:50%;background:transparent;" onerror="this.style.display='none';this.parentElement.textContent='${clubObj.name[0].toUpperCase()}'" />`;
     } else {
-      leagueEl.textContent = leagueName;
+      avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
+    }
+
+    // profile-nickname — klub nomi
+    nicknameEl.textContent = clubObj ? clubObj.name : (data.nickname || "—");
+
+    // profile-league — foydalanuvchi nicki + username linki
+    const username = APP.currentUser?.username || null;
+    const displayName = escHtml(data.nickname || "");
+    if (username) {
+      leagueEl.innerHTML = `${displayName}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>`;
+    } else {
+      leagueEl.textContent = data.nickname || leagueName;
     }
   } else {
+    // Ro'yxatdan o'tmagan
+    avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
+    nicknameEl.textContent = data.nickname || "—";
     leagueEl.textContent = t.not_registered || "Ro'yxatdan o'tilmagan";
   }
 

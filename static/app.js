@@ -9,14 +9,15 @@
 // ============================================================
 
 const APP = {
-  currentUser:     null,   // Telegram foydalanuvchisi
-  leagues:         [],     // /leagues javobi
-  selectedLeagueId: null,  // Tanlangan liga
-  selectedClub:    null,   // Tanlangan klub nomi (ro'yxatdan o'tishdan oldin)
-  profileData:     null,   // /profile javobi
-  activeMatchId:   null,   // Natija kiritish uchun
-  lang:            "uz",   // Joriy til
-  t:               {},     // Aktiv tarjimalar
+  currentUser:      null,   // Telegram foydalanuvchisi
+  leagues:          [],     // /leagues javobi
+  selectedLeagueId: null,   // Tanlangan liga
+  selectedClub:     null,   // Tanlangan klub nomi
+  selectedClubLogo: null,   // Tanlangan klub logo URL
+  profileData:      null,   // /profile javobi
+  activeMatchId:    null,   // Natija kiritish uchun
+  lang:             "uz",   // Joriy til
+  t:                {},     // Aktiv tarjimalar
 };
 
 // ============================================================
