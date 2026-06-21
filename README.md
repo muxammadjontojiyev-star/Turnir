@@ -29,6 +29,9 @@ repo/
 ├── models.py                   ✅ yaratilgan — SQLite jadval sxemalari
 ├── queries.py                  ✅ yaratilgan — users/leagues/registrations CRUD
 ├── schedule.py                 ✅ yaratilgan — round-robin (circle method) generatsiya
+├── rating.py                   ✅ yaratilgan — liga reyting jadvalini hisoblash
+├── api.py                      ✅ yaratilgan — FastAPI backend (1-bosqich: 4 ta GET endpoint)
+├── requirements.txt             ✅ yaratilgan — python-telegram-bot, fastapi, uvicorn
 ├── main_menu.py                ✅ yaratilgan — /start, til tanlash, WebApp kirish tugmasi
 ├── main.py                     ✅ yaratilgan — bot ishga tushish nuqtasi (entrypoint)
 ├── api.py                      ← FastAPI backend (hali yo'q)
@@ -38,7 +41,9 @@ repo/
     └── script.js                 ← Web App JS mantig'i (hali yo'q)
 ```
 
-**Ishga tushirish:** `python main.py`
+**Ishga tushirish:**
+- Bot: `python main.py`
+- API: `uvicorn api:app --reload`
 
 ---
 
@@ -55,14 +60,14 @@ repo/
 - Qoidalar/yo'riqnoma
 - E'lonlar/yangiliklar
 
-**Bog'liq fayllar:** `api.py` (`/leagues`, `/register` endpointlari), `queries.py`, `static/index.html` + `script.js` (Asosiy bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /leagues` ✅ tayyor, `POST /register` ⏳ 2-bosqich), `queries.py`, `static/index.html` + `script.js` (Asosiy bo'lim)
 
 ### 🏆 Reyting
 - Umumiy reyting jadvali (barcha o'yinchilar)
 - Faqat joriy turnir reytingi
 - G'oliblar tarixi (oldingi turnirlar)
 
-**Bog'liq fayllar:** `api.py` (`/rating` endpointi), `queries.py` (reyting hisoblash), `static/index.html` + `script.js` (Reyting bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /rating/{league_id}` ✅ tayyor), `rating.py` (ball/gol farqi hisoblash), `static/index.html` + `script.js` (Reyting bo'lim)
 
 ### 👤 Profil
 - Mening joriy reyting o'rnim
@@ -70,14 +75,14 @@ repo/
 - Ism/nickname tahrirlash
 - Shaxsiy statistika (g'alaba/mag'lubiyat)
 
-**Bog'liq fayllar:** `api.py` (`/profile` endpointi), `queries.py` (user jadvali), `static/index.html` + `script.js` (Profil bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /profile` ✅ tayyor, `POST /profile/nickname` ⏳ 2-bosqich), `queries.py`, `rating.py`, `static/index.html` + `script.js` (Profil bo'lim)
 
 ### 🎁 Sovrinlar
 - Eng ko'p gol urgan ishtirokchiga — 🥇 Oltin Butsa
 - Turnir g'olibiga — 🏆 Oltin To'p znachogi
 - Pul emas, ramziy/jismoniy sovrinlar
 
-**Bog'liq fayllar:** `api.py` (`/prizes` endpointi), `queries.py` (statistika so'rovlari), `static/index.html` + `script.js` (Sovrinlar bo'lim)
+**Bog'liq fayllar:** `api.py` (`GET /prizes/{league_id}` ✅ tayyor), `rating.py`, `static/index.html` + `script.js` (Sovrinlar bo'lim)
 
 ---
 
@@ -120,7 +125,9 @@ Foydalanuvchi tanlagan til DB'da saqlanadi (`users.language` maydoni) va WebApp 
 - [x] `texts.py` yaratildi (3 til — 24 ta matn, UZ/RU/EN)
 - [x] `main.py` yaratildi (entrypoint)
 - [x] `main_menu.py` yaratildi — /start, til tanlash, WebApp kirish tugmasi (test qilindi)
-- [ ] `api.py` (FastAPI backend) yaratildi
+- [x] `rating.py` yaratildi — reyting hisoblash mantig'i (test qilindi)
+- [x] `api.py` — 1-bosqich: `GET /leagues`, `/rating/{id}`, `/profile`, `/prizes/{id}` + initData auth (test qilindi)
+- [ ] `api.py` — 2-bosqich: `POST /register`, `/profile/nickname`, `GET /matches/my`, `POST /match/submit-result`
 - [ ] `static/index.html`, `style.css`, `script.js` yaratildi
 
 ---
@@ -129,8 +136,8 @@ Foydalanuvchi tanlagan til DB'da saqlanadi (`users.language` maydoni) va WebApp 
 
 | Kutubxona | Qayerda ishlatiladi | Status |
 |---|---|---|
-| `python-telegram-bot` | `main.py`, `main_menu.py` | ✅ Ishlatilmoqda, `requirements.txt`ga qo'shilishi kerak (hali yaratilmagan) |
-| `fastapi` + `uvicorn` | `api.py` | ⚠️ Hali ishlatilmagan, `api.py` yaratilganda qo'shiladi |
+| `python-telegram-bot` | `main.py`, `main_menu.py` | ✅ Ishlatilmoqda, `requirements.txt`ga qo'shildi |
+| `fastapi` + `uvicorn` | `api.py` | ✅ Ishlatilmoqda, `requirements.txt`ga qo'shildi |
 
 ---
 
@@ -148,3 +155,5 @@ Foydalanuvchi tanlagan til DB'da saqlanadi (`users.language` maydoni) va WebApp 
 | 2026-06-21 | Backend qarori: FastAPI (`api.py`) — WebApp uchun ma'lumot beruvchi alohida backend, bot jarayonidan mustaqil |
 | 2026-06-21 | `main_menu.py` yaratildi va test qilindi: /start → til tanlash (inline) → "🚀 Kirish" WebApp tugmasi. `texts.py`ga `enter_webapp` kaliti (3 til) qo'shildi |
 | 2026-06-21 | **STRUKTURA O'ZGARDI (GitHub'dagi haqiqiy holatga moslash):** `bot/`, `bot/db/`, `bot/handlers/` ichki papkalari olib tashlandi. Endi barcha backend fayllari (`config.py`, `texts.py`, `models.py`, `queries.py`, `schedule.py`, `main_menu.py`, `main.py`) repo ildizida, flat holda. Faqat `static/` alohida papka. Barcha import qatorlari (`from bot.config import` → `from config import` va h.k.) shunga moslab to'g'rilandi va qayta test qilindi. `keyboards.py` foydalanuvchi tomonidan GitHub'dan o'chiriladi. |
+| 2026-06-21 | `rating.py` yaratildi — reyting hisoblash (3 ball g'alaba, 1 ball durang, gol farqi bo'yicha saralash), test ma'lumotlari bilan tekshirildi |
+| 2026-06-21 | `api.py` yaratildi (1-bosqich): Telegram `initData` HMAC-SHA256 autentifikatsiyasi + `GET /leagues`, `/rating/{league_id}`, `/profile`, `/prizes/{league_id}`. To'g'ri va soxta initData bilan test qilindi (soxta → 401). `requirements.txt` yaratildi. |
