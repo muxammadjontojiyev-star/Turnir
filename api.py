@@ -142,6 +142,7 @@ def get_profile(user: dict = Depends(get_authenticated_user)):
         "nickname": user["nickname"],
         "language": user["language"],
         "league_id": registration["league_id"] if registration else None,
+        "club_name": registration["club_name"] if registration else None,
         "rating": position_info,
     }
 
@@ -170,14 +171,14 @@ def get_prizes(league_id: int):
 # ============ POST /register ============
 
 @app.post("/register")
-def register(league_id: int, user: dict = Depends(get_authenticated_user)):
+def register(league_id: int, club_name: str | None = None, user: dict = Depends(get_authenticated_user)):
     """
     Foydalanuvchini ligaga ro'yxatdan o'tkazadi.
 
-    Query param: league_id (int)
+    Query param: league_id (int), club_name (str, ixtiyoriy)
     Xato holatlari: already_registered, league_full, league_not_found → 400
     """
-    success, reason = register_user_to_league(user["id"], league_id)
+    success, reason = register_user_to_league(user["id"], league_id, club_name)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "league_id": league_id}

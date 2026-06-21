@@ -115,7 +115,7 @@ def get_user_registration(user_id: int) -> dict | None:
     return dict(row) if row else None
 
 
-def register_user_to_league(user_id: int, league_id: int) -> tuple[bool, str]:
+def register_user_to_league(user_id: int, league_id: int, club_name: str | None = None) -> tuple[bool, str]:
     """
     Foydalanuvchini ligaga ro'yxatdan o'tkazadi.
 
@@ -137,8 +137,8 @@ def register_user_to_league(user_id: int, league_id: int) -> tuple[bool, str]:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO registrations (user_id, league_id) VALUES (?, ?)",
-        (user_id, league_id),
+        "INSERT INTO registrations (user_id, league_id, club_name) VALUES (?, ?, ?)",
+        (user_id, league_id, club_name),
     )
     conn.commit()
     conn.close()
