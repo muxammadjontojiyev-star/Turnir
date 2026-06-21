@@ -94,6 +94,19 @@ def count_league_players(league_id: int) -> int:
     return row["cnt"]
 
 
+def get_taken_clubs(league_id: int) -> list[str]:
+    """Shu ligada allaqachon band qilingan klub nomlari ro'yxatini qaytaradi."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT club_name FROM registrations WHERE league_id = ? AND club_name IS NOT NULL",
+        (league_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [row["club_name"] for row in rows]
+
+
 def update_league_status(league_id: int, status: str) -> None:
     """Liga statusini yangilaydi."""
     conn = get_connection()
@@ -120,7 +133,7 @@ def register_user_to_league(user_id: int, league_id: int, club_name: str | None 
     Foydalanuvchini ligaga ro'yxatdan o'tkazadi.
 
     Qaytaradi: (muvaffaqiyat: bool, sabab: str)
-    Sabablar: "ok", "already_registered", "league_full"
+    Sabablar: "ok", "already_registered", "league_full", "club_taken"
     """
     existing = get_user_registration(user_id)
     if existing is not None:
@@ -133,6 +146,11 @@ def register_user_to_league(user_id: int, league_id: int, club_name: str | None 
     current_count = count_league_players(league_id)
     if current_count >= league["max_players"]:
         return False, "league_full"
+
+    if club_name is not None:
+        taken = get_taken_clubs(league_id)
+        if club_name in taken:
+            return False, "club_taken"
 
     conn = get_connection()
     cursor = conn.cursor()

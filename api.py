@@ -24,7 +24,7 @@ from config import BOT_TOKEN
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
-    register_user_to_league, update_user_nickname,
+    register_user_to_league, update_user_nickname, get_taken_clubs,
     get_user_matches, submit_match_result, confirm_or_reject_match,
 )
 from rating import calculate_league_rating, get_player_position
@@ -114,6 +114,17 @@ def list_leagues():
     return result
 
 
+# ============ GET /leagues/{league_id}/clubs ============
+
+@app.get("/leagues/{league_id}/clubs")
+def get_league_taken_clubs(league_id: int):
+    """Shu ligada allaqachon band qilingan klub nomlari ro'yxatini qaytaradi."""
+    league = get_league_by_id(league_id)
+    if league is None:
+        raise HTTPException(status_code=404, detail="league_not_found")
+    return {"taken_clubs": get_taken_clubs(league_id)}
+
+
 # ============ GET /rating/{league_id} ============
 
 @app.get("/rating/{league_id}")
@@ -176,7 +187,7 @@ def register(league_id: int, club_name: str | None = None, user: dict = Depends(
     Foydalanuvchini ligaga ro'yxatdan o'tkazadi.
 
     Query param: league_id (int), club_name (str, ixtiyoriy)
-    Xato holatlari: already_registered, league_full, league_not_found → 400
+    Xato holatlari: already_registered, league_full, league_not_found, club_taken → 400
     """
     success, reason = register_user_to_league(user["id"], league_id, club_name)
     if not success:
