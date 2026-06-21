@@ -93,6 +93,12 @@ async function loadHome() {
     if (open) APP.selectedLeagueId = open.id;
     APP.selectedClub = null;
 
+    // Klublar ko'rsatish uchun profileData ni oldindan yuklash
+    try {
+      const profile = await apiFetch("/profile");
+      APP.profileData = profile;
+    } catch (_) { /* Foydalanuvchi topilmasa — null qoladi */ }
+
     renderLeagues(leagues);
     renderHeroCard(open || null);
     renderRules();
@@ -158,15 +164,22 @@ function renderLeagues(leagues) {
       document.querySelectorAll(".league-item").forEach(el => el.classList.remove("selected"));
       item.classList.add("selected");
       renderHeroCard(league);
-      renderClubsForLeague(league);
+      // Allaqachon ro'yxatdan o'tgan bo'lsa klublarni ko'rsatmaymiz
+      if (!APP.profileData?.league_id) {
+        renderClubsForLeague(league);
+      }
     });
 
     list.appendChild(item);
   });
 
-  // Birinchi tanlangan liga uchun klublarni ham ko'rsat
+  // Birinchi tanlangan liga uchun klublarni ko'rsat — faqat ro'yxatdan o'tmagan bo'lsa
   const selected = leagues.find(l => l.id === APP.selectedLeagueId);
-  if (selected) renderClubsForLeague(selected);
+  if (selected && !APP.profileData?.league_id) {
+    renderClubsForLeague(selected);
+  } else {
+    document.getElementById("clubs-section").classList.add("hidden");
+  }
 }
 
 // Foydalanuvchi bu mavsumda tanlagan klub (local state) — app.js dagi APP.selectedClub
