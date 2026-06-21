@@ -12,7 +12,7 @@ import uvicorn
 from telegram.ext import Application
 
 from config import BOT_TOKEN
-from models import init_db
+from models import init_db, seed_leagues
 from main_menu import register_main_menu_handlers
 
 logging.basicConfig(
@@ -33,7 +33,8 @@ def main() -> None:
         raise RuntimeError("BOT_TOKEN topilmadi. Environment variable sifatida belgilang.")
 
     init_db()
-    logger.info("Ma'lumotlar bazasi tayyor.")
+    seed_leagues()
+    logger.info("Ma'lumotlar bazasi va ligalar tayyor.")
 
     # API ni alohida threadda ishga tushirish
     api_thread = threading.Thread(target=run_api, daemon=True)

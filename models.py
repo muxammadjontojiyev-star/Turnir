@@ -89,3 +89,19 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+
+def seed_leagues():
+    """Boshlang'ich ligalarni qo'shadi (agar mavjud bo'lmasa)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("LaLiga", 20, "open"),
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Premier Liga", 20, "open"),
+    )
+    conn.commit()
+    conn.close()
