@@ -18,6 +18,7 @@ from urllib.parse import parse_qsl
 
 from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from config import BOT_TOKEN
 from queries import (
@@ -37,6 +38,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# static/ papkasini serve qilish — WebApp HTML/CSS/JS
+app.mount("/webapp", StaticFiles(directory="static", html=True), name="static")
 
 
 def verify_telegram_init_data(init_data: str) -> dict:
