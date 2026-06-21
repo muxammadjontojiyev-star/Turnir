@@ -248,6 +248,12 @@ function setLanguage(lang) {
   applyTranslations();
 }
 
+function cycleLanguage() {
+  const order = ["uz", "ru", "en"];
+  const next  = order[(order.indexOf(APP.lang) + 1) % order.length];
+  setLanguage(next);
+}
+
 // ============================================================
 //  NAVIGATION
 // ============================================================
@@ -340,6 +346,10 @@ function init() {
 // ============================================================
 
 function bindEvents() {
+  // Til almashtirish (header)
+  document.getElementById("header-lang")
+    .addEventListener("click", cycleLanguage);
+
   // Bottom nav
   document.querySelectorAll(".nav-item").forEach(btn => {
     btn.addEventListener("click", () => navigateTo(btn.dataset.section));
