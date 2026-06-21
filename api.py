@@ -22,8 +22,8 @@ from fastapi.staticfiles import StaticFiles
 
 from config import BOT_TOKEN
 from queries import (
-    get_all_leagues, get_user_by_telegram_id, get_league_by_id,
-    count_league_players, get_user_registration,
+    get_all_leagues, get_user_by_telegram_id, get_or_create_user,
+    get_league_by_id, count_league_players, get_user_registration,
     register_user_to_league, update_user_nickname,
     get_user_matches, submit_match_result, confirm_or_reject_match,
 )
@@ -84,17 +84,13 @@ def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
     """
     FastAPI dependency: initData'ni tekshiradi va DB'dagi user yozuvini qaytaradi.
 
-    Foydalanuvchi DB'da topilmasa (hali /start bosmagan bo'lsa) — 404 qaytaradi.
+    Foydalanuvchi DB'da topilmasa — avtomatik yaratadi (nickname = first_name).
     """
     telegram_user = verify_telegram_init_data(x_telegram_init_data)
-    telegram_id = telegram_user["id"]
+    telegram_id   = telegram_user["id"]
+    first_name    = telegram_user.get("first_name", f"user_{telegram_id}")
 
-    user = get_user_by_telegram_id(telegram_id)
-    if user is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Foydalanuvchi topilmadi. Avval botda /start bosing.",
-        )
+    user = get_or_create_user(telegram_id, first_name)
     return user
 
 
