@@ -40,6 +40,7 @@ async function loadHome() {
     // Birinchi ochiq ligani tanlash
     const open = leagues.find(l => l.status === "open") || leagues[0];
     if (open) APP.selectedLeagueId = open.id;
+    APP.selectedClub = null;
 
     renderLeagues(leagues);
     renderHeroCard(open || null);
@@ -71,8 +72,10 @@ function renderHeroCard(league) {
   document.getElementById("home-matchday").textContent = "—";
 
   const btn = document.getElementById("btn-register");
-  btn.disabled = league.is_full;
-  btn.style.opacity = league.is_full ? "0.45" : "1";
+  // Liga to'liq bo'lsa yoki klub tanlanmagan bo'lsa — disabled
+  const clubSelected = !!APP.selectedClub;
+  btn.disabled = league.is_full || !clubSelected;
+  btn.style.opacity = (league.is_full || !clubSelected) ? "0.45" : "1";
 }
 
 function renderLeagues(leagues) {
@@ -100,13 +103,133 @@ function renderLeagues(leagues) {
 
     item.addEventListener("click", () => {
       APP.selectedLeagueId = league.id;
+      APP.selectedClub = null;
       document.querySelectorAll(".league-item").forEach(el => el.classList.remove("selected"));
       item.classList.add("selected");
       renderHeroCard(league);
+      renderClubsForLeague(league);
     });
 
     list.appendChild(item);
   });
+
+  // Birinchi tanlangan liga uchun klublarni ham ko'rsat
+  const selected = leagues.find(l => l.id === APP.selectedLeagueId);
+  if (selected) renderClubsForLeague(selected);
+}
+
+// ============================================================
+//  LIGA KLUBLAR MA'LUMOTLARI (statik, alifbo tartibida)
+// ============================================================
+
+const LEAGUE_CLUBS = {
+  "LaLiga": [
+    { name: "Almería",          logo: "https://upload.wikimedia.org/wikipedia/en/0/09/UD_Almer%C3%ADa_logo.svg" },
+    { name: "Athletic Club",    logo: "https://upload.wikimedia.org/wikipedia/en/9/98/Club_Athletic_de_Bilbao_logo.svg" },
+    { name: "Atlético Madrid",  logo: "https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_de_madrid_crest.svg" },
+    { name: "Barcelona",        logo: "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" },
+    { name: "Betis",            logo: "https://upload.wikimedia.org/wikipedia/en/1/13/Real_betis_logo.svg" },
+    { name: "Cádiz",            logo: "https://upload.wikimedia.org/wikipedia/en/3/39/C%C3%A1diz_CF_logo.svg" },
+    { name: "Celta Vigo",       logo: "https://upload.wikimedia.org/wikipedia/en/3/30/RC_Celta_de_Vigo_logo.svg" },
+    { name: "Getafe",           logo: "https://upload.wikimedia.org/wikipedia/en/3/35/Getafe_CF_logo.svg" },
+    { name: "Girona",           logo: "https://upload.wikimedia.org/wikipedia/en/6/60/Girona_FC_logo.svg" },
+    { name: "Granada",          logo: "https://upload.wikimedia.org/wikipedia/en/6/6a/Granada_CF_logo.svg" },
+    { name: "Las Palmas",       logo: "https://upload.wikimedia.org/wikipedia/en/7/75/UD_Las_Palmas_logo.svg" },
+    { name: "Mallorca",         logo: "https://upload.wikimedia.org/wikipedia/en/9/9f/Real_Mallorca.svg" },
+    { name: "Osasuna",          logo: "https://upload.wikimedia.org/wikipedia/en/d/db/Osasuna_logo.svg" },
+    { name: "Rayo Vallecano",   logo: "https://upload.wikimedia.org/wikipedia/en/2/27/Rayo_Vallecano_logo.svg" },
+    { name: "Real Madrid",      logo: "https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg" },
+    { name: "Real Sociedad",    logo: "https://upload.wikimedia.org/wikipedia/en/f/f1/Real_Sociedad_logo.svg" },
+    { name: "Sevilla",          logo: "https://upload.wikimedia.org/wikipedia/en/3/3b/Sevilla_FC_logo.svg" },
+    { name: "Valencia",         logo: "https://upload.wikimedia.org/wikipedia/en/c/ce/Valenciacf.svg" },
+    { name: "Valladolid",       logo: "https://upload.wikimedia.org/wikipedia/en/6/6d/Real_Valladolid_logo.svg" },
+    { name: "Villarreal",       logo: "https://upload.wikimedia.org/wikipedia/en/b/b9/Villarreal_CF_logo.svg" },
+  ],
+  "Premier Liga": [
+    { name: "Arsenal",          logo: "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg" },
+    { name: "Aston Villa",      logo: "https://upload.wikimedia.org/wikipedia/en/f/f9/Aston_Villa_FC_crest_%282016%29.svg" },
+    { name: "Bournemouth",      logo: "https://upload.wikimedia.org/wikipedia/en/e/e5/AFC_Bournemouth_%282013%29.svg" },
+    { name: "Brentford",        logo: "https://upload.wikimedia.org/wikipedia/en/2/2a/Brentford_FC_crest.svg" },
+    { name: "Brighton",         logo: "https://upload.wikimedia.org/wikipedia/en/f/fd/Brighton_%26_Hove_Albion_logo.svg" },
+    { name: "Burnley",          logo: "https://upload.wikimedia.org/wikipedia/en/6/62/Burnley_F.C._Logo.svg" },
+    { name: "Chelsea",          logo: "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg" },
+    { name: "Crystal Palace",   logo: "https://upload.wikimedia.org/wikipedia/en/a/a2/Crystal_Palace_FC_logo_%282022%29.svg" },
+    { name: "Everton",          logo: "https://upload.wikimedia.org/wikipedia/en/7/7c/Everton_FC_logo.svg" },
+    { name: "Fulham",           logo: "https://upload.wikimedia.org/wikipedia/en/e/eb/Fulham_FC_%28shield%29.svg" },
+    { name: "Liverpool",        logo: "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg" },
+    { name: "Luton Town",       logo: "https://upload.wikimedia.org/wikipedia/en/9/9d/Luton_Town_FC_logo.svg" },
+    { name: "Man City",         logo: "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg" },
+    { name: "Man United",       logo: "https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg" },
+    { name: "Newcastle",        logo: "https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg" },
+    { name: "Nottm Forest",     logo: "https://upload.wikimedia.org/wikipedia/en/e/e5/Nottingham_Forest_F.C._logo.svg" },
+    { name: "Sheffield Utd",    logo: "https://upload.wikimedia.org/wikipedia/en/9/9c/Sheffield_United_FC_logo.svg" },
+    { name: "Tottenham",        logo: "https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg" },
+    { name: "West Ham",         logo: "https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg" },
+    { name: "Wolves",           logo: "https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg" },
+  ],
+};
+
+// Foydalanuvchi bu mavsumda tanlagan klub (local state) — app.js dagi APP.selectedClub
+function renderClubsForLeague(league) {
+  const section = document.getElementById("clubs-section");
+  const list    = document.getElementById("clubs-list");
+  const t       = APP.t;
+
+  // Liga nomi bo'yicha klublar ro'yxatini topamiz
+  const clubs = LEAGUE_CLUBS[league.name] || [];
+  if (clubs.length === 0) {
+    section.classList.add("hidden");
+    return;
+  }
+
+  section.classList.remove("hidden");
+  list.innerHTML = "";
+
+  // Foydalanuvchi allaqachon ro'yxatdan o'tganmi?
+  const alreadyRegistered = !!(APP.profileData && APP.profileData.league_id);
+
+  // Alifbo tartibida (allaqachon alifbo tartibida, lekin sort qilamiz xavfsizlik uchun)
+  const sorted = [...clubs].sort((a, b) => a.name.localeCompare(b.name));
+
+  sorted.forEach(club => {
+    const item = document.createElement("div");
+    const isSelected = APP.selectedClub === club.name;
+    item.className = "club-item" +
+      (isSelected ? " selected" : "") +
+      (alreadyRegistered ? " disabled" : "");
+
+    item.innerHTML = `
+      <img
+        class="club-logo"
+        src="${escHtml(club.logo)}"
+        alt="${escHtml(club.name)}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+      />
+      <div class="club-logo-fallback" style="display:none">⚽</div>
+      <span class="club-name">${escHtml(club.name)}</span>
+    `;
+
+    if (!alreadyRegistered) {
+      item.addEventListener("click", () => {
+        APP.selectedClub = club.name;
+        document.querySelectorAll(".club-item").forEach(el => el.classList.remove("selected"));
+        item.classList.add("selected");
+        // Register tugmasini faollashtirish
+        const btn = document.getElementById("btn-register");
+        btn.disabled = false;
+        btn.style.opacity = "1";
+      });
+    }
+
+    list.appendChild(item);
+  });
+
+  // Agar allaqachon ro'yxatdan o'tgan bo'lsa — register tugmasini o'chirib qo'yamiz
+  if (alreadyRegistered) {
+    const btn = document.getElementById("btn-register");
+    btn.disabled = true;
+    btn.style.opacity = "0.45";
+  }
 }
 
 function renderRules() {
@@ -347,11 +470,23 @@ async function registerToLeague() {
   const leagueId = APP.selectedLeagueId;
   if (!leagueId) { showToast(APP.t.choose_league || "Liga tanlang"); return; }
 
+  if (!APP.selectedClub) { showToast(APP.t.select_club || "Klub tanlang"); return; }
+
+  // Mavsumda allaqachon ro'yxatdan o'tganligini tekshirish (local)
+  if (APP.profileData && APP.profileData.league_id) {
+    showToast(APP.t.already_in_season || "Siz bu mavsumda allaqachon ro'yxatdansiz");
+    return;
+  }
+
   const btn = document.getElementById("btn-register");
   btn.disabled = true;
   try {
-    await apiFetch(`/register?league_id=${leagueId}`, { method: "POST" });
+    await apiFetch(
+      `/register?league_id=${leagueId}&club_name=${encodeURIComponent(APP.selectedClub)}`,
+      { method: "POST" }
+    );
     showToast(APP.t.registered_ok || "✅ Ro'yxatdan o'tdingiz!");
+    APP.selectedClub = null;
     await loadHome();
     await loadProfile();
   } catch (e) {

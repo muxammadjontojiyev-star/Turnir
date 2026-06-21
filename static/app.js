@@ -12,6 +12,7 @@ const APP = {
   currentUser:     null,   // Telegram foydalanuvchisi
   leagues:         [],     // /leagues javobi
   selectedLeagueId: null,  // Tanlangan liga
+  selectedClub:    null,   // Tanlangan klub nomi (ro'yxatdan o'tishdan oldin)
   profileData:     null,   // /profile javobi
   activeMatchId:   null,   // Natija kiritish uchun
   lang:            "uz",   // Joriy til
@@ -35,6 +36,9 @@ const TEXTS = {
     matchday:        "Tur",
     register:        "Ro'yxatdan o'tish",
     choose_league:   "LIGA TANLASH",
+    clubs_in_league: "LIGADAGI KLUBLAR",
+    select_club:     "Klub tanlang",
+    already_in_season: "Siz bu mavsumda allaqachon ro'yxatdansiz",
     open:            "OCHIQ",
     full:            "TO'LIQ",
     league_open:     "OCHIQ — RO'YXAT DAVOM ETMOQDA",
@@ -106,6 +110,9 @@ const TEXTS = {
     matchday:        "Тур",
     register:        "Зарегистрироваться",
     choose_league:   "ВЫБОР ЛИГИ",
+    clubs_in_league: "КЛУБЫ ЛИГИ",
+    select_club:     "Выберите клуб",
+    already_in_season: "Вы уже зарегистрированы в этом сезоне",
     open:            "ОТКРЫТА",
     full:            "ЗАПОЛНЕНА",
     league_open:     "ОТКРЫТА — РЕГИСТРАЦИЯ ИДЁТ",
@@ -171,6 +178,9 @@ const TEXTS = {
     matchday:        "Round",
     register:        "Register",
     choose_league:   "CHOOSE LEAGUE",
+    clubs_in_league: "CLUBS IN LEAGUE",
+    select_club:     "Select a club",
+    already_in_season: "You are already registered this season",
     open:            "OPEN",
     full:            "FULL",
     league_open:     "OPEN — REGISTRATION ONGOING",
