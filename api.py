@@ -28,6 +28,7 @@ from queries import (
     get_user_matches, submit_match_result, confirm_or_reject_match,
     get_all_users_with_registration, remove_user_completely,
     get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
+    get_user_by_id,
 )
 from rating import calculate_league_rating, get_player_position
 
@@ -174,6 +175,37 @@ def get_profile(user: dict = Depends(get_authenticated_user)):
         "league_id": registration["league_id"] if registration else None,
         "club_name": registration["club_name"] if registration else None,
         "rating": position_info,
+    }
+
+
+# ============ GET /players/{user_id}/profile ============
+
+@app.get("/players/{user_id}/profile")
+def get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_user)):
+    """
+    Boshqa bir o'yinchining ommaviy profilini qaytaradi (reyting jadvalidan bosilganda).
+
+    Joriy foydalanuvchining avtorizatsiyasini talab qiladi, lekin har qanday
+    ro'yxatdan o'tgan foydalanuvchi boshqa o'yinchining profilini ko'ra oladi.
+    Xato holatlari: user_not_found → 404
+    """
+    target = get_user_by_id(user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="user_not_found")
+
+    registration = get_user_registration(user_id)
+    position_info = None
+    if registration is not None:
+        position_info = get_player_position(registration["league_id"], user_id)
+
+    return {
+        "user_id": target["id"],
+        "nickname": target["nickname"],
+        "username": target["username"],
+        "league_id": registration["league_id"] if registration else None,
+        "club_name": registration["club_name"] if registration else None,
+        "rating": position_info,
+        "matches": get_user_matches(user_id),
     }
 
 

@@ -42,6 +42,16 @@ def get_user_by_telegram_id(telegram_id: int) -> dict | None:
     return dict(row) if row else None
 
 
+def get_user_by_id(user_id: int) -> dict | None:
+    """Internal user.id bo'yicha foydalanuvchini qaytaradi."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
 def update_user_language(user_id: int, language: str) -> None:
     """Foydalanuvchi tilini yangilaydi."""
     conn = get_connection()
