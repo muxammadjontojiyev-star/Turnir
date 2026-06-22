@@ -309,16 +309,33 @@ function renderRatingFilter() {
 function renderPodiumPlayer(player, rank) {
   const medalColors = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
   const color = medalColors[rank];
-  const displayName = player.username
-    ? `<span class="pod-username">@${escHtml(player.username)}</span><span class="pod-nickname">${escHtml(player.nickname)}</span>`
-    : `<span class="pod-username">${escHtml(player.nickname)}</span>`;
+
+  // Klub logosini LEAGUE_CLUBS dan topamiz
+  let clubLogo = null;
+  let clubDisplayName = player.club_name || player.nickname;
+  if (player.club_name) {
+    for (const clubs of Object.values(LEAGUE_CLUBS)) {
+      const found = clubs.find(c => c.name === player.club_name);
+      if (found) { clubLogo = found.logo; clubDisplayName = found.name; break; }
+    }
+  }
+
+  const avatarInner = clubLogo
+    ? `<img src="${escHtml(clubLogo)}" alt="${escHtml(clubDisplayName)}" style="width:100%;height:100%;object-fit:contain;border-radius:50%;padding:4px;" onerror="this.style.display='none'" />`
+    : `<span style="font-size:${rank===1?'28':'22'}px">${rank===1?"🥇":rank===2?"🥈":"🥉"}</span>`;
+
+  const usernameRow = player.username
+    ? `<span class="pod-username">@${escHtml(player.username)}</span>`
+    : "";
+
   return `
     <div class="pod-player pod-rank-${rank}">
       <div class="pod-avatar" style="border-color:${color}">
-        <span class="pod-medal">${rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}</span>
+        ${avatarInner}
       </div>
       <div class="pod-info">
-        ${displayName}
+        <span class="pod-clubname">${escHtml(clubDisplayName)}</span>
+        ${usernameRow}
         <span class="pod-pts" style="color:${color}">${player.points} B</span>
       </div>
       <div class="pod-stand pod-stand-${rank}"></div>
@@ -355,9 +372,24 @@ function renderRatingTable(rating) {
   tbody.innerHTML = rest.map((player, i) => {
     const rank    = i + 4;
     const isMeCls = player.user_id === myId ? " class=\"is-me\"" : "";
-    const playerCell = player.username
-      ? `<div class="player-cell"><span class="player-username">@${escHtml(player.username)}</span><span class="player-nickname">${escHtml(player.nickname)}</span></div>`
-      : `<div class="player-cell"><span class="player-username">${escHtml(player.nickname)}</span></div>`;
+
+    // Klub logosini topamiz
+    let clubLogo = null;
+    let clubDisplayName = player.club_name || player.nickname;
+    if (player.club_name) {
+      for (const clubs of Object.values(LEAGUE_CLUBS)) {
+        const found = clubs.find(c => c.name === player.club_name);
+        if (found) { clubLogo = found.logo; clubDisplayName = found.name; break; }
+      }
+    }
+    const logoHtml = clubLogo
+      ? `<img src="${escHtml(clubLogo)}" alt="" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;" onerror="this.style.display='none'" />`
+      : "";
+    const usernameRow = player.username
+      ? `<span class="player-username">@${escHtml(player.username)}</span>`
+      : "";
+    const playerCell = `<div class="player-cell">${logoHtml}<div class="player-cell-text"><span class="player-clubname">${escHtml(clubDisplayName)}</span>${usernameRow}</div></div>`;
+
     return `
       <tr${isMeCls}>
         <td>${rank}</td>

@@ -558,9 +558,8 @@ table { border-collapse: collapse; width: 100%; }
   width: 100%;
 }
 .pod-username {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 10px;
+  color: var(--text-secondary);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -575,6 +574,52 @@ table { border-collapse: collapse; width: 100%; }
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+/* Podium klub nomi */
+.pod-clubname {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+/* Jadval: klub nomi (katta) + username (kichik) */
+.player-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.player-cell-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.player-clubname {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-username {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-nickname {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .pod-pts {
   font-size: 12px;
