@@ -52,6 +52,21 @@ app.add_middleware(
 app.mount("/webapp", StaticFiles(directory="static", html=True), name="static")
 
 
+# HTML fayllar (ayniqsa index.html) keshlanmasligi uchun no-cache header qo'shamiz.
+# Sabab: Telegram WebView index.html'ni agressiv keshlaydi — yangilanish chiqsa ham
+# eski HTML (va undagi eski ?v= versiyalari) yuklanib qolaveradi. HTML har safar
+# yangi olinsa, undagi ?v= orqali CSS/JS to'g'ri yangilanadi (CSS/JS esa keshlanaveradi).
+@app.middleware("http")
+async def no_cache_for_html(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.endswith(".html") or path == "/webapp" or path == "/webapp/":
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 def verify_telegram_init_data(init_data: str) -> dict:
     """
     Telegram WebApp initData'ni tekshiradi va ichidan foydalanuvchi ma'lumotini chiqaradi.
