@@ -662,6 +662,74 @@ table { border-collapse: collapse; width: 100%; }
   background: var(--cyan-dim);
   white-space: nowrap;
 }
+.match-id {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+/* ============================================================
+   ADMIN PANEL
+   ============================================================ */
+.admin-panel { margin-top: 18px; }
+.admin-players-list { display: flex; flex-direction: column; gap: 8px; }
+.admin-player-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-player-info {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-player-username {
+  color: var(--cyan);
+  font-weight: 500;
+}
+.admin-player-league {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-remove-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,69,96,.3);
+  color: var(--red-neon);
+  background: rgba(255,69,96,.1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.admin-set-result-btn {
+  border: 1px solid var(--border-accent);
+  color: var(--cyan);
+  background: var(--cyan-dim);
+}
+.admin-reset-match-btn {
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--bg-card-alt);
+}
+.admin-fix-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 /* ============================================================
    BUTTONS

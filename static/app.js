@@ -16,6 +16,7 @@ const APP = {
   selectedClubLogo: null,   // Tanlangan klub logo URL
   profileData:      null,   // /profile javobi
   activeMatchId:    null,   // Natija kiritish uchun
+  adminResolveMatchId: null,  // Admin: rad etilgan natijani belgilash uchun
   lang:             "uz",   // Joriy til
   t:                {},     // Aktiv tarjimalar
 };
@@ -100,6 +101,21 @@ const TEXTS = {
     golden_ball_desc:   "Turnir g'olibi",
     by_league:          "LIGA BO'YICHA",
     goals:              "gol",
+    // Admin panel
+    admin_panel_title:    "ADMIN PANEL",
+    admin_remove_player:  "Chiqarish",
+    admin_confirm_remove: "Bu o'yinchini chiqarishni tasdiqlaysizmi?",
+    admin_player_removed: "✅ O'yinchi chiqarildi",
+    admin_rejected_title:    "RAD ETILGAN NATIJALAR",
+    admin_set_result_title:  "Natijani belgilash",
+    admin_set_result:        "Natija",
+    admin_reset_match:       "Qayta tiklash",
+    admin_match_resolved:    "✅ Natija belgilandi",
+    admin_fix_title:                  "TASDIQLANGAN NATIJANI TUZATISH",
+    admin_fix_match_id_placeholder:   "Match ID",
+    admin_fix_submit:                 "Tuzatish",
+    admin_fix_success:                "✅ Natija tuzatildi",
+    admin_fix_match_id_required:      "Match ID kiritilmadi",
   },
 
   ru: {
@@ -169,6 +185,21 @@ const TEXTS = {
     golden_ball_desc:   "Победитель турнира",
     by_league:          "ПО ЛИГЕ",
     goals:              "голов",
+    // Admin panel
+    admin_panel_title:    "АДМИН-ПАНЕЛЬ",
+    admin_remove_player:  "Удалить",
+    admin_confirm_remove: "Удалить этого игрока?",
+    admin_player_removed: "✅ Игрок удалён",
+    admin_rejected_title:    "ОТКЛОНЁННЫЕ РЕЗУЛЬТАТЫ",
+    admin_set_result_title:  "Указать результат",
+    admin_set_result:        "Результат",
+    admin_reset_match:       "Сбросить",
+    admin_match_resolved:    "✅ Результат обновлён",
+    admin_fix_title:                  "ИСПРАВИТЬ ПОДТВЕРЖДЁННЫЙ РЕЗУЛЬТАТ",
+    admin_fix_match_id_placeholder:   "ID матча",
+    admin_fix_submit:                 "Исправить",
+    admin_fix_success:                "✅ Результат исправлен",
+    admin_fix_match_id_required:      "Введите ID матча",
   },
 
   en: {
@@ -238,6 +269,21 @@ const TEXTS = {
     golden_ball_desc:   "Tournament winner",
     by_league:          "BY LEAGUE",
     goals:              "goals",
+    // Admin panel
+    admin_panel_title:    "ADMIN PANEL",
+    admin_remove_player:  "Remove",
+    admin_confirm_remove: "Remove this player?",
+    admin_player_removed: "✅ Player removed",
+    admin_rejected_title:    "REJECTED RESULTS",
+    admin_set_result_title:  "Set result",
+    admin_set_result:        "Set result",
+    admin_reset_match:       "Reset",
+    admin_match_resolved:    "✅ Result updated",
+    admin_fix_title:                  "FIX CONFIRMED RESULT",
+    admin_fix_match_id_placeholder:   "Match ID",
+    admin_fix_submit:                 "Fix",
+    admin_fix_success:                "✅ Result fixed",
+    admin_fix_match_id_required:      "Match ID is required",
   },
 };
 
@@ -253,6 +299,12 @@ function applyTranslations() {
       el.textContent = t[key];
     }
   });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (t[key] !== undefined && typeof t[key] === "string") {
+      el.placeholder = t[key];
+    }
+  });
   document.getElementById("header-lang").textContent = APP.lang.toUpperCase();
 }
 
@@ -266,6 +318,13 @@ function cycleLanguage() {
   const order = ["uz", "ru", "en"];
   const next  = order[(order.indexOf(APP.lang) + 1) % order.length];
   setLanguage(next);
+
+  // data-i18n bilan belgilanmagan, JS orqali to'ldiriladigan qismlarni
+  // (masalan Rules ro'yxati, Rating jadvali, Admin panel) ham yangilash
+  // uchun joriy faol bo'limni qayta yuklaymiz.
+  const activeSection = document.querySelector(".section.active");
+  const sectionName = activeSection?.id?.replace("section-", "");
+  SECTION_LOADERS[sectionName]?.();
 }
 
 // ============================================================
@@ -385,12 +444,25 @@ function bindEvents() {
   document.getElementById("btn-result-submit")
     .addEventListener("click", submitMatchResult);
 
+  // Admin: rad etilgan natijani belgilash modali
+  document.getElementById("btn-admin-resolve-cancel")
+    .addEventListener("click", closeAdminResolveModal);
+  document.getElementById("btn-admin-resolve-submit")
+    .addEventListener("click", submitAdminSetResult);
+
+  // Admin: tasdiqlangan natijani tuzatish formasi
+  document.getElementById("btn-admin-fix-submit")
+    .addEventListener("click", submitAdminFixConfirmed);
+
   // Modal tashqarisiga bosish — yopish
   document.getElementById("modal-nickname").addEventListener("click", e => {
     if (e.target === e.currentTarget) closeNicknameModal();
   });
   document.getElementById("modal-result").addEventListener("click", e => {
     if (e.target === e.currentTarget) closeResultModal();
+  });
+  document.getElementById("modal-admin-resolve").addEventListener("click", e => {
+    if (e.target === e.currentTarget) closeAdminResolveModal();
   });
 }
 

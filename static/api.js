@@ -370,6 +370,7 @@ async function loadProfile() {
     APP.profileData = data;
     renderProfile(data);
     await loadMyMatches();
+    await loadAdminPanel();
   } catch (e) {
     showToast("❌ " + e.message);
   }
@@ -497,12 +498,209 @@ function renderMatchItem(m) {
   return `
     <div class="match-item">
       <span class="match-day">${m.matchday}</span>
-      <span class="match-names">Men vs Raqib</span>
+      <span class="match-names"><span class="match-id">#${m.id}</span> Men vs Raqib</span>
       <span class="match-score">${score}</span>
       <span class="match-status ${statusCls}">${statusText}</span>
       ${actionBtn}
     </div>
   `;
+}
+
+// ============================================================
+//  ADMIN PANEL
+// ============================================================
+
+async function loadAdminPanel() {
+  const panel = document.getElementById("admin-panel");
+  try {
+    const players = await apiFetch("/admin/players");
+    panel.classList.remove("hidden");
+    renderAdminPlayers(players);
+    await loadRejectedMatches();
+  } catch (e) {
+    // Admin emas (403) yoki boshqa xato — panel yashirin qoladi
+    panel.classList.add("hidden");
+  }
+}
+
+function renderAdminPlayers(players) {
+  const t = APP.t;
+  const list = document.getElementById("admin-players-list");
+
+  if (players.length === 0) {
+    list.innerHTML = `<div class="empty-state">${t.no_data || "Ma'lumot yo'q"}</div>`;
+    return;
+  }
+
+  list.innerHTML = players.map(p => {
+    const usernamePart = p.username
+      ? `<span class="admin-player-username">@${escHtml(p.username)}</span> `
+      : "";
+    let leagueLine;
+    if (p.league_id) {
+      const leagueName = (APP.leagues || []).find(l => l.id === p.league_id)?.name || `Liga #${p.league_id}`;
+      const clubPart = p.club_name ? ` · ${escHtml(p.club_name)}` : "";
+      leagueLine = `${escHtml(leagueName)}${clubPart}`;
+    } else {
+      leagueLine = t.not_registered || "Ro'yxatdan o'tilmagan";
+    }
+    return `
+      <div class="admin-player-item">
+        <div class="admin-player-info">
+          ${usernamePart}${escHtml(p.nickname)}
+          <div class="admin-player-league">${leagueLine}</div>
+        </div>
+        <button class="admin-remove-btn" data-user-id="${p.id}">
+          ${t.admin_remove_player || "Chiqarish"}
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  list.querySelectorAll(".admin-remove-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const userId = parseInt(btn.dataset.userId);
+      removePlayer(userId);
+    });
+  });
+}
+
+async function removePlayer(userId) {
+  const t = APP.t;
+  const confirmed = window.confirm(t.admin_confirm_remove || "Bu o'yinchini chiqarishni tasdiqlaysizmi?");
+  if (!confirmed) return;
+
+  try {
+    await apiFetch(`/admin/players/${userId}`, { method: "DELETE" });
+    showToast(t.admin_player_removed || "✅ O'yinchi chiqarildi");
+    await loadAdminPanel();
+    await loadHome();
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+async function loadRejectedMatches() {
+  const list = document.getElementById("admin-rejected-list");
+  try {
+    const matches = await apiFetch("/admin/rejected-matches");
+    renderRejectedMatches(matches);
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state">${e.message}</div>`;
+  }
+}
+
+function renderRejectedMatches(matches) {
+  const t = APP.t;
+  const list = document.getElementById("admin-rejected-list");
+
+  if (matches.length === 0) {
+    list.innerHTML = `<div class="empty-state">${t.no_data || "Ma'lumot yo'q"}</div>`;
+    return;
+  }
+
+  list.innerHTML = matches.map(m => `
+    <div class="admin-player-item">
+      <div class="admin-player-info">
+        <span class="match-id">#${m.id}</span> ${escHtml(m.player1_nickname)} vs ${escHtml(m.player2_nickname)}
+        <div class="admin-player-league">${t.matchday || "Tur"} ${m.matchday}</div>
+      </div>
+      <button class="admin-remove-btn admin-set-result-btn"
+        data-match-id="${m.id}"
+        data-p1="${escHtml(m.player1_nickname)}"
+        data-p2="${escHtml(m.player2_nickname)}">
+        ${t.admin_set_result || "Natija"}
+      </button>
+      <button class="admin-remove-btn admin-reset-match-btn" data-match-id="${m.id}">
+        ${t.admin_reset_match || "Qayta tiklash"}
+      </button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".admin-set-result-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const matchId = parseInt(btn.dataset.matchId);
+      openAdminResolveModal(matchId, btn.dataset.p1, btn.dataset.p2);
+    });
+  });
+
+  list.querySelectorAll(".admin-reset-match-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const matchId = parseInt(btn.dataset.matchId);
+      resetRejectedMatch(matchId);
+    });
+  });
+}
+
+function openAdminResolveModal(matchId, p1Name, p2Name) {
+  APP.adminResolveMatchId = matchId;
+  document.getElementById("admin-resolve-player1-name").textContent = p1Name;
+  document.getElementById("admin-resolve-player2-name").textContent = p2Name;
+  document.getElementById("admin-resolve-score1").value = 0;
+  document.getElementById("admin-resolve-score2").value = 0;
+  document.getElementById("modal-admin-resolve").classList.remove("hidden");
+}
+
+function closeAdminResolveModal() {
+  document.getElementById("modal-admin-resolve").classList.add("hidden");
+  APP.adminResolveMatchId = null;
+}
+
+async function submitAdminSetResult() {
+  const t = APP.t;
+  const matchId = APP.adminResolveMatchId;
+  if (!matchId) return;
+
+  const score1 = parseInt(document.getElementById("admin-resolve-score1").value);
+  const score2 = parseInt(document.getElementById("admin-resolve-score2").value);
+
+  try {
+    await apiFetch(`/admin/match/resolve?match_id=${matchId}&action=set_result&score1=${score1}&score2=${score2}`, {
+      method: "POST",
+    });
+    showToast(t.admin_match_resolved || "✅ Natija belgilandi");
+    closeAdminResolveModal();
+    await loadRejectedMatches();
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+async function resetRejectedMatch(matchId) {
+  const t = APP.t;
+  try {
+    await apiFetch(`/admin/match/resolve?match_id=${matchId}&action=reset`, {
+      method: "POST",
+    });
+    showToast(t.admin_match_resolved || "✅ Natija belgilandi");
+    await loadRejectedMatches();
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+async function submitAdminFixConfirmed() {
+  const t = APP.t;
+  const matchIdInput = document.getElementById("admin-fix-match-id");
+  const matchId = parseInt(matchIdInput.value);
+
+  if (!matchId) {
+    showToast("❌ " + (t.admin_fix_match_id_required || "Match ID kiritilmadi"));
+    return;
+  }
+
+  const score1 = parseInt(document.getElementById("admin-fix-score1").value);
+  const score2 = parseInt(document.getElementById("admin-fix-score2").value);
+
+  try {
+    await apiFetch(`/admin/match/fix-confirmed?match_id=${matchId}&score1=${score1}&score2=${score2}`, {
+      method: "POST",
+    });
+    showToast(t.admin_fix_success || "✅ Natija tuzatildi");
+    matchIdInput.value = "";
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
 }
 
 // ============================================================
