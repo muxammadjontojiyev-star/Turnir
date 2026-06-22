@@ -32,7 +32,7 @@ from queries import (
     get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
     get_user_by_id, update_league_status, league_has_matches,
     get_league_members_for_notify, get_match_by_id,
-    get_open_matchday, set_league_draw_date,
+    get_open_matchday, set_league_draw_date, delete_league_matches,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -147,6 +147,9 @@ def list_leagues():
     result = []
     for league in leagues:
         current_count = count_league_players(league["id"])
+        # has_draw_date: turnir boshlanganmi (draw_date o'rnatilganmi).
+        # Eski qur'a qilingan, lekin draw_date'siz ligalar uchun admin "Boshlash" kerak.
+        has_draw = ("draw_date" in league.keys()) and (league["draw_date"] is not None)
         result.append({
             "id": league["id"],
             "name": league["name"],
@@ -154,6 +157,7 @@ def list_leagues():
             "max_players": league["max_players"],
             "current_players": current_count,
             "is_full": current_count >= league["max_players"],
+            "has_draw_date": has_draw,
         })
     return result
 
@@ -532,6 +536,73 @@ async def admin_draw_league(league_id: int, admin: dict = Depends(get_authentica
     set_league_draw_date(league_id)
 
     # Ishtirokchilarga "Qur'a tashlandi" bildirishnomasini yuboramiz (har biri o'z tilida)
+    members = get_league_members_for_notify(league_id)
+    await notify_members(members, "notify_draw_done", league=league["name"])
+
+    return {"status": "ok", "league_id": league_id, "matches_created": matches_created}
+
+
+# ============ POST /admin/league/{league_id}/start ============
+
+@app.post("/admin/league/{league_id}/start")
+async def admin_start_league(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+    """
+    Turnirni boshlaydi: draw_date'ni BUGUNGA o'rnatadi (faqat admin).
+
+    XAVFSIZ — mavjud jadval va kiritilgan natijalar SAQLANADI. Bu, qur'a allaqachon
+    o'tkazilgan (matchlar bor), lekin draw_date yo'q ligalar uchun (eski qur'alar):
+    draw_date'siz hamma tur yopiq qoladi, shuning uchun uni bugunga o'rnatib turnirni
+    boshlaymiz — bugun 1-tur ochiq, keyingilari har kuni 01:00 (Toshkent) da.
+
+    Ishtirokchilarga "1-tur ochildi" xabari yuboriladi.
+
+    Xato holatlari: league_not_found → 404, no_matches (qur'a o'tkazilmagan) → 400
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        raise HTTPException(status_code=404, detail="league_not_found")
+
+    if not league_has_matches(league_id):
+        raise HTTPException(status_code=400, detail="no_matches")
+
+    update_league_status(league_id, LEAGUE_STATUS_IN_PROGRESS)
+    set_league_draw_date(league_id)  # = bugun (turnir mintaqasi)
+
+    members = get_league_members_for_notify(league_id)
+    await notify_members(members, "notify_matchday_open", matchday=1)
+
+    return {"status": "ok", "league_id": league_id}
+
+
+# ============ POST /admin/league/{league_id}/redraw ============
+
+@app.post("/admin/league/{league_id}/redraw")
+async def admin_redraw_league(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+    """
+    Qayta qur'a: eski jadvalni butunlay o'chirib, yangidan qur'a tashlaydi (faqat admin).
+
+    ⚠️ XAVFLI — barcha kiritilgan natijalar O'CHIRILADI. Faqat hammasini noldan
+    boshlash kerak bo'lganda ishlatiladi. draw_date bugunga qo'yiladi (1-tur bugun).
+
+    Faqat liga to'lgan bo'lsa ishlaydi.
+
+    Xato holatlari: league_not_found → 404, league_not_full → 400
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        raise HTTPException(status_code=404, detail="league_not_found")
+
+    current_count = count_league_players(league_id)
+    if current_count < league["max_players"]:
+        raise HTTPException(status_code=400, detail="league_not_full")
+
+    # Eski jadvalni o'chiramiz (natijalar bilan birga) va yangidan qur'a tashlaymiz
+    delete_league_matches(league_id)
+    player_ids = get_league_player_ids(league_id)
+    matches_created = generate_league_schedule(league_id, player_ids)
+    update_league_status(league_id, LEAGUE_STATUS_IN_PROGRESS)
+    set_league_draw_date(league_id)  # = bugun
+
     members = get_league_members_for_notify(league_id)
     await notify_members(members, "notify_draw_done", league=league["name"])
 

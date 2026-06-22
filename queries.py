@@ -208,6 +208,29 @@ def league_has_matches(league_id: int) -> bool:
     return row is not None
 
 
+def delete_league_matches(league_id: int) -> int:
+    """
+    Liga uchun barcha matchlarni o'chiradi (qayta qur'a uchun).
+
+    ⚠️ DIQQAT: bu kiritilgan natijalarni ham o'chiradi. Faqat to'liq qayta qur'a
+    (redraw) uchun ishlatiladi. last_notified_matchday ham 0 ga qaytariladi,
+    chunki yangi jadvalda turlar yangidan ochiladi.
+
+    Qaytaradi: o'chirilgan matchlar soni.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) AS cnt FROM matches WHERE league_id = ?", (league_id,))
+    count = cursor.fetchone()["cnt"]
+    cursor.execute("DELETE FROM matches WHERE league_id = ?", (league_id,))
+    cursor.execute(
+        "UPDATE leagues SET last_notified_matchday = 0 WHERE id = ?", (league_id,)
+    )
+    conn.commit()
+    conn.close()
+    return count
+
+
 # ============ TURNIR VAQT JADVALI (matchday qulfi) ============
 
 def _tournament_now() -> datetime:
