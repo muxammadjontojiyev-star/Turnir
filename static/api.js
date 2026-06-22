@@ -102,8 +102,36 @@ async function loadHome() {
     renderLeagues(leagues);
     renderHeroCard(open || null);
     renderRules();
+    await loadHomeMatches();
   } catch (e) {
     showToast("❌ " + e.message);
+  }
+}
+
+// Home'dagi "Joriy o'yinlarim" — Profildagi natija kiritish mantig'ini qayta ishlatadi.
+// O'yini yo'q bo'lsa (qur'a qilinmagan) bo'lim yashiriladi.
+async function loadHomeMatches() {
+  const section = document.getElementById("home-matches-section");
+  const list    = document.getElementById("home-matches-list");
+  const t       = APP.t;
+
+  try {
+    const data = await apiFetch("/matches/my");
+    const matches = data.matches || [];
+
+    if (matches.length === 0) {
+      section.classList.add("hidden");
+      list.innerHTML = "";
+      return;
+    }
+
+    section.classList.remove("hidden");
+    list.innerHTML = matches.map(m => renderMatchItem(m)).join("");
+    bindMatchActions(list);
+  } catch (e) {
+    // Foydalanuvchi/o'yin topilmasa — bo'lim yashirin qoladi
+    section.classList.add("hidden");
+    list.innerHTML = "";
   }
 }
 
@@ -682,18 +710,23 @@ async function loadMyMatches() {
     list.innerHTML = matches.map(m => renderMatchItem(m)).join("");
 
     // Natija kiritish tugmalariga event
-    list.querySelectorAll(".match-action-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const matchId = parseInt(btn.dataset.matchId);
-        const action  = btn.dataset.action;
-        if (action === "submit") openResultModal(matchId);
-        if (action === "confirm") confirmMatchResult(matchId, "confirm");
-        if (action === "reject")  confirmMatchResult(matchId, "reject");
-      });
-    });
+    bindMatchActions(list);
   } catch (e) {
     list.innerHTML = `<div class="empty-state">${e.message}</div>`;
   }
+}
+
+// Match tugmalariga (Natija / ✔ / ✖) hodisa bog'laydi — Profil va Home ikkisida ishlatiladi
+function bindMatchActions(listEl) {
+  listEl.querySelectorAll(".match-action-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const matchId = parseInt(btn.dataset.matchId);
+      const action  = btn.dataset.action;
+      if (action === "submit") openResultModal(matchId);
+      if (action === "confirm") confirmMatchResult(matchId, "confirm");
+      if (action === "reject")  confirmMatchResult(matchId, "reject");
+    });
+  });
 }
 
 function renderMatchItem(m) {
@@ -1164,7 +1197,7 @@ async function submitMatchResult() {
     );
     closeResultModal();
     showToast(APP.t.result_submitted || "✅ Natija yuborildi");
-    await loadMyMatches();
+    await refreshMatchViews();
   } catch (e) {
     showToast("❌ " + e.message);
   }
@@ -1180,10 +1213,16 @@ async function confirmMatchResult(matchId, action) {
       ? (APP.t.result_confirmed || "✅ Tasdiqlandi")
       : (APP.t.result_rejected  || "❌ Rad etildi");
     showToast(msg);
-    await loadMyMatches();
+    await refreshMatchViews();
   } catch (e) {
     showToast("❌ " + e.message);
   }
+}
+
+// Natija o'zgargach Profil va Home dagi o'yinlar ro'yxatini izchil yangilaydi
+async function refreshMatchViews() {
+  await loadMyMatches();
+  await loadHomeMatches();
 }
 
 // ============================================================

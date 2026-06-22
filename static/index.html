@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260622l" />
+  <link rel="stylesheet" href="style.css?v=20260622m" />
 </head>
 <body>
 
@@ -84,6 +84,14 @@
         <div id="clubs-section" class="hidden">
           <div class="section-label" data-i18n="clubs_in_league">LIGADAGI KLUBLAR</div>
           <div id="clubs-list" class="clubs-list">
+            <!-- JS tomonidan to'ldiriladi -->
+          </div>
+        </div>
+
+        <!-- Joriy o'yinlarim (qur'adan keyin natija kiritish uchun) -->
+        <div id="home-matches-section" class="hidden">
+          <div class="section-label" data-i18n="home_my_matches">JORIY O'YINLARIM</div>
+          <div id="home-matches-list" class="matches-list">
             <!-- JS tomonidan to'ldiriladi -->
           </div>
         </div>
@@ -414,7 +422,7 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260622l"></script>
-  <script src="api.js?v=20260622l"></script>
+  <script src="app.js?v=20260622m"></script>
+  <script src="api.js?v=20260622m"></script>
 </body>
 </html>
