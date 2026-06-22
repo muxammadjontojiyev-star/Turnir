@@ -11,8 +11,14 @@ from config import LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE
 
 # ============ USERS ============
 
-def get_or_create_user(telegram_id: int, nickname: str) -> dict:
-    """Foydalanuvchini topadi, topilmasa yangi yaratadi."""
+def get_or_create_user(telegram_id: int, nickname: str, username: str | None = None) -> dict:
+    """
+    Foydalanuvchini topadi, topilmasa yangi yaratadi.
+
+    username (Telegram @username) berilsa: yangi user yaratilganda yoziladi,
+    mavjud user'da esa yangilanadi (foydalanuvchi keyinroq username
+    qo'shishi yoki o'zgartirishi mumkin).
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -21,8 +27,17 @@ def get_or_create_user(telegram_id: int, nickname: str) -> dict:
 
     if row is None:
         cursor.execute(
-            "INSERT INTO users (telegram_id, nickname, language) VALUES (?, ?, ?)",
-            (telegram_id, nickname, DEFAULT_LANGUAGE),
+            "INSERT INTO users (telegram_id, nickname, username, language) VALUES (?, ?, ?, ?)",
+            (telegram_id, nickname, username, DEFAULT_LANGUAGE),
+        )
+        conn.commit()
+        cursor.execute("SELECT * FROM users WHERE telegram_id = ?", (telegram_id,))
+        row = cursor.fetchone()
+    elif username is not None and row["username"] != username:
+        # Mavjud user — username o'zgargan bo'lsa yangilaymiz
+        cursor.execute(
+            "UPDATE users SET username = ? WHERE telegram_id = ?",
+            (username, telegram_id),
         )
         conn.commit()
         cursor.execute("SELECT * FROM users WHERE telegram_id = ?", (telegram_id,))

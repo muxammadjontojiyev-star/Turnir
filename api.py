@@ -90,12 +90,14 @@ def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
     FastAPI dependency: initData'ni tekshiradi va DB'dagi user yozuvini qaytaradi.
 
     Foydalanuvchi DB'da topilmasa — avtomatik yaratadi (nickname = first_name).
+    Telegram @username initData'dan olinadi va DB'da saqlanadi/yangilanadi.
     """
     telegram_user = verify_telegram_init_data(x_telegram_init_data)
     telegram_id   = telegram_user["id"]
     first_name    = telegram_user.get("first_name", f"user_{telegram_id}")
+    username      = telegram_user.get("username")
 
-    user = get_or_create_user(telegram_id, first_name)
+    user = get_or_create_user(telegram_id, first_name, username)
     return user
 
 
@@ -113,7 +115,8 @@ def get_authenticated_admin(x_telegram_init_data: str = Header(...)) -> dict:
         raise HTTPException(status_code=403, detail="Sizda admin huquqi yo'q")
 
     first_name = telegram_user.get("first_name", f"user_{telegram_id}")
-    return get_or_create_user(telegram_id, first_name)
+    username   = telegram_user.get("username")
+    return get_or_create_user(telegram_id, first_name, username)
 
 
 # ============ GET /leagues ============
