@@ -40,7 +40,9 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE,
             max_players INTEGER NOT NULL DEFAULT 20,
-            status TEXT NOT NULL DEFAULT 'open'
+            status TEXT NOT NULL DEFAULT 'open',
+            draw_date TIMESTAMP,
+            last_notified_matchday INTEGER NOT NULL DEFAULT 0
         )
     """)
 
@@ -96,6 +98,8 @@ def init_db():
     migrations = [
         "ALTER TABLE registrations ADD COLUMN club_name TEXT",
         "ALTER TABLE users ADD COLUMN username TEXT",
+        "ALTER TABLE leagues ADD COLUMN draw_date TIMESTAMP",
+        "ALTER TABLE leagues ADD COLUMN last_notified_matchday INTEGER NOT NULL DEFAULT 0",
     ]
     for sql in migrations:
         try:

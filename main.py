@@ -14,6 +14,7 @@ from telegram.ext import Application
 from config import BOT_TOKEN
 from models import init_db, seed_leagues
 from main_menu import register_main_menu_handlers
+from scheduler import start_scheduler
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -40,6 +41,10 @@ def main() -> None:
     api_thread = threading.Thread(target=run_api, daemon=True)
     api_thread.start()
     logger.info("FastAPI server ishga tushdi.")
+
+    # Matchday scheduler'ni ishga tushirish (har kuni 01:00 da tur ochilishi xabari)
+    start_scheduler()
+    logger.info("Matchday scheduler ishga tushdi.")
 
     application = Application.builder().token(BOT_TOKEN).build()
 

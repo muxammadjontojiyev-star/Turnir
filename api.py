@@ -32,6 +32,7 @@ from queries import (
     get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
     get_user_by_id, update_league_status, league_has_matches,
     get_league_members_for_notify, get_match_by_id,
+    get_open_matchday, set_league_draw_date,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -351,10 +352,21 @@ async def submit_result(
     Natija muvaffaqiyatli kiritilgach, raqibga (natija kiritmagan tomonga)
     "Natija kiritildi, tasdiqlaysizmi?" inline xabari yuboriladi (uning tilida).
 
-    Xato holatlari: match_not_found, not_participant, already_submitted → 400
+    Xato holatlari: match_not_found, not_participant, already_submitted,
+                    matchday_locked (tur hali ochilmagan) → 400
     """
     if score1 < 0 or score2 < 0:
         raise HTTPException(status_code=400, detail="score_negative")
+
+    # Matchday qulfi: faqat ochilgan turlarning natijasini kiritish mumkin.
+    # Har kuni 01:00 (Toshkent) da bitta yangi tur ochiladi (get_open_matchday).
+    match = get_match_by_id(match_id)
+    if match is None:
+        raise HTTPException(status_code=400, detail="match_not_found")
+    open_matchday = get_open_matchday(match["league_id"])
+    if match["matchday"] > open_matchday:
+        raise HTTPException(status_code=400, detail="matchday_locked")
+
     success, reason = submit_match_result(match_id, score1, score2, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -500,6 +512,9 @@ async def admin_draw_league(league_id: int, admin: dict = Depends(get_authentica
     player_ids = get_league_player_ids(league_id)
     matches_created = generate_league_schedule(league_id, player_ids)
     update_league_status(league_id, LEAGUE_STATUS_IN_PROGRESS)
+    # Qur'a sanasini yozamiz — shu sanadan boshlab har kuni bitta tur ochiladi.
+    # 1-tur bugun ochiq, keyingilari har kuni 01:00 (Toshkent) da.
+    set_league_draw_date(league_id)
 
     # Ishtirokchilarga "Qur'a tashlandi" bildirishnomasini yuboramiz (har biri o'z tilida)
     members = get_league_members_for_notify(league_id)

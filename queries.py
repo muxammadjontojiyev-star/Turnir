@@ -5,8 +5,13 @@ Match generatsiyasi va jadval (schedule) bilan bog'liq funksiyalar
 uchun schedule.py ga qarang.
 """
 
+from datetime import datetime, timezone, timedelta
+
 from models import get_connection
-from config import LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE
+from config import (
+    LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE,
+    TOURNAMENT_TIMEZONE_OFFSET, MATCHDAY_UNLOCK_HOUR, TOTAL_MATCHDAYS,
+)
 
 
 # ============ USERS ============
@@ -201,6 +206,130 @@ def league_has_matches(league_id: int) -> bool:
     row = cursor.fetchone()
     conn.close()
     return row is not None
+
+
+# ============ TURNIR VAQT JADVALI (matchday qulfi) ============
+
+def _tournament_now() -> datetime:
+    """Hozirgi vaqtni turnir mintaqasida (Toshkent UTC+5) qaytaradi."""
+    tz = timezone(timedelta(hours=TOURNAMENT_TIMEZONE_OFFSET))
+    return datetime.now(tz)
+
+
+def _parse_draw_date(raw) -> datetime | None:
+    """
+    draw_date'ni (ISO string yoki datetime) turnir mintaqasidagi datetime'ga aylantiradi.
+    None yoki noto'g'ri qiymatda None qaytaradi.
+    """
+    if raw is None:
+        return None
+    tz = timezone(timedelta(hours=TOURNAMENT_TIMEZONE_OFFSET))
+    if isinstance(raw, datetime):
+        dt = raw
+    else:
+        try:
+            dt = datetime.fromisoformat(str(raw))
+        except ValueError:
+            return None
+    # Naive bo'lsa — turnir mintaqasida deb hisoblaymiz (biz shunday yozamiz)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+    return dt.astimezone(tz)
+
+
+def set_league_draw_date(league_id: int, dt: datetime | None = None) -> None:
+    """
+    Liga qur'a sanasini yozadi (turnir mintaqasi, ISO format). dt berilmasa — hozir.
+    Bu sana asosida har kuni bitta yangi tur ochiladi (get_open_matchday).
+    """
+    if dt is None:
+        dt = _tournament_now()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE leagues SET draw_date = ? WHERE id = ?",
+        (dt.isoformat(), league_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_open_matchday(league_id: int) -> int:
+    """
+    Shu liga uchun hozir ochiq bo'lgan eng yuqori matchday raqamini qaytaradi.
+
+    Mantiq: qur'a kuni 1-tur ochiq. Keyin har kuni MATCHDAY_UNLOCK_HOUR (01:00)
+    da bitta yangi tur ochiladi. Ochiq turlar soni = 1 + (kun farqi), kun farqi
+    "unlock soatiga moslangan kalendar kun" bo'yicha hisoblanadi (Toshkent vaqti).
+
+    draw_date yo'q bo'lsa (qur'a o'tkazilmagan) — 0 (hech qaysi tur ochiq emas).
+    Natija 1..TOTAL_MATCHDAYS oralig'ida cheklanadi.
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        return 0
+    draw_dt = _parse_draw_date(league["draw_date"] if "draw_date" in league.keys() else None)
+    if draw_dt is None:
+        return 0
+
+    now = _tournament_now()
+
+    # "Unlock kuni" = soatni MATCHDAY_UNLOCK_HOUR ga siljitib, faqat sanani olamiz.
+    # Masalan unlock soati 01:00 bo'lsa, 00:30 hali "kechagi kun"ga tegishli.
+    def unlock_day(d: datetime):
+        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR)
+        return shifted.date()
+
+    days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
+    open_count = 1 + days_passed
+
+    if open_count < 1:
+        return 0
+    if open_count > TOTAL_MATCHDAYS:
+        return TOTAL_MATCHDAYS
+    return open_count
+
+
+def set_last_notified_matchday(league_id: int, matchday: int) -> None:
+    """Liga uchun oxirgi 'tur ochildi' xabari yuborilgan matchday raqamini yozadi."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE leagues SET last_notified_matchday = ? WHERE id = ?",
+        (matchday, league_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_leagues_needing_matchday_notice() -> list[dict]:
+    """
+    Yangi tur ochilgani haqida xabar yuborilishi kerak bo'lgan ligalarni qaytaradi.
+
+    Liga uchun hozir ochiq matchday (get_open_matchday) last_notified_matchday'dan
+    katta bo'lsa — yangi tur(lar) ochilgan, xabar kerak. Faqat draw_date bor
+    (qur'a o'tkazilgan) ligalar tekshiriladi.
+
+    Qaytaradi: [{league_id, name, open_matchday}, ...]
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, name, last_notified_matchday FROM leagues WHERE draw_date IS NOT NULL"
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    result = []
+    for row in rows:
+        open_md = get_open_matchday(row["id"])
+        if open_md > row["last_notified_matchday"]:
+            result.append({
+                "league_id": row["id"],
+                "name": row["name"],
+                "open_matchday": open_md,
+            })
+    return result
 
 
 # ============ REGISTRATIONS ============

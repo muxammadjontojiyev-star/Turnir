@@ -157,6 +157,11 @@ TEXTS = {
         LANGUAGE_RU: "📝 Результат внесён, подтверждаете? Откройте приложение, чтобы подтвердить или отклонить результат матча.",
         LANGUAGE_EN: "📝 A result was submitted, do you confirm? Open the app to confirm or reject the match result.",
     },
+    "notify_matchday_open": {
+        LANGUAGE_UZ: "⚽️ {matchday}-tur ochildi! Bugungi o'yiningizni o'ynab, natijani ilovaga kiriting. Keyingi tur ertaga soat 01:00 da ochiladi.",
+        LANGUAGE_RU: "⚽️ Тур {matchday} открыт! Сыграйте сегодняшний матч и внесите результат в приложение. Следующий тур откроется завтра в 01:00.",
+        LANGUAGE_EN: "⚽️ Matchday {matchday} is open! Play today's match and submit the result in the app. The next matchday opens tomorrow at 01:00.",
+    },
 }
 
 

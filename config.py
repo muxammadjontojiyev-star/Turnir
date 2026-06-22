@@ -16,6 +16,13 @@ MAX_PLAYERS_PER_LEAGUE = 20      # Har bir ligadagi maksimal ishtirokchilar soni
 TOTAL_MATCHDAYS = 38              # Turnir necha kun (tur) davom etadi
 MATCHES_PER_MATCHDAY = MAX_PLAYERS_PER_LEAGUE // 2  # Har turda nechta o'yin (10 ta)
 
+# === Turnir vaqt jadvali ===
+# Har kuni bitta yangi tur (matchday) ochiladi. 1-tur qur'a tashlangan kuni ochiq,
+# keyingi turlar har kuni TOURNAMENT_TIMEZONE_OFFSET bo'yicha MATCHDAY_UNLOCK_HOUR'da.
+# Ishtirokchi faqat ochilgan turlarning natijasini kirita oladi (kelajak turlar yopiq).
+TOURNAMENT_TIMEZONE_OFFSET = 5   # Toshkent (UTC+5) — soat farqi
+MATCHDAY_UNLOCK_HOUR = 1         # Har kuni soat 01:00 (Toshkent) da yangi tur ochiladi
+
 # === Liga nomlari ===
 LEAGUE_LALIGA = "LaLiga"
 LEAGUE_PREMIER = "Premier Liga"
