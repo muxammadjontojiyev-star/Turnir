@@ -729,6 +729,27 @@ function bindMatchActions(listEl) {
   });
 }
 
+// Klub nomidan LEAGUE_CLUBS ichidan logoni topadi (topilmasa null)
+function findClubLogo(clubName) {
+  if (!clubName) return null;
+  for (const clubs of Object.values(LEAGUE_CLUBS)) {
+    const found = clubs.find(c => c.name === clubName);
+    if (found) return found.logo;
+  }
+  return null;
+}
+
+// Bitta klub uchun logo (+ zaxira: nom yo'q bo'lsa bo'sh doira) HTML qaytaradi
+function renderClubBadge(clubName) {
+  const logo = findClubLogo(clubName);
+  const safeName = escHtml(clubName || "");
+  if (logo) {
+    return `<img class="match-club-logo" src="${escHtml(logo)}" alt="${safeName}" title="${safeName}">`;
+  }
+  // Logo topilmadi (yoki klub nomi yo'q) — bo'sh doira zaxira
+  return `<span class="match-club-logo match-club-logo--empty" title="${safeName}"></span>`;
+}
+
 function renderMatchItem(m) {
   const t       = APP.t;
   const myId    = APP.currentUser?.id;
@@ -736,6 +757,15 @@ function renderMatchItem(m) {
   const score   = m.score1 !== null
     ? `${m.score1} : ${m.score2}`
     : "— : —";
+
+  // Ikki klub logosi: chap = player1, o'ng = player2 (qur'a tartibida).
+  // Klub nomlari hali yo'q bo'lsa (eski/registratsiyasiz holat) — eski matn zaxira.
+  let namesHtml;
+  if (m.player1_club || m.player2_club) {
+    namesHtml = `<span class="match-id">#${m.id}</span> ${renderClubBadge(m.player1_club)} ${renderClubBadge(m.player2_club)}`;
+  } else {
+    namesHtml = `<span class="match-id">#${m.id}</span> ${t.me_vs_opponent || "Men vs Raqib"}`;
+  }
 
   let statusCls  = "status--pending";
   let statusText = t.status_pending || "KUTILMOQDA";
@@ -758,7 +788,7 @@ function renderMatchItem(m) {
   return `
     <div class="match-item">
       <span class="match-day">${m.matchday}</span>
-      <span class="match-names"><span class="match-id">#${m.id}</span> Men vs Raqib</span>
+      <span class="match-names">${namesHtml}</span>
       <span class="match-score">${score}</span>
       <span class="match-status ${statusCls}">${statusText}</span>
       ${actionBtn}
