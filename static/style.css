@@ -702,6 +702,12 @@ table { border-collapse: collapse; width: 100%; }
   background: var(--bg-card);
   border: 1px solid var(--border);
 }
+.match-locked {
+  font-size: 14px;
+  opacity: 0.5;
+  flex-shrink: 0;
+  padding: 4px 8px;
+}
 
 /* ============================================================
    ADMIN PANEL

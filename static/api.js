@@ -775,9 +775,14 @@ function renderMatchItem(m) {
 
   let actionBtn = "";
   if (m.status === "pending") {
-    actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
-      ${t.enter_result || "Natija"}
-    </button>`;
+    if (m.is_locked) {
+      // Tur hali ochilmagan — natija kiritib bo'lmaydi, qulf belgisi
+      actionBtn = `<span class="match-locked" title="${t.matchday_locked_short || "Tur hali ochilmagan"}">🔒</span>`;
+    } else {
+      actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
+        ${t.enter_result || "Natija"}
+      </button>`;
+    }
   } else if (m.status === "awaiting_confirmation" && m.submitted_by !== myId) {
     actionBtn = `
       <button class="match-action-btn" data-match-id="${m.id}" data-action="confirm">✔</button>
