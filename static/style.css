@@ -763,6 +763,18 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-secondary);
   background: var(--bg-card-alt);
 }
+.admin-draw-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: stretch;
+}
+.admin-start-btn {
+  border: 1px solid var(--border-accent);
+  color: var(--cyan);
+  background: var(--cyan-dim);
+}
 .admin-reset-match-btn {
   border: 1px solid var(--border);
   color: var(--text-secondary);

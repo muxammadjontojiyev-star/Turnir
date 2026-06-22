@@ -826,13 +826,42 @@ function renderAdminDraw() {
 
   list.innerHTML = leagues.map(league => {
     const isFull = !!league.is_full;
-    const alreadyDrawn = league.status !== "open";
-    const disabled = !isFull || alreadyDrawn;
+    const hasMatches = league.status !== "open";   // jadval (qur'a) bormi
+    const hasDrawDate = !!league.has_draw_date;     // turnir boshlanganmi (draw_date)
 
+    // Holat matni
     let stateText;
-    if (alreadyDrawn) stateText = t.admin_draw_already || "Qur'a allaqachon o'tkazilgan";
-    else if (!isFull) stateText = `${league.current_players}/${league.max_players}`;
-    else stateText = `${league.current_players}/${league.max_players}`;
+    if (!hasMatches) {
+      stateText = `${league.current_players}/${league.max_players}`;
+    } else if (!hasDrawDate) {
+      stateText = t.admin_state_not_started || "Qur'a o'tkazilgan, hali boshlanmagan";
+    } else {
+      stateText = t.admin_state_running || "Turnir davom etmoqda";
+    }
+
+    // Tugmalar (holatga qarab)
+    let buttons = "";
+    if (!hasMatches) {
+      // Hali qur'a o'tkazilmagan — Qur'a tugmasi (liga to'lgan bo'lsa)
+      buttons = `
+        <button class="admin-remove-btn admin-draw-btn" data-league-id="${league.id}" ${isFull ? "" : "disabled"}>
+          ${t.admin_draw_button || "🎲 Qur'a o'tkazish"}
+        </button>`;
+    } else {
+      // Qur'a o'tkazilgan
+      if (!hasDrawDate) {
+        // draw_date yo'q — Turnirni boshlash (xavfsiz)
+        buttons += `
+          <button class="admin-remove-btn admin-start-btn" data-league-id="${league.id}">
+            ${t.admin_start_button || "▶️ Turnirni boshlash"}
+          </button>`;
+      }
+      // Qayta qur'a (xavfli) — har doim ko'rinadi (qur'a bor bo'lsa)
+      buttons += `
+        <button class="admin-remove-btn admin-redraw-btn" data-league-id="${league.id}">
+          ${t.admin_redraw_button || "🔄 Qayta qur'a"}
+        </button>`;
+    }
 
     return `
       <div class="admin-player-item">
@@ -840,19 +869,20 @@ function renderAdminDraw() {
           ${escHtml(league.name)}
           <div class="admin-player-league">${stateText}</div>
         </div>
-        <button class="admin-remove-btn admin-draw-btn" data-league-id="${league.id}" ${disabled ? "disabled" : ""}>
-          ${t.admin_draw_button || "🎲 Qur'a o'tkazish"}
-        </button>
+        <div class="admin-draw-actions">${buttons}</div>
       </div>
     `;
   }).join("");
 
   list.querySelectorAll(".admin-draw-btn").forEach(btn => {
     if (btn.disabled) return;
-    btn.addEventListener("click", () => {
-      const leagueId = parseInt(btn.dataset.leagueId);
-      runLeagueDraw(leagueId);
-    });
+    btn.addEventListener("click", () => runLeagueDraw(parseInt(btn.dataset.leagueId)));
+  });
+  list.querySelectorAll(".admin-start-btn").forEach(btn => {
+    btn.addEventListener("click", () => startLeagueTournament(parseInt(btn.dataset.leagueId)));
+  });
+  list.querySelectorAll(".admin-redraw-btn").forEach(btn => {
+    btn.addEventListener("click", () => redrawLeague(parseInt(btn.dataset.leagueId)));
   });
 }
 
@@ -870,6 +900,45 @@ async function runLeagueDraw(leagueId) {
     const msg = {
       league_not_full: t.admin_draw_not_full || "Liga hali to'lmagan",
       already_drawn:   t.admin_draw_already  || "Qur'a allaqachon o'tkazilgan",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+  }
+}
+
+async function startLeagueTournament(leagueId) {
+  const t = APP.t;
+  const confirmed = window.confirm(t.admin_start_confirm || "Turnirni bugundan boshlashni tasdiqlaysizmi? (Natijalar saqlanadi)");
+  if (!confirmed) return;
+
+  try {
+    await apiFetch(`/admin/league/${leagueId}/start`, { method: "POST" });
+    showToast(t.admin_start_success || "✅ Turnir boshlandi");
+    await loadHome();
+    await loadAdminPanel();
+  } catch (e) {
+    const msg = {
+      no_matches: t.admin_start_no_matches || "Avval qur'a o'tkazing",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+  }
+}
+
+async function redrawLeague(leagueId) {
+  const t = APP.t;
+  // Xavfli amal — ikki marta tasdiq so'raymiz
+  const c1 = window.confirm(t.admin_redraw_confirm || "DIQQAT: Qayta qur'a barcha kiritilgan natijalarni o'chiradi! Davom etasizmi?");
+  if (!c1) return;
+  const c2 = window.confirm(t.admin_redraw_confirm2 || "Aniqmisiz? Bu amalni ortga qaytarib bo'lmaydi.");
+  if (!c2) return;
+
+  try {
+    await apiFetch(`/admin/league/${leagueId}/redraw`, { method: "POST" });
+    showToast(t.admin_redraw_success || "✅ Qayta qur'a o'tkazildi");
+    await loadHome();
+    await loadAdminPanel();
+  } catch (e) {
+    const msg = {
+      league_not_full: t.admin_draw_not_full || "Liga hali to'lmagan",
     }[e.message] || e.message;
     showToast("❌ " + msg);
   }
