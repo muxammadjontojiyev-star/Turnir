@@ -640,15 +640,20 @@ table { border-collapse: collapse; width: 100%; }
   text-align: center;
 }
 .match-names {
-  flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-shrink: 0;
   font-size: 13px;
   color: var(--text-primary);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+.match-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
 }
 .match-score {
   font-family: var(--font-display);
@@ -657,6 +662,7 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-heading);
   min-width: 44px;
   text-align: center;
+  flex-shrink: 0;
 }
 .match-status {
   font-size: 10px;

@@ -597,7 +597,6 @@ function renderPlayerModal(data) {
 
 function renderPlayerMatchItem(m) {
   const t = APP.t;
-  const score = m.score1 !== null ? `${m.score1} : ${m.score2}` : "— : —";
 
   let statusCls  = "status--pending";
   let statusText = t.status_pending || "KUTILMOQDA";
@@ -609,7 +608,7 @@ function renderPlayerMatchItem(m) {
     <div class="match-item">
       <span class="match-day">${m.matchday}</span>
       <span class="match-names"><span class="match-id">#${m.id}</span></span>
-      <span class="match-score">${score}</span>
+      <span class="match-center">${renderMatchCenter(m)}</span>
       <span class="match-status ${statusCls}">${statusText}</span>
     </div>
   `;
@@ -750,22 +749,23 @@ function renderClubBadge(clubName) {
   return `<span class="match-club-logo match-club-logo--empty" title="${safeName}"></span>`;
 }
 
+// Match markazi: [logo1] score [logo2] — chap=player1, o'ng=player2 (qur'a tartibida).
+// Klub nomlari hali yo'q bo'lsa (eski/registratsiyasiz holat) — faqat score ko'rsatiladi.
+function renderMatchCenter(m) {
+  const score = m.score1 !== null ? `${m.score1} : ${m.score2}` : "— : —";
+  if (m.player1_club || m.player2_club) {
+    return `
+      ${renderClubBadge(m.player1_club)}
+      <span class="match-score">${score}</span>
+      ${renderClubBadge(m.player2_club)}
+    `;
+  }
+  return `<span class="match-score">${score}</span>`;
+}
+
 function renderMatchItem(m) {
   const t       = APP.t;
   const myId    = APP.currentUser?.id;
-  const isP1    = m.player1_id === myId;
-  const score   = m.score1 !== null
-    ? `${m.score1} : ${m.score2}`
-    : "— : —";
-
-  // Ikki klub logosi: chap = player1, o'ng = player2 (qur'a tartibida).
-  // Klub nomlari hali yo'q bo'lsa (eski/registratsiyasiz holat) — eski matn zaxira.
-  let namesHtml;
-  if (m.player1_club || m.player2_club) {
-    namesHtml = `<span class="match-id">#${m.id}</span> ${renderClubBadge(m.player1_club)} ${renderClubBadge(m.player2_club)}`;
-  } else {
-    namesHtml = `<span class="match-id">#${m.id}</span> ${t.me_vs_opponent || "Men vs Raqib"}`;
-  }
 
   let statusCls  = "status--pending";
   let statusText = t.status_pending || "KUTILMOQDA";
@@ -788,8 +788,8 @@ function renderMatchItem(m) {
   return `
     <div class="match-item">
       <span class="match-day">${m.matchday}</span>
-      <span class="match-names">${namesHtml}</span>
-      <span class="match-score">${score}</span>
+      <span class="match-names"><span class="match-id">#${m.id}</span></span>
+      <span class="match-center">${renderMatchCenter(m)}</span>
       <span class="match-status ${statusCls}">${statusText}</span>
       ${actionBtn}
     </div>
