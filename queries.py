@@ -215,6 +215,27 @@ def get_user_registration(user_id: int) -> dict | None:
     return dict(row) if row else None
 
 
+def get_league_members_for_notify(league_id: int) -> list[dict]:
+    """
+    Ligadagi barcha ishtirokchilarning telegram_id va language'ini qaytaradi
+    (inline bildirishnoma yuborish uchun). Format: [{telegram_id, language}, ...]
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT users.telegram_id, users.language
+        FROM registrations
+        JOIN users ON users.id = registrations.user_id
+        WHERE registrations.league_id = ?
+        """,
+        (league_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
 def register_user_to_league(user_id: int, league_id: int, club_name: str | None = None) -> tuple[bool, str]:
     """
     Foydalanuvchini ligaga ro'yxatdan o'tkazadi.

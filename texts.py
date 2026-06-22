@@ -145,6 +145,18 @@ TEXTS = {
         LANGUAGE_RU: "🏆 Победителю турнира — значок Золотой мяч",
         LANGUAGE_EN: "🏆 Tournament winner — Golden Ball badge",
     },
+
+    # === Inline bildirishnomalar (bot orqali yuboriladi) ===
+    "notify_draw_done": {
+        LANGUAGE_UZ: "🎲 Qur'a tashlandi! \"{league}\" ligasida turnir boshlandi. O'yinlaringizni ko'rish va natija kiritish uchun ilovaga kiring.",
+        LANGUAGE_RU: "🎲 Жребий проведён! В лиге \"{league}\" турнир начался. Откройте приложение, чтобы посмотреть свои матчи и внести результаты.",
+        LANGUAGE_EN: "🎲 The draw is done! The tournament has started in the \"{league}\" league. Open the app to see your matches and submit results.",
+    },
+    "notify_result_submitted": {
+        LANGUAGE_UZ: "📝 Natija kiritildi, tasdiqlaysizmi? Ilovaga kirib o'yin natijasini tasdiqlang yoki rad eting.",
+        LANGUAGE_RU: "📝 Результат внесён, подтверждаете? Откройте приложение, чтобы подтвердить или отклонить результат матча.",
+        LANGUAGE_EN: "📝 A result was submitted, do you confirm? Open the app to confirm or reject the match result.",
+    },
 }
 
 

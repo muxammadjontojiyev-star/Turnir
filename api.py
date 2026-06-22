@@ -31,9 +31,11 @@ from queries import (
     get_all_users_with_registration, remove_user_completely,
     get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
     get_user_by_id, update_league_status, league_has_matches,
+    get_league_members_for_notify, get_match_by_id,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
+from notify import notify_members, notify_user
 
 app = FastAPI(title="eFootball Turnir Bot API")
 
@@ -334,7 +336,7 @@ def get_my_matches(user: dict = Depends(get_authenticated_user)):
 # ============ POST /match/submit-result ============
 
 @app.post("/match/submit-result")
-def submit_result(
+async def submit_result(
     match_id: int,
     score1: int,
     score2: int,
@@ -345,6 +347,10 @@ def submit_result(
 
     Query params: match_id, score1, score2
     Faqat o'sha matchning player1 yoki player2 kira oladi.
+
+    Natija muvaffaqiyatli kiritilgach, raqibga (natija kiritmagan tomonga)
+    "Natija kiritildi, tasdiqlaysizmi?" inline xabari yuboriladi (uning tilida).
+
     Xato holatlari: match_not_found, not_participant, already_submitted → 400
     """
     if score1 < 0 or score2 < 0:
@@ -352,6 +358,19 @@ def submit_result(
     success, reason = submit_match_result(match_id, score1, score2, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)
+
+    # Raqibga (natija kiritmagan tomonga) tasdiqlash so'rovi yuboramiz
+    match = get_match_by_id(match_id)
+    if match is not None:
+        opponent_id = match["player2_id"] if user["id"] == match["player1_id"] else match["player1_id"]
+        opponent = get_user_by_id(opponent_id)
+        if opponent is not None:
+            await notify_user(
+                opponent["telegram_id"],
+                "notify_result_submitted",
+                opponent.get("language"),
+            )
+
     return {"status": "ok", "match_id": match_id}
 
 
@@ -453,7 +472,7 @@ def admin_fix_confirmed(
 # ============ POST /admin/league/{league_id}/draw ============
 
 @app.post("/admin/league/{league_id}/draw")
-def admin_draw_league(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+async def admin_draw_league(league_id: int, admin: dict = Depends(get_authenticated_admin)):
     """
     Liga uchun qur'a o'tkazadi: barcha 380 ta matchni avtomatik generatsiya qiladi
     (round-robin, schedule.py) va liga statusini 'in_progress'ga o'tkazadi (faqat admin).
@@ -461,6 +480,9 @@ def admin_draw_league(league_id: int, admin: dict = Depends(get_authenticated_ad
     Faqat liga to'lgan bo'lsa ishlaydi. Qur'a faqat bir marta o'tkaziladi —
     allaqachon match mavjud bo'lsa, qayta qur'a qilinmaydi (natijalarni
     yo'qotib qo'ymaslik uchun).
+
+    Qur'a o'tkazilgach, liganing barcha ishtirokchilariga (har biri o'z tilida)
+    "Qur'a tashlandi" inline xabari yuboriladi.
 
     Xato holatlari: league_not_found → 404, league_not_full, already_drawn → 400
     """
@@ -478,5 +500,9 @@ def admin_draw_league(league_id: int, admin: dict = Depends(get_authenticated_ad
     player_ids = get_league_player_ids(league_id)
     matches_created = generate_league_schedule(league_id, player_ids)
     update_league_status(league_id, LEAGUE_STATUS_IN_PROGRESS)
+
+    # Ishtirokchilarga "Qur'a tashlandi" bildirishnomasini yuboramiz (har biri o'z tilida)
+    members = get_league_members_for_notify(league_id)
+    await notify_members(members, "notify_draw_done", league=league["name"])
 
     return {"status": "ok", "league_id": league_id, "matches_created": matches_created}
