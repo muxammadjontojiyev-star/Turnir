@@ -138,6 +138,24 @@ def get_authenticated_admin(x_telegram_init_data: str = Header(...)) -> dict:
     return get_or_create_user(telegram_id, first_name, username)
 
 
+def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
+    """
+    Har bir match'ga 'is_locked' (bool) qo'shadi: matchday hali ochilmagan bo'lsa True.
+
+    Tur qulfi: faqat ochilgan turlarning (get_open_matchday) natijasini kiritish
+    mumkin. Bu yerda har match 'is_locked' bilan belgilanadi — frontend yopiq
+    turlarda "Natija" tugmasini ko'rsatmaydi. open_matchday liga bo'yicha bir marta
+    hisoblanadi (samaradorlik uchun, har match uchun emas).
+    """
+    open_cache: dict[int, int] = {}
+    for m in matches:
+        league_id = m.get("league_id")
+        if league_id not in open_cache:
+            open_cache[league_id] = get_open_matchday(league_id)
+        m["is_locked"] = m.get("matchday", 0) > open_cache[league_id]
+    return matches
+
+
 # ============ GET /leagues ============
 
 @app.get("/leagues")
@@ -233,7 +251,7 @@ def get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_us
         "league_id": registration["league_id"] if registration else None,
         "club_name": registration["club_name"] if registration else None,
         "rating": position_info,
-        "matches": get_user_matches(user_id),
+        "matches": _annotate_matches_locked(get_user_matches(user_id)),
     }
 
 
@@ -348,8 +366,8 @@ def change_nickname(nickname: str, user: dict = Depends(get_authenticated_user))
 
 @app.get("/matches/my")
 def get_my_matches(user: dict = Depends(get_authenticated_user)):
-    """Joriy foydalanuvchining barcha matchlarini qaytaradi."""
-    matches = get_user_matches(user["id"])
+    """Joriy foydalanuvchining barcha matchlarini qaytaradi (is_locked bilan)."""
+    matches = _annotate_matches_locked(get_user_matches(user["id"]))
     return {"user_id": user["id"], "matches": matches}
 
 
