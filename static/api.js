@@ -306,74 +306,21 @@ function renderRatingFilter() {
   });
 }
 
-function renderPodiumPlayer(player, rank) {
-  const medalColors = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
-  const color = medalColors[rank];
-
-  // Klub logosini LEAGUE_CLUBS dan topamiz
-  let clubLogo = null;
-  let clubDisplayName = player.club_name || player.nickname;
-  if (player.club_name) {
-    for (const clubs of Object.values(LEAGUE_CLUBS)) {
-      const found = clubs.find(c => c.name === player.club_name);
-      if (found) { clubLogo = found.logo; clubDisplayName = found.name; break; }
-    }
-  }
-
-  const avatarInner = clubLogo
-    ? `<img src="${escHtml(clubLogo)}" alt="${escHtml(clubDisplayName)}" style="width:100%;height:100%;object-fit:contain;border-radius:50%;padding:4px;" onerror="this.style.display='none'" />`
-    : `<span style="font-size:${rank===1?'28':'22'}px">${rank===1?"🥇":rank===2?"🥈":"🥉"}</span>`;
-
-  const usernameRow = player.username
-    ? `<span class="pod-username">@${escHtml(player.username)}</span>`
-    : "";
-
-  return `
-    <div class="pod-player pod-rank-${rank}">
-      <div class="pod-avatar" style="border-color:${color}">
-        ${avatarInner}
-      </div>
-      <div class="pod-info">
-        <span class="pod-clubname">${escHtml(clubDisplayName)}</span>
-        ${usernameRow}
-        <span class="pod-pts" style="color:${color}">${player.points} B</span>
-      </div>
-      <div class="pod-stand pod-stand-${rank}"></div>
-    </div>
-  `;
-}
-
 function renderRatingTable(rating) {
-  const podiumWrap  = document.getElementById("podium-wrap");
-  const tbody       = document.getElementById("rating-tbody");
-  const restCard    = document.getElementById("rating-rest-card");
-  const myId        = APP.currentUser?.id;
+  const tbody = document.getElementById("rating-tbody");
+  const myId  = APP.currentUser?.id;
 
   if (!rating || rating.length === 0) {
-    podiumWrap.innerHTML = "";
     tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</td></tr>`;
-    restCard.classList.remove("hidden");
     return;
   }
 
-  // --- PODIUM: top-3 ---
-  const top3 = rating.slice(0, 3);
-  // Tartib: 2-o'rin chap, 1-o'rin markaz, 3-o'rin o'ng
-  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
-  podiumWrap.innerHTML = `<div class="podium">${podiumOrder.map(p => renderPodiumPlayer(p, rating.indexOf(p) + 1)).join("")}</div>`;
-
-  // --- JADVAL: 4+ o'rinlar ---
-  const rest = rating.slice(3);
-  if (rest.length === 0) {
-    restCard.classList.add("hidden");
-    return;
-  }
-  restCard.classList.remove("hidden");
-  tbody.innerHTML = rest.map((player, i) => {
-    const rank    = i + 4;
+  tbody.innerHTML = rating.map((player, i) => {
+    const rank    = i + 1;
+    const rankCls = rank <= 3 ? ` class="rank-${rank}"` : "";
     const isMeCls = player.user_id === myId ? " class=\"is-me\"" : "";
 
-    // Klub logosini topamiz
+    // Klub logosini LEAGUE_CLUBS dan topamiz
     let clubLogo = null;
     let clubDisplayName = player.club_name || player.nickname;
     if (player.club_name) {
@@ -382,17 +329,26 @@ function renderRatingTable(rating) {
         if (found) { clubLogo = found.logo; clubDisplayName = found.name; break; }
       }
     }
+
     const logoHtml = clubLogo
-      ? `<img src="${escHtml(clubLogo)}" alt="" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;" onerror="this.style.display='none'" />`
+      ? `<img src="${escHtml(clubLogo)}" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'" />`
       : "";
     const usernameRow = player.username
       ? `<span class="player-username">@${escHtml(player.username)}</span>`
       : "";
-    const playerCell = `<div class="player-cell">${logoHtml}<div class="player-cell-text"><span class="player-clubname">${escHtml(clubDisplayName)}</span>${usernameRow}</div></div>`;
+
+    const playerCell = `
+      <div class="player-cell">
+        ${logoHtml}
+        <div class="player-cell-text">
+          <span class="player-clubname">${escHtml(clubDisplayName)}</span>
+          ${usernameRow}
+        </div>
+      </div>`;
 
     return `
       <tr${isMeCls}>
-        <td>${rank}</td>
+        <td${rankCls}>${rank}</td>
         <td>${playerCell}</td>
         <td class="pts">${player.points}</td>
         <td>${player.wins}</td>

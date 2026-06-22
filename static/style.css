@@ -512,85 +512,12 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 /* ============================================================
-   PODIUM (top-3)
+   JADVAL: klub logosi + nomi + username
    ============================================================ */
-.podium-wrap { margin: 12px 0 4px; }
-
-.podium {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 8px;
-}
-
-/* Har bir o'yinchi kolonkasi */
-.pod-player {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  max-width: 120px;
-}
-
-/* Avatar doirasi */
-.pod-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 2px solid #ffd700;
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  margin-bottom: 6px;
-  position: relative;
-}
-
-/* Ism va ball bloki */
-.pod-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  margin-bottom: 8px;
-  width: 100%;
-}
-.pod-username {
-  font-size: 10px;
-  color: var(--text-secondary);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-.pod-nickname {
-  font-size: 10px;
-  color: var(--text-secondary);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-/* Podium klub nomi */
-.pod-clubname {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-/* Jadval: klub nomi (katta) + username (kichik) */
 .player-cell {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 .player-cell-text {
@@ -621,26 +548,6 @@ table { border-collapse: collapse; width: 100%; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.pod-pts {
-  font-size: 12px;
-  font-weight: 700;
-  font-family: var(--font-display);
-}
-
-/* Kurs/poydevor bloki */
-.pod-stand {
-  width: 100%;
-  border-radius: 6px 6px 0 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-bottom: none;
-}
-.pod-stand-1 { height: 72px; background: rgba(255,215,0,0.10); border-color: rgba(255,215,0,0.25); }
-.pod-stand-2 { height: 50px; background: rgba(192,192,192,0.08); border-color: rgba(192,192,192,0.2); }
-.pod-stand-3 { height: 36px; background: rgba(205,127,50,0.08); border-color: rgba(205,127,50,0.2); }
-
-/* 1-o'rin avatar biroz kattaroq */
-.pod-rank-1 .pod-avatar { width: 64px; height: 64px; font-size: 28px; }
 
 /* ============================================================
    STATS GRID
