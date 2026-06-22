@@ -279,9 +279,14 @@ def get_user_matches(user_id: int) -> list[dict]:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT * FROM matches
-        WHERE player1_id = ? OR player2_id = ?
-        ORDER BY matchday ASC
+        SELECT m.*,
+               r1.club_name AS player1_club,
+               r2.club_name AS player2_club
+        FROM matches m
+        LEFT JOIN registrations r1 ON r1.user_id = m.player1_id
+        LEFT JOIN registrations r2 ON r2.user_id = m.player2_id
+        WHERE m.player1_id = ? OR m.player2_id = ?
+        ORDER BY m.matchday ASC
         """,
         (user_id, user_id),
     )
