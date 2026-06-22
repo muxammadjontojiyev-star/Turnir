@@ -398,8 +398,20 @@ function renderPlayerModal(data) {
   const leagueEl   = document.getElementById("player-league");
   const clubBadge  = document.getElementById("player-club-badge");
 
-  // Avatar: boshqa odamning Telegram rasmi WebApp'da mavjud emas — ism harfi
-  avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
+  // Avatar: Telegram rasmni proxy orqali yuklaymiz (maxfiy/yo'q bo'lsa — ism harfi)
+  const letter = (data.nickname || "?")[0].toUpperCase();
+  avatarEl.textContent = letter;
+  if (data.user_id) {
+    const img = new Image();
+    img.src = `${API_BASE}/players/${data.user_id}/photo`;
+    img.alt = escHtml(data.nickname || "");
+    img.style.cssText = "width:56px;height:56px;object-fit:cover;border-radius:50%;";
+    img.onload = () => {
+      avatarEl.textContent = "";
+      avatarEl.appendChild(img);
+    };
+    // onerror: rasm yo'q/maxfiy — ism harfi shundoq qoladi (hech narsa qilinmaydi)
+  }
 
   // Klub logosi va nomi
   let clubObj = null;
