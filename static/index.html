@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260622k" />
+  <link rel="stylesheet" href="style.css?v=20260622l" />
 </head>
 <body>
 
@@ -111,8 +111,8 @@
           <!-- JS tomonidan to'ldiriladi -->
         </div>
 
-        <!-- Jadval -->
-        <div class="card card--flat card--table">
+        <!-- Jadval: Reyting -->
+        <div class="card card--flat card--table" id="rating-card">
           <table class="rating-table" id="rating-table">
             <thead>
               <tr>
@@ -126,6 +126,23 @@
               </tr>
             </thead>
             <tbody id="rating-tbody">
+              <!-- JS tomonidan to'ldiriladi -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Jadval: To'p urarlar (barcha ligalar bo'yicha umumiy) -->
+        <div class="card card--flat card--table hidden" id="top-scorers-card">
+          <table class="rating-table" id="top-scorers-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-i18n="th_player">O'yinchi</th>
+                <th data-i18n="th_league">Liga</th>
+                <th data-i18n="th_goals_col">Gol</th>
+              </tr>
+            </thead>
+            <tbody id="top-scorers-tbody">
               <!-- JS tomonidan to'ldiriladi -->
             </tbody>
           </table>
@@ -178,6 +195,12 @@
         <!-- Admin panel (faqat adminga ko'rinadi, JS orqali boshqariladi) -->
         <div id="admin-panel" class="admin-panel hidden">
           <div class="section-label" data-i18n="admin_panel_title">ADMIN PANEL</div>
+
+          <div class="section-label" data-i18n="admin_draw_title">QUR'A</div>
+          <div id="admin-draw-list" class="admin-players-list">
+            <!-- JS tomonidan to'ldiriladi -->
+          </div>
+
           <div id="admin-players-list" class="admin-players-list">
             <!-- JS tomonidan to'ldiriladi -->
           </div>
@@ -211,6 +234,7 @@
             <button class="btn btn--primary btn--glow" id="btn-admin-fix-submit" data-i18n="admin_fix_submit">Tuzatish</button>
           </div>
         </div>
+
 
         <!-- Admin: rad etilgan natijani qo'lda belgilash modali -->
         <div id="modal-admin-resolve" class="modal hidden">
@@ -390,7 +414,7 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260622k"></script>
-  <script src="api.js?v=20260622k"></script>
+  <script src="app.js?v=20260622l"></script>
+  <script src="api.js?v=20260622l"></script>
 </body>
 </html>

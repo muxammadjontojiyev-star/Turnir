@@ -276,6 +276,12 @@ async function loadRating() {
   // Filter tugmalarini chizish
   renderRatingFilter();
 
+  if (APP.ratingTab === "top_scorers") {
+    try { await loadTopScorers(); }
+    catch (e) { showToast("❌ " + e.message); }
+    return;
+  }
+
   try {
     const data = await apiFetch(`/rating/${leagueId}`);
     renderRatingTable(data.rating);
@@ -287,12 +293,16 @@ async function loadRating() {
 function renderRatingFilter() {
   const filter = document.getElementById("rating-filter");
   filter.innerHTML = "";
+
+  // Liga tablari
   (APP.leagues || []).forEach(league => {
     const btn = document.createElement("button");
-    btn.className = "tab-btn" + (league.id === APP.selectedLeagueId ? " active" : "");
+    btn.className = "tab-btn" + (APP.ratingTab === "league" && league.id === APP.selectedLeagueId ? " active" : "");
     btn.textContent = league.name;
     btn.addEventListener("click", async () => {
       APP.selectedLeagueId = league.id;
+      APP.ratingTab = "league";
+      showRatingCard("league");
       document.querySelectorAll("#rating-filter .tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       try {
@@ -304,6 +314,27 @@ function renderRatingFilter() {
     });
     filter.appendChild(btn);
   });
+
+  // To'p urarlar tabi (barcha ligalar bo'yicha umumiy, doimiy tab)
+  const topScorersBtn = document.createElement("button");
+  topScorersBtn.className = "tab-btn" + (APP.ratingTab === "top_scorers" ? " active" : "");
+  topScorersBtn.textContent = APP.t.tab_top_scorers || "⚽ To'p urarlar";
+  topScorersBtn.addEventListener("click", async () => {
+    APP.ratingTab = "top_scorers";
+    showRatingCard("top_scorers");
+    document.querySelectorAll("#rating-filter .tab-btn").forEach(b => b.classList.remove("active"));
+    topScorersBtn.classList.add("active");
+    try { await loadTopScorers(); }
+    catch (e) { showToast("❌ " + e.message); }
+  });
+  filter.appendChild(topScorersBtn);
+
+  showRatingCard(APP.ratingTab);
+}
+
+function showRatingCard(tab) {
+  document.getElementById("rating-card").classList.toggle("hidden", tab !== "league");
+  document.getElementById("top-scorers-card").classList.toggle("hidden", tab !== "top_scorers");
 }
 
 function renderRatingTable(rating) {
@@ -371,8 +402,89 @@ function renderRatingTable(rating) {
 }
 
 // ============================================================
-//  BOSHQA O'YINCHI PROFILI (modal)
+//  TOP SCORERS (barcha ligalar bo'yicha umumiy)
 // ============================================================
+
+async function loadTopScorers() {
+  const leagues = APP.leagues || [];
+  if (leagues.length === 0) return;
+
+  // Har bir liga reytingini parallel so'raymiz, har bir o'yinchiga liga nomini qo'shamiz
+  const results = await Promise.all(
+    leagues.map(league =>
+      apiFetch(`/rating/${league.id}`)
+        .then(data => (data.rating || []).map(p => ({ ...p, league_name: league.name })))
+        .catch(() => [])
+    )
+  );
+
+  const allPlayers = results.flat();
+  renderTopScorersTable(allPlayers);
+}
+
+function renderTopScorersTable(players) {
+  const tbody = document.getElementById("top-scorers-tbody");
+
+  // Faqat gol urgan o'yinchilar, eng ko'p gol bo'yicha kamayish tartibida
+  const scorers = players
+    .filter(p => p.goals_for > 0)
+    .sort((a, b) => b.goals_for - a.goals_for);
+
+  if (scorers.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = scorers.map((player, i) => {
+    const rank    = i + 1;
+    const rankCls = rank <= 3 ? `rank-${rank}` : "";
+
+    // Klub logosini LEAGUE_CLUBS dan topamiz
+    let clubLogo = null;
+    let clubDisplayName = player.club_name || player.nickname;
+    if (player.club_name) {
+      for (const clubs of Object.values(LEAGUE_CLUBS)) {
+        const found = clubs.find(c => c.name === player.club_name);
+        if (found) { clubLogo = found.logo; clubDisplayName = found.name; break; }
+      }
+    }
+
+    const logoHtml = clubLogo
+      ? `<img src="${escHtml(clubLogo)}" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'" />`
+      : "";
+    const usernameRow = player.username
+      ? `<span class="player-username">@${escHtml(player.username)}</span>`
+      : "";
+
+    const playerCell = `
+      <div class="player-cell">
+        ${logoHtml}
+        <div class="player-cell-text">
+          <span class="player-clubname">${escHtml(clubDisplayName)}</span>
+          ${usernameRow}
+        </div>
+      </div>`;
+
+    return `
+      <tr class="rating-row" data-user-id="${player.user_id}">
+        <td${rankCls ? ` class="${rankCls}"` : ""}>${rank}</td>
+        <td>${playerCell}</td>
+        <td>${escHtml(player.league_name)}</td>
+        <td class="pts">${player.goals_for}</td>
+      </tr>
+    `;
+  }).join("");
+
+  // Qatorga bosilganda — o'sha o'yinchining profilini ochish
+  tbody.querySelectorAll(".rating-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const userId = parseInt(row.dataset.userId);
+      if (userId) openPlayerModal(userId);
+    });
+  });
+}
+
+
 
 async function openPlayerModal(userId) {
   const t = APP.t;
@@ -630,11 +742,73 @@ async function loadAdminPanel() {
   try {
     const players = await apiFetch("/admin/players");
     panel.classList.remove("hidden");
+    renderAdminDraw();
     renderAdminPlayers(players);
     await loadRejectedMatches();
   } catch (e) {
     // Admin emas (403) yoki boshqa xato — panel yashirin qoladi
     panel.classList.add("hidden");
+  }
+}
+
+function renderAdminDraw() {
+  const t = APP.t;
+  const list = document.getElementById("admin-draw-list");
+  const leagues = APP.leagues || [];
+
+  if (leagues.length === 0) {
+    list.innerHTML = `<div class="empty-state">${t.no_data || "Ma'lumot yo'q"}</div>`;
+    return;
+  }
+
+  list.innerHTML = leagues.map(league => {
+    const isFull = !!league.is_full;
+    const alreadyDrawn = league.status !== "open";
+    const disabled = !isFull || alreadyDrawn;
+
+    let stateText;
+    if (alreadyDrawn) stateText = t.admin_draw_already || "Qur'a allaqachon o'tkazilgan";
+    else if (!isFull) stateText = `${league.current_players}/${league.max_players}`;
+    else stateText = `${league.current_players}/${league.max_players}`;
+
+    return `
+      <div class="admin-player-item">
+        <div class="admin-player-info">
+          ${escHtml(league.name)}
+          <div class="admin-player-league">${stateText}</div>
+        </div>
+        <button class="admin-remove-btn admin-draw-btn" data-league-id="${league.id}" ${disabled ? "disabled" : ""}>
+          ${t.admin_draw_button || "🎲 Qur'a o'tkazish"}
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  list.querySelectorAll(".admin-draw-btn").forEach(btn => {
+    if (btn.disabled) return;
+    btn.addEventListener("click", () => {
+      const leagueId = parseInt(btn.dataset.leagueId);
+      runLeagueDraw(leagueId);
+    });
+  });
+}
+
+async function runLeagueDraw(leagueId) {
+  const t = APP.t;
+  const confirmed = window.confirm(t.admin_draw_confirm || "Bu liga uchun qur'a o'tkazishni tasdiqlaysizmi?");
+  if (!confirmed) return;
+
+  try {
+    await apiFetch(`/admin/league/${leagueId}/draw`, { method: "POST" });
+    showToast(t.admin_draw_success || "✅ Qur'a o'tkazildi");
+    await loadHome();
+    await loadAdminPanel();
+  } catch (e) {
+    const msg = {
+      league_not_full: t.admin_draw_not_full || "Liga hali to'lmagan",
+      already_drawn:   t.admin_draw_already  || "Qur'a allaqachon o'tkazilgan",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
   }
 }
 

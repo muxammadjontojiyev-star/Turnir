@@ -724,6 +724,18 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--cyan);
   background: var(--cyan-dim);
 }
+.admin-draw-btn {
+  border: 1px solid var(--border-accent);
+  color: var(--cyan);
+  background: var(--cyan-dim);
+}
+.admin-draw-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--border);
+  color: var(--text-secondary);
+  background: var(--bg-card-alt);
+}
 .admin-reset-match-btn {
   border: 1px solid var(--border);
   color: var(--text-secondary);

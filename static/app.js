@@ -17,6 +17,7 @@ const APP = {
   profileData:      null,   // /profile javobi
   activeMatchId:    null,   // Natija kiritish uchun
   adminResolveMatchId: null,  // Admin: rad etilgan natijani belgilash uchun
+  ratingTab:        "league",  // Reyting bo'limidagi tab: "league" yoki "top_scorers"
   lang:             "uz",   // Joriy til
   t:                {},     // Aktiv tarjimalar
 };
@@ -55,12 +56,15 @@ const TEXTS = {
     ],
     // Rating
     rating_title: "REYTING JADVALI",
+    tab_top_scorers: "⚽ To'p urarlar",
     th_player: "O'yinchi",
     th_pts: "B",
     th_w:   "G",
     th_d:   "D",
     th_l:   "M",
     th_gd:  "GF",
+    th_league: "Liga",
+    th_goals_col: "Gol",
     no_data: "Ma'lumot yo'q",
     // Profile
     not_registered:  "Ro'yxatdan o'tilmagan",
@@ -103,6 +107,12 @@ const TEXTS = {
     goals:              "gol",
     // Admin panel
     admin_panel_title:    "ADMIN PANEL",
+    admin_draw_title:     "QUR'A",
+    admin_draw_button:    "🎲 Qur'a o'tkazish",
+    admin_draw_confirm:   "Bu liga uchun qur'a o'tkazishni tasdiqlaysizmi? Bu amalni qaytarib bo'lmaydi.",
+    admin_draw_success:   "✅ Qur'a o'tkazildi",
+    admin_draw_not_full:  "Liga hali to'lmagan",
+    admin_draw_already:   "Qur'a allaqachon o'tkazilgan",
     admin_remove_player:  "Chiqarish",
     admin_confirm_remove: "Bu o'yinchini chiqarishni tasdiqlaysizmi?",
     admin_player_removed: "✅ O'yinchi chiqarildi",
@@ -147,12 +157,15 @@ const TEXTS = {
       "Отклонённый результат рассматривает администратор.",
     ],
     rating_title: "ТАБЛИЦА РЕЙТИНГА",
+    tab_top_scorers: "⚽ Бомбардиры",
     th_player: "Игрок",
     th_pts: "О",
     th_w:   "П",
     th_d:   "Н",
     th_l:   "П",
     th_gd:  "ЗГ",
+    th_league: "Лига",
+    th_goals_col: "Гол",
     no_data: "Нет данных",
     not_registered:  "Не зарегистрирован",
     my_stats:        "СТАТИСТИКА",
@@ -190,6 +203,12 @@ const TEXTS = {
     goals:              "голов",
     // Admin panel
     admin_panel_title:    "АДМИН-ПАНЕЛЬ",
+    admin_draw_title:     "ЖРЕБИЙ",
+    admin_draw_button:    "🎲 Провести жребий",
+    admin_draw_confirm:   "Провести жребий для этой лиги? Это действие нельзя отменить.",
+    admin_draw_success:   "✅ Жребий проведён",
+    admin_draw_not_full:  "Лига пока не заполнена",
+    admin_draw_already:   "Жребий уже проведён",
     admin_remove_player:  "Удалить",
     admin_confirm_remove: "Удалить этого игрока?",
     admin_player_removed: "✅ Игрок удалён",
@@ -234,12 +253,15 @@ const TEXTS = {
       "Rejected results are reviewed by the admin.",
     ],
     rating_title: "STANDINGS",
+    tab_top_scorers: "⚽ Top Scorers",
     th_player: "Player",
     th_pts: "Pts",
     th_w:   "W",
     th_d:   "D",
     th_l:   "L",
     th_gd:  "GF",
+    th_league: "League",
+    th_goals_col: "Goals",
     no_data: "No data",
     not_registered:  "Not registered",
     my_stats:        "STATS",
@@ -277,6 +299,12 @@ const TEXTS = {
     goals:              "goals",
     // Admin panel
     admin_panel_title:    "ADMIN PANEL",
+    admin_draw_title:     "DRAW",
+    admin_draw_button:    "🎲 Run draw",
+    admin_draw_confirm:   "Run the draw for this league? This action cannot be undone.",
+    admin_draw_success:   "✅ Draw completed",
+    admin_draw_not_full:  "League is not full yet",
+    admin_draw_already:   "Draw already completed",
     admin_remove_player:  "Remove",
     admin_confirm_remove: "Remove this player?",
     admin_player_removed: "✅ Player removed",
