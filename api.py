@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 
-from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS
+from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
@@ -30,8 +30,9 @@ from queries import (
     get_user_matches, submit_match_result, confirm_or_reject_match,
     get_all_users_with_registration, remove_user_completely,
     get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
-    get_user_by_id,
+    get_user_by_id, update_league_status, league_has_matches,
 )
+from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
 
 app = FastAPI(title="eFootball Turnir Bot API")
@@ -447,3 +448,35 @@ def admin_fix_confirmed(
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
+
+
+# ============ POST /admin/league/{league_id}/draw ============
+
+@app.post("/admin/league/{league_id}/draw")
+def admin_draw_league(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+    """
+    Liga uchun qur'a o'tkazadi: barcha 380 ta matchni avtomatik generatsiya qiladi
+    (round-robin, schedule.py) va liga statusini 'in_progress'ga o'tkazadi (faqat admin).
+
+    Faqat liga to'lgan bo'lsa ishlaydi. Qur'a faqat bir marta o'tkaziladi —
+    allaqachon match mavjud bo'lsa, qayta qur'a qilinmaydi (natijalarni
+    yo'qotib qo'ymaslik uchun).
+
+    Xato holatlari: league_not_found → 404, league_not_full, already_drawn → 400
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        raise HTTPException(status_code=404, detail="league_not_found")
+
+    current_count = count_league_players(league_id)
+    if current_count < league["max_players"]:
+        raise HTTPException(status_code=400, detail="league_not_full")
+
+    if league_has_matches(league_id):
+        raise HTTPException(status_code=400, detail="already_drawn")
+
+    player_ids = get_league_player_ids(league_id)
+    matches_created = generate_league_schedule(league_id, player_ids)
+    update_league_status(league_id, LEAGUE_STATUS_IN_PROGRESS)
+
+    return {"status": "ok", "league_id": league_id, "matches_created": matches_created}

@@ -191,6 +191,18 @@ def update_league_status(league_id: int, status: str) -> None:
     conn.close()
 
 
+def league_has_matches(league_id: int) -> bool:
+    """Liga uchun allaqachon match (jadval) yaratilganmi — qur'a takror o'tkazilishini oldini olish uchun."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM matches WHERE league_id = ? LIMIT 1", (league_id,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row is not None
+
+
 # ============ REGISTRATIONS ============
 
 def get_user_registration(user_id: int) -> dict | None:
