@@ -28,6 +28,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             telegram_id INTEGER UNIQUE NOT NULL,
             nickname TEXT NOT NULL,
+            username TEXT,
             language TEXT NOT NULL DEFAULT 'uz',
             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -89,6 +90,20 @@ def init_db():
     """)
 
     conn.commit()
+
+    # === MIGRATSIYALAR ===
+    # Mavjud DB ga yangi ustunlar qo'shish (agar yo'q bo'lsa)
+    migrations = [
+        "ALTER TABLE registrations ADD COLUMN club_name TEXT",
+        "ALTER TABLE users ADD COLUMN username TEXT",
+    ]
+    for sql in migrations:
+        try:
+            cursor.execute(sql)
+            conn.commit()
+        except Exception:
+            pass  # Ustun allaqachon mavjud — xato e'tiborsiz qoldiriladi
+
     conn.close()
 
 
