@@ -16,9 +16,11 @@ import hmac
 import json
 from urllib.parse import parse_qsl
 
+import httpx
 from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response
 
 from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS
 from queries import (
@@ -207,6 +209,60 @@ def get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_us
         "rating": position_info,
         "matches": get_user_matches(user_id),
     }
+
+
+# ============ GET /players/{user_id}/photo ============
+
+@app.get("/players/{user_id}/photo")
+async def get_player_photo(user_id: int):
+    """
+    O'yinchining Telegram profil rasmini qaytaradi (bot token orqali, proxy).
+
+    Auth talab qilinmaydi — bu <img src> orqali yuklanadi (header yuborib bo'lmaydi)
+    va rasm allaqachon ommaviy profil (reyting jadvalida ko'rinadigan o'yinchi)
+    qismi. Bot token URL'da oshkor bo'lmasligi uchun rasm baytlari server orqali
+    uzatiladi. Rasm yo'q, maxfiy yoki xato bo'lsa — 404 (frontend ism harfini ko'rsatadi).
+    """
+    target = get_user_by_id(user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="user_not_found")
+
+    telegram_id = target["telegram_id"]
+    base = f"https://api.telegram.org/bot{BOT_TOKEN}"
+
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            # 1) Profil rasmlari ro'yxati
+            r1 = await client.get(
+                f"{base}/getUserProfilePhotos",
+                params={"user_id": telegram_id, "limit": 1},
+            )
+            data1 = r1.json()
+            photos = data1.get("result", {}).get("photos", [])
+            if not photos or not photos[0]:
+                raise HTTPException(status_code=404, detail="no_photo")
+
+            # Eng kichik o'lchamni olamiz (avatar uchun yetarli, tez yuklanadi)
+            file_id = photos[0][0]["file_id"]
+
+            # 2) file_path olish
+            r2 = await client.get(f"{base}/getFile", params={"file_id": file_id})
+            file_path = r2.json().get("result", {}).get("file_path")
+            if not file_path:
+                raise HTTPException(status_code=404, detail="no_file_path")
+
+            # 3) Haqiqiy rasmni yuklab olish
+            r3 = await client.get(f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}")
+            if r3.status_code != 200:
+                raise HTTPException(status_code=404, detail="photo_fetch_failed")
+
+            media_type = r3.headers.get("content-type", "image/jpeg")
+            return Response(content=r3.content, media_type=media_type)
+
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=404, detail="photo_unavailable")
 
 
 # ============ GET /prizes/{league_id} ============
