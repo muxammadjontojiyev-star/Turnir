@@ -526,11 +526,60 @@ async function fetchAndRenderPrizes(leagueId) {
   const data = await apiFetch(`/prizes/${leagueId}`);
   const t = APP.t;
 
-  document.getElementById("prize-top-scorer").textContent =
-    data.top_scorer ? `${escHtml(data.top_scorer.nickname)} — ${data.top_scorer.goals_for} ${t.goals || "gol"}` : "—";
+  // Klub logosini LEAGUE_CLUBS dan topuvchi yordamchi funksiya
+  function findClub(player) {
+    if (!player || !player.club_name) return null;
+    for (const clubs of Object.values(LEAGUE_CLUBS)) {
+      const found = clubs.find(c => c.name === player.club_name);
+      if (found) return found;
+    }
+    return null;
+  }
 
-  document.getElementById("prize-winner").textContent =
-    data.current_leader ? escHtml(data.current_leader.nickname) : "—";
+  function renderPrizeClub(player, holderEl, clubEl) {
+    if (!player) {
+      holderEl.textContent = "—";
+      clubEl.innerHTML = "";
+      return;
+    }
+    // Birinchi qator: username yoki nickname
+    const displayName = player.username
+      ? `@${escHtml(player.username)}`
+      : escHtml(player.nickname);
+    holderEl.innerHTML = `<span class="prize-holder-name">${displayName}</span>`;
+
+    // Ikkinchi qator: klub logosi + klub nomi
+    const club = findClub(player);
+    if (club) {
+      clubEl.innerHTML = `
+        <img src="${escHtml(club.logo)}" alt="${escHtml(club.name)}"
+             class="prize-club-logo"
+             onerror="this.style.display='none'" />
+        <span class="prize-club-name">${escHtml(club.name)}</span>`;
+    } else {
+      clubEl.innerHTML = "";
+    }
+  }
+
+  renderPrizeClub(
+    data.top_scorer
+      ? { ...data.top_scorer, _suffix: ` — ${data.top_scorer.goals_for} ${t.goals || "gol"}` }
+      : null,
+    document.getElementById("prize-top-scorer"),
+    document.getElementById("prize-top-scorer-club")
+  );
+
+  // top_scorer uchun gol sonini qo'shib chiqamiz
+  if (data.top_scorer) {
+    const el = document.getElementById("prize-top-scorer");
+    el.innerHTML += `<span class="prize-goals"> — ${data.top_scorer.goals_for} ${t.goals || "gol"}</span>`;
+  }
+
+  renderPrizeClub(
+    data.current_leader || null,
+    document.getElementById("prize-winner"),
+    document.getElementById("prize-winner-club")
+  );
 }
 
 function renderPrizesFilter() {

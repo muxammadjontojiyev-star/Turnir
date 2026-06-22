@@ -345,6 +345,31 @@ table { border-collapse: collapse; width: 100%; }
   font-weight: 600;
   color: var(--cyan);
 }
+.prize-goals {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--cyan);
+}
+.prize-club {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.prize-club-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.prize-club-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Card header (qoidalar) */
 .card-header {
