@@ -833,29 +833,23 @@ table { border-collapse: collapse; width: 100%; }
 }
 .modal-actions .btn { flex: 1; }
 
-/* Boshqa o'yinchi profili modali (kengroq, scroll bilan) */
-.modal-box--wide {
-  position: relative;
-  max-height: 85vh;
-  overflow-y: auto;
-}
-.modal-close-btn {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--bg-base);
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1;
+/* Boshqa o'yinchi profili — ortga tugmasi */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--cyan);
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  z-index: 1;
+  padding: 4px 0;
+  margin-bottom: 4px;
 }
-.card--profile-modal {
-  margin-top: 8px;
+.back-btn-arrow {
+  font-size: 20px;
+  line-height: 1;
 }
 
 /* Score input */

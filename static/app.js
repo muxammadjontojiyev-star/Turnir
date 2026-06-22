@@ -117,6 +117,7 @@ const TEXTS = {
     admin_fix_success:                "✅ Natija tuzatildi",
     admin_fix_match_id_required:      "Match ID kiritilmadi",
     player_matches:       "O'YINLARI",
+    back:                 "Ortga",
   },
 
   ru: {
@@ -202,6 +203,7 @@ const TEXTS = {
     admin_fix_success:                "✅ Результат исправлен",
     admin_fix_match_id_required:      "Введите ID матча",
     player_matches:       "МАТЧИ",
+    back:                 "Назад",
   },
 
   en: {
@@ -287,6 +289,7 @@ const TEXTS = {
     admin_fix_success:                "✅ Result fixed",
     admin_fix_match_id_required:      "Match ID is required",
     player_matches:       "MATCHES",
+    back:                 "Back",
   },
 };
 
@@ -468,12 +471,9 @@ function bindEvents() {
     if (e.target === e.currentTarget) closeAdminResolveModal();
   });
 
-  // Boshqa o'yinchi profili modali
-  document.getElementById("btn-player-close")
+  // Boshqa o'yinchi profili — ortga tugmasi
+  document.getElementById("btn-player-back")
     .addEventListener("click", closePlayerModal);
-  document.getElementById("modal-player").addEventListener("click", e => {
-    if (e.target === e.currentTarget) closePlayerModal();
-  });
 }
 
 // ============================================================

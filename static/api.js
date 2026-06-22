@@ -379,14 +379,15 @@ async function openPlayerModal(userId) {
   try {
     const data = await apiFetch(`/players/${userId}/profile`);
     renderPlayerModal(data);
-    document.getElementById("modal-player").classList.remove("hidden");
+    navigateTo("player");
   } catch (e) {
     showToast("❌ " + e.message);
   }
 }
 
 function closePlayerModal() {
-  document.getElementById("modal-player").classList.add("hidden");
+  // Reyting bo'limiga qaytish
+  navigateTo("rating");
 }
 
 function renderPlayerModal(data) {
