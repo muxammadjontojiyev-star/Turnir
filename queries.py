@@ -60,6 +60,56 @@ def update_user_nickname(user_id: int, nickname: str) -> None:
     conn.close()
 
 
+def get_all_users_with_registration() -> list[dict]:
+    """
+    Barcha foydalanuvchilarni, ro'yxatdan o'tgan ligasi va klubi bilan birga
+    qaytaradi (admin panel uchun). Ro'yxatdan o'tmagan foydalanuvchilarda
+    league_id va club_name = None.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT users.id, users.telegram_id, users.nickname, users.username,
+               registrations.league_id, registrations.club_name
+        FROM users
+        LEFT JOIN registrations ON registrations.user_id = users.id
+        ORDER BY users.id ASC
+        """
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def remove_user_completely(user_id: int) -> tuple[bool, str]:
+    """
+    Foydalanuvchini butunlay o'chiradi: uning matchlari, ro'yxatdan
+    o'tgan yozuvi va user qatorining o'zi (admin uchun).
+
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "user_not_found"
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+    if cursor.fetchone() is None:
+        conn.close()
+        return False, "user_not_found"
+
+    cursor.execute(
+        "DELETE FROM matches WHERE player1_id = ? OR player2_id = ?",
+        (user_id, user_id),
+    )
+    cursor.execute("DELETE FROM registrations WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
 # ============ LEAGUES ============
 
 def get_all_leagues() -> list[dict]:
@@ -256,6 +306,106 @@ def confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tu
     cursor.execute(
         "UPDATE matches SET status = ? WHERE id = ?",
         (new_status, match_id),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def get_rejected_matches() -> list[dict]:
+    """
+    Statusi 'rejected' bo'lgan barcha matchlarni, ikkala o'yinchining
+    nickname'i bilan birga qaytaradi (admin panel uchun).
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT matches.*,
+               p1.nickname AS player1_nickname,
+               p2.nickname AS player2_nickname
+        FROM matches
+        JOIN users AS p1 ON p1.id = matches.player1_id
+        JOIN users AS p2 ON p2.id = matches.player2_id
+        WHERE matches.status = 'rejected'
+        ORDER BY matches.matchday ASC
+        """
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def admin_resolve_match(match_id: int, action: str, score1: int | None, score2: int | None) -> tuple[bool, str]:
+    """
+    Admin 'rejected' holatdagi matchni hal qiladi.
+
+    action: "set_result" (score1/score2 kiritib 'confirmed' qiladi)
+            yoki "reset" (natijani tozalab 'pending'ga qaytaradi)
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "match_not_found", "wrong_status", "invalid_action", "score_missing"
+    """
+    match = get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+
+    if match["status"] != "rejected":
+        return False, "wrong_status"
+
+    if action not in ("set_result", "reset"):
+        return False, "invalid_action"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if action == "set_result":
+        if score1 is None or score2 is None:
+            conn.close()
+            return False, "score_missing"
+        cursor.execute(
+            """
+            UPDATE matches
+            SET score1 = ?, score2 = ?, status = 'confirmed'
+            WHERE id = ?
+            """,
+            (score1, score2, match_id),
+        )
+    else:  # reset
+        cursor.execute(
+            """
+            UPDATE matches
+            SET score1 = NULL, score2 = NULL, submitted_by = NULL, status = 'pending'
+            WHERE id = ?
+            """,
+            (match_id,),
+        )
+
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def admin_fix_confirmed_match(match_id: int, score1: int, score2: int) -> tuple[bool, str]:
+    """
+    Admin allaqachon 'confirmed' (ikki tomon tasdiqlagan) matchning
+    noto'g'ri kiritilgan natijasini qo'lda tuzatadi. Status o'zgarmaydi,
+    faqat score1/score2 yangilanadi.
+
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "match_not_found", "wrong_status"
+    """
+    match = get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+
+    if match["status"] != "confirmed":
+        return False, "wrong_status"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE matches SET score1 = ?, score2 = ? WHERE id = ?",
+        (score1, score2, match_id),
     )
     conn.commit()
     conn.close()

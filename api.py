@@ -20,12 +20,14 @@ from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from config import BOT_TOKEN
+from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
     register_user_to_league, update_user_nickname, get_taken_clubs,
     get_user_matches, submit_match_result, confirm_or_reject_match,
+    get_all_users_with_registration, remove_user_completely,
+    get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
 )
 from rating import calculate_league_rating, get_player_position
 
@@ -92,6 +94,23 @@ def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
 
     user = get_or_create_user(telegram_id, first_name)
     return user
+
+
+def get_authenticated_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    """
+    FastAPI dependency: initData'ni tekshiradi va foydalanuvchining
+    ADMIN_TELEGRAM_IDS ro'yxatida ekanini tasdiqlaydi.
+
+    Admin emas bo'lsa — 403 qaytaradi.
+    """
+    telegram_user = verify_telegram_init_data(x_telegram_init_data)
+    telegram_id = telegram_user["id"]
+
+    if telegram_id not in ADMIN_TELEGRAM_IDS:
+        raise HTTPException(status_code=403, detail="Sizda admin huquqi yo'q")
+
+    first_name = telegram_user.get("first_name", f"user_{telegram_id}")
+    return get_or_create_user(telegram_id, first_name)
 
 
 # ============ GET /leagues ============
@@ -262,3 +281,78 @@ def confirm_result(
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id, "action": action}
+
+
+# ============ GET /admin/players ============
+
+@app.get("/admin/players")
+def admin_list_players(admin: dict = Depends(get_authenticated_admin)):
+    """Barcha foydalanuvchilarni ro'yxatdan o'tgan ligasi va klubi bilan qaytaradi (faqat admin)."""
+    return get_all_users_with_registration()
+
+
+# ============ DELETE /admin/players/{user_id} ============
+
+@app.delete("/admin/players/{user_id}")
+def admin_remove_player(user_id: int, admin: dict = Depends(get_authenticated_admin)):
+    """
+    Foydalanuvchini butunlay o'chiradi: user, registration va barcha matchlari (faqat admin).
+
+    Xato holatlari: user_not_found → 404
+    """
+    success, reason = remove_user_completely(user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=reason)
+    return {"status": "ok", "removed_user_id": user_id}
+
+
+# ============ GET /admin/rejected-matches ============
+
+@app.get("/admin/rejected-matches")
+def admin_list_rejected_matches(admin: dict = Depends(get_authenticated_admin)):
+    """Statusi 'rejected' bo'lgan barcha matchlarni qaytaradi (faqat admin)."""
+    return get_rejected_matches()
+
+
+# ============ POST /admin/match/resolve ============
+
+@app.post("/admin/match/resolve")
+def admin_resolve_rejected_match(
+    match_id: int,
+    action: str,
+    score1: int | None = None,
+    score2: int | None = None,
+    admin: dict = Depends(get_authenticated_admin),
+):
+    """
+    Admin 'rejected' holatdagi matchni hal qiladi.
+
+    Query params: match_id, action ("set_result" yoki "reset"), score1, score2 (set_result uchun shart)
+    Xato holatlari: match_not_found, wrong_status, invalid_action, score_missing → 400
+    """
+    success, reason = admin_resolve_match(match_id, action, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id, "action": action}
+
+
+# ============ POST /admin/match/fix-confirmed ============
+
+@app.post("/admin/match/fix-confirmed")
+def admin_fix_confirmed(
+    match_id: int,
+    score1: int,
+    score2: int,
+    admin: dict = Depends(get_authenticated_admin),
+):
+    """
+    Admin allaqachon 'confirmed' bo'lgan matchning noto'g'ri natijasini
+    qo'lda tuzatadi (status o'zgarmaydi, faqat score yangilanadi).
+
+    Query params: match_id, score1, score2
+    Xato holatlari: match_not_found, wrong_status → 400
+    """
+    success, reason = admin_fix_confirmed_match(match_id, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}

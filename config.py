@@ -49,3 +49,7 @@ WEBAPP_URL = os.getenv("WEBAPP_URL", "https://example.com/webapp")
 # === Sovrinlar ===
 PRIZE_TOP_SCORER = "golden_boot"   # Eng ko'p gol urgan — Oltin Butsa
 PRIZE_WINNER = "golden_ball"       # Turnir g'olibi — Oltin To'p znachogi
+
+# === Adminlar ===
+# Shu Telegram ID'lar WebApp'da admin paneliga kira oladi
+ADMIN_TELEGRAM_IDS = [6829293074]
