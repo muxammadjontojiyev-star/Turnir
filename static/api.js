@@ -306,23 +306,62 @@ function renderRatingFilter() {
   });
 }
 
+function renderPodiumPlayer(player, rank) {
+  const medalColors = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
+  const color = medalColors[rank];
+  const displayName = player.username
+    ? `<span class="pod-username">@${escHtml(player.username)}</span><span class="pod-nickname">${escHtml(player.nickname)}</span>`
+    : `<span class="pod-username">${escHtml(player.nickname)}</span>`;
+  return `
+    <div class="pod-player pod-rank-${rank}">
+      <div class="pod-avatar" style="border-color:${color}">
+        <span class="pod-medal">${rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}</span>
+      </div>
+      <div class="pod-info">
+        ${displayName}
+        <span class="pod-pts" style="color:${color}">${player.points} B</span>
+      </div>
+      <div class="pod-stand pod-stand-${rank}"></div>
+    </div>
+  `;
+}
+
 function renderRatingTable(rating) {
-  const tbody = document.getElementById("rating-tbody");
-  const myId  = APP.currentUser?.id;
+  const podiumWrap  = document.getElementById("podium-wrap");
+  const tbody       = document.getElementById("rating-tbody");
+  const restCard    = document.getElementById("rating-rest-card");
+  const myId        = APP.currentUser?.id;
 
   if (!rating || rating.length === 0) {
+    podiumWrap.innerHTML = "";
     tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</td></tr>`;
+    restCard.classList.remove("hidden");
     return;
   }
 
-  tbody.innerHTML = rating.map((player, i) => {
-    const rank    = i + 1;
-    const rankCls = rank <= 3 ? ` class="rank-${rank}"` : "";
+  // --- PODIUM: top-3 ---
+  const top3 = rating.slice(0, 3);
+  // Tartib: 2-o'rin chap, 1-o'rin markaz, 3-o'rin o'ng
+  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+  podiumWrap.innerHTML = `<div class="podium">${podiumOrder.map(p => renderPodiumPlayer(p, rating.indexOf(p) + 1)).join("")}</div>`;
+
+  // --- JADVAL: 4+ o'rinlar ---
+  const rest = rating.slice(3);
+  if (rest.length === 0) {
+    restCard.classList.add("hidden");
+    return;
+  }
+  restCard.classList.remove("hidden");
+  tbody.innerHTML = rest.map((player, i) => {
+    const rank    = i + 4;
     const isMeCls = player.user_id === myId ? " class=\"is-me\"" : "";
+    const playerCell = player.username
+      ? `<div class="player-cell"><span class="player-username">@${escHtml(player.username)}</span><span class="player-nickname">${escHtml(player.nickname)}</span></div>`
+      : `<div class="player-cell"><span class="player-username">${escHtml(player.nickname)}</span></div>`;
     return `
       <tr${isMeCls}>
-        <td${rankCls}>${rank}</td>
-        <td>${escHtml(player.nickname)}</td>
+        <td>${rank}</td>
+        <td>${playerCell}</td>
         <td class="pts">${player.points}</td>
         <td>${player.wins}</td>
         <td>${player.draws}</td>
