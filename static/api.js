@@ -317,8 +317,8 @@ function renderRatingTable(rating) {
 
   tbody.innerHTML = rating.map((player, i) => {
     const rank    = i + 1;
-    const rankCls = rank <= 3 ? ` class="rank-${rank}"` : "";
-    const isMeCls = player.user_id === myId ? " class=\"is-me\"" : "";
+    const rankCls = rank <= 3 ? `rank-${rank}` : "";
+    const isMe    = player.user_id === myId;
 
     // Klub logosini LEAGUE_CLUBS dan topamiz
     let clubLogo = null;
@@ -346,9 +346,11 @@ function renderRatingTable(rating) {
         </div>
       </div>`;
 
+    const trCls = ["rating-row", isMe ? "is-me" : ""].filter(Boolean).join(" ");
+
     return `
-      <tr${isMeCls}>
-        <td${rankCls}>${rank}</td>
+      <tr class="${trCls}" data-user-id="${player.user_id}">
+        <td${rankCls ? ` class="${rankCls}"` : ""}>${rank}</td>
         <td>${playerCell}</td>
         <td class="pts">${player.points}</td>
         <td>${player.wins}</td>
@@ -358,6 +360,109 @@ function renderRatingTable(rating) {
       </tr>
     `;
   }).join("");
+
+  // Qatorga bosilganda — o'sha o'yinchining profilini ochish
+  tbody.querySelectorAll(".rating-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const userId = parseInt(row.dataset.userId);
+      if (userId) openPlayerModal(userId);
+    });
+  });
+}
+
+// ============================================================
+//  BOSHQA O'YINCHI PROFILI (modal)
+// ============================================================
+
+async function openPlayerModal(userId) {
+  const t = APP.t;
+  try {
+    const data = await apiFetch(`/players/${userId}/profile`);
+    renderPlayerModal(data);
+    document.getElementById("modal-player").classList.remove("hidden");
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+function closePlayerModal() {
+  document.getElementById("modal-player").classList.add("hidden");
+}
+
+function renderPlayerModal(data) {
+  const t = APP.t;
+
+  const avatarEl   = document.getElementById("player-avatar-letter");
+  const nicknameEl = document.getElementById("player-nickname");
+  const leagueEl   = document.getElementById("player-league");
+  const clubBadge  = document.getElementById("player-club-badge");
+
+  // Avatar: boshqa odamning Telegram rasmi WebApp'da mavjud emas — ism harfi
+  avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
+
+  // Klub logosi va nomi
+  let clubObj = null;
+  if (data.club_name) {
+    for (const clubs of Object.values(LEAGUE_CLUBS)) {
+      const found = clubs.find(c => c.name === data.club_name);
+      if (found) { clubObj = found; break; }
+    }
+  }
+
+  if (clubObj) {
+    clubBadge.innerHTML = `<img src="${escHtml(clubObj.logo)}" alt="${escHtml(clubObj.name)}" style="width:32px;height:32px;object-fit:contain;" onerror="this.style.display='none'" />`;
+    nicknameEl.textContent = clubObj.name;
+  } else {
+    clubBadge.innerHTML = "";
+    nicknameEl.textContent = data.nickname || "—";
+  }
+
+  // Ism + Telegram username linki (mavjud bo'lsa)
+  const displayName = escHtml(data.nickname || "");
+  if (data.username) {
+    const u = escHtml(data.username);
+    leagueEl.innerHTML = `${displayName}<br><a class="profile-username" href="https://t.me/${u}" target="_blank">@${u}</a>`;
+  } else if (data.league_id) {
+    leagueEl.textContent = data.nickname || "—";
+  } else {
+    leagueEl.textContent = t.not_registered || "Ro'yxatdan o'tilmagan";
+  }
+
+  // Statistika
+  const r = data.rating;
+  document.getElementById("player-stat-position").textContent = r ? `#${r.position}` : "—";
+  document.getElementById("player-stat-wins").textContent     = r ? r.wins   : "—";
+  document.getElementById("player-stat-draws").textContent    = r ? r.draws  : "—";
+  document.getElementById("player-stat-losses").textContent   = r ? r.losses : "—";
+
+  // O'yinlar tarixi (faqat ko'rsatish — tugmasiz, chunki bu boshqa odam)
+  const list = document.getElementById("player-matches-list");
+  const matches = data.matches || [];
+  if (matches.length === 0) {
+    list.innerHTML = `<div class="empty-state">${t.no_matches || "Hali o'yinlar yo'q"}</div>`;
+    return;
+  }
+  list.innerHTML = matches.map(m => renderPlayerMatchItem(m)).join("");
+}
+
+function renderPlayerMatchItem(m) {
+  const t = APP.t;
+  const score = m.score1 !== null ? `${m.score1} : ${m.score2}` : "— : —";
+
+  let statusCls  = "status--pending";
+  let statusText = t.status_pending || "KUTILMOQDA";
+  if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting"; statusText = t.status_awaiting || "TASDIQ"; }
+  if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = t.status_confirmed || "TASDIQLANDI"; }
+  if (m.status === "rejected")              { statusCls = "status--rejected";  statusText = t.status_rejected  || "RAD ETILDI"; }
+
+  return `
+    <div class="match-item">
+      <span class="match-day">${m.matchday}</span>
+      <span class="match-names"><span class="match-id">#${m.id}</span></span>
+      <span class="match-score">${score}</span>
+      <span class="match-status ${statusCls}">${statusText}</span>
+    </div>
+  `;
 }
 
 // ============================================================

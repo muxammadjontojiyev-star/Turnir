@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260622g" />
+  <link rel="stylesheet" href="style.css?v=20260622h" />
 </head>
 <body>
 
@@ -274,6 +274,52 @@
           </div>
         </div>
 
+        <!-- Boshqa o'yinchi profili modali (reyting jadvalidan ochiladi) -->
+        <div id="modal-player" class="modal hidden">
+          <div class="modal-box modal-box--wide">
+            <button class="modal-close-btn" id="btn-player-close" aria-label="close">✕</button>
+
+            <!-- Avatar + ism -->
+            <div class="card card--profile card--profile-modal">
+              <div class="profile-avatar">
+                <div id="player-avatar-letter">?</div>
+              </div>
+              <div class="profile-info">
+                <h2 class="profile-nickname" id="player-nickname">—</h2>
+                <span class="profile-league" id="player-league">—</span>
+              </div>
+              <div class="profile-club-badge" id="player-club-badge"></div>
+            </div>
+
+            <!-- Statistika -->
+            <div class="section-label" data-i18n="my_stats">STATISTIKA</div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <span class="stat-card-value" id="player-stat-position">—</span>
+                <span class="stat-card-label" data-i18n="stat_pos">O'rin</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-card-value neon-cyan" id="player-stat-wins">—</span>
+                <span class="stat-card-label" data-i18n="stat_w">G'alaba</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-card-value" id="player-stat-draws">—</span>
+                <span class="stat-card-label" data-i18n="stat_d">Durang</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-card-value neon-red" id="player-stat-losses">—</span>
+                <span class="stat-card-label" data-i18n="stat_l">Mag'lubiyat</span>
+              </div>
+            </div>
+
+            <!-- O'yinlar tarixi -->
+            <div class="section-label" data-i18n="player_matches">O'YINLARI</div>
+            <div id="player-matches-list" class="matches-list">
+              <!-- JS tomonidan to'ldiriladi -->
+            </div>
+          </div>
+        </div>
+
       </section>
 
       <!-- ===== SOVRINLAR ===== -->
@@ -340,7 +386,7 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260622g"></script>
-  <script src="api.js?v=20260622g"></script>
+  <script src="app.js?v=20260622h"></script>
+  <script src="api.js?v=20260622h"></script>
 </body>
 </html>

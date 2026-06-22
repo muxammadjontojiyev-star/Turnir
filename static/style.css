@@ -493,6 +493,7 @@ table { border-collapse: collapse; width: 100%; }
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
 }
+.rating-table tbody tr.rating-row { cursor: pointer; }
 .rating-table tbody tr:last-child { border-bottom: none; }
 .rating-table tbody tr:hover { background: rgba(0,240,255,0.04); }
 .rating-table tbody tr.is-me { background: var(--cyan-dim); }
@@ -831,6 +832,31 @@ table { border-collapse: collapse; width: 100%; }
   gap: 10px;
 }
 .modal-actions .btn { flex: 1; }
+
+/* Boshqa o'yinchi profili modali (kengroq, scroll bilan) */
+.modal-box--wide {
+  position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+}
+.card--profile-modal {
+  margin-top: 8px;
+}
 
 /* Score input */
 .score-input-row {

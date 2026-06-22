@@ -116,6 +116,7 @@ const TEXTS = {
     admin_fix_submit:                 "Tuzatish",
     admin_fix_success:                "✅ Natija tuzatildi",
     admin_fix_match_id_required:      "Match ID kiritilmadi",
+    player_matches:       "O'YINLARI",
   },
 
   ru: {
@@ -200,6 +201,7 @@ const TEXTS = {
     admin_fix_submit:                 "Исправить",
     admin_fix_success:                "✅ Результат исправлен",
     admin_fix_match_id_required:      "Введите ID матча",
+    player_matches:       "МАТЧИ",
   },
 
   en: {
@@ -284,6 +286,7 @@ const TEXTS = {
     admin_fix_submit:                 "Fix",
     admin_fix_success:                "✅ Result fixed",
     admin_fix_match_id_required:      "Match ID is required",
+    player_matches:       "MATCHES",
   },
 };
 
@@ -463,6 +466,13 @@ function bindEvents() {
   });
   document.getElementById("modal-admin-resolve").addEventListener("click", e => {
     if (e.target === e.currentTarget) closeAdminResolveModal();
+  });
+
+  // Boshqa o'yinchi profili modali
+  document.getElementById("btn-player-close")
+    .addEventListener("click", closePlayerModal);
+  document.getElementById("modal-player").addEventListener("click", e => {
+    if (e.target === e.currentTarget) closePlayerModal();
   });
 }
 
