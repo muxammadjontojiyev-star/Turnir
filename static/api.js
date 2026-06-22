@@ -430,15 +430,12 @@ function renderPlayerModal(data) {
     nicknameEl.textContent = data.nickname || "—";
   }
 
-  // Ism + Telegram username linki (mavjud bo'lsa)
-  const displayName = escHtml(data.nickname || "");
+  // Faqat Telegram username (link) yoki "Username yo'q" yozuvi — nickname ko'rsatilmaydi
   if (data.username) {
     const u = escHtml(data.username);
-    leagueEl.innerHTML = `${displayName}<br><a class="profile-username" href="https://t.me/${u}" target="_blank">@${u}</a>`;
-  } else if (data.league_id) {
-    leagueEl.textContent = data.nickname || "—";
+    leagueEl.innerHTML = `<a class="profile-username" href="https://t.me/${u}" target="_blank">@${u}</a>`;
   } else {
-    leagueEl.textContent = t.not_registered || "Ro'yxatdan o'tilmagan";
+    leagueEl.innerHTML = `<span class="profile-no-username">${t.no_username || "Username yo'q"}</span>`;
   }
 
   // Statistika

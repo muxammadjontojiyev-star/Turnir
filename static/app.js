@@ -118,6 +118,7 @@ const TEXTS = {
     admin_fix_match_id_required:      "Match ID kiritilmadi",
     player_matches:       "O'YINLARI",
     back:                 "Ortga",
+    no_username:          "Username yo'q",
   },
 
   ru: {
@@ -204,6 +205,7 @@ const TEXTS = {
     admin_fix_match_id_required:      "Введите ID матча",
     player_matches:       "МАТЧИ",
     back:                 "Назад",
+    no_username:          "Нет username",
   },
 
   en: {
@@ -290,6 +292,7 @@ const TEXTS = {
     admin_fix_match_id_required:      "Match ID is required",
     player_matches:       "MATCHES",
     back:                 "Back",
+    no_username:          "No username",
   },
 };
 
