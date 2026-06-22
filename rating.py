@@ -24,7 +24,7 @@ def calculate_league_rating(league_id: int) -> list[dict]:
     # Ligadagi barcha ro'yxatdan o'tgan o'yinchilar
     cursor.execute(
         """
-        SELECT u.id as user_id, u.nickname
+        SELECT u.id as user_id, u.nickname, u.username, r.club_name
         FROM registrations r
         JOIN users u ON u.id = r.user_id
         WHERE r.league_id = ?
@@ -34,6 +34,8 @@ def calculate_league_rating(league_id: int) -> list[dict]:
     players = {row["user_id"]: {
         "user_id": row["user_id"],
         "nickname": row["nickname"],
+        "username": row["username"],
+        "club_name": row["club_name"],
         "played": 0,
         "wins": 0,
         "draws": 0,
