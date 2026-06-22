@@ -345,6 +345,13 @@ table { border-collapse: collapse; width: 100%; }
   font-weight: 600;
   color: var(--cyan);
 }
+.prize-holder-link {
+  color: inherit;
+  text-decoration: none;
+}
+.prize-holder-link:hover {
+  text-decoration: underline;
+}
 .prize-goals {
   font-size: 14px;
   font-weight: 400;

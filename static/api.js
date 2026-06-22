@@ -740,11 +740,15 @@ async function fetchAndRenderPrizes(leagueId) {
       clubEl.innerHTML = "";
       return;
     }
-    // Birinchi qator: username yoki nickname
-    const displayName = player.username
-      ? `@${escHtml(player.username)}`
-      : escHtml(player.nickname);
-    holderEl.innerHTML = `<span class="prize-holder-name">${displayName}</span>`;
+    // Birinchi qator: username (Telegram chatiga link) yoki nickname (oddiy)
+    let displayName;
+    if (player.username) {
+      const u = escHtml(player.username);
+      displayName = `<a class="prize-holder-link" href="https://t.me/${u}" target="_blank">@${u}</a>`;
+    } else {
+      displayName = `<span class="prize-holder-name">${escHtml(player.nickname)}</span>`;
+    }
+    holderEl.innerHTML = displayName;
 
     // Ikkinchi qator: klub logosi + klub nomi
     const club = findClub(player);
