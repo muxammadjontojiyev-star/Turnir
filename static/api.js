@@ -1229,7 +1229,10 @@ async function submitMatchResult() {
     showToast(APP.t.result_submitted || "✅ Natija yuborildi");
     await refreshMatchViews();
   } catch (e) {
-    showToast("❌ " + e.message);
+    const msg = {
+      matchday_locked: APP.t.matchday_locked || "Bu tur hali ochilmagan",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
   }
 }
 
