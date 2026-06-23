@@ -60,3 +60,11 @@ PRIZE_WINNER = "golden_ball"       # Turnir g'olibi — Oltin To'p znachogi
 # === Adminlar ===
 # Shu Telegram ID'lar WebApp'da admin paneliga kira oladi
 ADMIN_TELEGRAM_IDS = [6829293074]
+
+# === Majburiy kanal a'zoligi ===
+# Foydalanuvchi botdan/WebApp'dan foydalanish uchun shu kanalga a'zo bo'lishi shart.
+# ⚠️ Bot shu kanalda ADMIN bo'lishi kerak — aks holda getChatMember ishlamaydi.
+REQUIRED_CHANNEL_USERNAME = os.getenv("REQUIRED_CHANNEL_USERNAME", "@efootball_liga_turnir")
+REQUIRED_CHANNEL_URL = os.getenv("REQUIRED_CHANNEL_URL", "https://t.me/efootball_liga_turnir")
+# A'zolikni majburiy qilishni o'chirish/yoqish (test uchun False qilish mumkin)
+REQUIRE_CHANNEL_MEMBERSHIP = os.getenv("REQUIRE_CHANNEL_MEMBERSHIP", "true").lower() == "true"

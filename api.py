@@ -37,6 +37,8 @@ from queries import (
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
 from notify import notify_members, notify_user
+from membership import is_user_subscribed
+from config import REQUIRED_CHANNEL_USERNAME, REQUIRED_CHANNEL_URL
 
 app = FastAPI(title="eFootball Turnir Bot API")
 
@@ -154,6 +156,26 @@ def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
             open_cache[league_id] = get_open_matchday(league_id)
         m["is_locked"] = m.get("matchday", 0) > open_cache[league_id]
     return matches
+
+
+# ============ GET /membership/check ============
+
+@app.get("/membership/check")
+async def check_membership(user: dict = Depends(get_authenticated_user)):
+    """
+    Joriy foydalanuvchining majburiy kanalga a'zoligini tekshiradi.
+
+    WebApp ochilganda boshida bir marta chaqiriladi. A'zo bo'lmasa, frontend
+    "kanalga a'zo bo'ling" ekranini ko'rsatadi.
+
+    Qaytaradi: {subscribed: bool, channel_username, channel_url}
+    """
+    subscribed = await is_user_subscribed(user["telegram_id"])
+    return {
+        "subscribed": subscribed,
+        "channel_username": REQUIRED_CHANNEL_USERNAME,
+        "channel_url": REQUIRED_CHANNEL_URL,
+    }
 
 
 # ============ GET /leagues ============

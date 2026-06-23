@@ -162,6 +162,33 @@ TEXTS = {
         LANGUAGE_RU: "⚽️ Тур {matchday} открыт! Сыграйте сегодняшний матч и внесите результат в приложение. Следующий тур откроется завтра в 01:00.",
         LANGUAGE_EN: "⚽️ Matchday {matchday} is open! Play today's match and submit the result in the app. The next matchday opens tomorrow at 01:00.",
     },
+
+    # === Majburiy kanal a'zoligi ===
+    "subscribe_required": {
+        LANGUAGE_UZ: "📢 Botdan foydalanish uchun avval rasmiy kanalimizga a'zo bo'ling:",
+        LANGUAGE_RU: "📢 Чтобы пользоваться ботом, сначала подпишитесь на наш канал:",
+        LANGUAGE_EN: "📢 To use the bot, please subscribe to our channel first:",
+    },
+    "subscribe_button": {
+        LANGUAGE_UZ: "📢 Kanalga a'zo bo'lish",
+        LANGUAGE_RU: "📢 Подписаться на канал",
+        LANGUAGE_EN: "📢 Subscribe to channel",
+    },
+    "subscribe_check_button": {
+        LANGUAGE_UZ: "✅ A'zo bo'ldim, tekshirish",
+        LANGUAGE_RU: "✅ Я подписался, проверить",
+        LANGUAGE_EN: "✅ I subscribed, check",
+    },
+    "subscribe_not_yet": {
+        LANGUAGE_UZ: "❌ Siz hali kanalga a'zo bo'lmadingiz. Iltimos, a'zo bo'lib qayta tekshiring.",
+        LANGUAGE_RU: "❌ Вы ещё не подписались на канал. Пожалуйста, подпишитесь и проверьте снова.",
+        LANGUAGE_EN: "❌ You haven't subscribed yet. Please subscribe and check again.",
+    },
+    "subscribe_success": {
+        LANGUAGE_UZ: "✅ Rahmat! Endi botdan foydalanishingiz mumkin.",
+        LANGUAGE_RU: "✅ Спасибо! Теперь вы можете пользоваться ботом.",
+        LANGUAGE_EN: "✅ Thank you! Now you can use the bot.",
+    },
 }
 
 
