@@ -587,16 +587,19 @@ function applySafeArea(tg) {
     content = tg.contentSafeAreaInset?.top || 0;
     device  = tg.safeAreaInset?.top || 0;
   } catch (_) {}
-  let top = content + device;
+  // contentSafeAreaInset odatda device insetni O'Z ICHIGA OLADI — shuning uchun
+  // ikkalasini QO'SHMAYMIZ (aks holda ikki barobar bo'sh joy chiqadi), kattasini olamiz.
+  let top = Math.max(content, device);
 
-  // Zaxira: agar Telegram safe-area qiymat bermasa (eski/Android klientlar ko'pincha 0),
-  // panel ostidan kontent o'tib ketmasligi uchun minimal bo'sh joy qo'shamiz.
+  // Fullscreen rejimda Telegram tugmalari (X/⋮) ekran ustida suzadi.
+  const isFullscreen = (() => { try { return !!tg.isFullscreen; } catch (_) { return false; } })();
+
   if (top < 1) {
-    top = 56;  // taxminiy Telegram panel balandligi (X / ⋮ tugmalari)
+    // Telegram qiymat bermasa: fullscreen'da tugmalar uchun kattaroq, aks holda kichik zaxira
+    top = isFullscreen ? 50 : 20;
   }
-
   document.documentElement.style.setProperty("--safe-top", top + "px");
-  APP._safeAreaDebug = { content, device, applied: top };
+  APP._safeAreaDebug = { content, device, isFullscreen, applied: top };
 }
 
 async function init() {
@@ -604,18 +607,29 @@ async function init() {
   if (tg) {
     tg.ready();
     tg.expand();
+
+    // Fullscreen rejim — Telegram yuqori panelini (X/⋮ sarlavha) yashiradi, ilova
+    // butun ekranni egallaydi (Bot API 8.0+). Eski klientlarda funksiya yo'q — xavfsiz.
+    try {
+      if (typeof tg.requestFullscreen === "function") {
+        tg.requestFullscreen();
+      }
+    } catch (_) {}
+
     APP.currentUser = tg.initDataUnsafe?.user || null;
 
-    // Telegram yuqori paneli (X, ⋮ tugmalari) ostidan kontent o'tib ketmasligi uchun
-    // safe area qiymatini CSS o'zgaruvchisiga yozamiz. Qurilmaga qarab dinamik.
+    // Fullscreen'da Telegram tugmalari (X/⋮) ekran ustida suzadi — kontent ular
+    // ostidan boshlanishi uchun safe area qiymatini CSS o'zgaruvchisiga yozamiz.
     applySafeArea(tg);
-    // Viewport barqarorlashgach qayta qo'llaymiz (expand'dan keyin qiymat o'zgarishi mumkin)
+    // Viewport barqarorlashgach qayta qo'llaymiz (fullscreen/expand qiymatni o'zgartiradi)
     setTimeout(() => applySafeArea(tg), 300);
-    // Qiymat keyinroq o'zgarsa (panel kengaysa) — qayta qo'llaymiz
+    setTimeout(() => applySafeArea(tg), 800);
+    // Qiymat keyinroq o'zgarsa (panel/fullscreen) — qayta qo'llaymiz
     if (typeof tg.onEvent === "function") {
       tg.onEvent("safeAreaChanged", () => applySafeArea(tg));
       tg.onEvent("contentSafeAreaChanged", () => applySafeArea(tg));
       tg.onEvent("viewportChanged", () => applySafeArea(tg));
+      tg.onEvent("fullscreenChanged", () => applySafeArea(tg));
     }
 
     // Telegram dan tilni olish (foydalanuvchi DB'da saqlangan tilga mos kelishi kerak)
