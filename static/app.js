@@ -53,6 +53,8 @@ const TEXTS = {
       "O'yin 8 daqiqa davom etadi.",
       "Ikkitalik himoya yoqish mumkin emas.",
       "O'yinchilar holati \"Excellent\" bo'lishi kerak.",
+      "Extra time va penalti yo'q.",
+      "Dedline har kuni tungi soat 01:00 da.",
       "Agar raqib javob bermasa yoki hisobni noto'g'ri kiritsa — rasm yoki video bilan adminga murojaat qiling.",
     ],
     rules_detail: [
@@ -183,6 +185,8 @@ const TEXTS = {
       "Матч длится 8 минут.",
       "Двойной отбор (dual press) включать запрещено.",
       "Состояние игроков должно быть \"Excellent\".",
+      "Дополнительное время и пенальти отсутствуют.",
+      "Дедлайн каждый день в 01:00 ночи.",
       "Если соперник не отвечает или вводит неверный счёт — обратитесь к админу со скриншотом или видео.",
     ],
     rules_detail: [
@@ -307,6 +311,8 @@ const TEXTS = {
       "A match lasts 8 minutes.",
       "Dual press (double-team defending) is not allowed.",
       "Player condition must be \"Excellent\".",
+      "No extra time and no penalties.",
+      "Deadline every day at 01:00 at night.",
       "If your opponent doesn't respond or enters the wrong score, contact an admin with a screenshot or video.",
     ],
     rules_detail: [
