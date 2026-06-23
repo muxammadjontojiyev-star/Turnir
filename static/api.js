@@ -912,6 +912,11 @@ function renderAdminDraw() {
         <button class="admin-remove-btn admin-redraw-keep-btn" data-league-id="${league.id}">
           ${t.admin_redraw_keep_button || "♻️ Natijani saqlab qayta qur'a"}
         </button>`;
+      // Xato avtomatik 0:0 tasdiqlangan turlarni qayta ochish
+      buttons += `
+        <button class="admin-remove-btn admin-reopen-btn" data-league-id="${league.id}">
+          ${t.admin_reopen_button || "🔓 Avtomatik turlarni qayta ochish"}
+        </button>`;
     }
 
     return `
@@ -937,6 +942,9 @@ function renderAdminDraw() {
   });
   list.querySelectorAll(".admin-redraw-keep-btn").forEach(btn => {
     btn.addEventListener("click", () => redrawLeague(parseInt(btn.dataset.leagueId), true));
+  });
+  list.querySelectorAll(".admin-reopen-btn").forEach(btn => {
+    btn.addEventListener("click", () => reopenAutoMatches(parseInt(btn.dataset.leagueId)));
   });
 }
 
@@ -1010,6 +1018,21 @@ async function redrawLeague(leagueId, keepResults = false) {
   }
 }
 
+async function reopenAutoMatches(leagueId) {
+  const t = APP.t;
+  const ok = window.confirm(t.admin_reopen_confirm || "Avtomatik 0:0 tasdiqlangan turlar qayta ochiladi (o'yinchilar qaytadan o'ynaydi). Qo'lda kiritilgan natijalarga tegilmaydi. Davom etasizmi?");
+  if (!ok) return;
+  try {
+    const res = await apiFetch(`/admin/league/${leagueId}/reopen-auto`, { method: "POST" });
+    const n = res.reopened || 0;
+    showToast((t.admin_reopen_success || "✅ Qayta ochilgan turlar: ") + n);
+    await loadHome();
+    await loadAdminPanel();
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
 function renderAdminPlayers(players) {
   const t = APP.t;
   const list = document.getElementById("admin-players-list");
@@ -1066,22 +1089,43 @@ function renderAdminPlayers(players) {
     return na.localeCompare(nb);
   });
 
-  let html = "";
+  // Tanlangan filter (birinchi marta — birinchi liga, yoki avval tanlangani)
+  const validFilters = [...leagueIds.map(String), ...(noLeague.length ? ["none"] : [])];
+  if (!APP.adminFilter || !validFilters.includes(String(APP.adminFilter))) {
+    APP.adminFilter = validFilters[0];
+  }
+  const filter = String(APP.adminFilter);
+
+  // Tab tugmalari (har liga + ro'yxatdan o'tmaganlar)
+  let tabs = `<div class="admin-filter">`;
   leagueIds.forEach(lid => {
-    const leagueName = (APP.leagues || []).find(l => l.id === lid)?.name || `Liga #${lid}`;
-    const rows = groups[lid];
-    html += `<div class="admin-league-group">
-      <div class="admin-league-header">${escHtml(leagueName)} <span class="admin-league-count">${rows.length}</span></div>
-      ${rows.map(renderRow).join("")}
-    </div>`;
+    const name = (APP.leagues || []).find(l => l.id === lid)?.name || `Liga #${lid}`;
+    const active = filter === String(lid) ? " active" : "";
+    tabs += `<button class="admin-filter-btn${active}" data-filter="${lid}">${escHtml(name)} <span class="admin-league-count">${groups[lid].length}</span></button>`;
   });
   if (noLeague.length > 0) {
-    html += `<div class="admin-league-group">
-      <div class="admin-league-header">${escHtml(t.not_registered || "Ro'yxatdan o'tilmagan")} <span class="admin-league-count">${noLeague.length}</span></div>
-      ${noLeague.map(renderRow).join("")}
-    </div>`;
+    const active = filter === "none" ? " active" : "";
+    tabs += `<button class="admin-filter-btn${active}" data-filter="none">${escHtml(t.not_registered || "Ro'yxatdan o'tilmagan")} <span class="admin-league-count">${noLeague.length}</span></button>`;
   }
-  list.innerHTML = html;
+  tabs += `</div>`;
+
+  // Faqat tanlangan ligadagi o'yinchilar
+  let rowsHtml = "";
+  if (filter === "none") {
+    rowsHtml = noLeague.map(renderRow).join("");
+  } else {
+    rowsHtml = (groups[Number(filter)] || []).map(renderRow).join("");
+  }
+
+  list.innerHTML = tabs + `<div class="admin-filter-rows">${rowsHtml}</div>`;
+
+  // Tab tugmalariga hodisa — bosilganda o'sha liga ko'rsatiladi
+  list.querySelectorAll(".admin-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      APP.adminFilter = btn.dataset.filter;
+      renderAdminPlayers(players);   // qayta render (tanlangan filter bilan)
+    });
+  });
 
   list.querySelectorAll(".admin-remove-btn").forEach(btn => {
     btn.addEventListener("click", () => {
