@@ -6,6 +6,7 @@
 
 /* ---- TOKENS ---- */
 :root {
+  --safe-top:      0px;   /* Telegram yuqori paneli balandligi (JS dinamik o'rnatadi) */
   --bg-base:       #0a0a0f;
   --bg-card:       #1a1a2e;
   --bg-card-alt:   #121220;
@@ -130,7 +131,7 @@ table { border-collapse: collapse; width: 100%; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px 10px;
+  padding: calc(14px + max(var(--safe-top), env(safe-area-inset-top, 0px))) 16px 10px;
   background: var(--bg-base);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -1276,7 +1277,9 @@ table { border-collapse: collapse; width: 100%; }
 }
 .subscribe-icon {
   font-size: 48px;
+  color: var(--cyan);
 }
+.subscribe-icon .icon { width: 48px; height: 48px; }
 .subscribe-text {
   font-size: 15px;
   color: var(--text-primary);

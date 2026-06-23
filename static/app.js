@@ -578,12 +578,38 @@ function hideLoadingScreen() {
 //  INIT
 // ============================================================
 
+// Telegram yuqori paneli balandligini CSS o'zgaruvchisiga yozadi (--safe-top).
+// contentSafeAreaInset — kontent uchun xavfsiz zona (X/⋮ tugmalari ostidan).
+// safeAreaInset — qurilma tizim paneli (notch va h.k.). Ikkalasini qo'shamiz.
+function applySafeArea(tg) {
+  let top = 0;
+  try {
+    const content = tg.contentSafeAreaInset?.top || 0;
+    const device  = tg.safeAreaInset?.top || 0;
+    top = content + device;
+  } catch (_) {
+    top = 0;
+  }
+  // Hech qiymat kelmasa (eski Telegram klientlari) — zaxira sifatida kichik bo'sh joy
+  document.documentElement.style.setProperty("--safe-top", top + "px");
+}
+
 async function init() {
   const tg = window.Telegram?.WebApp;
   if (tg) {
     tg.ready();
     tg.expand();
     APP.currentUser = tg.initDataUnsafe?.user || null;
+
+    // Telegram yuqori paneli (X, ⋮ tugmalari) ostidan kontent o'tib ketmasligi uchun
+    // safe area qiymatini CSS o'zgaruvchisiga yozamiz. Qurilmaga qarab dinamik.
+    applySafeArea(tg);
+    // Qiymat keyinroq o'zgarsa (panel kengaysa) — qayta qo'llaymiz
+    if (typeof tg.onEvent === "function") {
+      tg.onEvent("safeAreaChanged", () => applySafeArea(tg));
+      tg.onEvent("contentSafeAreaChanged", () => applySafeArea(tg));
+      tg.onEvent("viewportChanged", () => applySafeArea(tg));
+    }
 
     // Telegram dan tilni olish (foydalanuvchi DB'da saqlangan tilga mos kelishi kerak)
     const tgLang = (tg.initDataUnsafe?.user?.language_code || "uz").toLowerCase();
