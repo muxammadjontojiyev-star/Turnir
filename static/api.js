@@ -907,6 +907,11 @@ function renderAdminDraw() {
         <button class="admin-remove-btn admin-redraw-btn" data-league-id="${league.id}">
           ${t.admin_redraw_button || "🔄 Qayta qur'a"}
         </button>`;
+      // Natijani saqlab qayta qur'a (yangi o'yinchini jadvalga qo'shish uchun)
+      buttons += `
+        <button class="admin-remove-btn admin-redraw-keep-btn" data-league-id="${league.id}">
+          ${t.admin_redraw_keep_button || "♻️ Natijani saqlab qayta qur'a"}
+        </button>`;
     }
 
     return `
@@ -929,6 +934,9 @@ function renderAdminDraw() {
   });
   list.querySelectorAll(".admin-redraw-btn").forEach(btn => {
     btn.addEventListener("click", () => redrawLeague(parseInt(btn.dataset.leagueId)));
+  });
+  list.querySelectorAll(".admin-redraw-keep-btn").forEach(btn => {
+    btn.addEventListener("click", () => redrawLeague(parseInt(btn.dataset.leagueId), true));
   });
 }
 
@@ -969,17 +977,29 @@ async function startLeagueTournament(leagueId) {
   }
 }
 
-async function redrawLeague(leagueId) {
+async function redrawLeague(leagueId, keepResults = false) {
   const t = APP.t;
-  // Xavfli amal — ikki marta tasdiq so'raymiz
-  const c1 = window.confirm(t.admin_redraw_confirm || "DIQQAT: Qayta qur'a barcha kiritilgan natijalarni o'chiradi! Davom etasizmi?");
-  if (!c1) return;
-  const c2 = window.confirm(t.admin_redraw_confirm2 || "Aniqmisiz? Bu amalni ortga qaytarib bo'lmaydi.");
-  if (!c2) return;
+  if (keepResults) {
+    // Natijani saqlab qayta qur'a — bitta tasdiq (natijalar yo'qolmaydi)
+    const ok = window.confirm(t.admin_redraw_keep_confirm || "Jadval qayta tuziladi va yangi o'yinchi(lar) qo'shiladi. Kiritilgan natijalar saqlanadi. Davom etasizmi?");
+    if (!ok) return;
+  } else {
+    // Toza qayta qur'a — ikki marta tasdiq (natijalar o'chadi)
+    const c1 = window.confirm(t.admin_redraw_confirm || "DIQQAT: Qayta qur'a barcha kiritilgan natijalarni o'chiradi! Davom etasizmi?");
+    if (!c1) return;
+    const c2 = window.confirm(t.admin_redraw_confirm2 || "Aniqmisiz? Bu amalni ortga qaytarib bo'lmaydi.");
+    if (!c2) return;
+  }
 
   try {
-    await apiFetch(`/admin/league/${leagueId}/redraw`, { method: "POST" });
-    showToast(t.admin_redraw_success || "✅ Qayta qur'a o'tkazildi");
+    const url = `/admin/league/${leagueId}/redraw${keepResults ? "?keep_results=true" : ""}`;
+    const res = await apiFetch(url, { method: "POST" });
+    if (keepResults) {
+      const n = res.results_restored || 0;
+      showToast((t.admin_redraw_keep_success || "✅ Qayta qur'a tayyor, saqlangan natijalar: ") + n);
+    } else {
+      showToast(t.admin_redraw_success || "✅ Qayta qur'a o'tkazildi");
+    }
     await loadHome();
     await loadAdminPanel();
   } catch (e) {

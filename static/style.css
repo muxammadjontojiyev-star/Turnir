@@ -1275,3 +1275,10 @@ table { border-collapse: collapse; width: 100%; }
 .match-center--clickable {
   cursor: pointer;
 }
+
+/* Natijani saqlab qayta qur'a tugmasi (xavfsizroq — cyan) */
+.admin-redraw-keep-btn {
+  color: var(--cyan);
+  border-color: var(--border-accent);
+  background: var(--cyan-dim);
+}
