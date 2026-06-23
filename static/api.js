@@ -677,6 +677,7 @@ async function loadMyMatches() {
   try {
     const data = await apiFetch("/matches/my");
     const matches = data.matches || [];
+    APP.myMatches = matches;   // Modal uchun saqlaymiz (match item bosilganda topish)
 
     if (matches.length === 0) {
       list.innerHTML = `
@@ -705,6 +706,13 @@ function bindMatchActions(listEl) {
       if (action === "submit") openResultModal(matchId);
       if (action === "confirm") confirmMatchResult(matchId, "confirm");
       if (action === "reject")  confirmMatchResult(matchId, "reject");
+    });
+  });
+
+  // Ochiq o'yin markazi (logolar) bosilganda — raqib modalini ochamiz
+  listEl.querySelectorAll("[data-open-match]").forEach(el => {
+    el.addEventListener("click", () => {
+      openOpponentModal(parseInt(el.dataset.openMatch));
     });
   });
 }
@@ -771,11 +779,16 @@ function renderMatchItem(m) {
     `;
   }
 
+  // Ochiq (qulfsiz) o'yinlarda markaz bosiluvchi — raqib modalini ochadi
+  const isOpen = !m.is_locked;
+  const centerCls = isOpen ? "match-center match-center--clickable" : "match-center";
+  const centerAttr = isOpen ? `data-open-match="${m.id}"` : "";
+
   return `
     <div class="match-item">
       <span class="match-day">${m.matchday}</span>
       <span class="match-names"><span class="match-id">#${m.id}</span></span>
-      <span class="match-center">${renderMatchCenter(m)}</span>
+      <span class="${centerCls}" ${centerAttr}>${renderMatchCenter(m)}</span>
       <span class="match-status ${statusCls}">${statusText}</span>
       ${actionBtn}
     </div>
@@ -1268,6 +1281,89 @@ function closeResultModal() {
   document.getElementById("modal-result").classList.add("hidden");
   document.getElementById("input-score1").value = "0";
   document.getElementById("input-score2").value = "0";
+}
+
+// ============================================================
+//  RAQIB MODALI (ochiq o'yin bosilganda)
+// ============================================================
+
+// Bir o'yinchi uchun: katta logo + klub nomi + @username (yoki nickname)
+function renderOpponentSide(club, username, nickname) {
+  const logo = findClubLogo(club);
+  const logoHtml = logo
+    ? `<img class="opp-logo" src="${escHtml(logo)}" alt="${escHtml(club || "")}">`
+    : `<span class="opp-logo opp-logo--empty"></span>`;
+  const handle = username ? `@${escHtml(username)}` : escHtml(nickname || "—");
+  return `
+    <div class="opp-side">
+      ${logoHtml}
+      <div class="opp-club">${escHtml(club || "—")}</div>
+      <div class="opp-user">${handle}</div>
+    </div>
+  `;
+}
+
+function openOpponentModal(matchId) {
+  const t = APP.t;
+  const m = (APP.myMatches || []).find(x => x.id === matchId);
+  if (!m) return;
+
+  const myId = APP.currentUser?.id;
+  // Raqib — men player1 bo'lsam player2, aks holda player1
+  const iAmP1 = m.player1_telegram_id === myId;
+  const opp = iAmP1
+    ? { tg: m.player2_telegram_id, username: m.player2_username, nickname: m.player2_nickname, club: m.player2_club }
+    : { tg: m.player1_telegram_id, username: m.player1_username, nickname: m.player1_nickname, club: m.player1_club };
+
+  // Chat tugmasi: Telegram ID orqali (username yo'q bo'lsa ham ishlaydi)
+  const chatBtn = opp.tg
+    ? `<button class="opp-chat-btn" id="opp-chat-btn">💬 ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
+    : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
+
+  let modal = document.getElementById("modal-opponent");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "modal-opponent";
+    modal.className = "modal hidden";
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box opp-modal-box">
+      <button class="modal-close" id="opp-modal-close">✕</button>
+      <div class="opp-vs">
+        ${renderOpponentSide(m.player1_club, m.player1_username, m.player1_nickname)}
+        <div class="opp-vs-sep">VS</div>
+        ${renderOpponentSide(m.player2_club, m.player2_username, m.player2_nickname)}
+      </div>
+      ${chatBtn}
+    </div>
+  `;
+  modal.classList.remove("hidden");
+
+  document.getElementById("opp-modal-close").addEventListener("click", closeOpponentModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeOpponentModal(); });
+
+  const btn = document.getElementById("opp-chat-btn");
+  if (btn && opp.tg) {
+    btn.addEventListener("click", () => {
+      // Raqibning Telegram profilini ochamiz. Telegram ID orqali (username shart emas).
+      const tgLink = `tg://user?id=${opp.tg}`;
+      const tg = window.Telegram?.WebApp;
+      if (tg && typeof tg.openLink === "function") {
+        // openLink tg:// sxemasini qo'llab-quvvatlaydi (WebApp tashqi havola ochish)
+        try { tg.openLink(tgLink); }
+        catch (_) { window.open(tgLink, "_blank"); }
+      } else {
+        window.open(tgLink, "_blank");
+      }
+      closeOpponentModal();
+    });
+  }
+}
+
+function closeOpponentModal() {
+  const modal = document.getElementById("modal-opponent");
+  if (modal) modal.classList.add("hidden");
 }
 
 async function submitMatchResult() {
