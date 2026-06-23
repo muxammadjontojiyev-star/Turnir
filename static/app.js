@@ -5,6 +5,41 @@
  */
 
 // ============================================================
+//  SVG IKONLAR (premium, ingichka chiziqli — currentColor bilan ranglanadi)
+//  Emoji o'rniga ishlatiladi. ICON.get("home") -> SVG matni.
+// ============================================================
+
+const ICON_PATHS = {
+  // Navigatsiya
+  home:    '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>',
+  trophy:  '<path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4.5A1.5 1.5 0 0 0 3 7.5 3.5 3.5 0 0 0 6.5 11H7"/><path d="M17 6h2.5A1.5 1.5 0 0 1 21 7.5 3.5 3.5 0 0 1 17.5 11H17"/><path d="M9 14.5 8 21h8l-1-6.5"/><path d="M7 21h10"/>',
+  user:    '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  gift:    '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><path d="M12 8v13"/><path d="M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5h4Z"/><path d="M12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5h-4Z"/>',
+  // Sarlavha / holat
+  clipboard:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6"/><path d="M9 14h6"/><path d="M9 18h4"/>',
+  lock:    '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  unlock:  '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>',
+  ball:    '<circle cx="12" cy="12" r="9"/><path d="m12 7 3.5 2.5-1.3 4h-4.4l-1.3-4L12 7Z"/><path d="m12 3 .9 3.4M5.5 8 3.3 6.6M5.8 16.5 3.5 18M18.2 16.5l2.3 1.5M18.5 8l2.2-1.4M9 21l1-3.4M15 21l-1-3.4"/>',
+  megaphone:'<path d="m3 11 13-6v14l-13-6Z"/><path d="M16 9a3 3 0 0 1 0 6"/><path d="M7 12.5V18a1 1 0 0 0 1 1h2"/>',
+  dice:    '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.1"/><circle cx="15" cy="15" r="1.1"/><circle cx="15" cy="9" r="1.1"/><circle cx="9" cy="15" r="1.1"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 4v5h-5"/>',
+  recycle: '<path d="M7 19H5a2 2 0 0 1-1.7-3l2-3.3"/><path d="m9.5 4.5 1.5-2.5 1.5 2.5"/><path d="M11 2.5 14 8"/><path d="M17 19h2a2 2 0 0 0 1.7-3l-1.2-2"/><path d="m14 21-2.5-1.5L14 18"/>',
+  chat:    '<path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/>',
+  back:    '<path d="M15 18l-6-6 6-6"/>',
+  close:   '<path d="M6 6l12 12M18 6 6 18"/>',
+  check:   '<path d="M5 12.5 10 17l9-10"/>',
+  cross:   '<path d="M6 6l12 12M18 6 6 18"/>',
+};
+
+const ICON = {
+  get(name, size = 24) {
+    const p = ICON_PATHS[name];
+    if (!p) return "";
+    return `<svg class="icon icon--${name}" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  },
+};
+
+// ============================================================
 //  GLOBAL STATE
 // ============================================================
 
@@ -450,6 +485,15 @@ function applyTranslations() {
   document.getElementById("header-lang").textContent = APP.lang.toUpperCase();
 }
 
+// HTML'dagi [data-icon="name"] elementlarni premium SVG ikon bilan to'ldiradi
+function applyIcons(root = document) {
+  root.querySelectorAll("[data-icon]").forEach(el => {
+    const name = el.dataset.icon;
+    const svg = ICON.get(name);
+    if (svg) el.innerHTML = svg;
+  });
+}
+
 function setLanguage(lang) {
   APP.lang = lang;
   APP.t    = TEXTS[lang] || TEXTS["uz"];
@@ -552,6 +596,7 @@ async function init() {
   }
 
   bindEvents();
+  applyIcons();           // Premium SVG ikonlarni joylashtirish (navigatsiya va h.k.)
   hideLoadingScreen();
 
   // Majburiy kanal a'zoligini tekshiramiz — a'zo bo'lmasa asosiy ilova ochilmaydi
