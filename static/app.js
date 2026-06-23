@@ -582,16 +582,21 @@ function hideLoadingScreen() {
 // contentSafeAreaInset — kontent uchun xavfsiz zona (X/⋮ tugmalari ostidan).
 // safeAreaInset — qurilma tizim paneli (notch va h.k.). Ikkalasini qo'shamiz.
 function applySafeArea(tg) {
-  let top = 0;
+  let content = 0, device = 0;
   try {
-    const content = tg.contentSafeAreaInset?.top || 0;
-    const device  = tg.safeAreaInset?.top || 0;
-    top = content + device;
-  } catch (_) {
-    top = 0;
+    content = tg.contentSafeAreaInset?.top || 0;
+    device  = tg.safeAreaInset?.top || 0;
+  } catch (_) {}
+  let top = content + device;
+
+  // Zaxira: agar Telegram safe-area qiymat bermasa (eski/Android klientlar ko'pincha 0),
+  // panel ostidan kontent o'tib ketmasligi uchun minimal bo'sh joy qo'shamiz.
+  if (top < 1) {
+    top = 56;  // taxminiy Telegram panel balandligi (X / ⋮ tugmalari)
   }
-  // Hech qiymat kelmasa (eski Telegram klientlari) — zaxira sifatida kichik bo'sh joy
+
   document.documentElement.style.setProperty("--safe-top", top + "px");
+  APP._safeAreaDebug = { content, device, applied: top };
 }
 
 async function init() {
@@ -604,6 +609,8 @@ async function init() {
     // Telegram yuqori paneli (X, ⋮ tugmalari) ostidan kontent o'tib ketmasligi uchun
     // safe area qiymatini CSS o'zgaruvchisiga yozamiz. Qurilmaga qarab dinamik.
     applySafeArea(tg);
+    // Viewport barqarorlashgach qayta qo'llaymiz (expand'dan keyin qiymat o'zgarishi mumkin)
+    setTimeout(() => applySafeArea(tg), 300);
     // Qiymat keyinroq o'zgarsa (panel kengaysa) — qayta qo'llaymiz
     if (typeof tg.onEvent === "function") {
       tg.onEvent("safeAreaChanged", () => applySafeArea(tg));
