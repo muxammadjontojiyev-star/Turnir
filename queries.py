@@ -11,6 +11,7 @@ from models import get_connection
 from config import (
     LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE,
     TOURNAMENT_TIMEZONE_OFFSET, MATCHDAY_UNLOCK_HOUR, TOTAL_MATCHDAYS,
+    MATCHDAYS_PER_UNLOCK,
 )
 
 
@@ -332,9 +333,10 @@ def get_open_matchday(league_id: int) -> int:
     """
     Shu liga uchun hozir ochiq bo'lgan eng yuqori matchday raqamini qaytaradi.
 
-    Mantiq: qur'a kuni 1-tur ochiq. Keyin har kuni MATCHDAY_UNLOCK_HOUR (01:00)
-    da bitta yangi tur ochiladi. Ochiq turlar soni = 1 + (kun farqi), kun farqi
-    "unlock soatiga moslangan kalendar kun" bo'yicha hisoblanadi (Toshkent vaqti).
+    Mantiq: qur'a kuni MATCHDAYS_PER_UNLOCK ta tur ochiq. Keyin har kuni
+    MATCHDAY_UNLOCK_HOUR (01:00) da yana MATCHDAYS_PER_UNLOCK ta tur ochiladi.
+    Ochiq turlar = (1 + kun farqi) * MATCHDAYS_PER_UNLOCK, kun farqi "unlock
+    soatiga moslangan kalendar kun" bo'yicha (Toshkent vaqti).
 
     draw_date yo'q bo'lsa (qur'a o'tkazilmagan) — 0 (hech qaysi tur ochiq emas).
     Natija 1..TOTAL_MATCHDAYS oralig'ida cheklanadi.
@@ -355,7 +357,8 @@ def get_open_matchday(league_id: int) -> int:
         return shifted.date()
 
     days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
-    open_count = 1 + days_passed
+    # Har "unlock kuni" MATCHDAYS_PER_UNLOCK ta tur ochiladi (boshlanish kuni ham shuncha).
+    open_count = (1 + days_passed) * MATCHDAYS_PER_UNLOCK
 
     if open_count < 1:
         return 0
