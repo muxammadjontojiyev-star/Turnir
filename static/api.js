@@ -288,7 +288,7 @@ async function renderClubsForLeague(league) {
         alt="${escHtml(club.name)}"
         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
       />
-      <div class="club-logo-fallback" style="display:none">${ICON.get("ball", 22)}</div>
+      <div class="club-logo-fallback" style="display:none">⚽</div>
       <span class="club-name">${escHtml(club.name)}</span>
     `;
 
@@ -385,7 +385,7 @@ function renderRatingFilter() {
   // To'p urarlar tabi (barcha ligalar bo'yicha umumiy, doimiy tab)
   const topScorersBtn = document.createElement("button");
   topScorersBtn.className = "tab-btn" + (APP.ratingTab === "top_scorers" ? " active" : "");
-  topScorersBtn.innerHTML = `${ICON.get("ball", 16)} ${escHtml(APP.t.tab_top_scorers || "To'p urarlar")}`;
+  topScorersBtn.textContent = APP.t.tab_top_scorers || "⚽ To'p urarlar";
   topScorersBtn.addEventListener("click", async () => {
     APP.ratingTab = "top_scorers";
     showRatingCard("top_scorers");
@@ -744,7 +744,7 @@ async function loadMyMatches() {
     if (matches.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="empty-state-icon">${ICON.get("ball", 40)}</span>
+          <span class="empty-state-icon">⚽</span>
           ${t.no_matches || "Hali o'yinlar yo'q"}
         </div>`;
       return;
