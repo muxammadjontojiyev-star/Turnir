@@ -1115,3 +1115,54 @@ table { border-collapse: collapse; width: 100%; }
   font-weight: 500;
   color: var(--text-secondary);
 }
+
+/* ============================================================
+   MAJBURIY KANAL A'ZOLIGI (subscribe gate)
+   ============================================================ */
+#subscribe-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 24px 18px;
+}
+.subscribe-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  max-width: 340px;
+}
+.subscribe-icon {
+  font-size: 48px;
+}
+.subscribe-text {
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.subscribe-link-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: 10px;
+  background: var(--cyan-dim);
+  border: 1px solid var(--border-accent);
+  color: var(--cyan);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.subscribe-check-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+}

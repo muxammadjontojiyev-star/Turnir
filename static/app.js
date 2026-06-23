@@ -471,7 +471,7 @@ function hideLoadingScreen() {
 //  INIT
 // ============================================================
 
-function init() {
+async function init() {
   const tg = window.Telegram?.WebApp;
   if (tg) {
     tg.ready();
@@ -490,7 +490,69 @@ function init() {
 
   bindEvents();
   hideLoadingScreen();
+
+  // Majburiy kanal a'zoligini tekshiramiz — a'zo bo'lmasa asosiy ilova ochilmaydi
+  const subscribed = await checkChannelMembership();
+  if (!subscribed) {
+    showSubscribeGate();
+    return;
+  }
+
   navigateTo("home");
+}
+
+// ============================================================
+//  MAJBURIY KANAL A'ZOLIGI
+// ============================================================
+
+// Backend orqali a'zolikni tekshiradi. Xato bo'lsa — true (bloklamaymiz).
+async function checkChannelMembership() {
+  try {
+    const data = await apiFetch("/membership/check");
+    APP.channelInfo = { url: data.channel_url, username: data.channel_username };
+    return !!data.subscribed;
+  } catch (e) {
+    // Tekshiruv ishlamasa foydalanuvchini bloklamaymiz
+    return true;
+  }
+}
+
+// "Kanalga a'zo bo'ling" ekranini ko'rsatadi (asosiy ilova o'rniga)
+function showSubscribeGate() {
+  const t = APP.t;
+  const info = APP.channelInfo || {};
+  const url = info.url || "https://t.me/efootball_liga_turnir";
+
+  // Asosiy konteynerni topamiz (mavjud bo'lsa main, bo'lmasa body)
+  const host = document.querySelector("main") || document.body;
+  // Boshqa bo'limlarni yashiramiz
+  document.querySelectorAll("main > section").forEach(s => s.classList.add("hidden"));
+
+  let gate = document.getElementById("subscribe-gate");
+  if (!gate) {
+    gate = document.createElement("div");
+    gate.id = "subscribe-gate";
+    host.appendChild(gate);
+  }
+  gate.classList.remove("hidden");
+  gate.innerHTML = `
+    <div class="subscribe-box">
+      <div class="subscribe-icon">📢</div>
+      <div class="subscribe-text">${escHtml(t.subscribe_required || "Botdan foydalanish uchun avval kanalimizga a'zo bo'ling:")}</div>
+      <a class="subscribe-link-btn" href="${escHtml(url)}" target="_blank">${escHtml(t.subscribe_button || "📢 Kanalga a'zo bo'lish")}</a>
+      <button class="subscribe-check-btn" id="btn-subscribe-check">${escHtml(t.subscribe_check_button || "✅ A'zo bo'ldim, tekshirish")}</button>
+    </div>
+  `;
+
+  document.getElementById("btn-subscribe-check").addEventListener("click", async () => {
+    const ok = await checkChannelMembership();
+    if (ok) {
+      gate.classList.add("hidden");
+      navigateTo("home");
+    } else {
+      showToast(t.subscribe_not_yet || "❌ Siz hali kanalga a'zo bo'lmadingiz.");
+    }
+  });
 }
 
 // ============================================================
