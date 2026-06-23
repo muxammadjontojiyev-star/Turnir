@@ -102,36 +102,8 @@ async function loadHome() {
     renderLeagues(leagues);
     renderHeroCard(open || null);
     renderRules();
-    await loadHomeMatches();
   } catch (e) {
     showToast("❌ " + e.message);
-  }
-}
-
-// Home'dagi "Joriy o'yinlarim" — Profildagi natija kiritish mantig'ini qayta ishlatadi.
-// O'yini yo'q bo'lsa (qur'a qilinmagan) bo'lim yashiriladi.
-async function loadHomeMatches() {
-  const section = document.getElementById("home-matches-section");
-  const list    = document.getElementById("home-matches-list");
-  const t       = APP.t;
-
-  try {
-    const data = await apiFetch("/matches/my");
-    const matches = data.matches || [];
-
-    if (matches.length === 0) {
-      section.classList.add("hidden");
-      list.innerHTML = "";
-      return;
-    }
-
-    section.classList.remove("hidden");
-    list.innerHTML = matches.map(m => renderMatchItem(m)).join("");
-    bindMatchActions(list);
-  } catch (e) {
-    // Foydalanuvchi/o'yin topilmasa — bo'lim yashirin qoladi
-    section.classList.add("hidden");
-    list.innerHTML = "";
   }
 }
 
@@ -291,6 +263,15 @@ function renderRules() {
   const rules = t.rules_list || [];
   const ul = document.getElementById("rules-list");
   ul.innerHTML = rules.map(r => `<li>${r}</li>`).join("");
+
+  // Batafsil ma'lumot (kanal yangiliklari + kelajak rejalar)
+  const detail = document.getElementById("rules-detail");
+  if (detail) {
+    const lines = t.rules_detail || [];
+    detail.innerHTML = lines.map(line =>
+      line === "" ? "<br>" : `<p>${line}</p>`
+    ).join("");
+  }
 }
 
 // ============================================================
@@ -1326,10 +1307,10 @@ async function confirmMatchResult(matchId, action) {
   }
 }
 
-// Natija o'zgargach Profil va Home dagi o'yinlar ro'yxatini izchil yangilaydi
+// Natija o'zgargach Profildagi o'yinlar ro'yxatini yangilaydi
+// (Home'da endi o'yinlar yo'q — faqat qoidalar)
 async function refreshMatchViews() {
   await loadMyMatches();
-  await loadHomeMatches();
 }
 
 // ============================================================
