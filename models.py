@@ -123,5 +123,13 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("Premier Liga", 20, "open"),
     )
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Bundesliga", 18, "open"),
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Serie A", 20, "open"),
+    )
     conn.commit()
     conn.close()
