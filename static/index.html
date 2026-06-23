@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260623c" />
+  <link rel="stylesheet" href="style.css?v=20260623f" />
 </head>
 <body>
 
@@ -288,12 +288,18 @@
             <div class="score-input-row">
               <div class="score-input-group">
                 <span class="score-input-label" id="result-player1-name">Sen</span>
-                <input id="input-score1" class="score-input" type="number" min="0" max="99" value="0" />
+                <div class="score-logo-input">
+                  <img id="result-logo1" class="result-club-logo" alt="" />
+                  <input id="input-score1" class="score-input" type="number" min="0" max="99" value="0" />
+                </div>
               </div>
               <span class="score-separator">:</span>
               <div class="score-input-group">
                 <span class="score-input-label" id="result-player2-name">Raqib</span>
-                <input id="input-score2" class="score-input" type="number" min="0" max="99" value="0" />
+                <div class="score-logo-input">
+                  <input id="input-score2" class="score-input" type="number" min="0" max="99" value="0" />
+                  <img id="result-logo2" class="result-club-logo" alt="" />
+                </div>
               </div>
             </div>
             <div class="modal-actions">
@@ -312,7 +318,7 @@
 
         <!-- Oltin Butsa -->
         <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-boot.png?v=20260623c" alt="Oltin Butsa" class="prize-icon-img" /></div>
+          <div class="prize-icon"><img src="golden-boot.png?v=20260623f" alt="Oltin Butsa" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_boot">Oltin Butsa</div>
             <div class="prize-desc" data-i18n="golden_boot_desc">Eng ko'p gol urgan o'yinchi</div>
@@ -323,7 +329,7 @@
 
         <!-- Oltin To'p -->
         <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-ball.png?v=20260623c" alt="Oltin To'p" class="prize-icon-img" /></div>
+          <div class="prize-icon"><img src="golden-ball.png?v=20260623f" alt="Oltin To'p" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_ball">Oltin To'p</div>
             <div class="prize-desc" data-i18n="golden_ball_desc">Turnir g'olibi</div>
@@ -419,7 +425,7 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260623c"></script>
-  <script src="api.js?v=20260623c"></script>
+  <script src="app.js?v=20260623f"></script>
+  <script src="api.js?v=20260623f"></script>
 </body>
 </html>
