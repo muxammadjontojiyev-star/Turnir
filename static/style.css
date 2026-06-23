@@ -521,6 +521,13 @@ table { border-collapse: collapse; width: 100%; }
   font-size: 13px;
   color: var(--text-primary);
 }
+/* Raqamli ustunlar (B/G/D/M/GF/GA/GD) ko'p — mobil ekranga sig'ishi uchun tor padding */
+.rating-table th:nth-last-child(-n+7),
+.rating-table td:nth-last-child(-n+7) {
+  padding-left: 5px;
+  padding-right: 5px;
+  font-size: 12px;
+}
 .rating-table td:first-child {
   font-family: var(--font-display);
   font-size: 14px;

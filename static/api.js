@@ -351,7 +351,7 @@ function renderRatingTable(rating) {
   const myId  = APP.currentUser?.id;
 
   if (!rating || rating.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</td></tr>`;
     return;
   }
 
@@ -388,6 +388,8 @@ function renderRatingTable(rating) {
 
     const trCls = ["rating-row", isMe ? "is-me" : ""].filter(Boolean).join(" ");
 
+    const gd = (player.goal_difference >= 0 ? "+" : "") + player.goal_difference;
+
     return `
       <tr class="${trCls}" data-user-id="${player.user_id}">
         <td${rankCls ? ` class="${rankCls}"` : ""}>${rank}</td>
@@ -397,6 +399,8 @@ function renderRatingTable(rating) {
         <td>${player.draws}</td>
         <td>${player.losses}</td>
         <td>${player.goals_for}</td>
+        <td>${player.goals_against}</td>
+        <td>${gd}</td>
       </tr>
     `;
   }).join("");
