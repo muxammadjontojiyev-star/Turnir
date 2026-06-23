@@ -37,6 +37,7 @@ const TEXTS = {
     players:         "O'yinchilar",
     max_players:     "Maksimal",
     matchday:        "Tur",
+    season:          "Mavsum",
     register:        "Ro'yxatdan o'tish",
     choose_league:   "LIGA TANLASH",
     clubs_in_league: "LIGADAGI KLUBLAR",
@@ -163,6 +164,7 @@ const TEXTS = {
     players:         "Игроки",
     max_players:     "Максимум",
     matchday:        "Тур",
+    season:          "Сезон",
     register:        "Зарегистрироваться",
     choose_league:   "ВЫБОР ЛИГИ",
     clubs_in_league: "КЛУБЫ ЛИГИ",
@@ -283,6 +285,7 @@ const TEXTS = {
     players:         "Players",
     max_players:     "Max",
     matchday:        "Round",
+    season:          "Season",
     register:        "Register",
     choose_league:   "CHOOSE LEAGUE",
     clubs_in_league: "CLUBS IN LEAGUE",
@@ -553,10 +556,11 @@ function showSubscribeGate() {
   const info = APP.channelInfo || {};
   const url = info.url || "https://t.me/efootball_liga_turnir";
 
-  // Asosiy konteynerni topamiz (mavjud bo'lsa main, bo'lmasa body)
   const host = document.querySelector("main") || document.body;
-  // Boshqa bo'limlarni yashiramiz
-  document.querySelectorAll("main > section").forEach(s => s.classList.add("hidden"));
+  // Barcha bo'limlarni yashiramiz (active'ni olib tashlaymiz — navigateTo bilan bir xil tizim)
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  // Pastki navigatsiyani ham yashiramiz (gate paytida kerak emas)
+  document.querySelector(".bottom-nav")?.classList.add("hidden");
 
   let gate = document.getElementById("subscribe-gate");
   if (!gate) {
@@ -577,12 +581,19 @@ function showSubscribeGate() {
   document.getElementById("btn-subscribe-check").addEventListener("click", async () => {
     const ok = await checkChannelMembership();
     if (ok) {
-      gate.classList.add("hidden");
+      hideSubscribeGate();
       navigateTo("home");
     } else {
       showToast(t.subscribe_not_yet || "❌ Siz hali kanalga a'zo bo'lmadingiz.");
     }
   });
+}
+
+// Gate'ni yopadi va asosiy interfeysni qaytaradi
+function hideSubscribeGate() {
+  const gate = document.getElementById("subscribe-gate");
+  if (gate) gate.classList.add("hidden");
+  document.querySelector(".bottom-nav")?.classList.remove("hidden");
 }
 
 // ============================================================
