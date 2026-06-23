@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 
-from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS
+from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
@@ -610,10 +610,16 @@ async def admin_start_league(league_id: int, admin: dict = Depends(get_authentic
     update_league_status(league_id, LEAGUE_STATUS_IN_PROGRESS)
     set_league_draw_date(league_id)  # = bugun (turnir mintaqasi)
 
+    # Avtomatik 0:0 tasdiqlangan turlarni qayta ochamiz (toza boshlanish).
+    # Qo'lda kiritilgan haqiqiy natijalar (0:0 emas) SAQLANADI.
+    # Bugundan boshlanganda faqat MATCHDAYS_PER_UNLOCK ta tur ochiq, qolgani yopiq —
+    # shuning uchun butun jadval bo'ylab avtomatik 0:0 larni tozalaymiz.
+    reopened = reopen_matchdays(league_id, TOTAL_MATCHDAYS)
+
     members = get_league_members_for_notify(league_id)
     await notify_members(members, "notify_matchday_open", matchday=1)
 
-    return {"status": "ok", "league_id": league_id}
+    return {"status": "ok", "league_id": league_id, "reopened": reopened}
 
 
 # ============ POST /admin/league/{league_id}/redraw ============
@@ -671,12 +677,13 @@ async def admin_redraw_league(
 @app.post("/admin/league/{league_id}/reopen-auto")
 async def admin_reopen_auto(league_id: int, admin: dict = Depends(get_authenticated_admin)):
     """
-    Avtomatik 0:0 tasdiqlangan turlarni qayta 'pending' qiladi (xato avtomatik
-    tasdiqni bekor qilish). Faqat haqiqatan deadline o'tmagan, lekin noto'g'ri
-    tasdiqlangan turlarni qaytaradi — qo'lda kiritilgan natijalarga TEGMAYDI.
+    Turnirni BUGUNDAN qayta boshlaydi: draw_date'ni bugunga qo'yadi va avtomatik
+    0:0 tasdiqlangan turlarni qayta 'pending' qiladi.
 
-    Mantiq: hozir deadline o'tgan tur = get_deadline_passed_matchday. Undan KEYINGI
-    (hali deadline o'tmasligi kerak) turlardan avtomatik 0:0 bo'lganlari qaytariladi.
+    - draw_date = bugun → bugun MATCHDAYS_PER_UNLOCK ta tur ochiq, qolgani yopiq;
+      keyingilari har kuni 01:00 da ochiladi.
+    - Avtomatik 0:0 tasdiqlangan turlar → pending (qaytadan o'ynaladi).
+    - Qo'lda kiritilgan haqiqiy natijalar (0:0 emas) SAQLANADI — tegilmaydi.
 
     Xato holatlari: league_not_found → 404
     """
@@ -684,22 +691,11 @@ async def admin_reopen_auto(league_id: int, admin: dict = Depends(get_authentica
     if league is None:
         raise HTTPException(status_code=404, detail="league_not_found")
 
-    # Deadline haqiqatan o'tgan tur — undan keyingilari xato tasdiqlangan bo'lishi mumkin
-    deadline_md = get_deadline_passed_matchday(league_id)
-    open_md = get_open_matchday(league_id)
+    # draw_date'ni bugunga qo'yamiz — shundagina "bugun faqat 1-2 tur ochiq" bo'ladi
+    set_league_draw_date(league_id)
 
-    # deadline_md dan keyin, open_md gacha bo'lgan turlar — bugun ochiq, deadline o'tmagan.
-    # Ulardan avtomatik 0:0 confirmed bo'lganlarini qaytaramiz.
-    reopened = 0
-    if open_md > deadline_md:
-        # up_to = open_md (ochiq turlargacha), lekin deadline o'tganlarni qaytarmaymiz.
-        # Avval hammasini (open_md gacha) belgilab, keyin deadline_md gacha bo'lganlarni
-        # qayta tasdiqlaymiz — soddalik uchun: faqat (deadline_md, open_md] oralig'i.
-        # reopen_matchdays up_to bilan ishlaydi, shuning uchun open_md gacha ochib,
-        # so'ng deadline_md gacha bo'lganlarni qayta yopamiz (auto_resolve).
-        reopened_all = reopen_matchdays(league_id, open_md)
-        if deadline_md >= 1:
-            auto_resolve_matches(league_id, deadline_md)
-        reopened = reopened_all
+    # Butun jadval bo'ylab avtomatik 0:0 confirmed turlarni qaytaramiz.
+    # reopen_matchdays faqat score 0:0 confirmed'larni oladi (qo'lda natijalarga tegmaydi).
+    reopened = reopen_matchdays(league_id, TOTAL_MATCHDAYS)
 
     return {"status": "ok", "league_id": league_id, "reopened": reopened}
