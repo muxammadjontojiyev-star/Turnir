@@ -1112,6 +1112,10 @@ table { border-collapse: collapse; width: 100%; }
   vertical-align: -0.18em;
   margin-right: 2px;
 }
+.rules-detail-line .icon {
+  vertical-align: -0.2em;
+  margin-right: 4px;
+}
 .nav-label { font-family: var(--font-display); font-size: 10px; font-weight: 600; letter-spacing: 1px; }
 
 /* Imzo element: neon glow chizig'i */

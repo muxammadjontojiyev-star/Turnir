@@ -326,9 +326,14 @@ function renderRules() {
   const detail = document.getElementById("rules-detail");
   if (detail) {
     const lines = t.rules_detail || [];
-    detail.innerHTML = lines.map(line =>
-      line === "" ? "<br>" : `<p>${line}</p>`
-    ).join("");
+    detail.innerHTML = lines.map(line => {
+      if (line === "") return "<br>";
+      // Qator boshidagi emojilarni premium SVG ikon bilan almashtiramiz
+      let html = escHtml(line)
+        .replace(/^📢\s*/, `${ICON.get("megaphone", 18)} `)
+        .replace(/^🏆\s*/, `${ICON.get("trophy", 18)} `);
+      return `<p class="rules-detail-line">${html}</p>`;
+    }).join("");
   }
 }
 
