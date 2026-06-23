@@ -586,6 +586,54 @@ def confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tu
     return True, "ok"
 
 
+def auto_resolve_matches(league_id: int, up_to_matchday: int) -> dict:
+    """
+    Deadline o'tgan (up_to_matchday va undan oldingi turlar) hal qilinmagan
+    o'yinlarni avtomatik tasdiqlaydi. Har kuni 01:00 da scheduler chaqiradi.
+
+    Qoidalar:
+    - status 'pending' (hech kim kiritmagan) → 0:0 durang, 'confirmed'.
+    - status 'awaiting_confirmation' (bir tomon kiritgan, raqib javob bermagan)
+      → kiritilgan natija saqlanadi, 'confirmed' (avtomatik tasdiq).
+    - 'confirmed' va 'rejected' o'yinlarga TEGILMAYDI (allaqachon hal qilingan).
+
+    up_to_matchday: shu raqamgacha (shu raqam ham kiradi) bo'lgan turlar deadline'i o'tgan.
+
+    Qaytaradi: {pending_resolved, awaiting_resolved}.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # 1) Hech kim kiritmagan (pending) → 0:0 durang, tasdiqlangan
+    cursor.execute(
+        """
+        UPDATE matches
+        SET score1 = 0, score2 = 0, status = 'confirmed'
+        WHERE league_id = ? AND matchday <= ? AND status = 'pending'
+        """,
+        (league_id, up_to_matchday),
+    )
+    pending_resolved = cursor.rowcount
+
+    # 2) Bir tomon kiritgan, tasdiqlanmagan → kiritilgan natija tasdiqlanadi
+    cursor.execute(
+        """
+        UPDATE matches
+        SET status = 'confirmed'
+        WHERE league_id = ? AND matchday <= ? AND status = 'awaiting_confirmation'
+        """,
+        (league_id, up_to_matchday),
+    )
+    awaiting_resolved = cursor.rowcount
+
+    conn.commit()
+    conn.close()
+    return {
+        "pending_resolved": pending_resolved,
+        "awaiting_resolved": awaiting_resolved,
+    }
+
+
 def get_rejected_matches() -> list[dict]:
     """
     Statusi 'rejected' bo'lgan barcha matchlarni, ikkala o'yinchining

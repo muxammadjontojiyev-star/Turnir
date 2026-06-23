@@ -28,6 +28,7 @@ from queries import (
     get_leagues_needing_matchday_notice,
     set_last_notified_matchday,
     get_league_members_for_notify,
+    auto_resolve_matches,
 )
 from notify import notify_members
 
@@ -52,6 +53,18 @@ async def _check_and_notify_once() -> None:
         league_id = lg["league_id"]
         open_md = lg["open_matchday"]
         try:
+            # Yangi tur ochildi — OLDINGI turlar deadline'i o'tdi, ularni avtomatik
+            # tasdiqlaymiz (pending→0:0, awaiting→tasdiq). open_md hali yangi, tegmaymiz.
+            up_to = open_md - 1
+            if up_to >= 1:
+                resolved = auto_resolve_matches(league_id, up_to)
+                if resolved["pending_resolved"] or resolved["awaiting_resolved"]:
+                    logger.info(
+                        "Scheduler: '%s' ligasida avtomatik tasdiq — pending(0:0): %d, awaiting: %d (tur %d gacha).",
+                        lg["name"], resolved["pending_resolved"],
+                        resolved["awaiting_resolved"], up_to,
+                    )
+
             members = get_league_members_for_notify(league_id)
             await notify_members(members, "notify_matchday_open", matchday=open_md)
             # Xabar yuborilgach belgilaymiz — takror yuborilmasligi uchun
