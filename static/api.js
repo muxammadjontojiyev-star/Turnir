@@ -1340,6 +1340,36 @@ async function registerToLeague() {
 
 function openResultModal(matchId) {
   APP.activeMatchId = matchId;
+
+  // Logolarni to'ldiramiz — score1 (chap) = player1_club, score2 (o'ng) = player2_club.
+  const m = (APP.myMatches || []).find(x => x.id === matchId);
+  const logo1El = document.getElementById("result-logo1");
+  const logo2El = document.getElementById("result-logo2");
+
+  // Yordamchi: logo bor bo'lsa ko'rsatadi, aks holda butunlay yashiradi (joy egallamaydi)
+  const setLogo = (el, club) => {
+    if (!el) return;
+    const logo = club ? findClubLogo(club) : null;
+    if (logo) {
+      el.src = logo;
+      el.alt = club || "";
+      el.style.display = "";
+    } else {
+      el.removeAttribute("src");
+      el.style.display = "none";
+    }
+  };
+
+  setLogo(logo1El, m ? m.player1_club : null);
+  setLogo(logo2El, m ? m.player2_club : null);
+
+  // Vaqtinchalik diagnostika — logo muammosini aniqlash uchun
+  console.log("[Natija modal] match topildi:", !!m,
+    "| player1_club:", m ? m.player1_club : "(match yo'q)",
+    "-> logo:", m ? !!findClubLogo(m.player1_club) : "-",
+    "| player2_club:", m ? m.player2_club : "(match yo'q)",
+    "-> logo:", m ? !!findClubLogo(m.player2_club) : "-");
+
   document.getElementById("modal-result").classList.remove("hidden");
 }
 

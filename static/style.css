@@ -950,6 +950,10 @@ table { border-collapse: collapse; width: 100%; }
   object-fit: contain;
   flex-shrink: 0;
 }
+.result-club-logo:not([src]),
+.result-club-logo[src=""] {
+  display: none;
+}
 .score-input {
   width: 72px;
   height: 64px;
