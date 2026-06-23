@@ -433,10 +433,18 @@ def get_user_matches(user_id: int) -> list[dict]:
         """
         SELECT m.*,
                r1.club_name AS player1_club,
-               r2.club_name AS player2_club
+               r2.club_name AS player2_club,
+               u1.telegram_id AS player1_telegram_id,
+               u1.username    AS player1_username,
+               u1.nickname    AS player1_nickname,
+               u2.telegram_id AS player2_telegram_id,
+               u2.username    AS player2_username,
+               u2.nickname    AS player2_nickname
         FROM matches m
         LEFT JOIN registrations r1 ON r1.user_id = m.player1_id
         LEFT JOIN registrations r2 ON r2.user_id = m.player2_id
+        LEFT JOIN users u1 ON u1.id = m.player1_id
+        LEFT JOIN users u2 ON u2.id = m.player2_id
         WHERE m.player1_id = ? OR m.player2_id = ?
         ORDER BY m.matchday ASC
         """,
