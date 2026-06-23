@@ -59,6 +59,48 @@ const LEAGUE_CLUBS = {
     { name: "West Ham",        logo: "https://media.api-sports.io/football/teams/48.png" },
     { name: "Wolves",          logo: "https://media.api-sports.io/football/teams/39.png" },
   ],
+  "Bundesliga": [
+    { name: "Augsburg",          logo: "https://media.api-sports.io/football/teams/170.png" },
+    { name: "Bayer Leverkusen",  logo: "https://media.api-sports.io/football/teams/168.png" },
+    { name: "Bayern München",    logo: "https://media.api-sports.io/football/teams/157.png" },
+    { name: "Bochum",            logo: "https://media.api-sports.io/football/teams/176.png" },
+    { name: "Borussia Dortmund", logo: "https://media.api-sports.io/football/teams/165.png" },
+    { name: "Darmstadt",         logo: "https://media.api-sports.io/football/teams/1318.png" },
+    { name: "Eintracht Frankfurt", logo: "https://media.api-sports.io/football/teams/169.png" },
+    { name: "Freiburg",          logo: "https://media.api-sports.io/football/teams/160.png" },
+    { name: "Gladbach",          logo: "https://media.api-sports.io/football/teams/163.png" },
+    { name: "Heidenheim",        logo: "https://media.api-sports.io/football/teams/180.png" },
+    { name: "Hoffenheim",        logo: "https://media.api-sports.io/football/teams/167.png" },
+    { name: "Köln",              logo: "https://media.api-sports.io/football/teams/192.png" },
+    { name: "Mainz 05",          logo: "https://media.api-sports.io/football/teams/164.png" },
+    { name: "RB Leipzig",        logo: "https://media.api-sports.io/football/teams/173.png" },
+    { name: "Stuttgart",         logo: "https://media.api-sports.io/football/teams/172.png" },
+    { name: "Union Berlin",      logo: "https://media.api-sports.io/football/teams/182.png" },
+    { name: "Werder Bremen",     logo: "https://media.api-sports.io/football/teams/162.png" },
+    { name: "Wolfsburg",         logo: "https://media.api-sports.io/football/teams/161.png" },
+  ],
+  "Serie A": [
+    { name: "Atalanta",        logo: "https://media.api-sports.io/football/teams/499.png" },
+    { name: "Bologna",         logo: "https://media.api-sports.io/football/teams/500.png" },
+    { name: "Cagliari",        logo: "https://media.api-sports.io/football/teams/490.png" },
+    { name: "Empoli",          logo: "https://media.api-sports.io/football/teams/511.png" },
+    { name: "Fiorentina",      logo: "https://media.api-sports.io/football/teams/502.png" },
+    { name: "Frosinone",       logo: "https://media.api-sports.io/football/teams/512.png" },
+    { name: "Genoa",           logo: "https://media.api-sports.io/football/teams/495.png" },
+    { name: "Inter",           logo: "https://media.api-sports.io/football/teams/505.png" },
+    { name: "Juventus",        logo: "https://media.api-sports.io/football/teams/496.png" },
+    { name: "Lazio",           logo: "https://media.api-sports.io/football/teams/487.png" },
+    { name: "Lecce",           logo: "https://media.api-sports.io/football/teams/867.png" },
+    { name: "Milan",           logo: "https://media.api-sports.io/football/teams/489.png" },
+    { name: "Monza",           logo: "https://media.api-sports.io/football/teams/1579.png" },
+    { name: "Napoli",          logo: "https://media.api-sports.io/football/teams/492.png" },
+    { name: "Roma",            logo: "https://media.api-sports.io/football/teams/497.png" },
+    { name: "Salernitana",     logo: "https://media.api-sports.io/football/teams/514.png" },
+    { name: "Sassuolo",        logo: "https://media.api-sports.io/football/teams/488.png" },
+    { name: "Torino",          logo: "https://media.api-sports.io/football/teams/503.png" },
+    { name: "Udinese",         logo: "https://media.api-sports.io/football/teams/494.png" },
+    { name: "Verona",          logo: "https://media.api-sports.io/football/teams/504.png" },
+  ],
 };
 
 async function apiFetch(path, options = {}) {
@@ -126,7 +168,8 @@ function renderHeroCard(league) {
   count.textContent = league.current_players;
   max.textContent   = league.max_players;
 
-  document.getElementById("home-matchday").textContent = "—";
+  // Mavsum raqami — hozircha barcha ligalarda 1-mavsum
+  document.getElementById("home-matchday").textContent = "1";
 
   const btn = document.getElementById("btn-register");
   // Liga to'liq bo'lsa yoki klub tanlanmagan bo'lsa — disabled
