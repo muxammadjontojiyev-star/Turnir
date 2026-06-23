@@ -35,6 +35,7 @@ from queries import (
     get_open_matchday, set_league_draw_date, delete_league_matches,
     get_played_results, restore_results_to_schedule,
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
+    get_matchday_entry_locked,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -144,19 +145,27 @@ def get_authenticated_admin(x_telegram_init_data: str = Header(...)) -> dict:
 
 def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
     """
-    Har bir match'ga 'is_locked' (bool) qo'shadi: matchday hali ochilmagan bo'lsa True.
+    Har bir match'ga 'is_locked' va 'entry_locked' (bool) qo'shadi.
 
-    Tur qulfi: faqat ochilgan turlarning (get_open_matchday) natijasini kiritish
-    mumkin. Bu yerda har match 'is_locked' bilan belgilanadi — frontend yopiq
-    turlarda "Natija" tugmasini ko'rsatmaydi. open_matchday liga bo'yicha bir marta
-    hisoblanadi (samaradorlik uchun, har match uchun emas).
+    - is_locked: matchday hali OCHILMAGAN (get_open_matchday'dan katta) → True.
+    - entry_locked: tur ochilgan, lekin ochilgandan keyin RESULT_ENTRY_DELAY_MINUTES
+      (1s45daq) hali o'tmagan → True (hisob kiritib bo'lmaydi, biroz erta).
+
+    Frontend: is_locked → qulf belgisi; entry_locked → "biroz kuting" (tugma o'chiq).
+    open_matchday liga bo'yicha bir marta keshlanadi (samaradorlik uchun).
     """
     open_cache: dict[int, int] = {}
     for m in matches:
         league_id = m.get("league_id")
         if league_id not in open_cache:
             open_cache[league_id] = get_open_matchday(league_id)
-        m["is_locked"] = m.get("matchday", 0) > open_cache[league_id]
+        matchday = m.get("matchday", 0)
+        m["is_locked"] = matchday > open_cache[league_id]
+        # Ochiq turlar uchun kechikishni tekshiramiz (yopiq turlar uchun keraksiz)
+        if not m["is_locked"]:
+            m["entry_locked"] = get_matchday_entry_locked(league_id, matchday)
+        else:
+            m["entry_locked"] = False
     return matches
 
 
@@ -462,6 +471,12 @@ async def submit_result(
     if match["matchday"] > open_matchday:
         raise HTTPException(status_code=400, detail="matchday_locked")
 
+    # Hisob kiritish kechikishi: tur ochilgandan keyin 1s45daq o'tmagan bo'lsa,
+    # natija kiritib bo'lmaydi (o'ynalmagan o'yinga darrov yolg'on natija oldini olish).
+    # Rad etilgan natijani qayta kiritish ham shu cheklovga bo'ysunadi.
+    if get_matchday_entry_locked(match["league_id"], match["matchday"]):
+        raise HTTPException(status_code=400, detail="entry_too_early")
+
     success, reason = submit_match_result(match_id, score1, score2, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -733,3 +748,36 @@ async def admin_reopen_auto(league_id: int, admin: dict = Depends(get_authentica
     reopened = reopen_matchdays(league_id, TOTAL_MATCHDAYS)
 
     return {"status": "ok", "league_id": league_id, "reopened": reopened}
+
+
+@app.post("/admin/league/{league_id}/resolve-open")
+async def admin_resolve_open(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+    """
+    Hozir OCHIQ bo'lgan barcha turlarni DARROV avtomatik tasdiqlaydi (deadline
+    o'tishini kutmasdan). LaLiga kabi 1 kun orqada qolgan ligani boshqalarga
+    tenglashtirish uchun — bugun ochiq turlar (masalan 1-2) shu zahoti tasdiqlanadi.
+
+    - pending (hech kim kiritmagan) → 0:0 durang, confirmed.
+    - awaiting_confirmation (bir tomon kiritgan) → kiritilgan natija, confirmed.
+    - confirmed/rejected → tegilmaydi.
+
+    Xato holatlari: league_not_found → 404
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        raise HTTPException(status_code=404, detail="league_not_found")
+
+    open_md = get_open_matchday(league_id)
+    if open_md < 1:
+        return {"status": "ok", "league_id": league_id, "resolved": 0, "up_to": 0}
+
+    resolved = auto_resolve_matches(league_id, open_md)
+    total = resolved["pending_resolved"] + resolved["awaiting_resolved"]
+    return {
+        "status": "ok",
+        "league_id": league_id,
+        "up_to": open_md,
+        "resolved": total,
+        "pending_resolved": resolved["pending_resolved"],
+        "awaiting_resolved": resolved["awaiting_resolved"],
+    }

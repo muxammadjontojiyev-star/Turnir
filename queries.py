@@ -11,7 +11,7 @@ from models import get_connection
 from config import (
     LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE,
     TOURNAMENT_TIMEZONE_OFFSET, MATCHDAY_UNLOCK_HOUR, TOTAL_MATCHDAYS,
-    MATCHDAYS_PER_UNLOCK,
+    MATCHDAYS_PER_UNLOCK, RESULT_ENTRY_DELAY_MINUTES,
 )
 
 
@@ -394,6 +394,49 @@ def get_deadline_passed_matchday(league_id: int) -> int:
     return deadline_passed
 
 
+def get_matchday_entry_locked(league_id: int, matchday: int) -> bool:
+    """
+    Berilgan matchday uchun hisob kiritish KECHIKISH tufayli bloklanganmi.
+
+    Tur ochilgandan (01:00) so'ng RESULT_ENTRY_DELAY_MINUTES (105 daq = 1s45daq)
+    o'tmaguncha natija kiritib bo'lmaydi. Maqsad: o'yinchilar o'ynashga ulgursin,
+    o'ynalmagan o'yinga darrov yolg'on natija kiritilmasin.
+
+    True  → hali erta, hisob kiritib bo'lmaydi (kechikish tugamagan).
+    False → kechikish tugagan yoki tur eski, hisob kiritsa bo'ladi.
+
+    Eslatma: bu tur OCHIQ (get_open_matchday) ekanini tekshirmaydi — uni chaqiruvchi
+    alohida tekshiradi. Bu faqat "ochilgandan keyin yetarli vaqt o'tdimi"ni qaraydi.
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        return True
+    draw_dt = _parse_draw_date(league["draw_date"] if "draw_date" in league.keys() else None)
+    if draw_dt is None:
+        return True
+
+    import math
+    # matchday qaysi "unlock kunida" ochiladi (0 = boshlanish/qur'a kuni):
+    # 1..PER_UNLOCK -> 0-kun, PER_UNLOCK+1..2*PER_UNLOCK -> 1-kun, ...
+    unlock_day_index = math.ceil(matchday / MATCHDAYS_PER_UNLOCK) - 1
+
+    # O'sha turning ochilish payti: draw_date kuni + unlock_day_index kun, soat = UNLOCK_HOUR.
+    # draw_dt timezone-aware — open_dt'ni ham o'sha tzinfo bilan yasaymiz (taqqoslash uchun).
+    draw_day = (draw_dt - timedelta(hours=MATCHDAY_UNLOCK_HOUR)).date()
+    open_day = draw_day + timedelta(days=unlock_day_index)
+    open_dt = datetime(open_day.year, open_day.month, open_day.day,
+                       MATCHDAY_UNLOCK_HOUR, 0, 0, tzinfo=draw_dt.tzinfo)
+
+    # Boshlanish kuni (0-kun) turlar darrov ochiladi (qur'a payti), keyingilari 01:00 da.
+    # Qur'a kuni ochilgan turlar uchun ochilish payti = draw_date'ning o'zi.
+    if unlock_day_index == 0:
+        open_dt = draw_dt
+
+    entry_allowed_at = open_dt + timedelta(minutes=RESULT_ENTRY_DELAY_MINUTES)
+    now = _tournament_now()
+    return now < entry_allowed_at
+
+
 def get_open_matchday(league_id: int) -> int:
     """
     Shu liga uchun hozir ochiq bo'lgan eng yuqori matchday raqamini qaytaradi.
@@ -641,14 +684,26 @@ def confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tu
     if action not in ("confirm", "reject"):
         return False, "invalid_action"
 
-    new_status = "confirmed" if action == "confirm" else "rejected"
-
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE matches SET status = ? WHERE id = ?",
-        (new_status, match_id),
-    )
+    if action == "confirm":
+        # Tasdiqlandi — natija o'zgarmaydi, status 'confirmed'
+        cursor.execute(
+            "UPDATE matches SET status = 'confirmed' WHERE id = ?",
+            (match_id,),
+        )
+    else:
+        # Rad etildi — natija TOZALANADI va 'pending'ga qaytadi, shunda ikkala tomon
+        # (ayniqsa rad etgan tomon) TO'G'RI natijani qaytadan kirita oladi.
+        # Eski (rad etilgan) natija admin ko'rishi uchun kerak bo'lsa — log/notify orqali.
+        cursor.execute(
+            """
+            UPDATE matches
+            SET status = 'pending', score1 = NULL, score2 = NULL, submitted_by = NULL
+            WHERE id = ?
+            """,
+            (match_id,),
+        )
     conn.commit()
     conn.close()
     return True, "ok"

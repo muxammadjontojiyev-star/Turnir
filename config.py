@@ -25,6 +25,11 @@ TOURNAMENT_TIMEZONE_OFFSET = 5   # Toshkent (UTC+5) — soat farqi
 MATCHDAY_UNLOCK_HOUR = 1         # Har kuni soat 01:00 (Toshkent) da yangi turlar ochiladi
 MATCHDAYS_PER_UNLOCK = 2         # Har kuni nechta tur ochiladi (turnir tezroq o'tishi uchun)
 
+# Tur ochilgandan (01:00) so'ng hisob kiritish uchun kutish vaqti (daqiqa).
+# O'yinchilar o'ynashga ulgurishi va o'ynalmagan o'yinga darrov yolg'on natija
+# kiritilmasligi uchun. 1 soat 45 daqiqa = 105 daqiqa → 02:45 dan keyin ochiladi.
+RESULT_ENTRY_DELAY_MINUTES = 105
+
 # === Liga nomlari ===
 LEAGUE_LALIGA = "LaLiga"
 LEAGUE_PREMIER = "Premier Liga"
