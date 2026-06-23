@@ -185,13 +185,23 @@ function renderLeagues(leagues) {
 
   leagues.forEach(league => {
     const item = document.createElement("div");
-    item.className = "league-item" + (league.id === APP.selectedLeagueId ? " selected" : "");
+    item.className = "league-item"
+      + (league.id === APP.selectedLeagueId ? " selected" : "")
+      + (league.is_locked ? " league-item--locked" : "");
     item.dataset.id = league.id;
 
-    const badgeClass = league.is_full ? "badge--full" : "badge--open";
-    const badgeText  = league.is_full
-      ? (t.full || "TO'LIQ")
-      : (t.open || "OCHIQ");
+    // Badge: yopiq (navbati kelmagan) > to'liq > ochiq
+    let badgeClass, badgeText;
+    if (league.is_locked) {
+      badgeClass = "badge--locked";
+      badgeText = t.league_locked_badge || "🔒 YOPIQ";
+    } else if (league.is_full) {
+      badgeClass = "badge--full";
+      badgeText = t.full || "TO'LIQ";
+    } else {
+      badgeClass = "badge--open";
+      badgeText = t.open || "OCHIQ";
+    }
 
     item.innerHTML = `
       <div>
@@ -202,6 +212,11 @@ function renderLeagues(leagues) {
     `;
 
     item.addEventListener("click", () => {
+      // Yopiq (navbati kelmagan) ligaga ro'yxatdan o'tib bo'lmaydi
+      if (league.is_locked) {
+        showToast(t.league_locked_toast || "Bu liga hali yopiq. Avval oldingi liga to'lishi kerak.");
+        return;
+      }
       APP.selectedLeagueId = league.id;
       APP.selectedClub = null;
       document.querySelectorAll(".league-item").forEach(el => el.classList.remove("selected"));
@@ -1405,6 +1420,7 @@ async function registerToLeague() {
       already_registered: APP.t.already_registered || "Siz allaqachon ro'yxatdansiz",
       league_full:        APP.t.league_full_err    || "Liga to'liq",
       club_taken:         APP.t.club_taken          || "Bu klub allaqachon band qilingan",
+      league_locked:      APP.t.league_locked_toast || "Bu liga hali yopiq. Avval oldingi liga to'lishi kerak.",
     }[e.message] || e.message;
     showToast("❌ " + msg);
     btn.disabled = false;

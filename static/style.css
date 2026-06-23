@@ -462,6 +462,11 @@ table { border-collapse: collapse; width: 100%; }
 }
 .badge--open  { background: var(--cyan-dim);   color: var(--cyan);     border: 1px solid var(--border-accent); }
 .badge--full  { background: rgba(255,69,96,.1); color: var(--red-neon); border: 1px solid rgba(255,69,96,.3); }
+.badge--locked { background: rgba(245,185,66,.1); color: #f5b942; border: 1px solid rgba(245,185,66,.35); }
+.league-item--locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 /* ============================================================
    TAB FILTER
