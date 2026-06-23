@@ -231,7 +231,58 @@ def delete_league_matches(league_id: int) -> int:
     return count
 
 
-# ============ TURNIR VAQT JADVALI (matchday qulfi) ============
+def get_played_results(league_id: int) -> list[dict]:
+    """
+    Liga uchun NATIJA kiritilgan matchlarni qaytaradi (qayta qur'ada saqlash uchun).
+
+    Faqat score'i bor (confirmed/awaiting_confirmation/rejected) matchlar.
+    Qaytaradi: [{player1_id, player2_id, score1, score2, submitted_by, status}, ...]
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT player1_id, player2_id, score1, score2, submitted_by, status
+        FROM matches
+        WHERE league_id = ? AND score1 IS NOT NULL
+        """,
+        (league_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def restore_results_to_schedule(league_id: int, played: list[dict]) -> int:
+    """
+    Saqlangan natijalarni (get_played_results) yangi jadvalga ko'chiradi.
+
+    Har bir saqlangan natija uchun yangi jadvaldan O'SHA ikki o'yinchi o'rtasidagi
+    matchni topadi (uy/mehmon tartibi muhim — player1 vs player2 aniq mos kelishi
+    kerak) va score/status'ni yozadi.
+
+    Qaytaradi: muvaffaqiyatli ko'chirilgan natijalar soni.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    restored = 0
+    for r in played:
+        # Yangi jadvalda aynan shu yo'nalishdagi (p1 uy, p2 mehmon) matchni topamiz
+        cursor.execute(
+            """
+            UPDATE matches
+            SET score1 = ?, score2 = ?, submitted_by = ?, status = ?
+            WHERE league_id = ? AND player1_id = ? AND player2_id = ?
+              AND score1 IS NULL
+            """,
+            (r["score1"], r["score2"], r["submitted_by"], r["status"],
+             league_id, r["player1_id"], r["player2_id"]),
+        )
+        if cursor.rowcount > 0:
+            restored += 1
+    conn.commit()
+    conn.close()
+    return restored
 
 def _tournament_now() -> datetime:
     """Hozirgi vaqtni turnir mintaqasida (Toshkent UTC+5) qaytaradi."""

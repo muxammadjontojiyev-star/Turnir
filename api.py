@@ -33,6 +33,7 @@ from queries import (
     get_user_by_id, update_league_status, league_has_matches,
     get_league_members_for_notify, get_match_by_id,
     get_open_matchday, set_league_draw_date, delete_league_matches,
+    get_played_results, restore_results_to_schedule,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -617,12 +618,18 @@ async def admin_start_league(league_id: int, admin: dict = Depends(get_authentic
 # ============ POST /admin/league/{league_id}/redraw ============
 
 @app.post("/admin/league/{league_id}/redraw")
-async def admin_redraw_league(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+async def admin_redraw_league(
+    league_id: int,
+    keep_results: bool = False,
+    admin: dict = Depends(get_authenticated_admin),
+):
     """
-    Qayta qur'a: eski jadvalni butunlay o'chirib, yangidan qur'a tashlaydi (faqat admin).
+    Qayta qur'a: eski jadvalni o'chirib, yangidan qur'a tashlaydi (faqat admin).
 
-    ⚠️ XAVFLI — barcha kiritilgan natijalar O'CHIRILADI. Faqat hammasini noldan
-    boshlash kerak bo'lganda ishlatiladi. draw_date bugunga qo'yiladi (1-tur bugun).
+    keep_results=False (default): barcha natijalar O'CHIRILADI (toza qayta qur'a).
+    keep_results=True: kiritilgan natijalar SAQLANADI — yangi jadvaldagi o'sha
+        juftlik o'yiniga ko'chiriladi. Liga to'lib (masalan 19→20 kishi), yangi
+        o'yinchini jadvalga qo'shish kerak bo'lganda ishlatiladi.
 
     Faqat liga to'lgan bo'lsa ishlaydi.
 
@@ -636,14 +643,25 @@ async def admin_redraw_league(league_id: int, admin: dict = Depends(get_authenti
     if current_count < league["max_players"]:
         raise HTTPException(status_code=400, detail="league_not_full")
 
-    # Eski jadvalni o'chiramiz (natijalar bilan birga) va yangidan qur'a tashlaymiz
+    # keep_results bo'lsa — eski natijalarni saqlab olamiz
+    played = get_played_results(league_id) if keep_results else []
+
+    # Eski jadvalni o'chirib, yangidan qur'a tashlaymiz
     delete_league_matches(league_id)
     player_ids = get_league_player_ids(league_id)
     matches_created = generate_league_schedule(league_id, player_ids)
     update_league_status(league_id, LEAGUE_STATUS_IN_PROGRESS)
     set_league_draw_date(league_id)  # = bugun
 
+    # Saqlangan natijalarni yangi jadvalga ko'chiramiz
+    restored = restore_results_to_schedule(league_id, played) if keep_results else 0
+
     members = get_league_members_for_notify(league_id)
     await notify_members(members, "notify_draw_done", league=league["name"])
 
-    return {"status": "ok", "league_id": league_id, "matches_created": matches_created}
+    return {
+        "status": "ok",
+        "league_id": league_id,
+        "matches_created": matches_created,
+        "results_restored": restored,
+    }
