@@ -184,23 +184,35 @@ async def check_membership(user: dict = Depends(get_authenticated_user)):
 
 @app.get("/leagues")
 def list_leagues():
-    """Barcha ligalarni va ularning to'lganlik holatini qaytaradi."""
-    leagues = get_all_leagues()
+    """
+    Barcha ligalarni va ularning to'lganlik holatini qaytaradi.
+
+    Ketma-ket ochilish: ligalar seed (id) tartibida ochiladi. Liga "is_locked"
+    (navbatda yopiq) bo'ladi, agar undan OLDINGI (kichikroq id) ligalardan biri
+    hali to'lmagan bo'lsa. Ya'ni faqat birinchi to'lmagan liga (va undan oldingi
+    to'lganlar) ro'yxatga ochiq; keyingilari to'lmaguncha yopiq qoladi.
+    """
+    leagues = get_all_leagues()  # id (seed) tartibida
     result = []
+    prev_all_full = True  # undan oldingi barcha ligalar to'lganmi
     for league in leagues:
         current_count = count_league_players(league["id"])
-        # has_draw_date: turnir boshlanganmi (draw_date o'rnatilganmi).
-        # Eski qur'a qilingan, lekin draw_date'siz ligalar uchun admin "Boshlash" kerak.
+        is_full = current_count >= league["max_players"]
         has_draw = ("draw_date" in league.keys()) and (league["draw_date"] is not None)
+        # Liga yopiq, agar undan oldingilardan biri to'lmagan bo'lsa
+        is_locked = not prev_all_full
         result.append({
             "id": league["id"],
             "name": league["name"],
             "status": league["status"],
             "max_players": league["max_players"],
             "current_players": current_count,
-            "is_full": current_count >= league["max_players"],
+            "is_full": is_full,
             "has_draw_date": has_draw,
+            "is_locked": is_locked,
         })
+        # Keyingi liga uchun: shu liga ham to'lган bo'lsagina ochiq bo'ladi
+        prev_all_full = prev_all_full and is_full
     return result
 
 
@@ -361,13 +373,35 @@ def register(league_id: int, club_name: str | None = None, user: dict = Depends(
     """
     Foydalanuvchini ligaga ro'yxatdan o'tkazadi.
 
+    Ketma-ket ochilish qoidasi: agar bu ligadan OLDINGI (kichikroq id) ligalardan
+    biri hali to'lmagan bo'lsa, ro'yxatdan o'tib bo'lmaydi (league_locked).
+
     Query param: league_id (int), club_name (str, ixtiyoriy)
-    Xato holatlari: already_registered, league_full, league_not_found, club_taken → 400
+    Xato holatlari: already_registered, league_full, league_not_found, club_taken,
+                    league_locked → 400
     """
+    # Ketma-ket ochilish — yopiq (navbati kelmagan) ligaga ro'yxat taqiqlanadi
+    if _is_league_locked(league_id):
+        raise HTTPException(status_code=400, detail="league_locked")
+
     success, reason = register_user_to_league(user["id"], league_id, club_name)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "league_id": league_id}
+
+
+def _is_league_locked(league_id: int) -> bool:
+    """
+    Liga "navbatda yopiq"mi: undan OLDINGI (kichikroq id) ligalardan biri hali
+    to'lmagan bo'lsa True. list_leagues bilan bir xil mantiq (backend himoyasi).
+    """
+    for league in get_all_leagues():  # id (seed) tartibida
+        if league["id"] == league_id:
+            return False  # bu liga — birinchi to'lmagan yoki to'lgan, ochiq
+        # undan oldingi liga to'lmagan bo'lsa, bu liga yopiq
+        if count_league_players(league["id"]) < league["max_players"]:
+            return True
+    return False
 
 
 # ============ POST /profile/nickname ============
