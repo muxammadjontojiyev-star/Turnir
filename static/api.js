@@ -1019,30 +1019,69 @@ function renderAdminPlayers(players) {
     return;
   }
 
-  list.innerHTML = players.map(p => {
-    const usernamePart = p.username
-      ? `<span class="admin-player-username">@${escHtml(p.username)}</span> `
-      : "";
-    let leagueLine;
+  // O'yinchilarni liga bo'yicha guruhlaymiz
+  const groups = {};            // league_id -> [players]
+  const noLeague = [];          // ro'yxatdan o'tmaganlar
+  players.forEach(p => {
     if (p.league_id) {
-      const leagueName = (APP.leagues || []).find(l => l.id === p.league_id)?.name || `Liga #${p.league_id}`;
-      const clubPart = p.club_name ? ` · ${escHtml(p.club_name)}` : "";
-      leagueLine = `${escHtml(leagueName)}${clubPart}`;
+      (groups[p.league_id] = groups[p.league_id] || []).push(p);
     } else {
-      leagueLine = t.not_registered || "Ro'yxatdan o'tilmagan";
+      noLeague.push(p);
     }
+  });
+
+  // Bitta o'yinchi qatorini yasaydi (klub logosi bilan)
+  const renderRow = (p) => {
+    // Faqat @username ko'rsatamiz (nickname o'chirildi). Username yo'q bo'lsa nickname zaxira.
+    const nameDisplay = p.username
+      ? `<span class="admin-player-username">@${escHtml(p.username)}</span>`
+      : escHtml(p.nickname || "—");
+    const clubPart = p.club_name ? ` · ${escHtml(p.club_name)}` : "";
+    const leagueName = p.league_id
+      ? ((APP.leagues || []).find(l => l.id === p.league_id)?.name || `Liga #${p.league_id}`)
+      : (t.not_registered || "Ro'yxatdan o'tilmagan");
+    // Klub logosi (bor bo'lsa) — topishni osonlashtiradi
+    const logo = p.club_name ? findClubLogo(p.club_name) : null;
+    const logoHtml = logo
+      ? `<img class="admin-player-logo" src="${escHtml(logo)}" alt="${escHtml(p.club_name)}">`
+      : `<span class="admin-player-logo admin-player-logo--empty"></span>`;
     return `
       <div class="admin-player-item">
+        ${logoHtml}
         <div class="admin-player-info">
-          ${usernamePart}${escHtml(p.nickname)}
-          <div class="admin-player-league">${leagueLine}</div>
+          ${nameDisplay}
+          <div class="admin-player-league">${escHtml(leagueName)}${clubPart}</div>
         </div>
         <button class="admin-remove-btn" data-user-id="${p.id}">
           ${t.admin_remove_player || "Chiqarish"}
         </button>
       </div>
     `;
-  }).join("");
+  };
+
+  // Ligalarni nom bo'yicha tartiblab chiqaramiz
+  const leagueIds = Object.keys(groups).map(Number).sort((a, b) => {
+    const na = (APP.leagues || []).find(l => l.id === a)?.name || "";
+    const nb = (APP.leagues || []).find(l => l.id === b)?.name || "";
+    return na.localeCompare(nb);
+  });
+
+  let html = "";
+  leagueIds.forEach(lid => {
+    const leagueName = (APP.leagues || []).find(l => l.id === lid)?.name || `Liga #${lid}`;
+    const rows = groups[lid];
+    html += `<div class="admin-league-group">
+      <div class="admin-league-header">${escHtml(leagueName)} <span class="admin-league-count">${rows.length}</span></div>
+      ${rows.map(renderRow).join("")}
+    </div>`;
+  });
+  if (noLeague.length > 0) {
+    html += `<div class="admin-league-group">
+      <div class="admin-league-header">${escHtml(t.not_registered || "Ro'yxatdan o'tilmagan")} <span class="admin-league-count">${noLeague.length}</span></div>
+      ${noLeague.map(renderRow).join("")}
+    </div>`;
+  }
+  list.innerHTML = html;
 
   list.querySelectorAll(".admin-remove-btn").forEach(btn => {
     btn.addEventListener("click", () => {
