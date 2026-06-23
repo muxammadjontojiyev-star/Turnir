@@ -329,6 +329,71 @@ def set_league_draw_date(league_id: int, dt: datetime | None = None) -> None:
     conn.close()
 
 
+def reopen_matchdays(league_id: int, up_to_matchday: int) -> int:
+    """
+    Berilgan turgacha (up_to_matchday) bo'lgan AVTOMATIK 0:0 tasdiqlangan turlarni
+    qayta 'pending' holatiga qaytaradi (xato avtomatik tasdiqni bekor qilish uchun).
+
+    Faqat score 0:0 va confirmed bo'lganlarni qaytaradi (qo'lda kiritilган haqiqiy
+    natijalarga TEGMAYDI — ular 0:0 emas yoki boshqa status).
+
+    Qaytaradi: qayta ochilgan turlar (match) soni.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE matches
+        SET score1 = NULL, score2 = NULL, submitted_by = NULL, status = 'pending'
+        WHERE league_id = ? AND matchday <= ?
+          AND status = 'confirmed' AND score1 = 0 AND score2 = 0
+        """,
+        (league_id, up_to_matchday),
+    )
+    count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return count
+
+
+def get_deadline_passed_matchday(league_id: int) -> int:
+    """
+    Deadline (01:00) o'tgan eng yuqori matchday raqamini qaytaradi.
+
+    Bu get_open_matchday'dan FARQ qiladi: ochiq turlar ichida BUGUN ochilganlarning
+    deadline'i hali o'tmagan. Deadline o'tgan = qur'a kunidan keyingi kunlarda
+    ochilganlar (bugun ochilgan MATCHDAYS_PER_UNLOCK ta turdan oldingilari).
+
+    Mantiq:
+    - days_passed=0 (qur'a kuni): turlar ochiq, lekin deadline o'tmagan → 0.
+    - days_passed=1: birinchi kun ochilganlar (MATCHDAYS_PER_UNLOCK ta) deadline o'tdi.
+    - days_passed=N: N*MATCHDAYS_PER_UNLOCK tur deadline o'tdi.
+
+    Avtomatik tasdiqlash (scheduler) shu raqamgacha bo'lgan turlarni hal qiladi.
+    draw_date yo'q bo'lsa — 0.
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        return 0
+    draw_dt = _parse_draw_date(league["draw_date"] if "draw_date" in league.keys() else None)
+    if draw_dt is None:
+        return 0
+
+    now = _tournament_now()
+
+    def unlock_day(d: datetime):
+        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR)
+        return shifted.date()
+
+    days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
+    if days_passed < 1:
+        return 0
+    deadline_passed = days_passed * MATCHDAYS_PER_UNLOCK
+    if deadline_passed > TOTAL_MATCHDAYS:
+        return TOTAL_MATCHDAYS
+    return deadline_passed
+
+
 def get_open_matchday(league_id: int) -> int:
     """
     Shu liga uchun hozir ochiq bo'lgan eng yuqori matchday raqamini qaytaradi.

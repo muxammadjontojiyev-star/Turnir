@@ -29,8 +29,8 @@ from queries import (
     set_last_notified_matchday,
     get_league_members_for_notify,
     auto_resolve_matches,
+    get_deadline_passed_matchday,
 )
-from config import MATCHDAYS_PER_UNLOCK
 from notify import notify_members
 
 logger = logging.getLogger(__name__)
@@ -54,10 +54,9 @@ async def _check_and_notify_once() -> None:
         league_id = lg["league_id"]
         open_md = lg["open_matchday"]
         try:
-            # Yangi turlar ochildi — OLDINGI turlar deadline'i o'tdi, ularni avtomatik
-            # tasdiqlaymiz (pending→0:0, awaiting→tasdiq). Bugun ochilgan MATCHDAYS_PER_UNLOCK
-            # ta turga TEGMAYMIZ (ularning deadline'i hali o'tmagan).
-            up_to = open_md - MATCHDAYS_PER_UNLOCK
+            # Yangi turlar ochildi. Faqat DEADLINE (01:00) o'tgan turlarni avtomatik
+            # tasdiqlaymiz — bugun ochilgan turlarning deadline'i hali o'tmagan, tegmaymiz.
+            up_to = get_deadline_passed_matchday(league_id)
             if up_to >= 1:
                 resolved = auto_resolve_matches(league_id, up_to)
                 if resolved["pending_resolved"] or resolved["awaiting_resolved"]:

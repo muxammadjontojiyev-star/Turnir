@@ -34,6 +34,7 @@ from queries import (
     get_league_members_for_notify, get_match_by_id,
     get_open_matchday, set_league_draw_date, delete_league_matches,
     get_played_results, restore_results_to_schedule,
+    reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -665,3 +666,40 @@ async def admin_redraw_league(
         "matches_created": matches_created,
         "results_restored": restored,
     }
+
+
+@app.post("/admin/league/{league_id}/reopen-auto")
+async def admin_reopen_auto(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+    """
+    Avtomatik 0:0 tasdiqlangan turlarni qayta 'pending' qiladi (xato avtomatik
+    tasdiqni bekor qilish). Faqat haqiqatan deadline o'tmagan, lekin noto'g'ri
+    tasdiqlangan turlarni qaytaradi — qo'lda kiritilgan natijalarga TEGMAYDI.
+
+    Mantiq: hozir deadline o'tgan tur = get_deadline_passed_matchday. Undan KEYINGI
+    (hali deadline o'tmasligi kerak) turlardan avtomatik 0:0 bo'lganlari qaytariladi.
+
+    Xato holatlari: league_not_found → 404
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        raise HTTPException(status_code=404, detail="league_not_found")
+
+    # Deadline haqiqatan o'tgan tur — undan keyingilari xato tasdiqlangan bo'lishi mumkin
+    deadline_md = get_deadline_passed_matchday(league_id)
+    open_md = get_open_matchday(league_id)
+
+    # deadline_md dan keyin, open_md gacha bo'lgan turlar — bugun ochiq, deadline o'tmagan.
+    # Ulardan avtomatik 0:0 confirmed bo'lganlarini qaytaramiz.
+    reopened = 0
+    if open_md > deadline_md:
+        # up_to = open_md (ochiq turlargacha), lekin deadline o'tganlarni qaytarmaymiz.
+        # Avval hammasini (open_md gacha) belgilab, keyin deadline_md gacha bo'lganlarni
+        # qayta tasdiqlaymiz — soddalik uchun: faqat (deadline_md, open_md] oralig'i.
+        # reopen_matchdays up_to bilan ishlaydi, shuning uchun open_md gacha ochib,
+        # so'ng deadline_md gacha bo'lganlarni qayta yopamiz (auto_resolve).
+        reopened_all = reopen_matchdays(league_id, open_md)
+        if deadline_md >= 1:
+            auto_resolve_matches(league_id, deadline_md)
+        reopened = reopened_all
+
+    return {"status": "ok", "league_id": league_id, "reopened": reopened}
