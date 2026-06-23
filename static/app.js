@@ -140,6 +140,12 @@ const TEXTS = {
     opp_no_contact:   "Raqib bilan bog'lanib bo'lmaydi",
     result_submitted: "✅ Natija yuborildi",
     result_confirmed: "✅ Tasdiqlandi",
+    confirm_result_title: "Natijani tasdiqlaysizmi?",
+    confirm_claims: "shu natijani da'vo qilyapti:",
+    confirm_warning: "Faqat haqiqatan o'ynagan va natija to'g'ri bo'lsa tasdiqlang. Bunday o'yin bo'lmagan bo'lsa — rad eting.",
+    confirm_yes: "Ha, o'ynadik va to'g'ri",
+    confirm_no: "Yo'q, bunday o'yin bo'lmagan",
+    opponent: "Raqib",
     result_rejected:  "❌ Rad etildi",
     // Match statuses
     status_pending:   "KUTILMOQDA",
@@ -274,6 +280,12 @@ const TEXTS = {
     opp_no_contact:   "Не удаётся связаться с соперником",
     result_submitted: "✅ Результат отправлен",
     result_confirmed: "✅ Подтверждено",
+    confirm_result_title: "Подтвердить результат?",
+    confirm_claims: "заявляет этот результат:",
+    confirm_warning: "Подтверждайте только если игра действительно состоялась и счёт верный. Если такой игры не было — отклоните.",
+    confirm_yes: "Да, мы играли, всё верно",
+    confirm_no: "Нет, такой игры не было",
+    opponent: "Соперник",
     result_rejected:  "❌ Отклонено",
     status_pending:   "ОЖИДАНИЕ",
     status_awaiting:  "ПОДТВЕРДИТЬ",
@@ -405,6 +417,12 @@ const TEXTS = {
     opp_no_contact:   "Can't contact this opponent",
     result_submitted: "✅ Result submitted",
     result_confirmed: "✅ Confirmed",
+    confirm_result_title: "Confirm the result?",
+    confirm_claims: "claims this result:",
+    confirm_warning: "Only confirm if the match was actually played and the score is correct. If no such match happened — reject it.",
+    confirm_yes: "Yes, we played, it's correct",
+    confirm_no: "No, this match didn't happen",
+    opponent: "Opponent",
     result_rejected:  "❌ Rejected",
     status_pending:   "PENDING",
     status_awaiting:  "CONFIRM",
@@ -753,6 +771,22 @@ function bindEvents() {
     .addEventListener("click", closeResultModal);
   document.getElementById("btn-result-submit")
     .addEventListener("click", submitMatchResult);
+
+  // Natija tasdiqlash modal (yolg'on natija oldini olish)
+  document.getElementById("btn-confirm-yes")
+    .addEventListener("click", () => {
+      const id = APP._confirmMatchId;
+      closeConfirmModal();
+      if (id) confirmMatchResult(id, "confirm");
+    });
+  document.getElementById("btn-confirm-no")
+    .addEventListener("click", () => {
+      const id = APP._confirmMatchId;
+      closeConfirmModal();
+      if (id) confirmMatchResult(id, "reject");
+    });
+  document.getElementById("btn-confirm-cancel")
+    .addEventListener("click", closeConfirmModal);
 
   // Admin: rad etilgan natijani belgilash modali
   document.getElementById("btn-admin-resolve-cancel")

@@ -771,7 +771,7 @@ function bindMatchActions(listEl) {
       const matchId = parseInt(btn.dataset.matchId);
       const action  = btn.dataset.action;
       if (action === "submit") openResultModal(matchId);
-      if (action === "confirm") confirmMatchResult(matchId, "confirm");
+      if (action === "confirm") openConfirmModal(matchId);
       if (action === "reject")  confirmMatchResult(matchId, "reject");
     });
   });
@@ -1596,6 +1596,38 @@ async function submitMatchResult() {
     }[e.message] || e.message;
     showToast("❌ " + msg);
   }
+}
+
+// Raqib kiritgan natijani tasdiqlashdan oldin aniq ko'rsatadigan modal.
+// Maqsad: o'ynalmagan o'yinga adashib/bilmasdan tasdiq bermaslik.
+function openConfirmModal(matchId) {
+  const t = APP.t;
+  const m = (APP.myMatches || []).find(x => x.id === matchId);
+  if (!m) { confirmMatchResult(matchId, "confirm"); return; }
+
+  const myId = APP.profileData?.user_id ?? APP.profileData?.id;
+  // Raqib (da'vo qilayotgan) — submitted_by tomon. Men qarama-qarshi tomonman.
+  const iAmP1 = m.player1_telegram_id === APP.currentUser?.id || m.player1_id === myId;
+  const myClub   = iAmP1 ? m.player1_club : m.player2_club;
+  const oppClub  = iAmP1 ? m.player2_club : m.player1_club;
+  const oppName  = iAmP1 ? (m.player2_username || m.player2_nickname) : (m.player1_username || m.player1_nickname);
+  const myScore  = iAmP1 ? m.score1 : m.score2;
+  const oppScore = iAmP1 ? m.score2 : m.score1;
+
+  const oppDisplay = oppName ? `@${escHtml(String(oppName).replace(/^@/, ""))}` : (escHtml(oppClub || t.opponent || "Raqib"));
+
+  document.getElementById("confirm-modal-claim").innerHTML =
+    `${escHtml(oppClub || "")} <b>${escHtml(oppDisplay)}</b> ${t.confirm_claims || "shu natijani da'vo qilyapti:"}`;
+  document.getElementById("confirm-modal-score").innerHTML =
+    `<span class="cm-club">${escHtml(myClub || "")}</span> <b class="cm-score">${myScore}</b> : <b class="cm-score">${oppScore}</b> <span class="cm-club">${escHtml(oppClub || "")}</span>`;
+
+  APP._confirmMatchId = matchId;
+  document.getElementById("modal-confirm").classList.remove("hidden");
+}
+
+function closeConfirmModal() {
+  document.getElementById("modal-confirm").classList.add("hidden");
+  APP._confirmMatchId = null;
 }
 
 async function confirmMatchResult(matchId, action) {

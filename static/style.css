@@ -998,6 +998,42 @@ table { border-collapse: collapse; width: 100%; }
   gap: 10px;
 }
 .modal-actions .btn { flex: 1; }
+/* Tasdiqlash modali — tugmalar ustma-ust (aniq tanlov uchun) */
+.modal-actions--stacked {
+  flex-direction: column;
+}
+.modal-actions--stacked .btn { flex: none; width: 100%; }
+.btn--danger {
+  background: rgba(255,69,96,.12);
+  color: var(--red-neon);
+  border: 1px solid rgba(255,69,96,.4);
+}
+.btn--danger:hover { background: rgba(255,69,96,.2); }
+.confirm-claim {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 4px 0 12px;
+}
+.confirm-score {
+  text-align: center;
+  font-size: 22px;
+  margin: 8px 0 14px;
+  color: var(--text-primary);
+}
+.confirm-score .cm-score { color: var(--cyan); font-weight: 700; }
+.confirm-score .cm-club { font-size: 14px; color: var(--text-secondary); }
+.confirm-warning {
+  text-align: center;
+  font-size: 12.5px;
+  color: #f5b942;
+  background: rgba(245,185,66,.08);
+  border: 1px solid rgba(245,185,66,.25);
+  border-radius: 10px;
+  padding: 10px;
+  margin: 0 0 14px;
+  line-height: 1.4;
+}
 
 /* Boshqa o'yinchi profili — ortga tugmasi */
 .back-btn {
