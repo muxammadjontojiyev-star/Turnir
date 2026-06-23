@@ -1382,8 +1382,8 @@ function openOpponentModal(matchId) {
     ? { tg: m.player2_telegram_id, username: m.player2_username, nickname: m.player2_nickname, club: m.player2_club }
     : { tg: m.player1_telegram_id, username: m.player1_username, nickname: m.player1_nickname, club: m.player1_club };
 
-  // Chat tugmasi: Telegram ID orqali (username yo'q bo'lsa ham ishlaydi)
-  const chatBtn = opp.tg
+  // Chat tugmasi: username (t.me) yoki telegram_id (zaxira) bor bo'lsa ko'rsatiladi
+  const chatBtn = (opp.username || opp.tg)
     ? `<button class="opp-chat-btn" id="opp-chat-btn">💬 ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
 
@@ -1411,17 +1411,27 @@ function openOpponentModal(matchId) {
   modal.addEventListener("click", (e) => { if (e.target === modal) closeOpponentModal(); });
 
   const btn = document.getElementById("opp-chat-btn");
-  if (btn && opp.tg) {
+  if (btn && (opp.username || opp.tg)) {
     btn.addEventListener("click", () => {
-      // Raqibning Telegram profilini ochamiz. Telegram ID orqali (username shart emas).
-      const tgLink = `tg://user?id=${opp.tg}`;
       const tg = window.Telegram?.WebApp;
-      if (tg && typeof tg.openLink === "function") {
-        // openLink tg:// sxemasini qo'llab-quvvatlaydi (WebApp tashqi havola ochish)
-        try { tg.openLink(tgLink); }
-        catch (_) { window.open(tgLink, "_blank"); }
+      if (opp.username) {
+        // Eng ishonchli: @username -> https://t.me/username (Telegram ichida ochiladi)
+        const link = `https://t.me/${opp.username}`;
+        if (tg && typeof tg.openTelegramLink === "function") {
+          try { tg.openTelegramLink(link); }
+          catch (_) { window.open(link, "_blank"); }
+        } else {
+          window.open(link, "_blank");
+        }
       } else {
-        window.open(tgLink, "_blank");
+        // Username yo'q — Telegram ID orqali (zaxira; ba'zi klientlarda ishlamasligi mumkin)
+        const tgLink = `tg://user?id=${opp.tg}`;
+        if (tg && typeof tg.openLink === "function") {
+          try { tg.openLink(tgLink); }
+          catch (_) { window.open(tgLink, "_blank"); }
+        } else {
+          window.open(tgLink, "_blank");
+        }
       }
       closeOpponentModal();
     });
