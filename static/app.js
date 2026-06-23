@@ -595,8 +595,14 @@ function applySafeArea(tg) {
   const isFullscreen = (() => { try { return !!tg.isFullscreen; } catch (_) { return false; } })();
 
   if (top < 1) {
-    // Telegram qiymat bermasa: fullscreen'da tugmalar uchun kattaroq, aks holda kichik zaxira
-    top = isFullscreen ? 50 : 20;
+    // Telegram qiymat bermasa: fullscreen'da tugmalar (X/⋮) status bar ostida ~90px,
+    // shuning uchun kattaroq zaxira; oddiy rejimda kichik.
+    top = isFullscreen ? 90 : 20;
+  }
+  // Fullscreen'da Telegram qiymat bersa ham, ba'zan tugmalar uchun kam bo'ladi —
+  // kamida 90px kafolatlaymiz (tugmalar header bilan ustma-ust tushmasligi uchun).
+  if (isFullscreen && top < 90) {
+    top = 90;
   }
   document.documentElement.style.setProperty("--safe-top", top + "px");
   APP._safeAreaDebug = { content, device, isFullscreen, applied: top };
