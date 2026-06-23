@@ -1102,6 +1102,15 @@ table { border-collapse: collapse; width: 100%; }
   flex-shrink: 0;
 }
 .nav-icon .icon { width: 24px; height: 24px; }
+/* Tugma va badge ichidagi ikonlar matn bilan tekis tursin */
+.admin-remove-btn .icon,
+.opp-chat-btn .icon,
+.league-item-badge .icon,
+.tab-btn .icon,
+.match-locked .icon {
+  vertical-align: -0.18em;
+  margin-right: 2px;
+}
 .nav-label { font-family: var(--font-display); font-size: 10px; font-weight: 600; letter-spacing: 1px; }
 
 /* Imzo element: neon glow chizig'i */

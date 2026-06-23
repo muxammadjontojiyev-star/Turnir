@@ -194,7 +194,7 @@ function renderLeagues(leagues) {
     let badgeClass, badgeText;
     if (league.is_locked) {
       badgeClass = "badge--locked";
-      badgeText = t.league_locked_badge || "🔒 YOPIQ";
+      badgeText = `${ICON.get("lock", 14)} ${t.league_locked_badge || "YOPIQ"}`;
     } else if (league.is_full) {
       badgeClass = "badge--full";
       badgeText = t.full || "TO'LIQ";
@@ -288,7 +288,7 @@ async function renderClubsForLeague(league) {
         alt="${escHtml(club.name)}"
         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
       />
-      <div class="club-logo-fallback" style="display:none">⚽</div>
+      <div class="club-logo-fallback" style="display:none">${ICON.get("ball", 22)}</div>
       <span class="club-name">${escHtml(club.name)}</span>
     `;
 
@@ -385,7 +385,7 @@ function renderRatingFilter() {
   // To'p urarlar tabi (barcha ligalar bo'yicha umumiy, doimiy tab)
   const topScorersBtn = document.createElement("button");
   topScorersBtn.className = "tab-btn" + (APP.ratingTab === "top_scorers" ? " active" : "");
-  topScorersBtn.textContent = APP.t.tab_top_scorers || "⚽ To'p urarlar";
+  topScorersBtn.innerHTML = `${ICON.get("ball", 16)} ${escHtml(APP.t.tab_top_scorers || "To'p urarlar")}`;
   topScorersBtn.addEventListener("click", async () => {
     APP.ratingTab = "top_scorers";
     showRatingCard("top_scorers");
@@ -744,7 +744,7 @@ async function loadMyMatches() {
     if (matches.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="empty-state-icon">⚽</span>
+          <span class="empty-state-icon">${ICON.get("ball", 40)}</span>
           ${t.no_matches || "Hali o'yinlar yo'q"}
         </div>`;
       return;
@@ -828,7 +828,7 @@ function renderMatchItem(m) {
   if (m.status === "pending") {
     if (m.is_locked) {
       // Tur hali ochilmagan — natija kiritib bo'lmaydi, qulf belgisi
-      actionBtn = `<span class="match-locked" title="${t.matchday_locked_short || "Tur hali ochilmagan"}">🔒</span>`;
+      actionBtn = `<span class="match-locked" title="${t.matchday_locked_short || "Tur hali ochilmagan"}">${ICON.get("lock", 16)}</span>`;
     } else {
       actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
         ${t.enter_result || "Natija"}
@@ -906,7 +906,7 @@ function renderAdminDraw() {
       // Hali qur'a o'tkazilmagan — Qur'a tugmasi (liga to'lgan bo'lsa)
       buttons = `
         <button class="admin-remove-btn admin-draw-btn" data-league-id="${league.id}" ${isFull ? "" : "disabled"}>
-          ${t.admin_draw_button || "🎲 Qur'a o'tkazish"}
+          ${ICON.get("dice", 18)} ${t.admin_draw_button || "Qur'a o'tkazish"}
         </button>`;
     } else {
       // Qur'a o'tkazilgan
@@ -914,23 +914,23 @@ function renderAdminDraw() {
         // draw_date yo'q — Turnirni boshlash (xavfsiz)
         buttons += `
           <button class="admin-remove-btn admin-start-btn" data-league-id="${league.id}">
-            ${t.admin_start_button || "▶️ Turnirni boshlash"}
+            ${ICON.get("play", 18)} ${t.admin_start_button || "Turnirni boshlash"}
           </button>`;
       }
       // Qayta qur'a (xavfli) — har doim ko'rinadi (qur'a bor bo'lsa)
       buttons += `
         <button class="admin-remove-btn admin-redraw-btn" data-league-id="${league.id}">
-          ${t.admin_redraw_button || "🔄 Qayta qur'a"}
+          ${ICON.get("refresh", 18)} ${t.admin_redraw_button || "Qayta qur'a"}
         </button>`;
       // Natijani saqlab qayta qur'a (yangi o'yinchini jadvalga qo'shish uchun)
       buttons += `
         <button class="admin-remove-btn admin-redraw-keep-btn" data-league-id="${league.id}">
-          ${t.admin_redraw_keep_button || "♻️ Natijani saqlab qayta qur'a"}
+          ${ICON.get("recycle", 18)} ${t.admin_redraw_keep_button || "Natijani saqlab qayta qur'a"}
         </button>`;
       // Xato avtomatik 0:0 tasdiqlangan turlarni qayta ochish
       buttons += `
         <button class="admin-remove-btn admin-reopen-btn" data-league-id="${league.id}">
-          ${t.admin_reopen_button || "🔓 Avtomatik turlarni qayta ochish"}
+          ${ICON.get("unlock", 18)} ${t.admin_reopen_button || "Avtomatik turlarni qayta ochish"}
         </button>`;
     }
 
@@ -1513,7 +1513,7 @@ function openOpponentModal(matchId) {
 
   // Chat tugmasi: username (t.me) yoki telegram_id (zaxira) bor bo'lsa ko'rsatiladi
   const chatBtn = (opp.username || opp.tg)
-    ? `<button class="opp-chat-btn" id="opp-chat-btn">💬 ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
+    ? `<button class="opp-chat-btn" id="opp-chat-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
 
   let modal = document.getElementById("modal-opponent");
@@ -1525,7 +1525,7 @@ function openOpponentModal(matchId) {
   }
   modal.innerHTML = `
     <div class="modal-box opp-modal-box">
-      <button class="modal-close" id="opp-modal-close">✕</button>
+      <button class="modal-close" id="opp-modal-close">${ICON.get("close", 18)}</button>
       <div class="opp-vs">
         ${renderOpponentSide(m.player1_club, m.player1_username, m.player1_nickname)}
         <div class="opp-vs-sep">VS</div>
