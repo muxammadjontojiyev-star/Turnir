@@ -834,6 +834,9 @@ function renderMatchItem(m) {
     if (m.is_locked) {
       // Tur hali ochilmagan — natija kiritib bo'lmaydi, qulf belgisi
       actionBtn = `<span class="match-locked" title="${t.matchday_locked_short || "Tur hali ochilmagan"}">${ICON.get("lock", 16)}</span>`;
+    } else if (m.entry_locked) {
+      // Tur ochiq, lekin hisob kiritish kechikishi (1s45daq) hali tugamagan
+      actionBtn = `<span class="match-waiting" title="${t.entry_wait_hint || "Hisob kiritish biroz keyin ochiladi"}">${ICON.get("lock", 14)} ${t.entry_wait_short || "Kuting"}</span>`;
     } else {
       actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
         ${t.enter_result || "Natija"}
@@ -937,6 +940,11 @@ function renderAdminDraw() {
         <button class="admin-remove-btn admin-reopen-btn" data-league-id="${league.id}">
           ${ICON.get("unlock", 18)} ${t.admin_reopen_button || "Avtomatik turlarni qayta ochish"}
         </button>`;
+      // Bugun ochiq turlarni darrov tasdiqlash (1 kun orqada qolgan ligani tenglashtirish)
+      buttons += `
+        <button class="admin-remove-btn admin-resolve-btn" data-league-id="${league.id}">
+          ${ICON.get("check", 18)} ${t.admin_resolve_open_button || "Ochiq turlarni darrov tasdiqlash"}
+        </button>`;
     }
 
     return `
@@ -965,6 +973,9 @@ function renderAdminDraw() {
   });
   list.querySelectorAll(".admin-reopen-btn").forEach(btn => {
     btn.addEventListener("click", () => reopenAutoMatches(parseInt(btn.dataset.leagueId)));
+  });
+  list.querySelectorAll(".admin-resolve-btn").forEach(btn => {
+    btn.addEventListener("click", () => resolveOpenMatches(parseInt(btn.dataset.leagueId)));
   });
 }
 
@@ -1046,6 +1057,21 @@ async function reopenAutoMatches(leagueId) {
     const res = await apiFetch(`/admin/league/${leagueId}/reopen-auto`, { method: "POST" });
     const n = res.reopened || 0;
     showToast((t.admin_reopen_success || "✅ Qayta ochilgan turlar: ") + n);
+    await loadHome();
+    await loadAdminPanel();
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+async function resolveOpenMatches(leagueId) {
+  const t = APP.t;
+  const ok = window.confirm(t.admin_resolve_open_confirm || "Hozir ochiq turlardagi barcha o'yinlar darrov tasdiqlanadi (o'ynalmaganlar 0:0). Davom etasizmi?");
+  if (!ok) return;
+  try {
+    const res = await apiFetch(`/admin/league/${leagueId}/resolve-open`, { method: "POST" });
+    const n = res.resolved || 0;
+    showToast((t.admin_resolve_open_success || "✅ Tasdiqlangan o'yinlar: ") + n);
     await loadHome();
     await loadAdminPanel();
   } catch (e) {
@@ -1593,6 +1619,7 @@ async function submitMatchResult() {
   } catch (e) {
     const msg = {
       matchday_locked: APP.t.matchday_locked || "Bu tur hali ochilmagan",
+      entry_too_early: APP.t.entry_too_early || "Hisob kiritish hali erta. Tur ochilgandan 1 soat 45 daqiqa o'tishi kerak.",
     }[e.message] || e.message;
     showToast("❌ " + msg);
   }

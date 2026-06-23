@@ -1452,3 +1452,20 @@ table { border-collapse: collapse; width: 100%; }
   border-color: rgba(245, 185, 66, 0.4);
   background: rgba(245, 185, 66, 0.1);
 }
+/* Ochiq turlarni darrov tasdiqlash (yashil) */
+.admin-resolve-btn {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.1);
+}
+/* Hisob kiritish kechikishi — "Kuting" belgisi */
+.match-waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #f5b942;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+.match-waiting .icon { vertical-align: middle; }
