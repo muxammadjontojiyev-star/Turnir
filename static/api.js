@@ -837,15 +837,22 @@ function renderMatchItem(m) {
     } else if (m.entry_locked) {
       // Tur ochiq, lekin hisob kiritish kechikishi (1s45daq) hali tugamagan
       actionBtn = `<span class="match-waiting" title="${t.entry_wait_hint || "Hisob kiritish biroz keyin ochiladi"}">${ICON.get("lock", 14)} ${t.entry_wait_short || "Kuting"}</span>`;
+    } else if (m.near_deadline) {
+      // Deadline (01:00) ga 15 daqiqa qoldi — yangi hisob kiritib bo'lmaydi
+      actionBtn = `<span class="match-waiting" title="${t.entry_deadline_hint || "Deadline yaqin — hisob kiritish yopiq"}">${ICON.get("lock", 14)}</span>`;
     } else {
       actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
         ${t.enter_result || "Natija"}
       </button>`;
     }
   } else if (m.status === "awaiting_confirmation" && m.submitted_by !== myId) {
+    // Raqib tasdiqlaydi. Rad etish faqat deadline'dan oldin (00:45 gacha) mumkin.
+    const rejectBtn = m.near_deadline
+      ? ""
+      : `<button class="match-action-btn" style="color:var(--red-neon);border-color:rgba(255,69,96,.3)" data-match-id="${m.id}" data-action="reject">✖</button>`;
     actionBtn = `
       <button class="match-action-btn" data-match-id="${m.id}" data-action="confirm">✔</button>
-      <button class="match-action-btn" style="color:var(--red-neon);border-color:rgba(255,69,96,.3)" data-match-id="${m.id}" data-action="reject">✖</button>
+      ${rejectBtn}
     `;
   }
 
@@ -1643,6 +1650,7 @@ async function submitMatchResult() {
     const msg = {
       matchday_locked: APP.t.matchday_locked || "Bu tur hali ochilmagan",
       entry_too_early: APP.t.entry_too_early || "Hisob kiritish hali erta. Tur ochilgandan 1 soat 45 daqiqa o'tishi kerak.",
+      entry_near_deadline: APP.t.entry_near_deadline || "Deadline yaqin (01:00). Oxirgi 15 daqiqada hisob kiritib bo'lmaydi.",
     }[e.message] || e.message;
     showToast("❌ " + msg);
   }
@@ -1692,7 +1700,10 @@ async function confirmMatchResult(matchId, action) {
     showToast(msg);
     await refreshMatchViews();
   } catch (e) {
-    showToast("❌ " + e.message);
+    const emsg = {
+      reject_near_deadline: APP.t.reject_near_deadline || "Deadline yaqin (01:00). Endi rad etib bo'lmaydi — o'yin avtomatik tasdiqlanadi.",
+    }[e.message] || e.message;
+    showToast("❌ " + emsg);
   }
 }
 
