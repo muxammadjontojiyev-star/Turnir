@@ -945,6 +945,11 @@ function renderAdminDraw() {
         <button class="admin-remove-btn admin-resolve-btn" data-league-id="${league.id}">
           ${ICON.get("check", 18)} ${t.admin_resolve_open_button || "Ochiq turlarni darrov tasdiqlash"}
         </button>`;
+      // Bugun ochiq, deadline o'tmagan turlardagi xato 0:0 tasdiqni bekor qilish
+      buttons += `
+        <button class="admin-remove-btn admin-undo-resolve-btn" data-league-id="${league.id}">
+          ${ICON.get("refresh", 18)} ${t.admin_undo_resolve_button || "Bugungi ochiq turlarni qayta ochish"}
+        </button>`;
     }
 
     return `
@@ -976,6 +981,9 @@ function renderAdminDraw() {
   });
   list.querySelectorAll(".admin-resolve-btn").forEach(btn => {
     btn.addEventListener("click", () => resolveOpenMatches(parseInt(btn.dataset.leagueId)));
+  });
+  list.querySelectorAll(".admin-undo-resolve-btn").forEach(btn => {
+    btn.addEventListener("click", () => undoResolveMatches(parseInt(btn.dataset.leagueId)));
   });
 }
 
@@ -1072,6 +1080,21 @@ async function resolveOpenMatches(leagueId) {
     const res = await apiFetch(`/admin/league/${leagueId}/resolve-open`, { method: "POST" });
     const n = res.resolved || 0;
     showToast((t.admin_resolve_open_success || "✅ Tasdiqlangan o'yinlar: ") + n);
+    await loadHome();
+    await loadAdminPanel();
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+async function undoResolveMatches(leagueId) {
+  const t = APP.t;
+  const ok = window.confirm(t.admin_undo_resolve_confirm || "Bugun ochiq, lekin deadline o'tmagan turlardagi avtomatik 0:0 tasdiqlar bekor qilinadi (o'yinchilar bugun o'ynaydi). Tasdiqlangan eski turlar va qo'lda natijalar saqlanadi. Davom etasizmi?");
+  if (!ok) return;
+  try {
+    const res = await apiFetch(`/admin/league/${leagueId}/undo-resolve`, { method: "POST" });
+    const n = res.reopened || 0;
+    showToast((t.admin_undo_resolve_success || "✅ Qayta ochilgan turlar: ") + n);
     await loadHome();
     await loadAdminPanel();
   } catch (e) {

@@ -1458,6 +1458,12 @@ table { border-collapse: collapse; width: 100%; }
   border-color: rgba(74, 222, 128, 0.4);
   background: rgba(74, 222, 128, 0.1);
 }
+/* Bugungi ochiq turlarni qayta ochish (ko'k) */
+.admin-undo-resolve-btn {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.1);
+}
 /* Hisob kiritish kechikishi — "Kuting" belgisi */
 .match-waiting {
   display: inline-flex;
