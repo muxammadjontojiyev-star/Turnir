@@ -799,6 +799,30 @@ function bindEvents() {
   document.getElementById("btn-result-submit")
     .addEventListener("click", submitMatchResult);
 
+  // Hisob input'lari: dastlab "0" tursin, lekin raqam yozilganda 0 avtomatik o'chsin
+  // (03 yoki 30 bo'lib qolmasligi uchun). Bo'sh qolsa — 0 qaytadi.
+  ["input-score1", "input-score2"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // Maydonga bosilganda 0 bo'lsa tozalaymiz (yangi raqam toza kiritilsin)
+    el.addEventListener("focus", () => {
+      if (el.value === "0") el.value = "";
+    });
+    // Yozilganda boshidagi keraksiz nollarni olib tashlaymiz: "03" -> "3", "30" -> "30"
+    el.addEventListener("input", () => {
+      let v = el.value.replace(/[^0-9]/g, "");      // faqat raqam
+      if (v.length > 1) v = v.replace(/^0+/, "");    // boshidagi 0(lar)ni olib tashlaymiz
+      if (v === "") v = "";
+      // Maksimal 2 xona (99 gacha)
+      if (v.length > 2) v = v.slice(0, 2);
+      el.value = v;
+    });
+    // Maydondan chiqilganda bo'sh bo'lsa — 0 qaytadi
+    el.addEventListener("blur", () => {
+      if (el.value === "") el.value = "0";
+    });
+  });
+
   // Natija tasdiqlash modal (yolg'on natija oldini olish)
   document.getElementById("btn-confirm-yes")
     .addEventListener("click", () => {
