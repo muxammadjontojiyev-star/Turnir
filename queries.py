@@ -329,6 +329,34 @@ def set_league_draw_date(league_id: int, dt: datetime | None = None) -> None:
     conn.close()
 
 
+def reopen_matchday_range(league_id: int, from_md: int, to_md: int) -> int:
+    """
+    Berilgan ORALIQDAGI (from_md < matchday <= to_md) avtomatik 0:0 tasdiqlangan
+    turlarni qayta 'pending' qiladi. reopen_matchdays'dan farqi — pastki chegara ham
+    bor, shuning uchun deadline o'tib tasdiqlangan turlarga (1-2) TEGMAYDI.
+
+    Masalan from_md=2, to_md=4 → faqat 3-4 turdagi 0:0'lar qaytariladi.
+    Faqat score 0:0 confirmed (qo'lda natijalarga tegmaydi).
+
+    Qaytaradi: qayta ochilgan turlar soni.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE matches
+        SET score1 = NULL, score2 = NULL, submitted_by = NULL, status = 'pending'
+        WHERE league_id = ? AND matchday > ? AND matchday <= ?
+          AND status = 'confirmed' AND score1 = 0 AND score2 = 0
+        """,
+        (league_id, from_md, to_md),
+    )
+    count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return count
+
+
 def reopen_matchdays(league_id: int, up_to_matchday: int) -> int:
     """
     Berilgan turgacha (up_to_matchday) bo'lgan AVTOMATIK 0:0 tasdiqlangan turlarni

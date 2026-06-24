@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 
-from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS
+from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS, MATCHDAYS_PER_UNLOCK
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
@@ -35,7 +35,7 @@ from queries import (
     get_open_matchday, set_league_draw_date, delete_league_matches,
     get_played_results, restore_results_to_schedule,
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
-    get_matchday_entry_locked,
+    get_matchday_entry_locked, reopen_matchday_range,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -753,12 +753,15 @@ async def admin_reopen_auto(league_id: int, admin: dict = Depends(get_authentica
 @app.post("/admin/league/{league_id}/resolve-open")
 async def admin_resolve_open(league_id: int, admin: dict = Depends(get_authenticated_admin)):
     """
-    Hozir OCHIQ bo'lgan barcha turlarni DARROV avtomatik tasdiqlaydi (deadline
-    o'tishini kutmasdan). LaLiga kabi 1 kun orqada qolgan ligani boshqalarga
-    tenglashtirish uchun — bugun ochiq turlar (masalan 1-2) shu zahoti tasdiqlanadi.
+    Ligani 1 KUN oldinga suradi: bugun deadline o'tgan turlarga QO'SHIMCHA yana bir
+    kunlik (MATCHDAYS_PER_UNLOCK ta) turni darrov tasdiqlaydi. LaLiga kabi 1 kun
+    orqada qolgan ligani boshqalarga tenglashtirish uchun.
 
-    - pending (hech kim kiritmagan) → 0:0 durang, confirmed.
-    - awaiting_confirmation (bir tomon kiritgan) → kiritilgan natija, confirmed.
+    Misol: LaLiga 1 kun orqada (bugun hech narsa deadline o'tmagan, deadline=0).
+    Bu tugma 0 + MATCHDAYS_PER_UNLOCK = 2 turni (1-2) tasdiqlaydi. 3-4 TEGILMAYDI.
+
+    - pending → 0:0 durang, confirmed.
+    - awaiting_confirmation → kiritilgan natija, confirmed.
     - confirmed/rejected → tegilmaydi.
 
     Xato holatlari: league_not_found → 404
@@ -767,17 +770,51 @@ async def admin_resolve_open(league_id: int, admin: dict = Depends(get_authentic
     if league is None:
         raise HTTPException(status_code=404, detail="league_not_found")
 
+    # Bugun deadline o'tgan turlar + yana bir kunlik blok (ligani 1 kun oldinga surish).
+    deadline_md = get_deadline_passed_matchday(league_id)
+    up_to = deadline_md + MATCHDAYS_PER_UNLOCK
+    # Ochiq turlardan oshmasin (yopiq turlarni tasdiqlamaymiz)
     open_md = get_open_matchday(league_id)
-    if open_md < 1:
+    if up_to > open_md:
+        up_to = open_md
+    if up_to < 1:
         return {"status": "ok", "league_id": league_id, "resolved": 0, "up_to": 0}
 
-    resolved = auto_resolve_matches(league_id, open_md)
+    resolved = auto_resolve_matches(league_id, up_to)
     total = resolved["pending_resolved"] + resolved["awaiting_resolved"]
     return {
         "status": "ok",
         "league_id": league_id,
-        "up_to": open_md,
+        "up_to": up_to,
         "resolved": total,
         "pending_resolved": resolved["pending_resolved"],
         "awaiting_resolved": resolved["awaiting_resolved"],
     }
+
+
+@app.post("/admin/league/{league_id}/undo-resolve")
+async def admin_undo_resolve(league_id: int, admin: dict = Depends(get_authenticated_admin)):
+    """
+    Bugun OCHIQ, lekin deadline o'tMAGAN turlardagi avtomatik 0:0 tasdiqlarni
+    bekor qiladi (qayta 'pending'). draw_date'ga TEGMAYDI — deadline o'tib
+    tasdiqlangan turlar (masalan 1-2) va qo'lda natijalar SAQLANADI.
+
+    Masalan LaLiga: 1-2 (deadline o'tgan) tasdiq qoladi, 3-4 (bugun ochiq) noto'g'ri
+    0:0 tasdiqlangan bo'lsa → qayta pending (o'yinchilar bugun o'ynaydi).
+
+    Xato holatlari: league_not_found → 404
+    """
+    league = get_league_by_id(league_id)
+    if league is None:
+        raise HTTPException(status_code=404, detail="league_not_found")
+
+    deadline_md = get_deadline_passed_matchday(league_id)  # bugun tasdiq bo'lishi kerak (1-2)
+    open_md = get_open_matchday(league_id)                 # bugun ochiq (3-4 ham)
+
+    # (deadline_md, open_md] oralig'idagi 0:0 avtomatik tasdiqlarni qaytaramiz.
+    reopened = 0
+    if open_md > deadline_md:
+        reopened = reopen_matchday_range(league_id, deadline_md, open_md)
+
+    return {"status": "ok", "league_id": league_id, "reopened": reopened,
+            "from_md": deadline_md, "to_md": open_md}
