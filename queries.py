@@ -505,17 +505,24 @@ def is_near_deadline() -> bool:
 
     Vaqtga asoslangan (matchday'dan mustaqil) — har kuni 00:45 da yopiladi,
     01:00 da (yangi tur ochilgach) yana ochiladi.
+
+    ⚠️ CHEKLOV O'CHIRILDI (foydalanuvchi so'rovi): deadline'dan oldingi 15 daqiqalik
+    cheklov olib tashlandi — endi 00:45–01:00 oralig'ida ham hisob kiritish va rad
+    etish ochiq. Funksiya doim False qaytaradi.
+    REVERT: pastdagi `return False`ni o'chirib, izohga olingan asl blokni qaytarish kifoya.
     """
-    now = _tournament_now()
-    # Bugungi (yoki ertangi) keyingi unlock payti (01:00)
-    today_unlock = now.replace(hour=MATCHDAY_UNLOCK_HOUR, minute=0, second=0, microsecond=0)
-    if now >= today_unlock:
-        # 01:00 dan o'tdik — keyingi deadline ertaga 01:00
-        next_deadline = today_unlock + timedelta(days=1)
-    else:
-        next_deadline = today_unlock
-    minutes_left = (next_deadline - now).total_seconds() / 60.0
-    return minutes_left <= ENTRY_CUTOFF_BEFORE_DEADLINE_MINUTES
+    return False
+    # --- ASL CHEKLOV MANTIG'I (revert uchun saqlandi) ---
+    # now = _tournament_now()
+    # # Bugungi (yoki ertangi) keyingi unlock payti (01:00)
+    # today_unlock = now.replace(hour=MATCHDAY_UNLOCK_HOUR, minute=0, second=0, microsecond=0)
+    # if now >= today_unlock:
+    #     # 01:00 dan o'tdik — keyingi deadline ertaga 01:00
+    #     next_deadline = today_unlock + timedelta(days=1)
+    # else:
+    #     next_deadline = today_unlock
+    # minutes_left = (next_deadline - now).total_seconds() / 60.0
+    # return minutes_left <= ENTRY_CUTOFF_BEFORE_DEADLINE_MINUTES
 
 
 def get_open_matchday(league_id: int) -> int:
