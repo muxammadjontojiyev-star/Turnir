@@ -265,6 +265,7 @@ def get_profile(user: dict = Depends(get_authenticated_user)):
         position_info = get_player_position(registration["league_id"], user["id"])
 
     return {
+        "user_id": user["id"],
         "nickname": user["nickname"],
         "language": user["language"],
         "league_id": registration["league_id"] if registration else None,
