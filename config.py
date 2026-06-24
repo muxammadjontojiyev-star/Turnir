@@ -30,6 +30,11 @@ MATCHDAYS_PER_UNLOCK = 2         # Har kuni nechta tur ochiladi (turnir tezroq o
 # kiritilmasligi uchun. 1 soat 45 daqiqa = 105 daqiqa → 02:45 dan keyin ochiladi.
 RESULT_ENTRY_DELAY_MINUTES = 105
 
+# Deadline (keyingi tur ochilishi, 01:00) ga shuncha daqiqa qolganda hisob kiritish
+# VA rad etish yopiladi. O'rtacha o'yin 8-15 daq davom etgani uchun, oxirgi 15 daqiqada
+# yangi o'yin boshlab/rad etib bo'lmaydi. 00:45 dan keyin: kiritish yo'q, rad yo'q.
+ENTRY_CUTOFF_BEFORE_DEADLINE_MINUTES = 15
+
 # === Liga nomlari ===
 LEAGUE_LALIGA = "LaLiga"
 LEAGUE_PREMIER = "Premier Liga"

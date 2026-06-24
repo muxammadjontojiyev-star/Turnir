@@ -36,6 +36,7 @@ from queries import (
     get_played_results, restore_results_to_schedule,
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
     get_matchday_entry_locked, reopen_matchday_range, reset_awaiting_in_range,
+    is_near_deadline,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -145,15 +146,17 @@ def get_authenticated_admin(x_telegram_init_data: str = Header(...)) -> dict:
 
 def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
     """
-    Har bir match'ga 'is_locked' va 'entry_locked' (bool) qo'shadi.
+    Har bir match'ga 'is_locked', 'entry_locked', 'near_deadline' (bool) qo'shadi.
 
     - is_locked: matchday hali OCHILMAGAN (get_open_matchday'dan katta) → True.
     - entry_locked: tur ochilgan, lekin ochilgandan keyin RESULT_ENTRY_DELAY_MINUTES
       (1s45daq) hali o'tmagan → True (hisob kiritib bo'lmaydi, biroz erta).
+    - near_deadline: hozir 00:45–01:00 oralig'i → hisob kiritish VA rad etish yopiq.
 
-    Frontend: is_locked → qulf belgisi; entry_locked → "biroz kuting" (tugma o'chiq).
+    Frontend: is_locked → qulf; entry_locked → "kuting"; near_deadline → kiritish/rad o'chiq.
     open_matchday liga bo'yicha bir marta keshlanadi (samaradorlik uchun).
     """
+    near_dl = is_near_deadline()  # vaqtga bog'liq, hamma match uchun bir xil
     open_cache: dict[int, int] = {}
     for m in matches:
         league_id = m.get("league_id")
@@ -161,6 +164,7 @@ def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
             open_cache[league_id] = get_open_matchday(league_id)
         matchday = m.get("matchday", 0)
         m["is_locked"] = matchday > open_cache[league_id]
+        m["near_deadline"] = near_dl
         # Ochiq turlar uchun kechikishni tekshiramiz (yopiq turlar uchun keraksiz)
         if not m["is_locked"]:
             m["entry_locked"] = get_matchday_entry_locked(league_id, matchday)
@@ -477,6 +481,11 @@ async def submit_result(
     if get_matchday_entry_locked(match["league_id"], match["matchday"]):
         raise HTTPException(status_code=400, detail="entry_too_early")
 
+    # Deadline (01:00) ga 15 daqiqa qolganda (00:45 dan keyin) yangi hisob kiritib
+    # bo'lmaydi — o'rtacha o'yin 8-15 daqiqa, oxirgi 15 daqiqada boshlab bo'lmaydi.
+    if is_near_deadline():
+        raise HTTPException(status_code=400, detail="entry_near_deadline")
+
     success, reason = submit_match_result(match_id, score1, score2, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -508,8 +517,15 @@ def confirm_result(
     Raqib tomonidan natijani tasdiqlaydi yoki rad etadi.
 
     Query params: match_id, action ("confirm" yoki "reject")
-    Xato holatlari: match_not_found, not_opponent, wrong_status, invalid_action → 400
+    Xato holatlari: match_not_found, not_opponent, wrong_status, invalid_action,
+                    reject_near_deadline → 400
     """
+    # Deadline (01:00) ga 15 daqiqa qolganda (00:45 dan keyin) RAD ETIB bo'lmaydi —
+    # 00:45 gacha kiritilgan to'g'ri hisob himoyalanadi (raqib oxirgi daqiqada rad
+    # qilib turnir oqimini buzolmaydi). Tasdiqlash esa har doim mumkin.
+    if action == "reject" and is_near_deadline():
+        raise HTTPException(status_code=400, detail="reject_near_deadline")
+
     success, reason = confirm_or_reject_match(match_id, action, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)

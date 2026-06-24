@@ -12,6 +12,7 @@ from config import (
     LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE,
     TOURNAMENT_TIMEZONE_OFFSET, MATCHDAY_UNLOCK_HOUR, TOTAL_MATCHDAYS,
     MATCHDAYS_PER_UNLOCK, RESULT_ENTRY_DELAY_MINUTES,
+    ENTRY_CUTOFF_BEFORE_DEADLINE_MINUTES,
 )
 
 
@@ -491,6 +492,30 @@ def get_matchday_entry_locked(league_id: int, matchday: int) -> bool:
     entry_allowed_at = open_dt + timedelta(minutes=RESULT_ENTRY_DELAY_MINUTES)
     now = _tournament_now()
     return now < entry_allowed_at
+
+
+def is_near_deadline() -> bool:
+    """
+    Hozir keyingi DEADLINE (01:00, MATCHDAY_UNLOCK_HOUR) ga
+    ENTRY_CUTOFF_BEFORE_DEADLINE_MINUTES (15 daq) dan kam qoldimi.
+
+    True  → 00:45–01:00 oralig'idamiz: hisob KIRITISH va RAD ETISH yopiq.
+            (oxirgi 15 daqiqada yangi o'yin boshlab/rad etib bo'lmaydi)
+    False → vaqt yetarli, normal ishlaydi.
+
+    Vaqtga asoslangan (matchday'dan mustaqil) — har kuni 00:45 da yopiladi,
+    01:00 da (yangi tur ochilgach) yana ochiladi.
+    """
+    now = _tournament_now()
+    # Bugungi (yoki ertangi) keyingi unlock payti (01:00)
+    today_unlock = now.replace(hour=MATCHDAY_UNLOCK_HOUR, minute=0, second=0, microsecond=0)
+    if now >= today_unlock:
+        # 01:00 dan o'tdik — keyingi deadline ertaga 01:00
+        next_deadline = today_unlock + timedelta(days=1)
+    else:
+        next_deadline = today_unlock
+    minutes_left = (next_deadline - now).total_seconds() / 60.0
+    return minutes_left <= ENTRY_CUTOFF_BEFORE_DEADLINE_MINUTES
 
 
 def get_open_matchday(league_id: int) -> int:
