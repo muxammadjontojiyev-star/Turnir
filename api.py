@@ -35,7 +35,7 @@ from queries import (
     get_open_matchday, set_league_draw_date, delete_league_matches,
     get_played_results, restore_results_to_schedule,
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
-    get_matchday_entry_locked, reopen_matchday_range,
+    get_matchday_entry_locked, reopen_matchday_range, reset_awaiting_in_range,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -811,10 +811,14 @@ async def admin_undo_resolve(league_id: int, admin: dict = Depends(get_authentic
     deadline_md = get_deadline_passed_matchday(league_id)  # bugun tasdiq bo'lishi kerak (1-2)
     open_md = get_open_matchday(league_id)                 # bugun ochiq (3-4 ham)
 
-    # (deadline_md, open_md] oralig'idagi 0:0 avtomatik tasdiqlarni qaytaramiz.
+    # (deadline_md, open_md] oralig'idagi xato natijalarni qaytaramiz:
+    #  - 0:0 avtomatik CONFIRMED (auto-resolve qilingan)
+    #  - awaiting_confirmation (kimdir kiritgan, raqib tasdiqlamagan — o'ynalmagan o'yin)
+    # Tasdiqlangan haqiqiy (0:0 emas) natijalar SAQLANADI.
     reopened = 0
     if open_md > deadline_md:
-        reopened = reopen_matchday_range(league_id, deadline_md, open_md)
+        reopened += reopen_matchday_range(league_id, deadline_md, open_md)
+        reopened += reset_awaiting_in_range(league_id, deadline_md, open_md)
 
     return {"status": "ok", "league_id": league_id, "reopened": reopened,
             "from_md": deadline_md, "to_md": open_md}
