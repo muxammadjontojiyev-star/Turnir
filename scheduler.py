@@ -30,6 +30,8 @@ from queries import (
     get_league_members_for_notify,
     auto_resolve_matches,
     get_deadline_passed_matchday,
+    get_leagues_needing_deadline_notice,
+    set_deadline_notice_sent,
 )
 from notify import notify_members
 
@@ -77,6 +79,29 @@ async def _check_and_notify_once() -> None:
         except Exception as exc:
             logger.warning(
                 "Scheduler: '%s' ligasiga xabar yuborishda xato: %s", lg["name"], exc
+            )
+
+    # Deadline eslatmasi: har kuni 00:00-01:00 oynasida (01:00 dan 1 soat oldin)
+    # ligalardagi a'zolarga "deadline yaqin" xabarini bir marta yuboramiz.
+    try:
+        deadline_leagues = get_leagues_needing_deadline_notice()
+    except Exception as exc:
+        logger.warning("Scheduler: deadline eslatma ligalarini olishda xato: %s", exc)
+        deadline_leagues = []
+
+    for lg in deadline_leagues:
+        league_id = lg["league_id"]
+        try:
+            members = get_league_members_for_notify(league_id)
+            await notify_members(members, "notify_deadline_soon", league=lg["name"])
+            set_deadline_notice_sent(league_id)
+            logger.info(
+                "Scheduler: '%s' ligasiga deadline eslatmasi yuborildi (%d a'zo).",
+                lg["name"], len(members),
+            )
+        except Exception as exc:
+            logger.warning(
+                "Scheduler: '%s' deadline eslatmasida xato: %s", lg["name"], exc
             )
 
 

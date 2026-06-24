@@ -100,6 +100,7 @@ def init_db():
         "ALTER TABLE users ADD COLUMN username TEXT",
         "ALTER TABLE leagues ADD COLUMN draw_date TIMESTAMP",
         "ALTER TABLE leagues ADD COLUMN last_notified_matchday INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE leagues ADD COLUMN last_deadline_notice_date TEXT",
     ]
     for sql in migrations:
         try:

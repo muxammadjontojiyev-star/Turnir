@@ -162,6 +162,11 @@ TEXTS = {
         LANGUAGE_RU: "⚽️ Тур {matchday} открыт! Сыграйте сегодняшний матч и внесите результат в приложение. Следующий тур откроется завтра в 01:00.",
         LANGUAGE_EN: "⚽️ Matchday {matchday} is open! Play today's match and submit the result in the app. The next matchday opens tomorrow at 01:00.",
     },
+    "notify_deadline_soon": {
+        LANGUAGE_UZ: "⏰ Diqqat! {league} ligasida deadline'ga 1 soat qoldi (01:00). O'yiningizni o'ynab, natijani kiritib ulguring. 00:45 dan keyin natija kiritish yopiladi!",
+        LANGUAGE_RU: "⏰ Внимание! В лиге {league} до дедлайна 1 час (01:00). Успейте сыграть и внести результат. После 00:45 ввод результата закроется!",
+        LANGUAGE_EN: "⏰ Heads up! 1 hour left until the deadline in {league} (01:00). Play your match and submit the result in time. Entry closes after 00:45!",
+    },
 
     # === Majburiy kanal a'zoligi ===
     "subscribe_required": {

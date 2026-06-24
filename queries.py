@@ -556,6 +556,57 @@ def get_open_matchday(league_id: int) -> int:
     return open_count
 
 
+def get_leagues_needing_deadline_notice() -> list[dict]:
+    """
+    Deadline (01:00) ga 1 soat qolganda (00:00-01:00 oralig'ida) hali bugun
+    eslatma yuborilmagan, davom etayotgan (ochiq turi bor) ligalarni qaytaradi.
+
+    Idempotent: last_deadline_notice_date bugungi sanaga teng bo'lsa qayta
+    yuborilmaydi. Faqat 00:00-01:00 oynasida ishlaydi.
+
+    Qaytaradi: [{league_id, name}, ...]
+    """
+    now = _tournament_now()
+    # Faqat deadline'dan 1 soat oldingi oynada (00:00 - 01:00)
+    if not (MATCHDAY_UNLOCK_HOUR - 1 <= now.hour < MATCHDAY_UNLOCK_HOUR):
+        return []
+    today_str = now.date().isoformat()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, name FROM leagues
+        WHERE draw_date IS NOT NULL
+          AND (last_deadline_notice_date IS NULL OR last_deadline_notice_date != ?)
+        """,
+        (today_str,),
+    )
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+
+    # Faqat hali tugamagan (ochiq turi bor) ligalar
+    result = []
+    for r in rows:
+        open_md = get_open_matchday(r["id"])
+        if 1 <= open_md <= TOTAL_MATCHDAYS:
+            result.append({"league_id": r["id"], "name": r["name"]})
+    return result
+
+
+def set_deadline_notice_sent(league_id: int) -> None:
+    """Ligaga bugun deadline eslatmasi yuborilganini belgilaydi (idempotentlik)."""
+    today_str = _tournament_now().date().isoformat()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE leagues SET last_deadline_notice_date = ? WHERE id = ?",
+        (today_str, league_id),
+    )
+    conn.commit()
+    conn.close()
+
+
 def set_last_notified_matchday(league_id: int, matchday: int) -> None:
     """Liga uchun oxirgi 'tur ochildi' xabari yuborilgan matchday raqamini yozadi."""
     conn = get_connection()
