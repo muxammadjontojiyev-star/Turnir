@@ -521,7 +521,23 @@ table { border-collapse: collapse; width: 100%; }
 .rating-table tbody tr.rating-row { cursor: pointer; }
 .rating-table tbody tr:last-child { border-bottom: none; }
 .rating-table tbody tr:hover { background: rgba(0,240,255,0.04); }
-.rating-table tbody tr.is-me { background: var(--cyan-dim); }
+/* Joriy foydalanuvchining o'z qatori — yorqin ajralib turadi */
+.rating-table tbody tr.is-me {
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: inset 3px 0 0 0 var(--cyan);
+}
+.rating-table tbody tr.is-me td {
+  color: var(--cyan);
+  font-weight: 600;
+}
+.rating-table tbody tr.is-me .player-clubname {
+  color: var(--cyan);
+  font-weight: 700;
+}
+.rating-table tbody tr.is-me .player-username {
+  color: var(--cyan);
+  opacity: 0.85;
+}
 .rating-table td {
   padding: 10px 10px;
   font-size: 13px;

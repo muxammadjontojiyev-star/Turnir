@@ -411,7 +411,9 @@ function showRatingCard(tab) {
 
 function renderRatingTable(rating) {
   const tbody = document.getElementById("rating-tbody");
-  const myId  = APP.currentUser?.id;
+  // O'z qatorimni aniqlash uchun DB user_id kerak (rating.user_id = u.id).
+  // APP.currentUser.id — bu Telegram ID, rating'dagi user_id bilan mos kelmaydi.
+  const myId  = APP.profileData?.user_id;
 
   if (!rating || rating.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</td></tr>`;
