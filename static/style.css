@@ -711,6 +711,14 @@ table { border-collapse: collapse; width: 100%; }
   background: var(--cyan-dim);
   white-space: nowrap;
 }
+/* 💬 chat tugmasi — Natija o'rnida, raqib bilan kelishish uchun */
+.match-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+}
+.match-chat-btn .icon { vertical-align: middle; }
 .match-id {
   font-size: 10px;
   color: var(--text-secondary);

@@ -773,6 +773,7 @@ function bindMatchActions(listEl) {
       if (action === "submit") openResultModal(matchId);
       if (action === "confirm") openConfirmModal(matchId);
       if (action === "reject")  confirmMatchResult(matchId, "reject");
+      if (action === "chat")    openMatchChat(matchId);
     });
   });
 
@@ -841,9 +842,18 @@ function renderMatchItem(m) {
       // Deadline (01:00) ga 15 daqiqa qoldi — yangi hisob kiritib bo'lmaydi
       actionBtn = `<span class="match-waiting" title="${t.entry_deadline_hint || "Deadline yaqin — hisob kiritish yopiq"}">${ICON.get("lock", 14)}</span>`;
     } else {
-      actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
-        ${t.enter_result || "Natija"}
-      </button>`;
+      // Avval raqib bilan chatlashish kerak: 💬 tugmasi. Bosilgandan keyin (chatga
+      // o'tib qaytgach) o'sha match uchun "Natija" tugmasi ochiladi.
+      const chatDone = APP.chatOpened && APP.chatOpened.has(m.id);
+      if (chatDone) {
+        actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
+          ${t.enter_result || "Natija"}
+        </button>`;
+      } else {
+        actionBtn = `<button class="match-action-btn match-chat-btn" data-match-id="${m.id}" data-action="chat" title="${t.chat_first_hint || "Avval raqib bilan kelishing"}">
+          ${ICON.get("chat", 18)}
+        </button>`;
+      }
     }
   } else if (m.status === "awaiting_confirmation" && m.submitted_by !== myId) {
     // Raqib tasdiqlaydi. Rad etish faqat deadline'dan oldin (00:45 gacha) mumkin.
@@ -1558,6 +1568,47 @@ function renderOpponentSide(club, username, nickname) {
       <div class="opp-user">${handle}</div>
     </div>
   `;
+}
+
+// 💬 bosilganda: raqib chatiga o'tadi VA bu match'ni "chat ochilgan" deb belgilaydi,
+// shunda qaytib kelganda o'sha match uchun "Natija" tugmasi ochiladi.
+function openMatchChat(matchId) {
+  const t = APP.t;
+  const m = (APP.myMatches || []).find(x => x.id === matchId);
+  if (!m) return;
+
+  const myId = APP.currentUser?.id;
+  const iAmP1 = m.player1_telegram_id === myId;
+  const opp = iAmP1
+    ? { tg: m.player2_telegram_id, username: m.player2_username }
+    : { tg: m.player1_telegram_id, username: m.player1_username };
+
+  // Match'ni "chat ochilgan" deb belgilaymiz (Natija tugmasi ochiladi)
+  if (!APP.chatOpened) APP.chatOpened = new Set();
+  APP.chatOpened.add(matchId);
+
+  // Raqib chatiga o'tamiz
+  const tg = window.Telegram?.WebApp;
+  if (opp.username) {
+    const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
+    if (tg && typeof tg.openTelegramLink === "function") {
+      try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); }
+    } else {
+      window.open(link, "_blank");
+    }
+  } else if (opp.tg) {
+    const tgLink = `tg://user?id=${opp.tg}`;
+    if (tg && typeof tg.openLink === "function") {
+      try { tg.openLink(tgLink); } catch (_) { window.open(tgLink, "_blank"); }
+    } else {
+      window.open(tgLink, "_blank");
+    }
+  } else {
+    showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
+  }
+
+  // Ro'yxatni yangilaymiz — endi bu match uchun "Natija" tugmasi chiqadi
+  loadMyMatches();
 }
 
 function openOpponentModal(matchId) {

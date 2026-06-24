@@ -51,6 +51,7 @@ const APP = {
   selectedClubLogo: null,   // Tanlangan klub logo URL
   profileData:      null,   // /profile javobi
   activeMatchId:    null,   // Natija kiritish uchun
+  chatOpened:       new Set(),  // 💬 bosilgan match'lar (Natija tugmasi ochilishi uchun)
   adminResolveMatchId: null,  // Admin: rad etilgan natijani belgilash uchun
   ratingTab:        "league",  // Reyting bo'limidagi tab: "league" yoki "top_scorers"
   lang:             "uz",   // Joriy til
@@ -133,6 +134,7 @@ const TEXTS = {
     submit_result:    "Natija kiritish",
     submit:           "Yuborish",
     enter_result:     "Natija",
+    chat_first_hint:  "Avval raqib bilan kelishing",
     me_vs_opponent:   "Men vs Raqib",
     matchday_locked:  "Bu tur hali ochilmagan. Har kuni soat 01:00 da yangi tur ochiladi.",
     matchday_locked_short: "Tur hali ochilmagan",
@@ -285,6 +287,7 @@ const TEXTS = {
     submit_result:    "Внести результат",
     submit:           "Отправить",
     enter_result:     "Результат",
+    chat_first_hint:  "Сначала договоритесь с соперником",
     me_vs_opponent:   "Я против соперника",
     matchday_locked:  "Этот тур ещё не открыт. Новый тур открывается каждый день в 01:00.",
     matchday_locked_short: "Тур ещё не открыт",
@@ -434,6 +437,7 @@ const TEXTS = {
     submit_result:    "Submit result",
     submit:           "Submit",
     enter_result:     "Result",
+    chat_first_hint:  "First agree with your opponent",
     me_vs_opponent:   "Me vs Opponent",
     matchday_locked:  "This matchday is not open yet. A new matchday opens every day at 01:00.",
     matchday_locked_short: "Matchday not open yet",
