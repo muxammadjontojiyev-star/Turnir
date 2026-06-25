@@ -101,6 +101,26 @@ const LEAGUE_CLUBS = {
     { name: "Udinese",         logo: "https://media.api-sports.io/football/teams/494.png" },
     { name: "Verona",          logo: "https://media.api-sports.io/football/teams/504.png" },
   ],
+  "Ligue 1": [
+    { name: "Angers",          logo: "https://media.api-sports.io/football/teams/77.png" },
+    { name: "Auxerre",         logo: "https://media.api-sports.io/football/teams/108.png" },
+    { name: "Brest",           logo: "https://media.api-sports.io/football/teams/106.png" },
+    { name: "Le Havre",        logo: "https://media.api-sports.io/football/teams/111.png" },
+    { name: "Lens",            logo: "https://media.api-sports.io/football/teams/116.png" },
+    { name: "Lille",           logo: "https://media.api-sports.io/football/teams/79.png" },
+    { name: "Lorient",         logo: "https://media.api-sports.io/football/teams/97.png" },
+    { name: "Lyon",            logo: "https://media.api-sports.io/football/teams/80.png" },
+    { name: "Marseille",       logo: "https://media.api-sports.io/football/teams/81.png" },
+    { name: "Metz",            logo: "https://media.api-sports.io/football/teams/112.png" },
+    { name: "Monaco",          logo: "https://media.api-sports.io/football/teams/91.png" },
+    { name: "Nantes",          logo: "https://media.api-sports.io/football/teams/89.png" },
+    { name: "Nice",            logo: "https://media.api-sports.io/football/teams/84.png" },
+    { name: "Paris FC",        logo: "https://media.api-sports.io/football/teams/83.png" },
+    { name: "Paris SG",        logo: "https://media.api-sports.io/football/teams/85.png" },
+    { name: "Rennes",          logo: "https://media.api-sports.io/football/teams/94.png" },
+    { name: "Strasbourg",      logo: "https://media.api-sports.io/football/teams/95.png" },
+    { name: "Toulouse",        logo: "https://media.api-sports.io/football/teams/96.png" },
+  ],
 };
 
 async function apiFetch(path, options = {}) {
