@@ -406,10 +406,15 @@ def get_prizes(league_id: int):
         default=None,
     ) if overall else None
 
+    # Liga Kubogi: SHU liganing reyting jadvalidagi 1-o'rin (faqat tanlangan liga).
+    league_rating = calculate_league_rating(league_id)
+    league_champion = league_rating[0] if league_rating else None
+
     return {
         "league": league["name"],
         "top_scorer": top_scorer,
         "current_leader": leader,
+        "league_champion": league_champion,
     }
 
 
