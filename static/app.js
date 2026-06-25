@@ -166,6 +166,8 @@ const TEXTS = {
     golden_boot_desc:   "Eng ko'p gol urgan o'yinchi",
     golden_ball:        "Oltin To'p",
     golden_ball_desc:   "Turnir g'olibi",
+    league_trophy:      "Liga Kubogi",
+    league_trophy_desc: "Liga chempioni",
     by_league:          "LIGA BO'YICHA",
     goals:              "gol",
     // Admin panel
@@ -317,6 +319,8 @@ const TEXTS = {
     golden_boot_desc:   "Лучший бомбардир турнира",
     golden_ball:        "Золотой Мяч",
     golden_ball_desc:   "Победитель турнира",
+    league_trophy:      "Кубок Лиги",
+    league_trophy_desc: "Чемпион лиги",
     by_league:          "ПО ЛИГЕ",
     goals:              "голов",
     // Admin panel
@@ -468,6 +472,8 @@ const TEXTS = {
     golden_boot_desc:   "Top scorer of the tournament",
     golden_ball:        "Golden Ball",
     golden_ball_desc:   "Tournament winner",
+    league_trophy:      "League Trophy",
+    league_trophy_desc: "League champion",
     by_league:          "BY LEAGUE",
     goals:              "goals",
     // Admin panel

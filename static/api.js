@@ -123,6 +123,19 @@ const LEAGUE_CLUBS = {
   ],
 };
 
+// ============================================================
+//  LIGA KUBOKLARI (sovrinlar bo'limida liga tanlanganda ko'rsatiladi)
+//  Kalit = DB liga nomi (AYNAN mos bo'lishi shart). Rasm fayllari index.html yonida.
+// ============================================================
+
+const LEAGUE_TROPHIES = {
+  "LaLiga":       "laliga-trophy.png",
+  "Premier Liga": "premier-trophy.png",
+  "Bundesliga":   "bundesliga-trophy.png",
+  "Serie A":      "seriea-trophy.png",
+  "Ligue 1":      "ligue1-trophy.png",
+};
+
 async function apiFetch(path, options = {}) {
   const initData = window.Telegram?.WebApp?.initData || "";
   const res = await fetch(API_BASE + path, {
@@ -1460,6 +1473,25 @@ async function fetchAndRenderPrizes(leagueId) {
     document.getElementById("prize-winner"),
     document.getElementById("prize-winner-club")
   );
+
+  // Liga kubogi: tanlangan liga nomiga qarab rasmni ko'rsatamiz.
+  // Champion = liga g'olibi (current_leader bilan bir xil manba).
+  const league = (APP.leagues || []).find(l => l.id === leagueId);
+  const card = document.getElementById("league-trophy-card");
+  const img = document.getElementById("league-trophy-img");
+  const trophyFile = league ? LEAGUE_TROPHIES[league.name] : null;
+  if (card && img && trophyFile) {
+    img.src = trophyFile + "?v=20260625c";
+    img.onerror = function () { card.style.display = "none"; };
+    card.style.display = "";
+    renderPrizeClub(
+      data.current_leader || null,
+      document.getElementById("prize-league-champion"),
+      document.getElementById("prize-league-champion-club")
+    );
+  } else if (card) {
+    card.style.display = "none";
+  }
 }
 
 function renderPrizesFilter() {
