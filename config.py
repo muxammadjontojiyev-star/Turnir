@@ -22,7 +22,8 @@ MATCHES_PER_MATCHDAY = MAX_PLAYERS_PER_LEAGUE // 2  # Har turda nechta o'yin (10
 # TOURNAMENT_TIMEZONE_OFFSET bo'yicha MATCHDAY_UNLOCK_HOUR'da yana shuncha qo'shiladi.
 # Ishtirokchi faqat ochilgan turlarning natijasini kirita oladi (kelajak turlar yopiq).
 TOURNAMENT_TIMEZONE_OFFSET = 5   # Toshkent (UTC+5) — soat farqi
-MATCHDAY_UNLOCK_HOUR = 1         # Har kuni soat 01:00 (Toshkent) da yangi turlar ochiladi
+MATCHDAY_UNLOCK_HOUR = 23        # Har kuni soat 23:30 (Toshkent) da yangi turlar ochiladi / deadline o'tadi
+MATCHDAY_UNLOCK_MINUTE = 30      # Tur ochilishi/deadline daqiqasi (23:30)
 MATCHDAYS_PER_UNLOCK = 2         # Har kuni nechta tur ochiladi (turnir tezroq o'tishi uchun)
 
 # Tur ochilgandan (01:00) so'ng hisob kiritish uchun kutish vaqti (daqiqa).

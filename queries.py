@@ -10,7 +10,7 @@ from datetime import datetime, timezone, timedelta
 from models import get_connection
 from config import (
     LEAGUE_STATUS_OPEN, DEFAULT_LANGUAGE,
-    TOURNAMENT_TIMEZONE_OFFSET, MATCHDAY_UNLOCK_HOUR, TOTAL_MATCHDAYS,
+    TOURNAMENT_TIMEZONE_OFFSET, MATCHDAY_UNLOCK_HOUR, MATCHDAY_UNLOCK_MINUTE, TOTAL_MATCHDAYS,
     MATCHDAYS_PER_UNLOCK, RESULT_ENTRY_DELAY_MINUTES,
     ENTRY_CUTOFF_BEFORE_DEADLINE_MINUTES,
 )
@@ -439,7 +439,7 @@ def get_deadline_passed_matchday(league_id: int) -> int:
     now = _tournament_now()
 
     def unlock_day(d: datetime):
-        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR)
+        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR, minutes=MATCHDAY_UNLOCK_MINUTE)
         return shifted.date()
 
     days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
@@ -477,14 +477,14 @@ def get_matchday_entry_locked(league_id: int, matchday: int) -> bool:
     # 1..PER_UNLOCK -> 0-kun, PER_UNLOCK+1..2*PER_UNLOCK -> 1-kun, ...
     unlock_day_index = math.ceil(matchday / MATCHDAYS_PER_UNLOCK) - 1
 
-    # O'sha turning ochilish payti: draw_date kuni + unlock_day_index kun, soat = UNLOCK_HOUR.
+    # O'sha turning ochilish payti: draw_date kuni + unlock_day_index kun, soat = UNLOCK_HOUR:UNLOCK_MINUTE.
     # draw_dt timezone-aware — open_dt'ni ham o'sha tzinfo bilan yasaymiz (taqqoslash uchun).
-    draw_day = (draw_dt - timedelta(hours=MATCHDAY_UNLOCK_HOUR)).date()
+    draw_day = (draw_dt - timedelta(hours=MATCHDAY_UNLOCK_HOUR, minutes=MATCHDAY_UNLOCK_MINUTE)).date()
     open_day = draw_day + timedelta(days=unlock_day_index)
     open_dt = datetime(open_day.year, open_day.month, open_day.day,
-                       MATCHDAY_UNLOCK_HOUR, 0, 0, tzinfo=draw_dt.tzinfo)
+                       MATCHDAY_UNLOCK_HOUR, MATCHDAY_UNLOCK_MINUTE, 0, tzinfo=draw_dt.tzinfo)
 
-    # Boshlanish kuni (0-kun) turlar darrov ochiladi (qur'a payti), keyingilari 01:00 da.
+    # Boshlanish kuni (0-kun) turlar darrov ochiladi (qur'a payti), keyingilari 23:30 da.
     # Qur'a kuni ochilgan turlar uchun ochilish payti = draw_date'ning o'zi.
     if unlock_day_index == 0:
         open_dt = draw_dt
@@ -546,10 +546,10 @@ def get_open_matchday(league_id: int) -> int:
 
     now = _tournament_now()
 
-    # "Unlock kuni" = soatni MATCHDAY_UNLOCK_HOUR ga siljitib, faqat sanani olamiz.
-    # Masalan unlock soati 01:00 bo'lsa, 00:30 hali "kechagi kun"ga tegishli.
+    # "Unlock kuni" = soat:daqiqani MATCHDAY_UNLOCK_HOUR:MATCHDAY_UNLOCK_MINUTE ga siljitib, faqat sanani olamiz.
+    # Masalan unlock payti 23:30 bo'lsa, 23:00 hali "kechagi kun"ga tegishli.
     def unlock_day(d: datetime):
-        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR)
+        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR, minutes=MATCHDAY_UNLOCK_MINUTE)
         return shifted.date()
 
     days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
@@ -565,17 +565,20 @@ def get_open_matchday(league_id: int) -> int:
 
 def get_leagues_needing_deadline_notice() -> list[dict]:
     """
-    Deadline (01:00) ga 1 soat qolganda (00:00-01:00 oralig'ida) hali bugun
+    Deadline (23:30) ga 1 soat qolganda (22:30-23:30 oralig'ida) hali bugun
     eslatma yuborilmagan, davom etayotgan (ochiq turi bor) ligalarni qaytaradi.
 
     Idempotent: last_deadline_notice_date bugungi sanaga teng bo'lsa qayta
-    yuborilmaydi. Faqat 00:00-01:00 oynasida ishlaydi.
+    yuborilmaydi. Faqat 22:30-23:30 oynasida ishlaydi.
 
     Qaytaradi: [{league_id, name}, ...]
     """
     now = _tournament_now()
-    # Faqat deadline'dan 1 soat oldingi oynada (00:00 - 01:00)
-    if not (MATCHDAY_UNLOCK_HOUR - 1 <= now.hour < MATCHDAY_UNLOCK_HOUR):
+    # Faqat deadline'dan 1 soat oldingi oynada (deadline 23:30 → 22:30-23:30).
+    # Daqiqa aniqligida: now ning kun ichidagi daqiqasi [deadline-60, deadline) oralig'ida.
+    deadline_minutes = MATCHDAY_UNLOCK_HOUR * 60 + MATCHDAY_UNLOCK_MINUTE
+    now_minutes = now.hour * 60 + now.minute
+    if not (deadline_minutes - 60 <= now_minutes < deadline_minutes):
         return []
     today_str = now.date().isoformat()
 

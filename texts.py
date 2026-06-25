@@ -158,14 +158,14 @@ TEXTS = {
         LANGUAGE_EN: "📝 A result was submitted, do you confirm? Open the app to confirm or reject the match result.",
     },
     "notify_matchday_open": {
-        LANGUAGE_UZ: "⚽️ {matchday}-tur ochildi! Bugungi o'yiningizni o'ynab, natijani ilovaga kiriting. Keyingi tur ertaga soat 01:00 da ochiladi.",
-        LANGUAGE_RU: "⚽️ Тур {matchday} открыт! Сыграйте сегодняшний матч и внесите результат в приложение. Следующий тур откроется завтра в 01:00.",
-        LANGUAGE_EN: "⚽️ Matchday {matchday} is open! Play today's match and submit the result in the app. The next matchday opens tomorrow at 01:00.",
+        LANGUAGE_UZ: "⚽️ {matchday}-tur ochildi! Bugungi o'yiningizni o'ynab, natijani ilovaga kiriting. Keyingi tur ertaga soat 23:30 da ochiladi.",
+        LANGUAGE_RU: "⚽️ Тур {matchday} открыт! Сыграйте сегодняшний матч и внесите результат в приложение. Следующий тур откроется завтра в 23:30.",
+        LANGUAGE_EN: "⚽️ Matchday {matchday} is open! Play today's match and submit the result in the app. The next matchday opens tomorrow at 23:30.",
     },
     "notify_deadline_soon": {
-        LANGUAGE_UZ: "⏰ Diqqat! {league} ligasida deadline'ga 1 soat qoldi (01:00). O'yiningizni o'ynab, natijani kiritib ulguring. 00:45 dan keyin natija kiritish yopiladi!",
-        LANGUAGE_RU: "⏰ Внимание! В лиге {league} до дедлайна 1 час (01:00). Успейте сыграть и внести результат. После 00:45 ввод результата закроется!",
-        LANGUAGE_EN: "⏰ Heads up! 1 hour left until the deadline in {league} (01:00). Play your match and submit the result in time. Entry closes after 00:45!",
+        LANGUAGE_UZ: "⏰ Diqqat! {league} ligasida deadline'ga 1 soat qoldi (23:30). O'yiningizni o'ynab, natijani kiritib ulguring!",
+        LANGUAGE_RU: "⏰ Внимание! В лиге {league} до дедлайна 1 час (23:30). Успейте сыграть и внести результат!",
+        LANGUAGE_EN: "⏰ Heads up! 1 hour left until the deadline in {league} (23:30). Play your match and submit the result in time!",
     },
 
     # === Majburiy kanal a'zoligi ===
