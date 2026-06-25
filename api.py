@@ -368,8 +368,6 @@ def get_prizes(league_id: int):
     if league is None:
         raise HTTPException(status_code=404, detail="Liga topilmadi")
 
-    rating = calculate_league_rating(league_id)
-
     # Oltin butsa va Oltin to'p — IKKALASI HAM barcha ligalar bo'yicha umumiy hisoblanadi
     # (liga tanlansa o'zgarmaydi). Bir ishtirokchining (user_id) barcha ligalardagi
     # natijalari yig'iladi.
