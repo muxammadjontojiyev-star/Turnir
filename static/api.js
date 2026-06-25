@@ -129,11 +129,11 @@ const LEAGUE_CLUBS = {
 // ============================================================
 
 const LEAGUE_TROPHIES = {
-  "LaLiga":       "laliga-trophy.png",
-  "Premier Liga": "premier-trophy.png",
-  "Bundesliga":   "bundesliga-trophy.png",
-  "Serie A":      "seriea-trophy.png",
-  "Ligue 1":      "ligue1-trophy.png",
+  "LaLiga":       "images/laliga-trophy.png",
+  "Premier Liga": "images/premier-trophy.png",
+  "Bundesliga":   "images/bundesliga-trophy.png",
+  "Serie A":      "images/seriea-trophy-1.png",
+  "Ligue 1":      "images/ligue1-trophy-1.png",
 };
 
 async function apiFetch(path, options = {}) {
