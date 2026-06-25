@@ -1475,7 +1475,7 @@ async function fetchAndRenderPrizes(leagueId) {
   );
 
   // Liga kubogi: tanlangan liga nomiga qarab rasmni ko'rsatamiz.
-  // Champion = liga g'olibi (current_leader bilan bir xil manba).
+  // Champion = SHU liganing reyting 1-o'rni (league_champion).
   const league = (APP.leagues || []).find(l => l.id === leagueId);
   const card = document.getElementById("league-trophy-card");
   const img = document.getElementById("league-trophy-img");
@@ -1485,7 +1485,7 @@ async function fetchAndRenderPrizes(leagueId) {
     img.onerror = function () { card.style.display = "none"; };
     card.style.display = "";
     renderPrizeClub(
-      data.current_leader || null,
+      data.league_champion || null,
       document.getElementById("prize-league-champion"),
       document.getElementById("prize-league-champion-club")
     );
