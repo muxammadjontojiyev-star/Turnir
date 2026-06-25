@@ -370,8 +370,43 @@ def get_prizes(league_id: int):
 
     rating = calculate_league_rating(league_id)
 
-    top_scorer = max(rating, key=lambda p: p["goals_for"], default=None) if rating else None
-    leader = rating[0] if rating else None
+    # Oltin butsa va Oltin to'p — IKKALASI HAM barcha ligalar bo'yicha umumiy hisoblanadi
+    # (liga tanlansa o'zgarmaydi). Bir ishtirokchining (user_id) barcha ligalardagi
+    # natijalari yig'iladi.
+    overall = {}
+    for lg in get_all_leagues():
+        for p in calculate_league_rating(lg["id"]):
+            agg = overall.get(p["user_id"])
+            if agg is None:
+                overall[p["user_id"]] = {
+                    "user_id": p["user_id"],
+                    "nickname": p["nickname"],
+                    "username": p["username"],
+                    "club_name": p["club_name"],
+                    "points": p["points"],
+                    "goals_for": p["goals_for"],
+                    "goal_difference": p["goal_difference"],
+                }
+            else:
+                agg["points"] += p["points"]
+                agg["goals_for"] += p["goals_for"]
+                agg["goal_difference"] += p["goal_difference"]
+
+    # Oltin butsa: umumiy to'purarlar jadvalidagi 1-o'rin (eng ko'p gol urgan).
+    # Tartib: gollar (goals_for) > achko (points) > gol farqi (goal_difference).
+    top_scorer = max(
+        overall.values(),
+        key=lambda p: (p["goals_for"], p["points"], p["goal_difference"]),
+        default=None,
+    ) if overall else None
+
+    # Oltin to'p: umumiy reyting jadvalidagi 1-o'rin (eng ko'p achko yiqqan).
+    # Tartib: achko (points) > urilgan gollar (goals_for) > gol farqi (goal_difference).
+    leader = max(
+        overall.values(),
+        key=lambda p: (p["points"], p["goals_for"], p["goal_difference"]),
+        default=None,
+    ) if overall else None
 
     return {
         "league": league["name"],
