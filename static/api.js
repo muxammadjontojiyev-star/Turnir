@@ -1926,7 +1926,8 @@ function renderWebChatStatus(state) {
   // Offline — oxirgi ko'rinish
   const secs = state.last_seen_seconds;
   if (secs === null || secs === undefined) {
-    el.textContent = "";
+    // Raqib hali ilovaga kirmagan (last_seen yo'q) — "oflayn" ko'rsatamiz
+    el.textContent = t.webchat_offline || "oflayn";
     el.className = "webchat-status";
     return;
   }
