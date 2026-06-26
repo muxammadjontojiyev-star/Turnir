@@ -149,7 +149,7 @@ const LEAGUE_LOGOS = {
 function renderLeagueLogo(leagueName, cls) {
   const src = LEAGUE_LOGOS[leagueName];
   if (!src) return "";
-  return `<img class="${cls}" src="${src}?v=1" alt="${escHtml(leagueName)}" onerror="this.style.display='none'">`;
+  return `<img class="${cls}" src="${src}?v=2" alt="${escHtml(leagueName)}" onerror="this.style.display='none'">`;
 }
 
 async function apiFetch(path, options = {}) {
