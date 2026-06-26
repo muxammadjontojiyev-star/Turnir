@@ -1780,11 +1780,14 @@ function closeOpponentModal() {
 //  WEBAPP CHAT (aktiv match raqibi bilan)
 // ============================================================
 
-const CHAT_POLL_INTERVAL_MS = 4000;  // Xabarlarni har 4 soniyada yangilash
+const CHAT_POLL_INTERVAL_MS = 2000;  // Xabar + holatni har 2 soniyada yangilash
+const TYPING_SEND_THROTTLE_MS = 3000;  // "Yozmoqda" signalini ko'pi bilan 3s da bir yuborish
 
 function openWebChat(matchId, opponentLabel) {
   const t = APP.t;
   APP.chatMatchId = matchId;
+  APP.chatOppLabel = opponentLabel || (t.webchat_opponent || "Raqib");
+  APP.lastTypingSent = 0;
 
   let modal = document.getElementById("modal-webchat");
   if (!modal) {
@@ -1796,7 +1799,10 @@ function openWebChat(matchId, opponentLabel) {
   modal.innerHTML = `
     <div class="modal-box webchat-box">
       <div class="webchat-header">
-        <span class="webchat-title">${escHtml(opponentLabel || (t.webchat_opponent || "Raqib"))}</span>
+        <div class="webchat-headinfo">
+          <span class="webchat-title">${escHtml(APP.chatOppLabel)}</span>
+          <span class="webchat-status" id="webchat-status"></span>
+        </div>
         <button class="modal-close" id="webchat-close">${ICON.get("close", 18)}</button>
       </div>
       <div class="webchat-messages" id="webchat-messages">
@@ -1821,11 +1827,23 @@ function openWebChat(matchId, opponentLabel) {
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); sendWebChatMessage(); }
   });
+  // Yozayotganda raqibga "yozmoqda" signali (throttle bilan)
+  input.addEventListener("input", () => {
+    const now = Date.now();
+    if (now - APP.lastTypingSent > TYPING_SEND_THROTTLE_MS) {
+      APP.lastTypingSent = now;
+      apiFetch(`/matches/${matchId}/typing`, { method: "POST" }).catch(() => {});
+    }
+  });
 
-  // Birinchi yuklash + polling
+  // Birinchi yuklash + polling (xabar va holat)
   loadWebChatMessages();
+  loadWebChatState();
   if (APP.chatPoll) clearInterval(APP.chatPoll);
-  APP.chatPoll = setInterval(loadWebChatMessages, CHAT_POLL_INTERVAL_MS);
+  APP.chatPoll = setInterval(() => {
+    loadWebChatMessages();
+    loadWebChatState();
+  }, CHAT_POLL_INTERVAL_MS);
 }
 
 function closeWebChat() {
@@ -1878,6 +1896,57 @@ async function loadWebChatMessages() {
   }
 }
 
+async function loadWebChatState() {
+  const matchId = APP.chatMatchId;
+  if (!matchId) return;
+  try {
+    const state = await apiFetch(`/matches/${matchId}/state`);
+    renderWebChatStatus(state);
+  } catch (_) {
+    // Holatni yangilab bo'lmasa — jim qoldiramiz
+  }
+}
+
+function renderWebChatStatus(state) {
+  const el = document.getElementById("webchat-status");
+  if (!el || !state) return;
+  const t = APP.t;
+
+  if (state.typing) {
+    // "Yozmoqda..." + uchta nuqta animatsiyasi
+    el.innerHTML = `${escHtml(t.webchat_typing || "yozmoqda")}<span class="typing-dots"><i></i><i></i><i></i></span>`;
+    el.className = "webchat-status typing";
+    return;
+  }
+  if (state.online) {
+    el.textContent = t.webchat_online || "online";
+    el.className = "webchat-status online";
+    return;
+  }
+  // Offline — oxirgi ko'rinish
+  const secs = state.last_seen_seconds;
+  if (secs === null || secs === undefined) {
+    el.textContent = "";
+    el.className = "webchat-status";
+    return;
+  }
+  el.textContent = formatLastSeen(secs);
+  el.className = "webchat-status";
+}
+
+// Oxirgi ko'rinishni "X daqiqa/soat oldin" ko'rinishida (sodda)
+function formatLastSeen(seconds) {
+  const t = APP.t;
+  const prefix = t.webchat_last_seen || "oxirgi marta";
+  if (seconds < 60) return `${prefix} ${t.webchat_just_now || "hozirgina"}`;
+  const mins = Math.floor(seconds / 60);
+  if (mins < 60) return `${prefix} ${mins} ${t.webchat_min_ago || "daqiqa oldin"}`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${prefix} ${hours} ${t.webchat_hour_ago || "soat oldin"}`;
+  const days = Math.floor(hours / 24);
+  return `${prefix} ${days} ${t.webchat_day_ago || "kun oldin"}`;
+}
+
 function renderWebChatMessages(messages) {
   const box = document.getElementById("webchat-messages");
   if (!box) return;
@@ -1895,17 +1964,35 @@ function renderWebChatMessages(messages) {
     const mine = msg.mine;
     const ticks = mine ? (msg.is_read ? "✓✓" : "✓") : "";
     const tickCls = (mine && msg.is_read) ? "webchat-ticks read" : "webchat-ticks";
+    const time = formatChatTime(msg.created_at);
     return `
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         <div class="webchat-bubble">
           <span class="webchat-text">${escHtml(msg.text)}</span>
-          ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
+          <span class="webchat-meta">
+            ${time ? `<span class="webchat-time">${time}</span>` : ""}
+            ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
+          </span>
         </div>
       </div>
     `;
   }).join("");
 
   if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+// SQLite created_at (UTC) -> mahalliy "HH:MM"
+function formatChatTime(raw) {
+  if (!raw) return "";
+  try {
+    // SQLite formati "YYYY-MM-DD HH:MM:SS" (UTC) — ISO ga aylantiramiz
+    const iso = String(raw).replace(" ", "T") + (String(raw).includes("Z") ? "" : "Z");
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  } catch (_) {
+    return "";
+  }
 }
 
 async function sendWebChatMessage() {

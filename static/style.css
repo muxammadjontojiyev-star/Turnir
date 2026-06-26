@@ -1680,3 +1680,59 @@ table { border-collapse: collapse; width: 100%; }
   top: -4px;
   right: -4px;
 }
+
+/* Chat xabar vaqti + ✓ belgilari (puffak ichida, pastki o'ngda) */
+.webchat-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+.webchat-time {
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Chat header: raqib nomi + holat qatori */
+.webchat-headinfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.webchat-status {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}
+.webchat-status.online { color: var(--cyan); }
+.webchat-status.typing { color: var(--cyan); }
+
+/* "Yozmoqda" uchta nuqta animatsiyasi (navbatma-navbat tepa-past) */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+}
+.typing-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cyan);
+  display: inline-block;
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.typing-dots i:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots i:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
