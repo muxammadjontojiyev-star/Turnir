@@ -1755,3 +1755,21 @@ table { border-collapse: collapse; width: 100%; }
 .webchat-msg.mine .webchat-club-logo { order: 2; }
 /* Raqib: logo chapda (puffakdan oldin) */
 .webchat-msg.theirs { flex-direction: row; }
+
+/* Chat header: avatar + username */
+.webchat-header { gap: 10px; }
+.webchat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border-accent);
+}
+.webchat-headinfo { flex: 1; }
+.webchat-username {
+  font-size: 11px;
+  color: var(--cyan);
+  opacity: 0.85;
+  line-height: 1.2;
+}

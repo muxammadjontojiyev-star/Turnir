@@ -1799,8 +1799,10 @@ function openWebChat(matchId, opponentLabel) {
   modal.innerHTML = `
     <div class="modal-box webchat-box">
       <div class="webchat-header">
+        <img class="webchat-avatar hidden" id="webchat-avatar" alt="">
         <div class="webchat-headinfo">
           <span class="webchat-title">${escHtml(APP.chatOppLabel)}</span>
+          <span class="webchat-username" id="webchat-username"></span>
           <span class="webchat-status" id="webchat-status"></span>
         </div>
         <button class="modal-close" id="webchat-close">${ICON.get("close", 18)}</button>
@@ -1911,6 +1913,25 @@ function renderWebChatStatus(state) {
   const el = document.getElementById("webchat-status");
   if (!el || !state) return;
   const t = APP.t;
+
+  // Avatar (raqib profil rasmi) — bir marta to'ldiramiz
+  const avatar = document.getElementById("webchat-avatar");
+  if (avatar && state.opponent_user_id && !avatar.dataset.loaded) {
+    avatar.dataset.loaded = "1";
+    avatar.src = `${API_BASE}/players/${state.opponent_user_id}/photo`;
+    avatar.onload = () => avatar.classList.remove("hidden");
+    avatar.onerror = () => avatar.classList.add("hidden");  // Rasm yo'q — yashirin
+  }
+  // Username (ism ostida)
+  const userEl = document.getElementById("webchat-username");
+  if (userEl && !userEl.dataset.loaded) {
+    userEl.dataset.loaded = "1";
+    if (state.opponent_username) {
+      userEl.textContent = "@" + String(state.opponent_username).replace(/^@/, "");
+    } else {
+      userEl.style.display = "none";
+    }
+  }
 
   if (state.typing) {
     // "Yozmoqda..." + uchta nuqta animatsiyasi
