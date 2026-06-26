@@ -1641,21 +1641,21 @@ function openMatchChat(matchId) {
   if (!APP.chatOpened) APP.chatOpened = new Set();
   APP.chatOpened.add(matchId);
 
-  // Raqib chatiga o'tamiz
+  // Raqib chatiga o'tamiz — avval telegram_id (tg://user?id=), bo'lmasa username (zaxira)
   const tg = window.Telegram?.WebApp;
-  if (opp.username) {
-    const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
-    if (tg && typeof tg.openTelegramLink === "function") {
-      try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); }
-    } else {
-      window.open(link, "_blank");
-    }
-  } else if (opp.tg) {
+  if (opp.tg) {
     const tgLink = `tg://user?id=${opp.tg}`;
     if (tg && typeof tg.openLink === "function") {
       try { tg.openLink(tgLink); } catch (_) { window.open(tgLink, "_blank"); }
     } else {
       window.open(tgLink, "_blank");
+    }
+  } else if (opp.username) {
+    const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
+    if (tg && typeof tg.openTelegramLink === "function") {
+      try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); }
+    } else {
+      window.open(link, "_blank");
     }
   } else {
     showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
@@ -1709,23 +1709,23 @@ function openOpponentModal(matchId) {
   if (btn && (opp.username || opp.tg)) {
     btn.addEventListener("click", () => {
       const tg = window.Telegram?.WebApp;
-      if (opp.username) {
-        // Eng ishonchli: @username -> https://t.me/username (Telegram ichida ochiladi)
-        const link = `https://t.me/${opp.username}`;
-        if (tg && typeof tg.openTelegramLink === "function") {
-          try { tg.openTelegramLink(link); }
-          catch (_) { window.open(link, "_blank"); }
-        } else {
-          window.open(link, "_blank");
-        }
-      } else {
-        // Username yo'q — Telegram ID orqali (zaxira; ba'zi klientlarda ishlamasligi mumkin)
+      if (opp.tg) {
+        // Eng ishonchli: Telegram ID orqali (username bo'lmasa ham ishlaydi)
         const tgLink = `tg://user?id=${opp.tg}`;
         if (tg && typeof tg.openLink === "function") {
           try { tg.openLink(tgLink); }
           catch (_) { window.open(tgLink, "_blank"); }
         } else {
           window.open(tgLink, "_blank");
+        }
+      } else {
+        // Telegram ID yo'q — @username orqali (zaxira)
+        const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
+        if (tg && typeof tg.openTelegramLink === "function") {
+          try { tg.openTelegramLink(link); }
+          catch (_) { window.open(link, "_blank"); }
+        } else {
+          window.open(link, "_blank");
         }
       }
       closeOpponentModal();
