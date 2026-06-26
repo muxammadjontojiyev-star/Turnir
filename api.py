@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 
-from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS, MATCHDAYS_PER_UNLOCK
+from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS, MATCHDAYS_PER_UNLOCK, BOT_USERNAME
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
@@ -191,6 +191,15 @@ async def check_membership(user: dict = Depends(get_authenticated_user)):
         "channel_username": REQUIRED_CHANNEL_USERNAME,
         "channel_url": REQUIRED_CHANNEL_URL,
     }
+
+
+# ============ GET /config ============
+
+@app.get("/config")
+def get_config():
+    """WebApp uchun ochiq sozlamalar. Raqibga bot orqali yozish deep-link'i uchun
+    bot username'ini qaytaradi (config'da bo'sh bo'lsa "" qaytadi)."""
+    return {"bot_username": BOT_USERNAME}
 
 
 # ============ GET /leagues ============
