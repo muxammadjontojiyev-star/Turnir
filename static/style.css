@@ -1736,3 +1736,22 @@ table { border-collapse: collapse; width: 100%; }
   0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
   30% { transform: translateY(-4px); opacity: 1; }
 }
+
+/* Chat xabar yonidagi klub logosi */
+.webchat-msg {
+  align-items: flex-end;
+  gap: 6px;
+}
+.webchat-club-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+/* O'z xabarim: logo o'ngda (puffakdan keyin) */
+.webchat-msg.mine { flex-direction: row; }
+.webchat-msg.mine .webchat-club-logo { order: 2; }
+/* Raqib: logo chapda (puffakdan oldin) */
+.webchat-msg.theirs { flex-direction: row; }

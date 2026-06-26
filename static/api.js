@@ -1966,8 +1966,13 @@ function renderWebChatMessages(messages) {
     const ticks = mine ? (msg.is_read ? "✓✓" : "✓") : "";
     const tickCls = (mine && msg.is_read) ? "webchat-ticks read" : "webchat-ticks";
     const time = formatChatTime(msg.created_at);
+    const logo = findClubLogo(msg.club_name);
+    const clubLogo = logo
+      ? `<img class="webchat-club-logo" src="${escHtml(logo)}" alt="${escHtml(msg.club_name || "")}" title="${escHtml(msg.club_name || "")}">`
+      : "";
     return `
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
+        ${clubLogo}
         <div class="webchat-bubble">
           <span class="webchat-text">${escHtml(msg.text)}</span>
           <span class="webchat-meta">
