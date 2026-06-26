@@ -1054,8 +1054,15 @@ def get_chat_messages(match_id: int, requester_telegram_id: int) -> list[dict] |
     conn.commit()
 
     cursor.execute(
-        "SELECT id, sender_id, text, is_read, created_at FROM messages "
-        "WHERE match_id = ? ORDER BY id ASC",
+        """
+        SELECT msg.id AS id, msg.sender_id AS sender_id, msg.text AS text,
+               msg.is_read AS is_read, msg.created_at AS created_at,
+               reg.club_name AS club_name
+        FROM messages msg
+        LEFT JOIN registrations reg ON reg.user_id = msg.sender_id
+        WHERE msg.match_id = ?
+        ORDER BY msg.id ASC
+        """,
         (match_id,),
     )
     rows = cursor.fetchall()
@@ -1070,6 +1077,7 @@ def get_chat_messages(match_id: int, requester_telegram_id: int) -> list[dict] |
             "created_at": d["created_at"],
             "is_read": bool(d["is_read"]),
             "mine": d["sender_id"] == my_id,
+            "club_name": d.get("club_name"),
         })
     return result
 
