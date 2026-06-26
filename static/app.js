@@ -56,7 +56,6 @@ const APP = {
   ratingTab:        "league",  // Reyting bo'limidagi tab: "league" yoki "top_scorers"
   lang:             "uz",   // Joriy til
   t:                {},     // Aktiv tarjimalar
-  botUsername:      "",     // /config dan: raqibga bot orqali yozish deep-link uchun
 };
 
 // ============================================================
@@ -141,7 +140,6 @@ const TEXTS = {
     matchday_locked:  "Bu tur hali ochilmagan. Har kuni soat 23:30 da yangi tur ochiladi.",
     matchday_locked_short: "Tur hali ochilmagan",
     opp_write_button: "Raqib chatiga yozish",
-    opp_bot_relay_button: "Bot orqali yozish",
     opp_no_contact:   "Raqib bilan bog'lanib bo'lmaydi",
     result_submitted: "✅ Natija yuborildi",
     result_confirmed: "✅ Tasdiqlandi",
@@ -298,7 +296,6 @@ const TEXTS = {
     matchday_locked:  "Этот тур ещё не открыт. Новый тур открывается каждый день в 23:30.",
     matchday_locked_short: "Тур ещё не открыт",
     opp_write_button: "Написать сопернику",
-    opp_bot_relay_button: "Написать через бота",
     opp_no_contact:   "Не удаётся связаться с соперником",
     result_submitted: "✅ Результат отправлен",
     result_confirmed: "✅ Подтверждено",
@@ -452,7 +449,6 @@ const TEXTS = {
     matchday_locked:  "This matchday is not open yet. A new matchday opens every day at 23:30.",
     matchday_locked_short: "Matchday not open yet",
     opp_write_button: "Message opponent",
-    opp_bot_relay_button: "Write via bot",
     opp_no_contact:   "Can't contact this opponent",
     result_submitted: "✅ Result submitted",
     result_confirmed: "✅ Confirmed",
@@ -721,15 +717,6 @@ async function init() {
 
   bindEvents();
   applyIcons();           // Premium SVG ikonlarni joylashtirish (navigatsiya va h.k.)
-
-  // Bot username'ini olamiz (raqibga bot orqali yozish deep-link uchun).
-  // Xato bo'lsa ilova ishlashda davom etadi — tugma faqat ko'rinmaydi.
-  try {
-    const cfg = await apiFetch("/config");
-    APP.botUsername = (cfg && cfg.bot_username) ? cfg.bot_username : "";
-  } catch (_) {
-    APP.botUsername = "";
-  }
 
   hideLoadingScreen();
 
