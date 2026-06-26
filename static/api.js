@@ -1716,23 +1716,24 @@ function openOpponentModal(matchId) {
   if (btn && (opp.username || opp.tg)) {
     btn.addEventListener("click", () => {
       const tg = window.Telegram?.WebApp;
-      if (opp.tg) {
-        // Eng ishonchli: Telegram ID orqali (username bo'lmasa ham ishlaydi)
-        const tgLink = `tg://user?id=${opp.tg}`;
-        if (tg && typeof tg.openLink === "function") {
-          try { tg.openLink(tgLink); }
-          catch (_) { window.open(tgLink, "_blank"); }
-        } else {
-          window.open(tgLink, "_blank");
-        }
-      } else {
-        // Telegram ID yo'q — @username orqali (zaxira)
+      if (opp.username) {
+        // Username bor — t.me/username (openTelegramLink Telegram ichida toza ochadi,
+        // tg://user kabi loading'da qotib qolmaydi)
         const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
         if (tg && typeof tg.openTelegramLink === "function") {
           try { tg.openTelegramLink(link); }
           catch (_) { window.open(link, "_blank"); }
         } else {
           window.open(link, "_blank");
+        }
+      } else {
+        // Username yo'q — Telegram ID orqali (zaxira)
+        const tgLink = `tg://user?id=${opp.tg}`;
+        if (tg && typeof tg.openLink === "function") {
+          try { tg.openLink(tgLink); }
+          catch (_) { window.open(tgLink, "_blank"); }
+        } else {
+          window.open(tgLink, "_blank");
         }
       }
       closeOpponentModal();
