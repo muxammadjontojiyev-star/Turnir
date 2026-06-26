@@ -989,20 +989,24 @@ def get_chat_state(match_id: int, requester_telegram_id: int) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Raqib oxirgi faolligi (online)
-    cursor.execute("SELECT last_seen FROM users WHERE id = ?", (opp_id,))
+    # Raqib oxirgi faolligi (online) + username
+    cursor.execute("SELECT last_seen, username FROM users WHERE id = ?", (opp_id,))
     row = cursor.fetchone()
     last_seen_seconds = None
     online = False
-    if row is not None and dict(row).get("last_seen"):
-        cursor.execute(
-            "SELECT (julianday('now') - julianday(?)) * 86400.0",
-            (dict(row)["last_seen"],),
-        )
-        elapsed = cursor.fetchone()[0]
-        if elapsed is not None:
-            last_seen_seconds = int(elapsed)
-            online = elapsed < ONLINE_THRESHOLD_SECONDS
+    opponent_username = None
+    if row is not None:
+        rd = dict(row)
+        opponent_username = rd.get("username")
+        if rd.get("last_seen"):
+            cursor.execute(
+                "SELECT (julianday('now') - julianday(?)) * 86400.0",
+                (rd["last_seen"],),
+            )
+            elapsed = cursor.fetchone()[0]
+            if elapsed is not None:
+                last_seen_seconds = int(elapsed)
+                online = elapsed < ONLINE_THRESHOLD_SECONDS
 
     # Raqib "yozmoqda"mi
     typing = False
@@ -1025,6 +1029,8 @@ def get_chat_state(match_id: int, requester_telegram_id: int) -> dict | None:
         "online": online,
         "typing": typing,
         "last_seen_seconds": 0 if online else last_seen_seconds,
+        "opponent_user_id": opp_id,
+        "opponent_username": opponent_username,
     }
 
 
