@@ -1669,3 +1669,14 @@ table { border-collapse: collapse; width: 100%; }
   text-align: center;
   box-shadow: 0 0 6px rgba(255, 69, 96, 0.6);
 }
+
+/* Raqib klubi logosi ustidagi o'qilmagan rozetka uchun konteyner */
+.match-badge-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.match-badge-wrap .chat-badge {
+  top: -4px;
+  right: -4px;
+}

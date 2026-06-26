@@ -625,6 +625,9 @@ function navigateTo(sectionName) {
     btn.classList.toggle("active", btn.dataset.section === sectionName);
   });
 
+  // Profil rozetkasini har sahifada yangilab turamiz (umumiy o'qilmagan soni)
+  if (typeof refreshUnreadBadge === "function") refreshUnreadBadge();
+
   // Ma'lumotlarni yuklash
   SECTION_LOADERS[sectionName]?.();
 }

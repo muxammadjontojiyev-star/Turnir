@@ -853,11 +853,23 @@ function renderClubBadge(clubName) {
 // Klub nomlari hali yo'q bo'lsa (eski/registratsiyasiz holat) — faqat score ko'rsatiladi.
 function renderMatchCenter(m) {
   const score = m.score1 !== null ? `${m.score1} : ${m.score2}` : "— : —";
+
+  // O'qilmagan xabar rozetkasi — RAQIB klubi logosi ustida ko'rsatiladi
+  const myId = APP.currentUser?.id;
+  const iAmP1 = m.player1_telegram_id === myId;
+  const unreadCount = (APP.unread && APP.unread.by_match && APP.unread.by_match[m.id]) || 0;
+  const badge = unreadCount > 0
+    ? `<span class="chat-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
+    : "";
+  // Raqib qaysi tomonda? Men P1 bo'lsam raqib = P2 (o'ng), aks holda P1 (chap)
+  const p1Badge = iAmP1 ? "" : badge;
+  const p2Badge = iAmP1 ? badge : "";
+
   if (m.player1_club || m.player2_club) {
     return `
-      ${renderClubBadge(m.player1_club)}
+      <span class="match-badge-wrap">${renderClubBadge(m.player1_club)}${p1Badge}</span>
       <span class="match-score">${score}</span>
-      ${renderClubBadge(m.player2_club)}
+      <span class="match-badge-wrap">${renderClubBadge(m.player2_club)}${p2Badge}</span>
     `;
   }
   return `<span class="match-score">${score}</span>`;
@@ -893,12 +905,8 @@ function renderMatchItem(m) {
           ${t.enter_result || "Natija"}
         </button>`;
       } else {
-        const unreadCount = (APP.unread && APP.unread.by_match && APP.unread.by_match[m.id]) || 0;
-        const badge = unreadCount > 0
-          ? `<span class="chat-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
-          : "";
         actionBtn = `<button class="match-action-btn match-chat-btn" data-match-id="${m.id}" data-action="chat" title="${t.chat_first_hint || "Avval raqib bilan kelishing"}">
-          ${ICON.get("chat", 18)}${badge}
+          ${ICON.get("chat", 18)}
         </button>`;
       }
     }
@@ -1843,6 +1851,17 @@ function updateProfileBadge() {
   } else if (badge) {
     badge.remove();
   }
+}
+
+// Umumiy o'qilmagan sonni yuklab, profil rozetkasini yangilaydi (har sahifada).
+// Yengil: faqat /matches/unread, match ro'yxatini qayta yuklamaydi.
+async function refreshUnreadBadge() {
+  try {
+    APP.unread = await apiFetch("/matches/unread");
+  } catch (_) {
+    APP.unread = { total: 0, by_match: {} };
+  }
+  updateProfileBadge();
 }
 
 async function loadWebChatMessages() {
