@@ -37,7 +37,7 @@ from queries import (
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
     get_matchday_entry_locked, reopen_matchday_range, reset_awaiting_in_range,
     is_near_deadline,
-    send_chat_message, get_chat_messages,
+    send_chat_message, get_chat_messages, count_unread_messages,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -498,7 +498,7 @@ def get_match_messages(match_id: int, user: dict = Depends(get_authenticated_use
 
 
 @app.post("/matches/{match_id}/messages")
-def post_match_message(
+async def post_match_message(
     match_id: int,
     text: str = Body(..., embed=True),
     user: dict = Depends(get_authenticated_user),
@@ -507,13 +507,40 @@ def post_match_message(
     Aktiv match raqibiga matnli xabar yuboradi.
     Body: {"text": "..."}
     Xatolar: empty (bo'sh matn) → 400, no_access (begona/tugagan) → 403.
+
+    Muvaffaqiyatda, raqib chatni faol kuzatmayotgan bo'lsa (anti-spam: 1 daqiqada
+    bir marta), unga bot orqali "Raqib sizga ilovadan xabar yubordi" bildirishnomasi
+    yuboriladi (xabar matnining qisqa ko'rinishi bilan).
     """
-    ok, reason = send_chat_message(match_id, user["telegram_id"], text)
+    ok, reason, notify = send_chat_message(match_id, user["telegram_id"], text)
     if not ok:
         if reason == "empty":
             raise HTTPException(status_code=400, detail="empty")
         raise HTTPException(status_code=403, detail="chat_no_access")
+
+    # Bot bildirishnomasi (raqibga). Xato bo'lsa ham xabar yuborilgan — javobni buzmaymiz.
+    if notify is not None:
+        try:
+            recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            await notify_user(
+                notify["recipient_telegram_id"],
+                "notify_chat_message",
+                recipient.get("language") if recipient else None,
+                preview=notify["text_preview"],
+            )
+        except Exception:
+            pass
+
     return {"ok": True}
+
+
+@app.get("/matches/unread")
+def get_unread_counts(user: dict = Depends(get_authenticated_user)):
+    """
+    O'qilmagan chat xabarlari soni (qizil rozetka uchun).
+    Qaytaradi: {"total": int, "by_match": {match_id: count, ...}}
+    """
+    return count_unread_messages(user["telegram_id"])
 
 
 # ============ POST /match/submit-result ============

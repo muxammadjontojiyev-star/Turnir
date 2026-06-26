@@ -772,6 +772,10 @@ def get_match_by_id(match_id: int) -> dict | None:
 # WebApp chat faqat AKTIV (o'ynalmagan / tasdiq kutilayotgan) o'yinlarda ishlaydi.
 CHAT_ACTIVE_MATCH_STATUSES = ("pending", "awaiting_confirmation")
 
+# Bot bildirishnomasi anti-spam: shu (match, raqib) uchun ketma-ket bot xabarlari
+# orasidagi minimal vaqt (soniya). 60s = 1 daqiqada bir martadan ko'p emas.
+CHAT_NOTIFY_THROTTLE_SECONDS = 60
+
 
 def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None:
     """
@@ -819,20 +823,25 @@ def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None
     }
 
 
-def send_chat_message(match_id: int, sender_telegram_id: int, text: str) -> tuple[bool, str]:
+def send_chat_message(match_id: int, sender_telegram_id: int, text: str):
     """
     Chat xabarini yozadi. Faqat aktiv match ishtirokchisi yuborar oladi.
-    Qaytaradi: (muvaffaqiyat, xabar/xato_sababi).
+
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str, notify: dict | None)
+      - notify None bo'lmasa, chaqiruvchi raqibga bot xabari yuborishi kerak:
+        {"recipient_telegram_id": int, "sender_label": None, "text_preview": str}
+        (sender_label api tomonda to'ldiriladi). Anti-spam: oxirgi bot xabaridan
+        CHAT_NOTIFY_THROTTLE_SECONDS o'tgan bo'lsagina notify qaytadi.
     """
     text = (text or "").strip()
     if not text:
-        return False, "empty"
+        return False, "empty", None
     if len(text) > 2000:
         text = text[:2000]
 
     access = _chat_match_access(match_id, sender_telegram_id)
     if access is None:
-        return False, "no_access"
+        return False, "no_access", None
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -841,8 +850,89 @@ def send_chat_message(match_id: int, sender_telegram_id: int, text: str) -> tupl
         (match_id, access["my_user_id"], text),
     )
     conn.commit()
+
+    # Raqibning telegram_id'sini olamiz (bot xabari uchun)
+    cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (access["opponent_user_id"],))
+    opp_row = cursor.fetchone()
+    recipient_tg = dict(opp_row)["telegram_id"] if opp_row else None
+
+    notify = None
+    if recipient_tg is not None:
+        # Anti-spam: shu (match, raqib) uchun oxirgi bot xabaridan beri qancha o'tgan?
+        cursor.execute(
+            "SELECT last_notified_at FROM chat_notify WHERE match_id = ? AND recipient_id = ?",
+            (match_id, access["opponent_user_id"]),
+        )
+        nrow = cursor.fetchone()
+        send_it = True
+        if nrow is not None:
+            last = dict(nrow).get("last_notified_at")
+            if last:
+                cursor.execute(
+                    "SELECT (julianday('now') - julianday(?)) * 86400.0",
+                    (last,),
+                )
+                elapsed = cursor.fetchone()[0]
+                if elapsed is not None and elapsed < CHAT_NOTIFY_THROTTLE_SECONDS:
+                    send_it = False
+
+        if send_it:
+            # last_notified_at ni hozirgi vaqtga yangilaymiz (upsert)
+            cursor.execute(
+                "INSERT INTO chat_notify (match_id, recipient_id, last_notified_at) "
+                "VALUES (?, ?, datetime('now')) "
+                "ON CONFLICT(match_id, recipient_id) DO UPDATE SET last_notified_at = datetime('now')",
+                (match_id, access["opponent_user_id"]),
+            )
+            conn.commit()
+            preview = text if len(text) <= 50 else text[:50] + "..."
+            notify = {
+                "recipient_telegram_id": recipient_tg,
+                "text_preview": preview,
+            }
+
     conn.close()
-    return True, "ok"
+    return True, "ok", notify
+
+
+def count_unread_messages(requester_telegram_id: int) -> dict:
+    """
+    Foydalanuvchi uchun o'qilmagan xabarlar sonini qaytaradi.
+
+    Qaytaradi:
+      {"total": int, "by_match": {match_id: count, ...}}
+    Faqat AKTIV matchlardagi, raqib yuborgan, o'qilmagan xabarlar sanaladi.
+    """
+    user = get_user_by_telegram_id(requester_telegram_id)
+    if user is None:
+        return {"total": 0, "by_match": {}}
+    my_id = user["id"]
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT msg.match_id AS match_id, COUNT(*) AS cnt
+        FROM messages msg
+        JOIN matches m ON m.id = msg.match_id
+        WHERE msg.is_read = 0
+          AND msg.sender_id != ?
+          AND (m.player1_id = ? OR m.player2_id = ?)
+          AND m.status IN ('pending', 'awaiting_confirmation')
+        GROUP BY msg.match_id
+        """,
+        (my_id, my_id, my_id),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    by_match = {}
+    total = 0
+    for r in rows:
+        d = dict(r)
+        by_match[d["match_id"]] = d["cnt"]
+        total += d["cnt"]
+    return {"total": total, "by_match": by_match}
 
 
 def get_chat_messages(match_id: int, requester_telegram_id: int) -> list[dict] | None:

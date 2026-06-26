@@ -106,6 +106,18 @@ def init_db():
         )
     """)
 
+    # === chat_notify (bot bildirishnomasi anti-spam holati) ===
+    # Har (match_id, recipient_id) juftligi uchun bot oxirgi marta qachon xabar
+    # berganini saqlaydi — 1 daqiqada bir martadan ko'p yubormaslik uchun.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_notify (
+            match_id INTEGER NOT NULL,
+            recipient_id INTEGER NOT NULL,
+            last_notified_at TIMESTAMP,
+            PRIMARY KEY (match_id, recipient_id)
+        )
+    """)
+
     conn.commit()
 
     # === MIGRATSIYALAR ===
