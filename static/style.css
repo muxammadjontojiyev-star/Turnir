@@ -1799,3 +1799,16 @@ table { border-collapse: collapse; width: 100%; }
   object-fit: contain;
   flex-shrink: 0;
 }
+
+/* Reyting liga tablari: logo + nom yonma-yon */
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.tab-league-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}

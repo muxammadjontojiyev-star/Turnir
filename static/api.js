@@ -420,7 +420,7 @@ function renderRatingFilter() {
   (APP.leagues || []).forEach(league => {
     const btn = document.createElement("button");
     btn.className = "tab-btn" + (APP.ratingTab === "league" && league.id === APP.selectedLeagueId ? " active" : "");
-    btn.textContent = league.name;
+    btn.innerHTML = renderLeagueLogo(league.name, "tab-league-logo") + `<span>${escHtml(league.name)}</span>`;
     btn.addEventListener("click", async () => {
       APP.selectedLeagueId = league.id;
       APP.ratingTab = "league";
