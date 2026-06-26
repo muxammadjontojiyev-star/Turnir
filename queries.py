@@ -769,6 +769,128 @@ def get_match_by_id(match_id: int) -> dict | None:
     return dict(row) if row else None
 
 
+# WebApp chat faqat AKTIV (o'ynalmagan / tasdiq kutilayotgan) o'yinlarda ishlaydi.
+CHAT_ACTIVE_MATCH_STATUSES = ("pending", "awaiting_confirmation")
+
+
+def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None:
+    """
+    Chat xavfsizlik tekshiruvi. Requester shu matchning ishtirokchimi va match
+    aktivmi tekshiradi. Shart bajarilsa raqib/o'zi ma'lumotini qaytaradi, aks holda None.
+
+    Qaytaradi:
+      {"match_id", "my_user_id", "opponent_user_id", "status"}
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT m.id AS match_id, m.status AS status,
+               m.player1_id AS p1, m.player2_id AS p2,
+               u1.telegram_id AS p1_tg, u2.telegram_id AS p2_tg
+        FROM matches m
+        LEFT JOIN users u1 ON u1.id = m.player1_id
+        LEFT JOIN users u2 ON u2.id = m.player2_id
+        WHERE m.id = ?
+        """,
+        (match_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+    m = dict(row)
+    if m["status"] not in CHAT_ACTIVE_MATCH_STATUSES:
+        return None
+
+    if m["p1_tg"] == requester_telegram_id:
+        my_id, opp_id = m["p1"], m["p2"]
+    elif m["p2_tg"] == requester_telegram_id:
+        my_id, opp_id = m["p2"], m["p1"]
+    else:
+        return None
+
+    return {
+        "match_id": m["match_id"],
+        "my_user_id": my_id,
+        "opponent_user_id": opp_id,
+        "status": m["status"],
+    }
+
+
+def send_chat_message(match_id: int, sender_telegram_id: int, text: str) -> tuple[bool, str]:
+    """
+    Chat xabarini yozadi. Faqat aktiv match ishtirokchisi yuborar oladi.
+    Qaytaradi: (muvaffaqiyat, xabar/xato_sababi).
+    """
+    text = (text or "").strip()
+    if not text:
+        return False, "empty"
+    if len(text) > 2000:
+        text = text[:2000]
+
+    access = _chat_match_access(match_id, sender_telegram_id)
+    if access is None:
+        return False, "no_access"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO messages (match_id, sender_id, text) VALUES (?, ?, ?)",
+        (match_id, access["my_user_id"], text),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def get_chat_messages(match_id: int, requester_telegram_id: int) -> list[dict] | None:
+    """
+    Match xabarlarini (vaqt tartibida) qaytaradi. Yon ta'sir: raqib yuborgan
+    o'qilmagan xabarlarni "o'qilgan" deb belgilaydi (ikkita ✓ uchun).
+
+    Har bir xabar: {"id", "text", "created_at", "is_read", "mine"}
+      - mine: True = men yuborganman, False = raqib yuborgan.
+    Access yo'q bo'lsa None.
+    """
+    access = _chat_match_access(match_id, requester_telegram_id)
+    if access is None:
+        return None
+
+    my_id = access["my_user_id"]
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Raqib yuborgan o'qilmaganlarni o'qilgan deb belgilaymiz
+    cursor.execute(
+        "UPDATE messages SET is_read = 1 WHERE match_id = ? AND sender_id != ? AND is_read = 0",
+        (match_id, my_id),
+    )
+    conn.commit()
+
+    cursor.execute(
+        "SELECT id, sender_id, text, is_read, created_at FROM messages "
+        "WHERE match_id = ? ORDER BY id ASC",
+        (match_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    result = []
+    for r in rows:
+        d = dict(r)
+        result.append({
+            "id": d["id"],
+            "text": d["text"],
+            "created_at": d["created_at"],
+            "is_read": bool(d["is_read"]),
+            "mine": d["sender_id"] == my_id,
+        })
+    return result
+
+
 def submit_match_result(match_id: int, score1: int, score2: int, submitted_by: int) -> tuple[bool, str]:
     """
     Match natijasini kiritadi (faqat o'sha matchning player1 yoki player2 kira oladi).

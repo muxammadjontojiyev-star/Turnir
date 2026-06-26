@@ -91,6 +91,21 @@ def init_db():
         )
     """)
 
+    # === messages (WebApp chat — aktiv match raqibi bilan) ===
+    # sender_id = users.id (kim yuborgan). is_read = raqib o'qidimi (ikkita ✓ uchun).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES matches(id),
+            FOREIGN KEY (sender_id) REFERENCES users(id)
+        )
+    """)
+
     conn.commit()
 
     # === MIGRATSIYALAR ===

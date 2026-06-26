@@ -17,7 +17,7 @@ import json
 from urllib.parse import parse_qsl
 
 import httpx
-from fastapi import FastAPI, Header, HTTPException, Depends
+from fastapi import FastAPI, Header, HTTPException, Depends, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
@@ -37,6 +37,7 @@ from queries import (
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
     get_matchday_entry_locked, reopen_matchday_range, reset_awaiting_in_range,
     is_near_deadline,
+    send_chat_message, get_chat_messages,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -479,6 +480,40 @@ def get_my_matches(user: dict = Depends(get_authenticated_user)):
     """Joriy foydalanuvchining barcha matchlarini qaytaradi (is_locked bilan)."""
     matches = _annotate_matches_locked(get_user_matches(user["id"]))
     return {"user_id": user["id"], "matches": matches}
+
+
+# ============ Chat (aktiv match raqibi bilan) ============
+
+@app.get("/matches/{match_id}/messages")
+def get_match_messages(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """
+    Aktiv match xabarlarini qaytaradi (vaqt tartibida). Raqib yuborgan
+    o'qilmagan xabarlar "o'qilgan" deb belgilanadi (ikkita ✓ uchun).
+    Access yo'q (begona/tugagan match) → 403.
+    """
+    messages = get_chat_messages(match_id, user["telegram_id"])
+    if messages is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"match_id": match_id, "messages": messages}
+
+
+@app.post("/matches/{match_id}/messages")
+def post_match_message(
+    match_id: int,
+    text: str = Body(..., embed=True),
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    Aktiv match raqibiga matnli xabar yuboradi.
+    Body: {"text": "..."}
+    Xatolar: empty (bo'sh matn) → 400, no_access (begona/tugagan) → 403.
+    """
+    ok, reason = send_chat_message(match_id, user["telegram_id"], text)
+    if not ok:
+        if reason == "empty":
+            raise HTTPException(status_code=400, detail="empty")
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"ok": True}
 
 
 # ============ POST /match/submit-result ============
