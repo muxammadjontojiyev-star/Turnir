@@ -136,6 +136,22 @@ const LEAGUE_TROPHIES = {
   "Ligue 1":      "images/ligue1-trophy-1.png",
 };
 
+// Liga emblemasi (logo) — liga nomi yonida ko'rsatiladi (hero karta + tanlash ro'yxati)
+const LEAGUE_LOGOS = {
+  "LaLiga":       "images/laliga-logo.png",
+  "Premier Liga": "images/premier-logo.png",
+  "Bundesliga":   "images/bundesliga-logo.png",
+  "Serie A":      "images/seriea-logo.png",
+  "Ligue 1":      "images/ligue1-logo.png",
+};
+
+// Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
+function renderLeagueLogo(leagueName, cls) {
+  const src = LEAGUE_LOGOS[leagueName];
+  if (!src) return "";
+  return `<img class="${cls}" src="${src}?v=1" alt="${escHtml(leagueName)}" onerror="this.style.display='none'">`;
+}
+
 async function apiFetch(path, options = {}) {
   const initData = window.Telegram?.WebApp?.initData || "";
   const res = await fetch(API_BASE + path, {
@@ -197,7 +213,7 @@ function renderHeroCard(league) {
     ? "var(--red-neon)"
     : "var(--cyan)";
 
-  name.textContent  = league.name;
+  name.innerHTML = renderLeagueLogo(league.name, "hero-league-logo") + `<span>${escHtml(league.name)}</span>`;
   count.textContent = league.current_players;
   max.textContent   = league.max_players;
 
@@ -237,6 +253,7 @@ function renderLeagues(leagues) {
     }
 
     item.innerHTML = `
+      ${renderLeagueLogo(league.name, "league-item-logo")}
       <div>
         <div class="league-item-name">${league.name}</div>
         <div class="league-item-count">${league.current_players}/${league.max_players} ${t.players || "o'yinchi"}</div>

@@ -1773,3 +1773,29 @@ table { border-collapse: collapse; width: 100%; }
   opacity: 0.85;
   line-height: 1.2;
 }
+
+/* ============================================================
+   LIGA LOGOLARI (hero karta + tanlash ro'yxati)
+   ============================================================ */
+
+/* Tanlash ro'yxatidagi liga logosi */
+.league-item-logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+/* Hero kartadagi liga nomi + logo bir qatorda */
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hero-league-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
