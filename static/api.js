@@ -1641,21 +1641,21 @@ function openMatchChat(matchId) {
   if (!APP.chatOpened) APP.chatOpened = new Set();
   APP.chatOpened.add(matchId);
 
-  // Raqib chatiga o'tamiz — avval telegram_id (tg://user?id=), bo'lmasa username (zaxira)
+  // Raqib chatiga o'tamiz — avval username (t.me/username, qotmaydi), bo'lmasa telegram_id (zaxira)
   const tg = window.Telegram?.WebApp;
-  if (opp.tg) {
-    const tgLink = `tg://user?id=${opp.tg}`;
-    if (tg && typeof tg.openLink === "function") {
-      try { tg.openLink(tgLink); } catch (_) { window.open(tgLink, "_blank"); }
-    } else {
-      window.open(tgLink, "_blank");
-    }
-  } else if (opp.username) {
+  if (opp.username) {
     const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
     if (tg && typeof tg.openTelegramLink === "function") {
       try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); }
     } else {
       window.open(link, "_blank");
+    }
+  } else if (opp.tg) {
+    const tgLink = `tg://user?id=${opp.tg}`;
+    if (tg && typeof tg.openLink === "function") {
+      try { tg.openLink(tgLink); } catch (_) { window.open(tgLink, "_blank"); }
+    } else {
+      window.open(tgLink, "_blank");
     }
   } else {
     showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
