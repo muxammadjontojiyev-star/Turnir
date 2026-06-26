@@ -1682,6 +1682,12 @@ function openOpponentModal(matchId) {
     ? `<button class="opp-chat-btn" id="opp-chat-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
 
+  // WebApp chat tugmasi: faqat AKTIV match'da (pending / awaiting_confirmation)
+  const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
+  const webChatBtn = chatActive
+    ? `<button class="opp-chat-btn opp-webchat-btn" id="opp-webchat-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
+    : "";
+
   let modal = document.getElementById("modal-opponent");
   if (!modal) {
     modal = document.createElement("div");
@@ -1697,6 +1703,7 @@ function openOpponentModal(matchId) {
         <div class="opp-vs-sep">VS</div>
         ${renderOpponentSide(m.player2_club, m.player2_username, m.player2_nickname)}
       </div>
+      ${webChatBtn}
       ${chatBtn}
     </div>
   `;
@@ -1731,11 +1738,146 @@ function openOpponentModal(matchId) {
       closeOpponentModal();
     });
   }
+
+  // WebApp chat — "Chatni ochish"
+  const webBtn = document.getElementById("opp-webchat-btn");
+  if (webBtn) {
+    const oppLabel = opp.nickname || (opp.username ? "@" + String(opp.username).replace(/^@/, "") : (t.webchat_opponent || "Raqib"));
+    webBtn.addEventListener("click", () => {
+      closeOpponentModal();
+      openWebChat(matchId, oppLabel);
+    });
+  }
 }
 
 function closeOpponentModal() {
   const modal = document.getElementById("modal-opponent");
   if (modal) modal.classList.add("hidden");
+}
+
+// ============================================================
+//  WEBAPP CHAT (aktiv match raqibi bilan)
+// ============================================================
+
+const CHAT_POLL_INTERVAL_MS = 4000;  // Xabarlarni har 4 soniyada yangilash
+
+function openWebChat(matchId, opponentLabel) {
+  const t = APP.t;
+  APP.chatMatchId = matchId;
+
+  let modal = document.getElementById("modal-webchat");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "modal-webchat";
+    modal.className = "modal hidden";
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box webchat-box">
+      <div class="webchat-header">
+        <span class="webchat-title">${escHtml(opponentLabel || (t.webchat_opponent || "Raqib"))}</span>
+        <button class="modal-close" id="webchat-close">${ICON.get("close", 18)}</button>
+      </div>
+      <div class="webchat-messages" id="webchat-messages">
+        <div class="webchat-loading">${escHtml(t.webchat_loading || "Yuklanmoqda...")}</div>
+      </div>
+      <div class="webchat-input-row">
+        <input type="text" id="webchat-input" class="webchat-input"
+               placeholder="${escHtml(t.webchat_placeholder || "Xabar yozing...")}"
+               maxlength="2000" autocomplete="off" />
+        <button class="webchat-send" id="webchat-send">${ICON.get("chat", 18)}</button>
+      </div>
+    </div>
+  `;
+  modal.classList.remove("hidden");
+
+  document.getElementById("webchat-close").addEventListener("click", closeWebChat);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeWebChat(); });
+
+  const input = document.getElementById("webchat-input");
+  const sendBtn = document.getElementById("webchat-send");
+  sendBtn.addEventListener("click", sendWebChatMessage);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); sendWebChatMessage(); }
+  });
+
+  // Birinchi yuklash + polling
+  loadWebChatMessages();
+  if (APP.chatPoll) clearInterval(APP.chatPoll);
+  APP.chatPoll = setInterval(loadWebChatMessages, CHAT_POLL_INTERVAL_MS);
+}
+
+function closeWebChat() {
+  if (APP.chatPoll) { clearInterval(APP.chatPoll); APP.chatPoll = null; }
+  APP.chatMatchId = null;
+  const modal = document.getElementById("modal-webchat");
+  if (modal) modal.classList.add("hidden");
+}
+
+async function loadWebChatMessages() {
+  const matchId = APP.chatMatchId;
+  if (!matchId) return;
+  try {
+    const data = await apiFetch(`/matches/${matchId}/messages`);
+    renderWebChatMessages(data.messages || []);
+  } catch (e) {
+    // Access yo'q (match tugagan) — chatni yopamiz
+    const box = document.getElementById("webchat-messages");
+    if (box) box.innerHTML = `<div class="webchat-loading">${escHtml(APP.t.webchat_closed || "Chat yopilgan")}</div>`;
+    if (APP.chatPoll) { clearInterval(APP.chatPoll); APP.chatPoll = null; }
+  }
+}
+
+function renderWebChatMessages(messages) {
+  const box = document.getElementById("webchat-messages");
+  if (!box) return;
+  const t = APP.t;
+
+  if (!messages.length) {
+    box.innerHTML = `<div class="webchat-empty">${escHtml(t.webchat_empty || "Hali xabar yo'q. Birinchi bo'lib yozing!")}</div>`;
+    return;
+  }
+
+  // Pastga skroll qilinganmi (yangi xabarda avtomatik pastga tushish uchun)
+  const atBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 60;
+
+  box.innerHTML = messages.map(msg => {
+    const mine = msg.mine;
+    const ticks = mine ? (msg.is_read ? "✓✓" : "✓") : "";
+    const tickCls = (mine && msg.is_read) ? "webchat-ticks read" : "webchat-ticks";
+    return `
+      <div class="webchat-msg ${mine ? "mine" : "theirs"}">
+        <div class="webchat-bubble">
+          <span class="webchat-text">${escHtml(msg.text)}</span>
+          ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+async function sendWebChatMessage() {
+  const matchId = APP.chatMatchId;
+  const input = document.getElementById("webchat-input");
+  if (!matchId || !input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = "";
+  try {
+    await apiFetch(`/matches/${matchId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    });
+    await loadWebChatMessages();
+    const box = document.getElementById("webchat-messages");
+    if (box) box.scrollTop = box.scrollHeight;
+  } catch (e) {
+    showToast(APP.t.webchat_send_failed || "Xabar yuborilmadi");
+    input.value = text;  // Matnni qaytaramiz
+  }
 }
 
 async function submitMatchResult() {

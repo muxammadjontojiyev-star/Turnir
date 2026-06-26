@@ -56,6 +56,8 @@ const APP = {
   ratingTab:        "league",  // Reyting bo'limidagi tab: "league" yoki "top_scorers"
   lang:             "uz",   // Joriy til
   t:                {},     // Aktiv tarjimalar
+  chatMatchId:      null,   // WebApp chat: ochiq match id
+  chatPoll:         null,   // WebApp chat: polling interval handle
 };
 
 // ============================================================
@@ -141,6 +143,13 @@ const TEXTS = {
     matchday_locked_short: "Tur hali ochilmagan",
     opp_write_button: "Raqib chatiga yozish",
     opp_no_contact:   "Raqib bilan bog'lanib bo'lmaydi",
+    webchat_open:        "Chatni ochish",
+    webchat_opponent:    "Raqib",
+    webchat_loading:     "Yuklanmoqda...",
+    webchat_placeholder: "Xabar yozing...",
+    webchat_empty:       "Hali xabar yo'q. Birinchi bo'lib yozing!",
+    webchat_closed:      "Chat yopilgan",
+    webchat_send_failed: "Xabar yuborilmadi",
     result_submitted: "✅ Natija yuborildi",
     result_confirmed: "✅ Tasdiqlandi",
     confirm_result_title: "Natijani tasdiqlaysizmi?",
@@ -297,6 +306,13 @@ const TEXTS = {
     matchday_locked_short: "Тур ещё не открыт",
     opp_write_button: "Написать сопернику",
     opp_no_contact:   "Не удаётся связаться с соперником",
+    webchat_open:        "Открыть чат",
+    webchat_opponent:    "Соперник",
+    webchat_loading:     "Загрузка...",
+    webchat_placeholder: "Напишите сообщение...",
+    webchat_empty:       "Сообщений пока нет. Напишите первым!",
+    webchat_closed:      "Чат закрыт",
+    webchat_send_failed: "Сообщение не отправлено",
     result_submitted: "✅ Результат отправлен",
     result_confirmed: "✅ Подтверждено",
     confirm_result_title: "Подтвердить результат?",
@@ -450,6 +466,13 @@ const TEXTS = {
     matchday_locked_short: "Matchday not open yet",
     opp_write_button: "Message opponent",
     opp_no_contact:   "Can't contact this opponent",
+    webchat_open:        "Open chat",
+    webchat_opponent:    "Opponent",
+    webchat_loading:     "Loading...",
+    webchat_placeholder: "Type a message...",
+    webchat_empty:       "No messages yet. Be the first to write!",
+    webchat_closed:      "Chat closed",
+    webchat_send_failed: "Message not sent",
     result_submitted: "✅ Result submitted",
     result_confirmed: "✅ Confirmed",
     confirm_result_title: "Confirm the result?",

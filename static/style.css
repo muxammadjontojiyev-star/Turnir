@@ -1499,3 +1499,129 @@ table { border-collapse: collapse; width: 100%; }
   opacity: 0.85;
 }
 .match-waiting .icon { vertical-align: middle; }
+
+/* ============================================================
+   WEBAPP CHAT (aktiv match raqibi bilan)
+   ============================================================ */
+
+.opp-webchat-btn {
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+  border: none;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.webchat-box {
+  height: 80vh;
+  max-height: 80vh;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.webchat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.webchat-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-heading);
+}
+
+.webchat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.webchat-loading,
+.webchat-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: auto 0;
+  padding: 20px;
+}
+
+.webchat-msg {
+  display: flex;
+  max-width: 80%;
+}
+.webchat-msg.mine   { align-self: flex-end; }
+.webchat-msg.theirs { align-self: flex-start; }
+
+.webchat-bubble {
+  padding: 9px 13px;
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 1.35;
+  word-break: break-word;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.webchat-msg.mine .webchat-bubble {
+  background: var(--cyan-dim);
+  border: 1px solid var(--border-accent);
+  color: var(--text-primary);
+  border-bottom-right-radius: 4px;
+}
+.webchat-msg.theirs .webchat-bubble {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.webchat-text { white-space: pre-wrap; }
+
+.webchat-ticks {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.webchat-ticks.read { color: var(--cyan); }
+
+.webchat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.webchat-input {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 22px;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+}
+.webchat-input:focus { border-color: var(--border-accent); }
+
+.webchat-send {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), var(--cyan));
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
