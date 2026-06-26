@@ -1682,6 +1682,12 @@ function openOpponentModal(matchId) {
     ? `<button class="opp-chat-btn" id="opp-chat-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
 
+  // Bot orqali yozish tugmasi: bot username sozlangan VA match id bor bo'lsa ko'rsatiladi.
+  // To'g'ridan-to'g'ri chat ishlamasa (spam cheklovi), bot vositachi bo'ladi.
+  const relayBtn = (APP.botUsername && m.id)
+    ? `<button class="opp-chat-btn opp-relay-btn" id="opp-relay-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_bot_relay_button || "Bot orqali yozish")}</button>`
+    : "";
+
   let modal = document.getElementById("modal-opponent");
   if (!modal) {
     modal = document.createElement("div");
@@ -1698,6 +1704,7 @@ function openOpponentModal(matchId) {
         ${renderOpponentSide(m.player2_club, m.player2_username, m.player2_nickname)}
       </div>
       ${chatBtn}
+      ${relayBtn}
     </div>
   `;
   modal.classList.remove("hidden");
@@ -1727,6 +1734,22 @@ function openOpponentModal(matchId) {
         } else {
           window.open(link, "_blank");
         }
+      }
+      closeOpponentModal();
+    });
+  }
+
+  // Bot orqali yozish: deep-link https://t.me/<botUsername>?start=msg_<matchId>
+  const relayBtnEl = document.getElementById("opp-relay-btn");
+  if (relayBtnEl && APP.botUsername && m.id) {
+    relayBtnEl.addEventListener("click", () => {
+      const tg = window.Telegram?.WebApp;
+      const link = `https://t.me/${String(APP.botUsername).replace(/^@/, "")}?start=msg_${m.id}`;
+      if (tg && typeof tg.openTelegramLink === "function") {
+        try { tg.openTelegramLink(link); }
+        catch (_) { window.open(link, "_blank"); }
+      } else {
+        window.open(link, "_blank");
       }
       closeOpponentModal();
     });
