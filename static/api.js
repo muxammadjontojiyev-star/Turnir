@@ -776,6 +776,14 @@ async function loadMyMatches() {
   const t = APP.t;
   const list = document.getElementById("matches-list");
 
+  // O'qilmagan chat xabarlari soni (rozetka uchun) — sahifa ochilganda yangilanadi
+  try {
+    APP.unread = await apiFetch("/matches/unread");
+  } catch (_) {
+    APP.unread = { total: 0, by_match: {} };
+  }
+  updateProfileBadge();
+
   try {
     const data = await apiFetch("/matches/my");
     const matches = data.matches || [];
@@ -885,8 +893,12 @@ function renderMatchItem(m) {
           ${t.enter_result || "Natija"}
         </button>`;
       } else {
+        const unreadCount = (APP.unread && APP.unread.by_match && APP.unread.by_match[m.id]) || 0;
+        const badge = unreadCount > 0
+          ? `<span class="chat-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
+          : "";
         actionBtn = `<button class="match-action-btn match-chat-btn" data-match-id="${m.id}" data-action="chat" title="${t.chat_first_hint || "Avval raqib bilan kelishing"}">
-          ${ICON.get("chat", 18)}
+          ${ICON.get("chat", 18)}${badge}
         </button>`;
       }
     }
@@ -1813,6 +1825,24 @@ function closeWebChat() {
   APP.chatMatchId = null;
   const modal = document.getElementById("modal-webchat");
   if (modal) modal.classList.add("hidden");
+}
+
+// Profil navigatsiya ikonkasi ustidagi umumiy o'qilmagan rozetka
+function updateProfileBadge() {
+  const navBtn = document.querySelector('.nav-item[data-section="profile"]');
+  if (!navBtn) return;
+  const total = (APP.unread && APP.unread.total) || 0;
+  let badge = navBtn.querySelector(".nav-badge");
+  if (total > 0) {
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "nav-badge";
+      navBtn.appendChild(badge);
+    }
+    badge.textContent = total > 9 ? "9+" : String(total);
+  } else if (badge) {
+    badge.remove();
+  }
 }
 
 async function loadWebChatMessages() {

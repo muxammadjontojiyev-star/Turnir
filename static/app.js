@@ -58,6 +58,7 @@ const APP = {
   t:                {},     // Aktiv tarjimalar
   chatMatchId:      null,   // WebApp chat: ochiq match id
   chatPoll:         null,   // WebApp chat: polling interval handle
+  unread:           { total: 0, by_match: {} },  // O'qilmagan chat xabarlari (rozetka)
 };
 
 // ============================================================
