@@ -38,6 +38,7 @@ from queries import (
     get_matchday_entry_locked, reopen_matchday_range, reset_awaiting_in_range,
     is_near_deadline,
     send_chat_message, get_chat_messages, count_unread_messages,
+    touch_last_seen, set_typing, get_chat_state,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -124,6 +125,11 @@ def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
     username      = telegram_user.get("username")
 
     user = get_or_create_user(telegram_id, first_name, username)
+    # Online holati uchun: foydalanuvchi ilovani ishlatgan har lahzada faollik vaqti yangilanadi
+    try:
+        touch_last_seen(telegram_id)
+    except Exception:
+        pass
     return user
 
 
@@ -541,6 +547,27 @@ def get_unread_counts(user: dict = Depends(get_authenticated_user)):
     Qaytaradi: {"total": int, "by_match": {match_id: count, ...}}
     """
     return count_unread_messages(user["telegram_id"])
+
+
+@app.post("/matches/{match_id}/typing")
+def post_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """Foydalanuvchi shu match chatida 'yozmoqda' signalini yuboradi."""
+    ok = set_typing(match_id, user["telegram_id"])
+    if not ok:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"ok": True}
+
+
+@app.get("/matches/{match_id}/state")
+def get_match_state(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """
+    Raqibning chat holatini qaytaradi (online / yozmoqda / oxirgi ko'rinish).
+    Access yo'q → 403.
+    """
+    state = get_chat_state(match_id, user["telegram_id"])
+    if state is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return state
 
 
 # ============ POST /match/submit-result ============

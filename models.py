@@ -118,6 +118,18 @@ def init_db():
         )
     """)
 
+    # === chat_typing (kim qachon "yozmoqda") ===
+    # Har (match_id, user_id) uchun oxirgi "yozyapman" signali vaqti. Raqib buni
+    # o'qib, yaqinda (bir necha soniya) signal bo'lsa "yozmoqda..." ko'rsatadi.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_typing (
+            match_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            typing_at TIMESTAMP,
+            PRIMARY KEY (match_id, user_id)
+        )
+    """)
+
     conn.commit()
 
     # === MIGRATSIYALAR ===
@@ -128,6 +140,7 @@ def init_db():
         "ALTER TABLE leagues ADD COLUMN draw_date TIMESTAMP",
         "ALTER TABLE leagues ADD COLUMN last_notified_matchday INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE leagues ADD COLUMN last_deadline_notice_date TEXT",
+        "ALTER TABLE users ADD COLUMN last_seen TIMESTAMP",
     ]
     for sql in migrations:
         try:

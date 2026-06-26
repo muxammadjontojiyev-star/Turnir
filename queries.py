@@ -776,6 +776,11 @@ CHAT_ACTIVE_MATCH_STATUSES = ("pending", "awaiting_confirmation")
 # orasidagi minimal vaqt (soniya). 60s = 1 daqiqada bir martadan ko'p emas.
 CHAT_NOTIFY_THROTTLE_SECONDS = 60
 
+# Online deb hisoblash chegarasi: oxirgi faollikdan shuncha soniyada online.
+ONLINE_THRESHOLD_SECONDS = 35
+# "Yozmoqda" signali shuncha soniyagacha amal qiladi (yangilanmasa o'chadi).
+TYPING_THRESHOLD_SECONDS = 6
+
 
 def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None:
     """
@@ -933,6 +938,94 @@ def count_unread_messages(requester_telegram_id: int) -> dict:
         by_match[d["match_id"]] = d["cnt"]
         total += d["cnt"]
     return {"total": total, "by_match": by_match}
+
+
+def touch_last_seen(telegram_id: int) -> None:
+    """Foydalanuvchining oxirgi faollik vaqtini (online uchun) hozirgiga yangilaydi."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET last_seen = datetime('now') WHERE telegram_id = ?",
+        (telegram_id,),
+    )
+    conn.commit()
+    conn.close()
+
+
+def set_typing(match_id: int, requester_telegram_id: int) -> bool:
+    """
+    "Yozmoqda" signalini yozadi (upsert). Faqat aktiv match ishtirokchisi.
+    Qaytaradi: True (muvaffaqiyat) yoki False (access yo'q).
+    """
+    access = _chat_match_access(match_id, requester_telegram_id)
+    if access is None:
+        return False
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO chat_typing (match_id, user_id, typing_at) VALUES (?, ?, datetime('now')) "
+        "ON CONFLICT(match_id, user_id) DO UPDATE SET typing_at = datetime('now')",
+        (match_id, access["my_user_id"]),
+    )
+    conn.commit()
+    conn.close()
+    return True
+
+
+def get_chat_state(match_id: int, requester_telegram_id: int) -> dict | None:
+    """
+    Raqibning holatini qaytaradi (chat header uchun):
+      {"online": bool, "typing": bool, "last_seen_seconds": int | None}
+        - online: raqib oxirgi ONLINE_THRESHOLD_SECONDS ichida faol bo'lganmi
+        - typing: raqib oxirgi TYPING_THRESHOLD_SECONDS ichida "yozmoqda" signal berdimi
+        - last_seen_seconds: raqib oxirgi marta necha soniya oldin ko'ringan (online bo'lsa 0)
+    Access yo'q bo'lsa None.
+    """
+    access = _chat_match_access(match_id, requester_telegram_id)
+    if access is None:
+        return None
+    opp_id = access["opponent_user_id"]
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Raqib oxirgi faolligi (online)
+    cursor.execute("SELECT last_seen FROM users WHERE id = ?", (opp_id,))
+    row = cursor.fetchone()
+    last_seen_seconds = None
+    online = False
+    if row is not None and dict(row).get("last_seen"):
+        cursor.execute(
+            "SELECT (julianday('now') - julianday(?)) * 86400.0",
+            (dict(row)["last_seen"],),
+        )
+        elapsed = cursor.fetchone()[0]
+        if elapsed is not None:
+            last_seen_seconds = int(elapsed)
+            online = elapsed < ONLINE_THRESHOLD_SECONDS
+
+    # Raqib "yozmoqda"mi
+    typing = False
+    cursor.execute(
+        "SELECT typing_at FROM chat_typing WHERE match_id = ? AND user_id = ?",
+        (match_id, opp_id),
+    )
+    trow = cursor.fetchone()
+    if trow is not None and dict(trow).get("typing_at"):
+        cursor.execute(
+            "SELECT (julianday('now') - julianday(?)) * 86400.0",
+            (dict(trow)["typing_at"],),
+        )
+        t_elapsed = cursor.fetchone()[0]
+        if t_elapsed is not None:
+            typing = t_elapsed < TYPING_THRESHOLD_SECONDS
+
+    conn.close()
+    return {
+        "online": online,
+        "typing": typing,
+        "last_seen_seconds": 0 if online else last_seen_seconds,
+    }
 
 
 def get_chat_messages(match_id: int, requester_telegram_id: int) -> list[dict] | None:
