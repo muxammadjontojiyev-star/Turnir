@@ -1812,3 +1812,83 @@ table { border-collapse: collapse; width: 100%; }
   object-fit: contain;
   flex-shrink: 0;
 }
+
+/* ============================================================
+   MODE SELECT — kirish rejimini tanlash (Liga / World Cup)
+   eFootball loading'dan keyin chiqadigan ikkita oval tab ekrani.
+   ============================================================ */
+#mode-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  min-height: 70vh;
+  padding: 28px 18px calc(var(--nav-height) + 24px);
+}
+.mode-select-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-heading);
+  text-align: center;
+  text-shadow: 0 0 14px var(--cyan-glow);
+}
+.mode-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 360px;
+}
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  /* "kvadrat chetlari oval" — kuchli yumaloqlangan burchaklar */
+  border-radius: 28px;
+  padding: 22px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 0 0 rgba(0, 240, 255, 0);
+}
+.mode-card:active {
+  transform: scale(0.97);
+}
+.mode-card--leagues {
+  border-color: var(--border-accent);
+  box-shadow: 0 0 22px rgba(0, 240, 255, 0.12);
+}
+.mode-card--worldcup {
+  border-color: rgba(123, 47, 255, 0.4);
+  box-shadow: 0 0 22px rgba(123, 47, 255, 0.12);
+}
+.mode-card-label {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-heading);
+}
+.mode-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.mode-league-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.mode-flag {
+  font-size: 30px;
+  line-height: 1;
+  flex-shrink: 0;
+}

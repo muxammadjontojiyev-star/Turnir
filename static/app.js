@@ -240,6 +240,11 @@ const TEXTS = {
     player_matches:       "O'YINLARI",
     back:                 "Ortga",
     no_username:          "Username yo'q",
+    // Mode select (kirish rejimi)
+    mode_select_title:    "REJIMNI TANLANG",
+    mode_leagues:         "Ligalar",
+    mode_worldcup:        "Jahon Chempionati",
+    worldcup_soon:        "Jahon Chempionati tez orada ishga tushadi!",
   },
 
   ru: {
@@ -408,6 +413,11 @@ const TEXTS = {
     player_matches:       "МАТЧИ",
     back:                 "Назад",
     no_username:          "Нет username",
+    // Mode select (kirish rejimi)
+    mode_select_title:    "ВЫБЕРИТЕ РЕЖИМ",
+    mode_leagues:         "Лиги",
+    mode_worldcup:        "Чемпионат мира",
+    worldcup_soon:        "Чемпионат мира скоро запустится!",
   },
 
   en: {
@@ -576,6 +586,11 @@ const TEXTS = {
     player_matches:       "MATCHES",
     back:                 "Back",
     no_username:          "No username",
+    // Mode select (kirish rejimi)
+    mode_select_title:    "CHOOSE MODE",
+    mode_leagues:         "Leagues",
+    mode_worldcup:        "World Cup",
+    worldcup_soon:        "World Cup is launching soon!",
   },
 };
 
@@ -778,7 +793,7 @@ async function init() {
     return;
   }
 
-  navigateTo("home");
+  showModeSelect();
 }
 
 // ============================================================
@@ -829,7 +844,7 @@ function showSubscribeGate() {
     const ok = await checkChannelMembership();
     if (ok) {
       hideSubscribeGate();
-      navigateTo("home");
+      showModeSelect();
     } else {
       showToast(t.subscribe_not_yet || "❌ Siz hali kanalga a'zo bo'lmadingiz.");
     }
@@ -841,6 +856,85 @@ function hideSubscribeGate() {
   const gate = document.getElementById("subscribe-gate");
   if (gate) gate.classList.add("hidden");
   document.querySelector(".bottom-nav")?.classList.remove("hidden");
+}
+
+// ============================================================
+//  MODE SELECT — kirish rejimini tanlash (Liga / World Cup)
+// ============================================================
+
+// Tab 1 da ko'rsatiladigan 5 liga logosi (mavjud images/ fayllaridan).
+const MODE_LEAGUE_LOGOS = [
+  "images/laliga-logo.png",
+  "images/premier-logo.png",
+  "images/bundesliga-logo.png",
+  "images/seriea-logo.png",
+  "images/ligue1-logo.png",
+];
+
+// Tab 2 da ko'rsatiladigan davlat bayroqlari (emoji — yuklash kerak emas).
+const MODE_WORLDCUP_FLAGS = ["🇧🇷", "🇦🇷", "🇫🇷", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "🇪🇸", "🇩🇪", "🇵🇹", "🇺🇿"];
+
+// Loading/kanal tekshiruvidan keyin chiqadigan rejim tanlash ekrani.
+// Tab 1 (ligalar) -> mavjud ilova (home). Tab 2 (World Cup) -> hozircha placeholder.
+function showModeSelect() {
+  const t = APP.t;
+  const host = document.querySelector("main") || document.body;
+
+  // Barcha bo'limlarni yashiramiz va pastki navigatsiyani ham (tanlovgacha kerak emas)
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelector(".bottom-nav")?.classList.add("hidden");
+
+  let screen = document.getElementById("mode-select");
+  if (!screen) {
+    screen = document.createElement("div");
+    screen.id = "mode-select";
+    host.appendChild(screen);
+  }
+  screen.classList.remove("hidden");
+
+  const leagueLogos = MODE_LEAGUE_LOGOS
+    .map(src => `<img class="mode-league-logo" src="${src}?v=20260628a" alt="" />`)
+    .join("");
+  const flags = MODE_WORLDCUP_FLAGS
+    .map(f => `<span class="mode-flag">${f}</span>`)
+    .join("");
+
+  screen.innerHTML = `
+    <div class="mode-select-title">${escHtml(t.mode_select_title || "REJIMNI TANLANG")}</div>
+    <div class="mode-cards">
+      <div class="mode-card mode-card--leagues" id="mode-card-leagues">
+        <div class="mode-card-label">${escHtml(t.mode_leagues || "Ligalar")}</div>
+        <div class="mode-card-row">${leagueLogos}</div>
+      </div>
+      <div class="mode-card mode-card--worldcup" id="mode-card-worldcup">
+        <div class="mode-card-label">${escHtml(t.mode_worldcup || "Jahon Chempionati")}</div>
+        <div class="mode-card-row">${flags}</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("mode-card-leagues")
+    .addEventListener("click", enterLeagueMode);
+  document.getElementById("mode-card-worldcup")
+    .addEventListener("click", enterWorldCupMode);
+}
+
+// Rejim ekranini yashiradi (tanlangach asosiy interfeysga o'tish uchun)
+function hideModeSelect() {
+  const screen = document.getElementById("mode-select");
+  if (screen) screen.classList.add("hidden");
+}
+
+// Tab 1: mavjud liga ilovasiga kirish
+function enterLeagueMode() {
+  hideModeSelect();
+  document.querySelector(".bottom-nav")?.classList.remove("hidden");
+  navigateTo("home");
+}
+
+// Tab 2: World Cup — hozircha placeholder (2-bosqichda to'ldiriladi)
+function enterWorldCupMode() {
+  showToast(APP.t.worldcup_soon || "Jahon Chempionati tez orada ishga tushadi!");
 }
 
 // ============================================================
