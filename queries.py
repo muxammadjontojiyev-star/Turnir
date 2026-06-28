@@ -1316,3 +1316,85 @@ def admin_fix_confirmed_match(match_id: int, score1: int, score2: int) -> tuple[
     conn.commit()
     conn.close()
     return True, "ok"
+
+
+# ============================================================
+#  WORLD CUP (Jahon Chempionati) — liga tizimidan ALOHIDA
+#  wc_registrations jadvali. Foydalanuvchi WC'da 1 marta ro'yxatdan o'tadi.
+# ============================================================
+
+def wc_get_user_registration(user_id: int) -> dict | None:
+    """Foydalanuvchining World Cup ro'yxatini qaytaradi (bor bo'lsa)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM wc_registrations WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def wc_get_taken_teams(group_letter: str) -> list[str]:
+    """Shu guruhda allaqachon band qilingan jamoa nomlari ro'yxati."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT team_name FROM wc_registrations WHERE group_letter = ?",
+        (group_letter,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [row["team_name"] for row in rows]
+
+
+def wc_count_group_players(group_letter: str) -> int:
+    """Shu guruhda ro'yxatdan o'tgan ishtirokchilar soni."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) as cnt FROM wc_registrations WHERE group_letter = ?",
+        (group_letter,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row["cnt"]
+
+
+def wc_register_user(user_id: int, group_letter: str, team_name: str) -> tuple[bool, str]:
+    """
+    Foydalanuvchini World Cup'ga ro'yxatdan o'tkazadi.
+
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "wc_already_registered", "wc_group_full",
+              "wc_invalid_group", "wc_invalid_team", "wc_team_taken"
+    """
+    # WC_TEAMS_PER_GROUP markazlashtirilgan (wc_data) — guruh to'lganini tekshirish uchun
+    from wc_data import wc_is_valid_group, wc_team_in_group, WC_TEAMS_PER_GROUP
+
+    # Foydalanuvchi WC'da allaqachon ro'yxatdan o'tganmi (1 marta qoidasi)
+    existing = wc_get_user_registration(user_id)
+    if existing is not None:
+        return False, "wc_already_registered"
+
+    if not wc_is_valid_group(group_letter):
+        return False, "wc_invalid_group"
+
+    if not wc_team_in_group(group_letter, team_name):
+        return False, "wc_invalid_team"
+
+    # Guruh to'lgan bo'lsa (4 jamoa band)
+    if wc_count_group_players(group_letter) >= WC_TEAMS_PER_GROUP:
+        return False, "wc_group_full"
+
+    # Jamoa allaqachon band qilinganmi (race condition uchun ham backend himoyasi)
+    if team_name in wc_get_taken_teams(group_letter):
+        return False, "wc_team_taken"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO wc_registrations (user_id, group_letter, team_name) VALUES (?, ?, ?)",
+        (user_id, group_letter, team_name),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"

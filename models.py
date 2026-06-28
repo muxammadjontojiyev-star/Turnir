@@ -91,6 +91,21 @@ def init_db():
         )
     """)
 
+    # === wc_registrations (World Cup ro'yxati — liga tizimidan ALOHIDA) ===
+    # Foydalanuvchi World Cup'da bir marta ro'yxatdan o'tadi (UNIQUE user_id),
+    # liga registratsiyasidan mustaqil — ya'ni ligada VA WC'da bir vaqtda qatnasha oladi.
+    # group_letter: "A".."L", team_name: tanlangan terma jamoa (guruh ichida noyob).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_registrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            group_letter TEXT NOT NULL,
+            team_name TEXT NOT NULL,
+            registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
     # === messages (WebApp chat — aktiv match raqibi bilan) ===
     # sender_id = users.id (kim yuborgan). is_read = raqib o'qidimi (ikkita ✓ uchun).
     cursor.execute("""

@@ -39,6 +39,8 @@ from queries import (
     is_near_deadline,
     send_chat_message, get_chat_messages, count_unread_messages,
     touch_last_seen, set_typing, get_chat_state,
+    wc_register_user, wc_get_user_registration, wc_get_taken_teams,
+    wc_count_group_players,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -461,6 +463,47 @@ def _is_league_locked(league_id: int) -> bool:
         if count_league_players(league["id"]) < league["max_players"]:
             return True
     return False
+
+
+# ============ WORLD CUP (Jahon Chempionati) — liga'dan alohida ============
+
+@app.get("/wc/groups/{group_letter}/teams")
+def wc_group_taken_teams(group_letter: str):
+    """Shu World Cup guruhida band qilingan jamoa nomlari ro'yxati (auth shart emas)."""
+    from wc_data import wc_is_valid_group, WC_TEAMS_PER_GROUP
+    if not wc_is_valid_group(group_letter):
+        raise HTTPException(status_code=404, detail="wc_invalid_group")
+    return {
+        "taken_teams": wc_get_taken_teams(group_letter),
+        "count": wc_count_group_players(group_letter),
+        "max": WC_TEAMS_PER_GROUP,
+    }
+
+
+@app.get("/wc/profile")
+def wc_get_profile(user: dict = Depends(get_authenticated_user)):
+    """Foydalanuvchining World Cup ro'yxati (group_letter, team_name) yoki bo'sh."""
+    reg = wc_get_user_registration(user["id"])
+    return {
+        "registered": reg is not None,
+        "group_letter": reg["group_letter"] if reg else None,
+        "team_name": reg["team_name"] if reg else None,
+    }
+
+
+@app.post("/wc/register")
+def wc_register(group_letter: str, team_name: str, user: dict = Depends(get_authenticated_user)):
+    """
+    Foydalanuvchini World Cup'ga ro'yxatdan o'tkazadi (liga'dan mustaqil).
+
+    Query param: group_letter (str "A".."L"), team_name (str)
+    Xato holatlari: wc_already_registered, wc_group_full, wc_invalid_group,
+                    wc_invalid_team, wc_team_taken → 400
+    """
+    success, reason = wc_register_user(user["id"], group_letter, team_name)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "group_letter": group_letter, "team_name": team_name}
 
 
 # ============ POST /profile/nickname ============
