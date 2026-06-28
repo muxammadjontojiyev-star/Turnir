@@ -1892,3 +1892,194 @@ table { border-collapse: collapse; width: 100%; }
   line-height: 1;
   flex-shrink: 0;
 }
+
+/* ============================================================
+   WORLD CUP — Jahon Chempionati rejimi (worldcup.js)
+   Ligalardan alohida to'liq ekran. 2-bosqich: home + reyting.
+   ============================================================ */
+#worldcup-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+#worldcup-root.hidden { display: none; }
+
+/* --- WC header (Ortga + sarlavha) --- */
+.wc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(14px + max(var(--safe-top), env(safe-area-inset-top, 0px))) 16px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card-alt);
+}
+.wc-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--cyan);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.wc-back .icon { width: 18px; height: 18px; }
+.wc-header-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-heading);
+  margin-left: auto;
+}
+.wc-lang {
+  margin-left: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--cyan);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* --- WC body (bo'lim kontenti) --- */
+.wc-body {
+  flex: 1;
+  padding: 16px 16px calc(var(--nav-height) + 24px);
+  overflow-y: auto;
+}
+
+/* --- Guruh tablari (4 qatorli: A B C / D E F / ...) --- */
+.wc-group-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.wc-group-row {
+  display: flex;
+  gap: 8px;
+}
+.wc-group-tab {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.wc-group-tab.active {
+  background: var(--cyan-dim);
+  border-color: var(--border-accent);
+  color: var(--cyan);
+}
+
+/* --- Bayroq tanlash ro'yxati (home) --- */
+.wc-flags-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.wc-flag-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.wc-flag-item.selected {
+  border-color: var(--border-accent);
+  background: var(--cyan-dim);
+}
+.wc-flag-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.wc-flag-item.mine {
+  opacity: 1;
+  border-color: var(--cyan);
+  background: var(--cyan-dim);
+}
+.wc-flag {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.wc-flag-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* --- Reyting jadvalidagi bayroq + nom --- */
+.wc-row-flag {
+  font-size: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.wc-row-name {
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+/* --- WC pastki navigatsiyasi (liga nav namunasida) --- */
+.wc-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  height: var(--nav-height);
+  background: var(--bg-nav);
+  border-top: 1px solid var(--border);
+  z-index: 50;
+}
+.wc-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+.wc-nav-item .nav-icon .icon { width: 24px; height: 24px; }
+.wc-nav-item.active { color: var(--cyan); }
+
+/* --- WC placeholder (profil/sovrinlar — keyingi bosqich) --- */
+.wc-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 50vh;
+  text-align: center;
+}
+.wc-placeholder-icon .icon { width: 40px; height: 40px; color: var(--text-secondary); }
+.wc-placeholder-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 280px;
+}

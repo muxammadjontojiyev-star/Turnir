@@ -245,6 +245,19 @@ const TEXTS = {
     mode_leagues:         "Ligalar",
     mode_worldcup:        "Jahon Chempionati",
     worldcup_soon:        "Jahon Chempionati tez orada ishga tushadi!",
+    // World Cup — home/reyting
+    wc_open:              "OCHIQ — RO'YXAT DAVOM ETMOQDA",
+    wc_group:             "{g} guruh",
+    wc_teams:             "Jamoalar",
+    wc_choose_group:      "GURUH TANLASH",
+    wc_teams_in_group:    "GURUHDAGI JAMOALAR",
+    wc_select_team:       "Avval jamoa tanlang",
+    wc_registered_label:  "Ro'yxatdan o'tgansiz",
+    wc_already_in:        "Siz World Cup'da allaqachon ro'yxatdansiz",
+    wc_registered_ok:     "✅ World Cup'ga ro'yxatdan o'tdingiz!",
+    wc_group_full_err:    "Bu guruh to'lgan",
+    wc_team_taken:        "Bu jamoa allaqachon band qilingan",
+    wc_invalid:           "Noto'g'ri tanlov",
   },
 
   ru: {
@@ -418,6 +431,19 @@ const TEXTS = {
     mode_leagues:         "Лиги",
     mode_worldcup:        "Чемпионат мира",
     worldcup_soon:        "Чемпионат мира скоро запустится!",
+    // World Cup — home/reyting
+    wc_open:              "ОТКРЫТА — РЕГИСТРАЦИЯ ИДЁТ",
+    wc_group:             "Группа {g}",
+    wc_teams:             "Команды",
+    wc_choose_group:      "ВЫБОР ГРУППЫ",
+    wc_teams_in_group:    "КОМАНДЫ ГРУППЫ",
+    wc_select_team:       "Сначала выберите команду",
+    wc_registered_label:  "Вы зарегистрированы",
+    wc_already_in:        "Вы уже зарегистрированы в Чемпионате мира",
+    wc_registered_ok:     "✅ Вы зарегистрировались в Чемпионате мира!",
+    wc_group_full_err:    "Эта группа заполнена",
+    wc_team_taken:        "Эта команда уже занята",
+    wc_invalid:           "Неверный выбор",
   },
 
   en: {
@@ -591,6 +617,19 @@ const TEXTS = {
     mode_leagues:         "Leagues",
     mode_worldcup:        "World Cup",
     worldcup_soon:        "World Cup is launching soon!",
+    // World Cup — home/reyting
+    wc_open:              "OPEN — REGISTRATION ONGOING",
+    wc_group:             "Group {g}",
+    wc_teams:             "Teams",
+    wc_choose_group:      "CHOOSE GROUP",
+    wc_teams_in_group:    "TEAMS IN GROUP",
+    wc_select_team:       "Select a team first",
+    wc_registered_label:  "You are registered",
+    wc_already_in:        "You are already registered in the World Cup",
+    wc_registered_ok:     "✅ You registered for the World Cup!",
+    wc_group_full_err:    "This group is full",
+    wc_team_taken:        "This team is already taken",
+    wc_invalid:           "Invalid selection",
   },
 };
 
@@ -641,6 +680,12 @@ function cycleLanguage() {
   const activeSection = document.querySelector(".section.active");
   const sectionName = activeSection?.id?.replace("section-", "");
   SECTION_LOADERS[sectionName]?.();
+
+  // World Cup ekrani ochiq bo'lsa, uni ham yangi tilga qayta chizamiz
+  const wcRoot = document.getElementById("worldcup-root");
+  if (wcRoot && !wcRoot.classList.contains("hidden") && typeof renderWorldCup === "function") {
+    renderWorldCup();
+  }
 }
 
 // ============================================================
@@ -893,7 +938,7 @@ function showModeSelect() {
   screen.classList.remove("hidden");
 
   const leagueLogos = MODE_LEAGUE_LOGOS
-    .map(src => `<img class="mode-league-logo" src="${src}?v=20260628a" alt="" />`)
+    .map(src => `<img class="mode-league-logo" src="${src}?v=20260628c" alt="" />`)
     .join("");
   const flags = MODE_WORLDCUP_FLAGS
     .map(f => `<span class="mode-flag">${f}</span>`)
@@ -933,8 +978,13 @@ function enterLeagueMode() {
 }
 
 // Tab 2: World Cup — hozircha placeholder (2-bosqichda to'ldiriladi)
+// Tab 2: World Cup rejimini ochadi (worldcup.js)
 function enterWorldCupMode() {
-  showToast(APP.t.worldcup_soon || "Jahon Chempionati tez orada ishga tushadi!");
+  if (typeof showWorldCup === "function") {
+    showWorldCup();
+  } else {
+    showToast(APP.t.worldcup_soon || "Jahon Chempionati tez orada ishga tushadi!");
+  }
 }
 
 // ============================================================
