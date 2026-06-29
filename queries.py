@@ -1603,3 +1603,76 @@ def wc_confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) ->
     conn.commit()
     conn.close()
     return True, "ok"
+
+
+def wc_admin_fix_confirmed_match(match_id: int, score1: int, score2: int) -> tuple[bool, str]:
+    """
+    WC admin allaqachon 'confirmed' bo'lgan WC matchning noto'g'ri natijasini
+    qo'lda tuzatadi. Liga admin_fix_confirmed_match naqshiga mos, wc_matches uchun.
+
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "match_not_found", "wrong_status"
+    """
+    match = wc_get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+
+    if match["status"] != "confirmed":
+        return False, "wrong_status"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE wc_matches SET score1 = ?, score2 = ? WHERE id = ?",
+        (score1, score2, match_id),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def wc_admin_remove_player(user_id: int) -> tuple[bool, str]:
+    """
+    WC admin o'yinchini World Cup ro'yxatidan chiqaradi — FAQAT guruh hali
+    to'lmagan (o'yinlar yaratilmagan) bo'lsa. O'yinlar boshlangan bo'lsa
+    chiqarish guruh jadvalini buzadi, shuning uchun rad etiladi.
+
+    Qaytaradi: (success, reason)
+    Sabablar: ok / not_registered / group_started (o'yinlar boshlangan)
+    """
+    reg = wc_get_user_registration(user_id)
+    if reg is None:
+        return False, "not_registered"
+
+    from wc_schedule import wc_group_has_matches
+    if wc_group_has_matches(reg["group_letter"]):
+        return False, "group_started"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM wc_registrations WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def wc_get_all_players() -> list[dict]:
+    """
+    Barcha WC ishtirokchilari (admin paneli uchun). Har biriga nickname,
+    username, guruh, jamoa qo'shiladi.
+    Format: [{user_id, telegram_id, nickname, username, group_letter, team_name}, ...]
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT w.user_id, u.telegram_id, u.nickname, u.username,
+               w.group_letter, w.team_name
+        FROM wc_registrations w
+        JOIN users u ON u.id = w.user_id
+        ORDER BY w.group_letter, w.team_name
+        """
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]

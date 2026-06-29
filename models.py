@@ -136,6 +136,22 @@ def init_db():
         )
     """)
 
+    # === admins (qo'shimcha adminlar — bosh admindan tashqari) ===
+    # Bosh admin config.py ADMIN_TELEGRAM_IDS'da (hamma narsa). Bu jadval esa
+    # bosh admin tayinlagan "oddiy adminlar" — faqat natija tuzata oladi.
+    # scope: 'league' (faqat liga natijasi) yoki 'wc' (faqat WC natijasi).
+    # UNIQUE(telegram_id, scope): bir odam liga VA wc admin bo'la oladi (ikki qator).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telegram_id INTEGER NOT NULL,
+            scope TEXT NOT NULL,
+            added_by INTEGER,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(telegram_id, scope)
+        )
+    """)
+
     # === messages (WebApp chat — aktiv match raqibi bilan) ===
     # sender_id = users.id (kim yuborgan). is_read = raqib o'qidimi (ikkita ✓ uchun).
     cursor.execute("""

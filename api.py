@@ -43,11 +43,16 @@ from queries import (
     wc_count_group_players,
     wc_get_user_matches, wc_get_match_by_id, wc_submit_match_result,
     wc_confirm_or_reject_match, wc_get_open_matchday,
+    wc_admin_fix_confirmed_match, wc_admin_remove_player, wc_get_all_players,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
 from notify import notify_members, notify_user
 from membership import is_user_subscribed
+from admin_roles import (
+    is_super_admin, is_scope_admin, add_admin, remove_admin, list_admins,
+    SCOPE_LEAGUE, SCOPE_WC,
+)
 from config import REQUIRED_CHANNEL_USERNAME, REQUIRED_CHANNEL_URL
 
 app = FastAPI(title="eFootball Turnir Bot API")
@@ -153,6 +158,47 @@ def get_authenticated_admin(x_telegram_init_data: str = Header(...)) -> dict:
     first_name = telegram_user.get("first_name", f"user_{telegram_id}")
     username   = telegram_user.get("username")
     return get_or_create_user(telegram_id, first_name, username)
+
+
+def _authenticated_scope_admin(x_telegram_init_data: str, scope: str) -> dict:
+    """
+    Berilgan scope ('league'/'wc') uchun admin huquqини tekshiradi.
+    Bosh admin har doim o'tadi; oddiy admin faqat o'z scope'ida.
+    Admin emas bo'lsa — 403. user yozuvini qaytaradi (telegram_id ham qo'shiladi).
+    """
+    telegram_user = verify_telegram_init_data(x_telegram_init_data)
+    telegram_id = telegram_user["id"]
+    if not is_scope_admin(telegram_id, scope):
+        raise HTTPException(status_code=403, detail="Sizda admin huquqi yo'q")
+    first_name = telegram_user.get("first_name", f"user_{telegram_id}")
+    username   = telegram_user.get("username")
+    user = get_or_create_user(telegram_id, first_name, username)
+    user = dict(user)
+    user["telegram_id"] = telegram_id
+    return user
+
+
+def get_authenticated_league_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    """Liga admin (bosh yoki liga scope admin). Natija tuzatish uchun."""
+    return _authenticated_scope_admin(x_telegram_init_data, SCOPE_LEAGUE)
+
+
+def get_authenticated_wc_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    """WC admin (bosh yoki wc scope admin). WC natija tuzatish uchun."""
+    return _authenticated_scope_admin(x_telegram_init_data, SCOPE_WC)
+
+
+def get_authenticated_super_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    """Faqat bosh admin (config.py). Admin tayinlash uchun."""
+    telegram_user = verify_telegram_init_data(x_telegram_init_data)
+    telegram_id = telegram_user["id"]
+    if not is_super_admin(telegram_id):
+        raise HTTPException(status_code=403, detail="Faqat bosh admin")
+    first_name = telegram_user.get("first_name", f"user_{telegram_id}")
+    username   = telegram_user.get("username")
+    user = dict(get_or_create_user(telegram_id, first_name, username))
+    user["telegram_id"] = telegram_id
+    return user
 
 
 def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
@@ -623,6 +669,111 @@ def wc_confirm(
     return {"status": "ok", "match_id": match_id, "action": action}
 
 
+# ============ POST /wc/admin/match/fix-confirmed ============
+
+@app.post("/wc/admin/match/fix-confirmed")
+def wc_admin_fix_confirmed(
+    match_id: int,
+    score1: int,
+    score2: int,
+    admin: dict = Depends(get_authenticated_wc_admin),
+):
+    """
+    WC admin (bosh yoki WC scope admin) allaqachon 'confirmed' bo'lgan WC
+    matchning noto'g'ri natijasini qo'lda tuzatadi (status o'zgarmaydi).
+
+    Query params: match_id, score1, score2
+    Xato holatlari: match_not_found, wrong_status → 400
+    """
+    success, reason = wc_admin_fix_confirmed_match(match_id, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+# ============ GET /wc/admin/players ============
+
+@app.get("/wc/admin/players")
+def wc_admin_list_players(admin: dict = Depends(get_authenticated_super_admin)):
+    """WC ishtirokchilari ro'yxati (faqat bosh admin — o'yinchi chiqarish uchun)."""
+    return {"players": wc_get_all_players()}
+
+
+# ============ DELETE /wc/admin/players/{user_id} ============
+
+@app.delete("/wc/admin/players/{user_id}")
+def wc_admin_delete_player(user_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    WC o'yinchini ro'yxatdan chiqaradi (faqat bosh admin) — FAQAT guruh
+    hali to'lmagan (o'yinlar yaratilmagan) bo'lsa.
+
+    Xato holatlari: not_registered, group_started → 400
+    """
+    success, reason = wc_admin_remove_player(user_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "user_id": user_id}
+
+
+# ============ ADMIN BOSHQARUV (faqat bosh admin) ============
+
+@app.get("/admin/roles/{scope}")
+def admin_list_roles(scope: str, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Berilgan scope ('league'/'wc') uchun tayinlangan oddiy adminlar ro'yxati.
+    Faqat bosh admin ko'ra oladi.
+    Xato: invalid_scope → 400
+    """
+    if scope not in (SCOPE_LEAGUE, SCOPE_WC):
+        raise HTTPException(status_code=400, detail="invalid_scope")
+    return {"scope": scope, "admins": list_admins(scope)}
+
+
+@app.post("/admin/roles/{scope}")
+def admin_add_role(scope: str, telegram_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Yangi oddiy admin tayinlaydi (berilgan scope uchun). Faqat bosh admin.
+    Tayinlangan admin faqat o'sha scope'da natija tuzata oladi.
+
+    Query param: telegram_id (int)
+    Xato: invalid_scope, already_admin, cannot_add_super → 400
+    """
+    if scope not in (SCOPE_LEAGUE, SCOPE_WC):
+        raise HTTPException(status_code=400, detail="invalid_scope")
+    success, reason = add_admin(telegram_id, scope, admin["telegram_id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "telegram_id": telegram_id, "scope": scope}
+
+
+@app.delete("/admin/roles/{scope}/{telegram_id}")
+def admin_remove_role(scope: str, telegram_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Oddiy adminni scope'idan o'chiradi (faqat bosh admin).
+    Xato: invalid_scope, not_found → 400
+    """
+    if scope not in (SCOPE_LEAGUE, SCOPE_WC):
+        raise HTTPException(status_code=400, detail="invalid_scope")
+    if not remove_admin(telegram_id, scope):
+        raise HTTPException(status_code=400, detail="not_found")
+    return {"status": "ok", "telegram_id": telegram_id, "scope": scope}
+
+
+@app.get("/admin/whoami")
+def admin_whoami(x_telegram_init_data: str = Header(...)):
+    """
+    Joriy foydalanuvchining admin holatini qaytaradi (frontend panel ko'rsatish uchun).
+    is_super: bosh admin (config); is_league_admin / is_wc_admin: scope adminlar.
+    """
+    telegram_user = verify_telegram_init_data(x_telegram_init_data)
+    tid = telegram_user["id"]
+    return {
+        "is_super": is_super_admin(tid),
+        "is_league_admin": is_scope_admin(tid, SCOPE_LEAGUE),
+        "is_wc_admin": is_scope_admin(tid, SCOPE_WC),
+    }
+
+
 # ============ POST /profile/nickname ============
 
 @app.post("/profile/nickname")
@@ -880,7 +1031,7 @@ def admin_fix_confirmed(
     match_id: int,
     score1: int,
     score2: int,
-    admin: dict = Depends(get_authenticated_admin),
+    admin: dict = Depends(get_authenticated_league_admin),
 ):
     """
     Admin allaqachon 'confirmed' bo'lgan matchning noto'g'ri natijasini

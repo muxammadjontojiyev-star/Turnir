@@ -1,0 +1,118 @@
+"""
+admin_roles.py — Admin rollari mantig'i (markazlashtirilgan).
+
+Ikki daraja:
+  1. BOSH ADMIN — config.py ADMIN_TELEGRAM_IDS'da. Hamma narsani qila oladi:
+     ikkala tizimда (liga + wc) barcha admin funksiyalari + admin tayinlash.
+  2. ODDIY ADMIN — bosh admin tayinlagan (admins jadvali). Faqat o'z scope'ida
+     (liga YOKI wc) natija tuzata oladi. Admin tayinlay OLMAYDI.
+
+scope qiymatlari: 'league', 'wc'.
+"""
+
+from models import get_connection
+from config import ADMIN_TELEGRAM_IDS
+
+SCOPE_LEAGUE = "league"
+SCOPE_WC = "wc"
+VALID_SCOPES = (SCOPE_LEAGUE, SCOPE_WC)
+
+
+def is_super_admin(telegram_id: int) -> bool:
+    """Bosh admin (config.py)? Faqat ular admin tayinlay oladi va hamma narsani qiladi."""
+    return telegram_id in ADMIN_TELEGRAM_IDS
+
+
+def is_scope_admin(telegram_id: int, scope: str) -> bool:
+    """
+    Foydalanuvchi berilgan scope ('league'/'wc') uchun admin huquqiga egami?
+    Bosh admin har doim ha. Oddiy admin faqat o'z scope'ida.
+    """
+    if is_super_admin(telegram_id):
+        return True
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM admins WHERE telegram_id = ? AND scope = ? LIMIT 1",
+        (telegram_id, scope),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row is not None
+
+
+def add_admin(telegram_id: int, scope: str, added_by: int) -> tuple[bool, str]:
+    """
+    Yangi oddiy admin tayinlaydi (faqat bosh admin chaqirishi kerak — bu yerda
+    tekshirilmaydi, endpoint darajasida tekshiriladi).
+
+    Qaytaradi: (success, reason). reason: ok / invalid_scope / already_admin /
+               cannot_add_super (bosh adminni qo'shib bo'lmaydi — u allaqachon hammasi).
+    """
+    if scope not in VALID_SCOPES:
+        return False, "invalid_scope"
+    if is_super_admin(telegram_id):
+        return False, "cannot_add_super"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM admins WHERE telegram_id = ? AND scope = ? LIMIT 1",
+        (telegram_id, scope),
+    )
+    if cursor.fetchone() is not None:
+        conn.close()
+        return False, "already_admin"
+
+    cursor.execute(
+        "INSERT INTO admins (telegram_id, scope, added_by) VALUES (?, ?, ?)",
+        (telegram_id, scope, added_by),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def remove_admin(telegram_id: int, scope: str) -> bool:
+    """Oddiy adminni o'z scope'idan o'chiradi. Qaytaradi: o'chirildimi (bool)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM admins WHERE telegram_id = ? AND scope = ?",
+        (telegram_id, scope),
+    )
+    deleted = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return deleted
+
+
+def list_admins(scope: str) -> list[dict]:
+    """
+    Berilgan scope'dagi oddiy adminlar ro'yxati (bosh admin kiritilmaydi).
+    Har biriga users jadvalidan nickname/username qo'shiladi (agar topilsa).
+    Format: [{telegram_id, nickname, username, added_at}, ...]
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT a.telegram_id, a.added_at, u.nickname, u.username
+        FROM admins a
+        LEFT JOIN users u ON u.telegram_id = a.telegram_id
+        WHERE a.scope = ?
+        ORDER BY a.added_at
+        """,
+        (scope,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {
+            "telegram_id": row["telegram_id"],
+            "added_at": row["added_at"],
+            "nickname": row["nickname"],
+            "username": row["username"],
+        }
+        for row in rows
+    ]
