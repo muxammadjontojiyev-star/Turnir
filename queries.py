@@ -1631,6 +1631,57 @@ def wc_admin_fix_confirmed_match(match_id: int, score1: int, score2: int) -> tup
     return True, "ok"
 
 
+def wc_admin_set_score(match_id: int, score1: int, score2: int) -> tuple[bool, str]:
+    """
+    WC admin har qanday holatdagi (pending/awaiting/confirmed) WC matchning
+    natijasini to'g'ri songa o'zgartiradi va statusni 'confirmed' qiladi.
+    O'yinchilar o'ynamasdan noto'g'ri kiritgan natijani admin tuzatishi uchun.
+
+    Reyting dinamik (wc_matches'dan hisoblanadi), shuning uchun avtomat yangilanadi.
+
+    Qaytaradi: (success, reason). Sabablar: ok / match_not_found
+    """
+    match = wc_get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE wc_matches SET score1 = ?, score2 = ?, status = 'confirmed' WHERE id = ?",
+        (score1, score2, match_id),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def wc_admin_reset_match(match_id: int) -> tuple[bool, str]:
+    """
+    WC admin noto'g'ri kiritilgan natijani BEKOR qiladi: skorni tozalaydi va
+    o'yinni qayta 'pending' (— : —) holatiga qaytaradi. O'yinchilar qaytadan
+    to'g'ri natija kiritishi mumkin bo'ladi.
+
+    Qaytaradi: (success, reason). Sabablar: ok / match_not_found / already_pending
+    """
+    match = wc_get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+
+    if match["status"] == "pending" and match["score1"] is None:
+        return False, "already_pending"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE wc_matches SET score1 = NULL, score2 = NULL, submitted_by = NULL, status = 'pending' WHERE id = ?",
+        (match_id,),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
 def wc_admin_remove_player(user_id: int) -> tuple[bool, str]:
     """
     WC admin o'yinchini World Cup ro'yxatidan chiqaradi — FAQAT guruh hali

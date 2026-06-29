@@ -44,6 +44,7 @@ from queries import (
     wc_get_user_matches, wc_get_match_by_id, wc_submit_match_result,
     wc_confirm_or_reject_match, wc_get_open_matchday,
     wc_admin_fix_confirmed_match, wc_admin_remove_player, wc_get_all_players,
+    wc_admin_set_score, wc_admin_reset_match,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -780,6 +781,49 @@ def wc_admin_delete_player(user_id: int, admin: dict = Depends(get_authenticated
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "user_id": user_id}
+
+
+# ============ POST /wc/admin/match/set-score ============
+
+@app.post("/wc/admin/match/set-score")
+def wc_admin_match_set_score(
+    match_id: int,
+    score1: int,
+    score2: int,
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    Bosh admin har qanday holatdagi WC matchning natijasini to'g'ri songa
+    o'zgartiradi (status → confirmed). O'yinchilar o'ynamasdan noto'g'ri
+    kiritgan natijani tuzatish uchun.
+
+    Query params: match_id, score1, score2
+    Xato: match_not_found → 400
+    """
+    success, reason = wc_admin_set_score(match_id, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+# ============ POST /wc/admin/match/reset ============
+
+@app.post("/wc/admin/match/reset")
+def wc_admin_match_reset(
+    match_id: int,
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    Bosh admin noto'g'ri kiritilgan WC natijani BEKOR qiladi: o'yin qayta
+    'pending' (— : —) holatiga qaytadi, o'yinchilar qaytadan kiritishi mumkin.
+
+    Query param: match_id
+    Xato: match_not_found, already_pending → 400
+    """
+    success, reason = wc_admin_reset_match(match_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
 
 
 # ============ ADMIN BOSHQARUV (faqat bosh admin) ============
