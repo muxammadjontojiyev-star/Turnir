@@ -14,13 +14,14 @@ function wcRenderProfile() {
   const t = APP.t;
   const reg = WC.profile;
 
-  // Ro'yxatdan o'tmagan bo'lsa — eslatma
+  // Ro'yxatdan o'tmagan bo'lsa — eslatma (lekin admin panel baribir ko'rinishi mumkin)
   if (!reg || !reg.registered) {
     return `
       <div class="wc-placeholder">
         <span class="wc-placeholder-icon" data-icon="user"></span>
         <div class="wc-placeholder-text">${escHtml(t.wc_not_registered || "Siz hali World Cup'ga ro'yxatdan o'tmagansiz")}</div>
-      </div>`;
+      </div>
+      <div id="wc-admin-panel" class="admin-panel hidden"></div>`;
   }
 
   const flag = wcTeamFlag(reg.team_name);
