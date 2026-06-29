@@ -41,6 +41,8 @@ from queries import (
     touch_last_seen, set_typing, get_chat_state,
     wc_register_user, wc_get_user_registration, wc_get_taken_teams,
     wc_count_group_players,
+    wc_get_user_matches, wc_get_match_by_id, wc_submit_match_result,
+    wc_confirm_or_reject_match, wc_get_open_matchday,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -482,12 +484,25 @@ def wc_group_taken_teams(group_letter: str):
 
 @app.get("/wc/profile")
 def wc_get_profile(user: dict = Depends(get_authenticated_user)):
-    """Foydalanuvchining World Cup ro'yxati (group_letter, team_name) yoki bo'sh."""
+    """
+    Foydalanuvchining World Cup ro'yxati (group_letter, team_name) + guruh
+    reytingidagi statistikasi (o'rin/g'alaba/durang/mag'lubiyat). Ro'yxatdan
+    o'tmagan bo'lsa registered=False.
+    """
     reg = wc_get_user_registration(user["id"])
+    if reg is None:
+        return {
+            "registered": False, "group_letter": None, "team_name": None,
+            "user_id": user["id"], "rating": None,
+        }
+    from wc_rating import get_wc_player_position
+    pos = get_wc_player_position(reg["group_letter"], user["id"])
     return {
-        "registered": reg is not None,
-        "group_letter": reg["group_letter"] if reg else None,
-        "team_name": reg["team_name"] if reg else None,
+        "registered": True,
+        "group_letter": reg["group_letter"],
+        "team_name": reg["team_name"],
+        "user_id": user["id"],
+        "rating": pos,  # {position, wins, draws, losses, ...} yoki None
     }
 
 
@@ -504,6 +519,74 @@ def wc_register(group_letter: str, team_name: str, user: dict = Depends(get_auth
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "group_letter": group_letter, "team_name": team_name}
+
+
+def _wc_annotate_locked(matches: list[dict]) -> list[dict]:
+    """Har WC match'ga 'is_locked' (matchday hali ochilmaganmi) qo'shadi."""
+    open_cache: dict[str, int] = {}
+    for m in matches:
+        g = m.get("group_letter")
+        if g not in open_cache:
+            open_cache[g] = wc_get_open_matchday(g)
+        m["is_locked"] = m.get("matchday", 0) > open_cache[g]
+    return matches
+
+
+@app.get("/wc/matches/my")
+def wc_my_matches(user: dict = Depends(get_authenticated_user)):
+    """Foydalanuvchining World Cup o'yinlari (is_locked bilan)."""
+    matches = wc_get_user_matches(user["id"])
+    return {"matches": _wc_annotate_locked(matches)}
+
+
+@app.get("/wc/rating/{group_letter}")
+def wc_rating(group_letter: str):
+    """World Cup guruh reyting jadvali (ball, gol farqi bo'yicha saralangan)."""
+    from wc_data import wc_is_valid_group
+    if not wc_is_valid_group(group_letter):
+        raise HTTPException(status_code=404, detail="wc_invalid_group")
+    from wc_rating import calculate_wc_group_rating
+    return {"group": group_letter, "rating": calculate_wc_group_rating(group_letter)}
+
+
+@app.post("/wc/match/submit-result")
+def wc_submit_result(
+    match_id: int,
+    score1: int,
+    score2: int,
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    World Cup match natijasini kiritadi.
+
+    Query params: match_id, score1, score2
+    Xato holatlari: score_negative, match_not_found, not_participant,
+                    already_submitted, matchday_locked → 400
+    """
+    if score1 < 0 or score2 < 0:
+        raise HTTPException(status_code=400, detail="score_negative")
+    success, reason = wc_submit_match_result(match_id, score1, score2, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@app.post("/wc/match/confirm")
+def wc_confirm(
+    match_id: int,
+    action: str,
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    World Cup natijani tasdiqlaydi yoki rad etadi.
+
+    Query params: match_id, action ("confirm" yoki "reject")
+    Xato holatlari: match_not_found, not_opponent, wrong_status, invalid_action → 400
+    """
+    success, reason = wc_confirm_or_reject_match(match_id, action, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id, "action": action}
 
 
 # ============ POST /profile/nickname ============
