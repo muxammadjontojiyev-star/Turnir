@@ -960,15 +960,127 @@ function renderMatchItem(m) {
 
 async function loadAdminPanel() {
   const panel = document.getElementById("admin-panel");
+  const superOnly = document.getElementById("admin-super-only");
+
+  // Rolni aniqlaymiz
+  let who;
   try {
-    const players = await apiFetch("/admin/players");
-    panel.classList.remove("hidden");
-    renderAdminDraw();
-    renderAdminPlayers(players);
-    await loadRejectedMatches();
-  } catch (e) {
-    // Admin emas (403) yoki boshqa xato — panel yashirin qoladi
+    who = await apiFetch("/admin/whoami");
+  } catch (_) {
     panel.classList.add("hidden");
+    return;
+  }
+
+  const isLeagueAdmin = !!who.is_super || !!who.is_league_admin;
+  if (!isLeagueAdmin) {
+    // Liga admin emas (na bosh, na liga oddiy admin) — panel yashirin
+    panel.classList.add("hidden");
+    return;
+  }
+
+  panel.classList.remove("hidden");
+
+  if (who.is_super) {
+    // Bosh admin — hamma narsa
+    superOnly?.classList.remove("hidden");
+    try {
+      const players = await apiFetch("/admin/players");
+      renderAdminDraw();
+      renderAdminPlayers(players);
+      await loadRejectedMatches();
+    } catch (_) { /* xato — bu qism bo'sh qoladi */ }
+    await loadLeagueAdminRoles();
+  } else {
+    // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
+    superOnly?.classList.add("hidden");
+    document.getElementById("admin-manage-section")?.classList.add("hidden");
+  }
+}
+
+// Liga admin tayinlash bo'limi — faqat bosh adminga ko'rinadi
+async function loadLeagueAdminRoles() {
+  const section = document.getElementById("admin-manage-section");
+  if (!section) return;
+  let isSuper = false;
+  try {
+    const who = await apiFetch("/admin/whoami");
+    isSuper = !!who.is_super;
+  } catch (_) { isSuper = false; }
+
+  if (!isSuper) {
+    section.classList.add("hidden");
+    return;
+  }
+  section.classList.remove("hidden");
+
+  // Tugma listeneri (bir marta)
+  const addBtn = document.getElementById("btn-admin-add");
+  if (addBtn && !addBtn.dataset.bound) {
+    addBtn.dataset.bound = "1";
+    addBtn.addEventListener("click", leagueAdminAddRole);
+  }
+  await renderLeagueAdminRoles();
+}
+
+async function renderLeagueAdminRoles() {
+  const list = document.getElementById("admin-roles-list");
+  if (!list) return;
+  try {
+    const data = await apiFetch("/admin/roles/league");
+    const admins = data.admins || [];
+    if (admins.length === 0) {
+      list.innerHTML = `<div class="empty-state">${APP.t.admin_no_admins || "Tayinlangan admin yo'q"}</div>`;
+      return;
+    }
+    list.innerHTML = admins.map(a => {
+      const name = a.username ? `@${escHtml(a.username)}` : (a.nickname ? escHtml(a.nickname) : `ID ${a.telegram_id}`);
+      return `
+        <div class="admin-player-item">
+          <div class="admin-player-info">
+            ${name}
+            <div class="admin-player-league">ID ${a.telegram_id}</div>
+          </div>
+          <button class="admin-remove-btn" data-tid="${a.telegram_id}">${escHtml(APP.t.admin_remove_role || "O'chirish")}</button>
+        </div>`;
+    }).join("");
+    list.querySelectorAll(".admin-remove-btn").forEach(btn => {
+      btn.addEventListener("click", () => leagueAdminRemoveRole(parseInt(btn.dataset.tid)));
+    });
+  } catch (_) {
+    list.innerHTML = `<div class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</div>`;
+  }
+}
+
+async function leagueAdminAddRole() {
+  const t = APP.t;
+  const tid = parseInt(document.getElementById("admin-new-id").value);
+  if (!tid) {
+    showToast("❌ " + (t.admin_id_invalid || "Telegram ID ni kiriting"));
+    return;
+  }
+  try {
+    await apiFetch(`/admin/roles/league?telegram_id=${tid}`, { method: "POST" });
+    showToast(t.admin_added || "✅ Admin qo'shildi");
+    document.getElementById("admin-new-id").value = "";
+    await renderLeagueAdminRoles();
+  } catch (e) {
+    const msg = {
+      already_admin:    t.admin_already  || "Bu odam allaqachon admin",
+      cannot_add_super: t.admin_is_super || "Bu odam allaqachon bosh admin",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+  }
+}
+
+async function leagueAdminRemoveRole(telegramId) {
+  const t = APP.t;
+  if (!window.confirm(t.admin_remove_confirm || "Bu adminni o'chirasizmi?")) return;
+  try {
+    await apiFetch(`/admin/roles/league/${telegramId}`, { method: "DELETE" });
+    showToast(t.admin_removed || "✅ Admin o'chirildi");
+    await renderLeagueAdminRoles();
+  } catch (e) {
+    showToast("❌ " + e.message);
   }
 }
 

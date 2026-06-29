@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260628j" />
+  <link rel="stylesheet" href="style.css?v=20260628k" />
 </head>
 <body>
 
@@ -201,18 +201,21 @@
         <div id="admin-panel" class="admin-panel hidden">
           <div class="section-label" data-i18n="admin_panel_title">ADMIN PANEL</div>
 
-          <div class="section-label" data-i18n="admin_draw_title">QUR'A</div>
-          <div id="admin-draw-list" class="admin-players-list">
-            <!-- JS tomonidan to'ldiriladi -->
-          </div>
+          <!-- Faqat bosh adminga: qur'a, o'yinchilar, rad etilgan natijalar -->
+          <div id="admin-super-only" class="hidden">
+            <div class="section-label" data-i18n="admin_draw_title">QUR'A</div>
+            <div id="admin-draw-list" class="admin-players-list">
+              <!-- JS tomonidan to'ldiriladi -->
+            </div>
 
-          <div id="admin-players-list" class="admin-players-list">
-            <!-- JS tomonidan to'ldiriladi -->
-          </div>
+            <div id="admin-players-list" class="admin-players-list">
+              <!-- JS tomonidan to'ldiriladi -->
+            </div>
 
-          <div class="section-label" data-i18n="admin_rejected_title">RAD ETILGAN NATIJALAR</div>
-          <div id="admin-rejected-list" class="admin-players-list">
-            <!-- JS tomonidan to'ldiriladi -->
+            <div class="section-label" data-i18n="admin_rejected_title">RAD ETILGAN NATIJALAR</div>
+            <div id="admin-rejected-list" class="admin-players-list">
+              <!-- JS tomonidan to'ldiriladi -->
+            </div>
           </div>
 
           <div class="section-label" data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</div>
@@ -237,6 +240,23 @@
               </div>
             </div>
             <button class="btn btn--primary btn--glow" id="btn-admin-fix-submit" data-i18n="admin_fix_submit">Tuzatish</button>
+          </div>
+
+          <!-- Admin tayinlash (faqat bosh adminga ko'rinadi, JS boshqaradi) -->
+          <div id="admin-manage-section" class="hidden">
+            <div class="section-label" data-i18n="admin_manage_title">ADMIN TAYINLASH</div>
+            <div class="admin-fix-form">
+              <input
+                id="admin-new-id"
+                class="modal-input"
+                type="number"
+                min="1"
+                data-i18n-placeholder="admin_new_id_placeholder"
+                placeholder="Telegram ID"
+              />
+              <button class="btn btn--primary btn--glow" id="btn-admin-add" data-i18n="admin_add_btn">Admin qo'shish</button>
+            </div>
+            <div id="admin-roles-list" class="admin-players-list"></div>
           </div>
         </div>
 
@@ -331,7 +351,7 @@
 
         <!-- Oltin Butsa -->
         <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-boot.png?v=20260628j" alt="Oltin Butsa" class="prize-icon-img" /></div>
+          <div class="prize-icon"><img src="golden-boot.png?v=20260628k" alt="Oltin Butsa" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_boot">Oltin Butsa</div>
             <div class="prize-desc" data-i18n="golden_boot_desc">Eng ko'p gol urgan o'yinchi</div>
@@ -342,7 +362,7 @@
 
         <!-- Oltin To'p -->
         <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-ball.png?v=20260628j" alt="Oltin To'p" class="prize-icon-img" /></div>
+          <div class="prize-icon"><img src="golden-ball.png?v=20260628k" alt="Oltin To'p" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_ball">Oltin To'p</div>
             <div class="prize-desc" data-i18n="golden_ball_desc">Turnir g'olibi</div>
@@ -449,9 +469,10 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260628j"></script>
-  <script src="api.js?v=20260628j"></script>
-  <script src="worldcup.js?v=20260628j"></script>
-  <script src="worldcup_matches.js?v=20260628j"></script>
+  <script src="app.js?v=20260628k"></script>
+  <script src="api.js?v=20260628k"></script>
+  <script src="worldcup.js?v=20260628k"></script>
+  <script src="worldcup_matches.js?v=20260628k"></script>
+  <script src="worldcup_admin.js?v=20260628k"></script>
 </body>
 </html>

@@ -84,6 +84,9 @@ function wcRenderProfile() {
       <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
     </div>
 
+    <!-- WC admin paneli (rolga qarab JS ko'rsatadi) -->
+    <div id="wc-admin-panel" class="admin-panel hidden"></div>
+
     <!-- Natija kiritish modali -->
     <div id="wc-modal-result" class="modal hidden">
       <div class="modal-box">
@@ -135,6 +138,7 @@ function wcBindProfile() {
   document.getElementById("wc-btn-confirm-no")?.addEventListener("click", () => wcConfirmAction("reject"));
 
   void wcLoadMatches();
+  if (typeof wcLoadAdminPanel === "function") void wcLoadAdminPanel();
 }
 
 // ---- O'yinlar ro'yxatini yuklash ----
