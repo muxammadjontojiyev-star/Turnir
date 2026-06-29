@@ -364,8 +364,12 @@ function wcRenderRating() {
     <tr>
       <td>${idx + 1}</td>
       <td>
-        <span class="wc-row-flag">${flag}</span>
-        <span class="wc-row-name">${escHtml(name)}</span>
+        <div class="wc-row-cell">
+          <span class="wc-row-flag">${flag}</span>
+          <div class="wc-row-text">
+            <span class="wc-row-name">${escHtml(name)}</span>
+          </div>
+        </div>
       </td>
       <td>0</td><td>0</td><td>0</td><td>0</td>
       <td>0</td><td>0</td><td>0</td>
@@ -418,12 +422,20 @@ async function wcLoadRating() {
     tbody.innerHTML = rating.map((p, idx) => {
       const flag = wcTeamFlag(p.team_name);
       const gd = p.goal_difference > 0 ? `+${p.goal_difference}` : `${p.goal_difference}`;
+      const userLine = p.username
+        ? `<span class="wc-row-user">@${escHtml(p.username)}</span>`
+        : (p.nickname ? `<span class="wc-row-user">${escHtml(p.nickname)}</span>` : "");
       return `
         <tr>
           <td>${idx + 1}</td>
           <td>
-            <span class="wc-row-flag">${flag}</span>
-            <span class="wc-row-name">${escHtml(p.team_name || "")}</span>
+            <div class="wc-row-cell">
+              <span class="wc-row-flag">${flag}</span>
+              <div class="wc-row-text">
+                <span class="wc-row-name">${escHtml(p.team_name || "")}</span>
+                ${userLine}
+              </div>
+            </div>
           </td>
           <td>${p.points}</td>
           <td>${p.wins}</td>

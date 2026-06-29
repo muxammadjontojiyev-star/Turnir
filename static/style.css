@@ -2037,6 +2037,20 @@ table { border-collapse: collapse; width: 100%; }
   font-size: 13px;
   vertical-align: middle;
 }
+.wc-row-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.wc-row-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.wc-row-user {
+  font-size: 11px;
+  color: var(--cyan);
+}
 
 /* --- WC pastki navigatsiyasi (liga nav namunasida) --- */
 .wc-nav {
