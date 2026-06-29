@@ -288,3 +288,106 @@ async function wcConfirmAction(action) {
     showToast("❌ " + msg);
   }
 }
+
+// ============================================================
+//  BOSHQA O'YINCHI WC PROFILI (reytingdan bosilganda, faqat ko'rish)
+// ============================================================
+
+function wcRenderViewProfile() {
+  const t = APP.t;
+  const data = WC.viewedProfile;
+
+  if (!data) {
+    return `
+      <div class="wc-placeholder">
+        <span class="wc-placeholder-icon" data-icon="user"></span>
+        <div class="wc-placeholder-text">${escHtml(t.no_data || "Ma'lumot yo'q")}</div>
+      </div>`;
+  }
+
+  const flag = wcTeamFlag(data.team_name);
+  const nick = data.nickname || data.team_name || "?";
+
+  // Avatar: boshqa o'yinchining Telegram rasmi (proxy orqali), bo'lmasa bayroq
+  const avatarInner = data.user_id
+    ? `<img src="${API_BASE}/players/${data.user_id}/photo" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.querySelector('.wc-profile-flag').style.display='block'" /><span class="wc-profile-flag" style="display:none">${flag}</span>`
+    : `<span class="wc-profile-flag">${flag}</span>`;
+
+  // Username linki yoki "Username yo'q"
+  const subline = data.username
+    ? `<a class="profile-username" href="https://t.me/${escHtml(data.username)}" target="_blank">@${escHtml(data.username)}</a>`
+    : `<span class="profile-no-username">${escHtml(t.no_username || "Username yo'q")}</span>`;
+
+  // Statistika
+  const r = data.rating;
+  const pos = r ? `#${r.position}` : "—";
+  const wins = r ? r.wins : "—";
+  const draws = r ? r.draws : "—";
+  const losses = r ? r.losses : "—";
+
+  // O'yinlar (faqat ko'rish — tugmasiz)
+  const matches = data.matches || [];
+  const matchesHtml = matches.length === 0
+    ? `<div class="wc-loading-row">${escHtml(t.no_matches || "Hali o'yinlar yo'q")}</div>`
+    : matches.map(m => wcRenderViewMatchItem(m)).join("");
+
+  return `
+    <button class="back-btn" id="wc-viewplayer-back">
+      <span class="back-btn-arrow" data-icon="back"></span>
+      <span>${escHtml(t.nav_rating || "Reyting")}</span>
+    </button>
+
+    <div class="card card--profile">
+      <div class="profile-avatar">${avatarInner}</div>
+      <div class="profile-info">
+        <h2 class="profile-nickname">${escHtml(data.team_name || nick)}</h2>
+        <span class="profile-league">${subline}</span>
+      </div>
+      <div class="profile-club-badge"><span class="wc-profile-badge-flag">${flag}</span></div>
+    </div>
+
+    <div class="section-label">${escHtml(t.my_stats || "STATISTIKA")}</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-card-value">${pos}</span>
+        <span class="stat-card-label">${escHtml(t.stat_pos || "O'rin")}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value neon-cyan">${wins}</span>
+        <span class="stat-card-label">${escHtml(t.stat_w || "G'alaba")}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value">${draws}</span>
+        <span class="stat-card-label">${escHtml(t.stat_d || "Durang")}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value neon-red">${losses}</span>
+        <span class="stat-card-label">${escHtml(t.stat_l || "Mag'lubiyat")}</span>
+      </div>
+    </div>
+
+    <div class="section-label">${escHtml(t.player_matches || t.my_matches || "O'YINLAR")}</div>
+    <div class="matches-list">${matchesHtml}</div>
+  `;
+}
+
+// O'yin kartasi (faqat ko'rish — tugmasiz, liga renderPlayerMatchItem naqshida)
+function wcRenderViewMatchItem(m) {
+  const flag1 = wcTeamFlag(m.player1_club);
+  const flag2 = wcTeamFlag(m.player2_club);
+  const hasScore = (m.score1 !== null && m.score1 !== undefined);
+  const center = hasScore
+    ? `<span class="wc-mc-flag">${flag1}</span><span class="match-score">${m.score1} : ${m.score2}</span><span class="wc-mc-flag">${flag2}</span>`
+    : `<span class="wc-mc-flag">${flag1}</span><span class="match-score">— : —</span><span class="wc-mc-flag">${flag2}</span>`;
+  return `
+    <div class="match-item">
+      <span class="match-names">#${m.id}</span>
+      <div class="match-center">${center}</div>
+    </div>`;
+}
+
+function wcBindViewProfile() {
+  const root = document.getElementById("worldcup-root");
+  if (typeof applyIcons === "function") applyIcons(root);
+  document.getElementById("wc-viewplayer-back")?.addEventListener("click", wcBackToRating);
+}

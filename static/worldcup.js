@@ -14,11 +14,12 @@ const WC = {
   selectedGroup: "A",   // Home'da tanlangan guruh (ro'yxatdan o'tish uchun)
   selectedTeam:  null,  // Tanlangan terma jamoa nomi
   ratingGroup:   "A",   // Reyting bo'limida ko'rilayotgan guruh
-  section:       "home", // Joriy WC bo'limi: home | rating | profile | prizes
+  section:       "home", // Joriy WC bo'limi: home | rating | profile | prizes | viewplayer
   profile:       null,  // /wc/profile javobi (ro'yxatdan o'tgan bo'lsa)
   takenTeams:    [],     // Joriy guruhda band qilingan jamoalar
   myMatches:     [],     // WC o'yinlarim (worldcup_matches.js)
   activeMatchId: null,   // Natija/tasdiqlash modali uchun
+  viewedProfile: null,   // Reytingdan bosilgan boshqa o'yinchi profili (faqat ko'rish)
 };
 
 // ---- 48 terma jamoa, 12 guruh (rasmga muvofiq) ----
@@ -123,6 +124,7 @@ function renderWorldCup() {
   if (WC.section === "home")        body = wcRenderHome();
   else if (WC.section === "rating") body = wcRenderRating();
   else if (WC.section === "profile") body = wcRenderProfile();
+  else if (WC.section === "viewplayer") body = wcRenderViewProfile();
   else                              body = wcRenderPlaceholder();
 
   root.innerHTML = `
@@ -171,6 +173,7 @@ function renderWorldCup() {
   if (WC.section === "home")        wcBindHome();
   else if (WC.section === "rating") wcBindRating();
   else if (WC.section === "profile") wcBindProfile();
+  else if (WC.section === "viewplayer") wcBindViewProfile();
 }
 
 // ============================================================
@@ -426,7 +429,7 @@ async function wcLoadRating() {
         ? `<span class="wc-row-user">@${escHtml(p.username)}</span>`
         : (p.nickname ? `<span class="wc-row-user">${escHtml(p.nickname)}</span>` : "");
       return `
-        <tr>
+        <tr class="rating-row" data-user-id="${p.user_id}">
           <td>${idx + 1}</td>
           <td>
             <div class="wc-row-cell">
@@ -446,7 +449,35 @@ async function wcLoadRating() {
           <td>${gd}</td>
         </tr>`;
     }).join("");
+
+    // Qatorga bosilganda — o'sha o'yinchining WC profili (faqat ro'yxatdan o'tganlar)
+    tbody.querySelectorAll(".rating-row").forEach(row => {
+      row.addEventListener("click", () => {
+        const uid = parseInt(row.dataset.userId);
+        if (uid) wcOpenPlayerProfile(uid);
+      });
+    });
   } catch (_) { /* xato — dastlabki jadval qoladi */ }
+}
+
+// Reytingdan bosilgan boshqa o'yinchining WC profilini ochadi (faqat ko'rish)
+async function wcOpenPlayerProfile(userId) {
+  const t = APP.t;
+  try {
+    const data = await apiFetch(`/wc/players/${userId}/profile`);
+    WC.viewedProfile = data;
+    WC.section = "viewplayer";
+    renderWorldCup();
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+// Boshqa o'yinchi profilidan reyting bo'limiga qaytadi
+function wcBackToRating() {
+  WC.viewedProfile = null;
+  WC.section = "rating";
+  renderWorldCup();
 }
 
 // Profil / Sovrinlar — keyingi bosqichda
