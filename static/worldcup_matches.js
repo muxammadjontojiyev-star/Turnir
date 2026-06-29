@@ -198,16 +198,18 @@ function wcRenderMatchItem(m) {
       // Avval raqib bilan chatlashish kerak: 💬 tugmasi. Chat ochilgach "Natija" ochiladi.
       const chatDone = WC.chatOpened && WC.chatOpened.has(m.id);
       if (chatDone) {
-        action = `<button class="btn btn--sm btn--primary wc-match-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
+        action = `<button class="match-action-btn wc-match-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
       } else {
         action = `<button class="match-action-btn match-chat-btn wc-match-chat-btn" data-mid="${m.id}" title="${escHtml(t.chat_first_hint || "Avval raqib bilan kelishing")}">${ICON.get("chat", 18)}</button>`;
       }
     }
   } else if (m.status === "awaiting_confirmation") {
     if (iSubmitted) {
-      action = `<span class="wc-match-wait">${escHtml(t.awaiting_short || "Kutilmoqda")}</span>`;
+      // Men yubordim — raqib tasdiqlashini kutyapman
+      action = `<span class="match-waiting" title="${escHtml(t.awaiting_hint || "Raqib tasdiqlashini kuting")}">${escHtml(t.awaiting_short || "Kutilmoqda")}</span>`;
     } else {
-      action = `<button class="btn btn--sm btn--primary wc-match-confirm-btn" data-mid="${m.id}">${escHtml(t.confirm_short || "Tasdiqlash")}</button>`;
+      // Raqib yubordi — men ko'rib tasdiqlayman/rad etaman (modal skorni ko'rsatadi)
+      action = `<button class="match-action-btn wc-match-confirm-btn" data-mid="${m.id}">✔</button>`;
     }
   }
 

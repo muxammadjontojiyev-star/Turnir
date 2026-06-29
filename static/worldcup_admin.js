@@ -70,6 +70,7 @@ function wcRenderAdminPanel() {
         </div>
       </div>
       <button class="btn btn--primary btn--glow" id="wc-btn-admin-fix-submit">${escHtml(t.admin_fix_submit || "Tuzatish")}</button>
+      <button class="btn btn--ghost" id="wc-btn-admin-reset" style="margin-top:8px;color:var(--red-neon);border-color:rgba(255,69,96,.3)">${escHtml(t.admin_reset_btn || "Natijani bekor qilish")}</button>
     </div>`;
 
   // --- Faqat bosh admin: o'yinchi chiqarish + admin tayinlash ---
@@ -96,12 +97,13 @@ function wcRenderAdminPanel() {
 
 function wcBindAdminPanel() {
   document.getElementById("wc-btn-admin-fix-submit")?.addEventListener("click", wcAdminFixResult);
+  document.getElementById("wc-btn-admin-reset")?.addEventListener("click", wcAdminResetMatch);
   if (WC_ADMIN.isSuper) {
     document.getElementById("wc-btn-admin-add")?.addEventListener("click", wcAdminAddRole);
   }
 }
 
-// ---- Natija tuzatish ----
+// ---- Natija o'zgartirish (har qanday holat — o'ynamasdan kiritilgan natijani tuzatish) ----
 async function wcAdminFixResult() {
   const t = APP.t;
   const matchId = parseInt(document.getElementById("wc-admin-fix-match-id").value);
@@ -112,13 +114,34 @@ async function wcAdminFixResult() {
     return;
   }
   try {
-    await apiFetch(`/wc/admin/match/fix-confirmed?match_id=${matchId}&score1=${score1}&score2=${score2}`, { method: "POST" });
+    await apiFetch(`/wc/admin/match/set-score?match_id=${matchId}&score1=${score1}&score2=${score2}`, { method: "POST" });
     showToast(t.admin_fix_done || "✅ Natija tuzatildi");
     document.getElementById("wc-admin-fix-match-id").value = "";
   } catch (e) {
     const msg = {
       match_not_found: t.admin_match_not_found || "Match topilmadi",
-      wrong_status:    t.admin_wrong_status   || "Bu match tasdiqlanmagan",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+  }
+}
+
+// ---- Natijani bekor qilish (— : — pending holatiga qaytarish) ----
+async function wcAdminResetMatch() {
+  const t = APP.t;
+  const matchId = parseInt(document.getElementById("wc-admin-fix-match-id").value);
+  if (!matchId) {
+    showToast("❌ " + (t.admin_fix_invalid || "Match ID ni kiriting"));
+    return;
+  }
+  if (!window.confirm(t.admin_reset_confirm || "Bu o'yin natijasini bekor qilasizmi? O'yin qayta — : — bo'ladi.")) return;
+  try {
+    await apiFetch(`/wc/admin/match/reset?match_id=${matchId}`, { method: "POST" });
+    showToast(t.admin_reset_done || "✅ Natija bekor qilindi");
+    document.getElementById("wc-admin-fix-match-id").value = "";
+  } catch (e) {
+    const msg = {
+      match_not_found: t.admin_match_not_found || "Match topilmadi",
+      already_pending: t.admin_already_pending || "Bu o'yinda natija yo'q",
     }[e.message] || e.message;
     showToast("❌ " + msg);
   }
