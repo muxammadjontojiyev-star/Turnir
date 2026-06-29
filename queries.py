@@ -1397,4 +1397,209 @@ def wc_register_user(user_id: int, group_letter: str, team_name: str) -> tuple[b
     )
     conn.commit()
     conn.close()
+
+    # Guruh shu registratsiya bilan 4 jamoaga to'ldimi? To'lgan bo'lsa — avtomatik
+    # round-robin o'yinlarini yaratamiz va guruh draw_date'ini yozamiz (matchday-lock).
+    if wc_count_group_players(group_letter) >= WC_TEAMS_PER_GROUP:
+        _wc_try_generate_group(group_letter)
+
+    return True, "ok"
+
+
+def _wc_try_generate_group(group_letter: str) -> None:
+    """
+    Guruh to'lganda o'yinlarni avtomatik yaratadi (agar hali yaratilmagan bo'lsa)
+    va guruh draw_date'ini hozirgi vaqtga o'rnatadi (matchday hisoblanishi uchun).
+    Kechiktirilgan import — circular import oldini olish uchun.
+    """
+    from wc_schedule import (
+        wc_group_has_matches, generate_wc_group_schedule, wc_get_group_player_ids,
+    )
+    if wc_group_has_matches(group_letter):
+        return  # allaqachon yaratilgan — ikkinchi marta qur'a qilmaymiz
+    player_ids = wc_get_group_player_ids(group_letter)
+    generate_wc_group_schedule(group_letter, player_ids)
+    wc_set_group_draw_date(group_letter)
+
+
+def wc_set_group_draw_date(group_letter: str, dt: datetime | None = None) -> None:
+    """
+    Guruh qur'a sanasini wc_groups'ga yozadi (turnir mintaqasi, ISO). Bu sana
+    asosida WC matchday-lock hisoblanadi (liga set_league_draw_date kabi).
+    """
+    if dt is None:
+        dt = _tournament_now()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO wc_groups (group_letter, draw_date) VALUES (?, ?)
+        ON CONFLICT(group_letter) DO UPDATE SET draw_date = excluded.draw_date
+        """,
+        (group_letter, dt.isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def wc_get_group(group_letter: str) -> dict | None:
+    """wc_groups qatorini qaytaradi (draw_date va h.k.) yoki None."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM wc_groups WHERE group_letter = ?", (group_letter,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+# ============================================================
+#  WORLD CUP — o'yinlar, matchday-lock, natija kiritish/tasdiqlash
+# ============================================================
+
+# WC guruhda 4 jamoa -> 3 tur (matchday). Liga TOTAL_MATCHDAYS (38) emas.
+WC_TOTAL_MATCHDAYS = 3
+
+
+def wc_get_open_matchday(group_letter: str) -> int:
+    """
+    Shu WC guruh uchun hozir ochiq eng yuqori matchday raqami (liga
+    get_open_matchday mantig'i, lekin guruh draw_date va WC_TOTAL_MATCHDAYS bo'yicha).
+
+    draw_date yo'q bo'lsa (guruh to'lmagan/o'yin yo'q) — 0.
+    """
+    grp = wc_get_group(group_letter)
+    if grp is None:
+        return 0
+    draw_dt = _parse_draw_date(grp["draw_date"] if "draw_date" in grp.keys() else None)
+    if draw_dt is None:
+        return 0
+
+    now = _tournament_now()
+
+    def unlock_day(d: datetime):
+        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR, minutes=MATCHDAY_UNLOCK_MINUTE)
+        return shifted.date()
+
+    days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
+    open_count = (1 + days_passed) * MATCHDAYS_PER_UNLOCK
+
+    if open_count < 1:
+        return 0
+    if open_count > WC_TOTAL_MATCHDAYS:
+        return WC_TOTAL_MATCHDAYS
+    return open_count
+
+
+def wc_get_user_matches(user_id: int) -> list[dict]:
+    """
+    Foydalanuvchining WC o'yinlari (player1 yoki player2). Raqib jamoa nomi,
+    username, telegram_id bilan (liga get_user_matches kabi).
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT m.*,
+               w1.team_name   AS player1_club,
+               w2.team_name   AS player2_club,
+               u1.telegram_id AS player1_telegram_id,
+               u1.username    AS player1_username,
+               u1.nickname    AS player1_nickname,
+               u2.telegram_id AS player2_telegram_id,
+               u2.username    AS player2_username,
+               u2.nickname    AS player2_nickname
+        FROM wc_matches m
+        LEFT JOIN wc_registrations w1 ON w1.user_id = m.player1_id
+        LEFT JOIN wc_registrations w2 ON w2.user_id = m.player2_id
+        LEFT JOIN users u1 ON u1.id = m.player1_id
+        LEFT JOIN users u2 ON u2.id = m.player2_id
+        WHERE m.player1_id = ? OR m.player2_id = ?
+        ORDER BY m.matchday ASC
+        """,
+        (user_id, user_id),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def wc_get_match_by_id(match_id: int) -> dict | None:
+    """ID bo'yicha WC matchni qaytaradi."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM wc_matches WHERE id = ?", (match_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def wc_submit_match_result(match_id: int, score1: int, score2: int, submitted_by: int) -> tuple[bool, str]:
+    """
+    WC match natijasini kiritadi (liga submit_match_result kabi, lekin matchday-lock
+    tekshiruvi bilan: kelajak (yopiq) turlarning natijasi kiritilmaydi).
+
+    Sabablar: ok, match_not_found, not_participant, already_submitted, matchday_locked
+    """
+    match = wc_get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+    if submitted_by not in (match["player1_id"], match["player2_id"]):
+        return False, "not_participant"
+    if match["status"] != "pending":
+        return False, "already_submitted"
+
+    # Matchday-lock: faqat ochilgan turlarning natijasi kiritiladi
+    open_md = wc_get_open_matchday(match["group_letter"])
+    if match["matchday"] > open_md:
+        return False, "matchday_locked"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE wc_matches
+        SET score1 = ?, score2 = ?, submitted_by = ?, status = 'awaiting_confirmation'
+        WHERE id = ?
+        """,
+        (score1, score2, submitted_by, match_id),
+    )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def wc_confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tuple[bool, str]:
+    """
+    WC natijani tasdiqlaydi yoki rad etadi (liga confirm_or_reject_match kabi).
+    reject -> pending + score NULL (qayta kiritish mumkin).
+
+    Sabablar: ok, match_not_found, not_opponent, wrong_status, invalid_action
+    """
+    match = wc_get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+    if match["status"] != "awaiting_confirmation":
+        return False, "wrong_status"
+    if confirmed_by == match["submitted_by"]:
+        return False, "not_opponent"
+    if confirmed_by not in (match["player1_id"], match["player2_id"]):
+        return False, "not_opponent"
+    if action not in ("confirm", "reject"):
+        return False, "invalid_action"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    if action == "confirm":
+        cursor.execute("UPDATE wc_matches SET status = 'confirmed' WHERE id = ?", (match_id,))
+    else:
+        cursor.execute(
+            """
+            UPDATE wc_matches
+            SET status = 'pending', score1 = NULL, score2 = NULL, submitted_by = NULL
+            WHERE id = ?
+            """,
+            (match_id,),
+        )
+    conn.commit()
+    conn.close()
     return True, "ok"

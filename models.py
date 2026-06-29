@@ -106,6 +106,36 @@ def init_db():
         )
     """)
 
+    # === wc_groups (World Cup guruh holati) ===
+    # Har guruh (A–L) uchun bitta qator. draw_date: guruh 4 jamoaga to'lib o'yinlar
+    # yaratilgan vaqt (matchday-lock hisoblanishi uchun, liga draw_date kabi).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_groups (
+            group_letter TEXT PRIMARY KEY,
+            draw_date TIMESTAMP,
+            last_notified_matchday INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
+    # === wc_matches (World Cup guruh o'yinlari) ===
+    # Liga matches'ga o'xshash, lekin group_letter bo'yicha. player1/2_id = users.id.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            group_letter TEXT NOT NULL,
+            matchday INTEGER NOT NULL,
+            player1_id INTEGER NOT NULL,
+            player2_id INTEGER NOT NULL,
+            score1 INTEGER,
+            score2 INTEGER,
+            submitted_by INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            FOREIGN KEY (player1_id) REFERENCES users(id),
+            FOREIGN KEY (player2_id) REFERENCES users(id),
+            FOREIGN KEY (submitted_by) REFERENCES users(id)
+        )
+    """)
+
     # === messages (WebApp chat — aktiv match raqibi bilan) ===
     # sender_id = users.id (kim yuborgan). is_read = raqib o'qidimi (ikkita ✓ uchun).
     cursor.execute("""
