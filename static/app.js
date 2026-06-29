@@ -920,6 +920,7 @@ async function init() {
   }
 
   bindEvents();
+  bindScoreInputClear();  // Score kataklariga fokus berilganda 0 ni bo'shatadi
   applyIcons();           // Premium SVG ikonlarni joylashtirish (navigatsiya va h.k.)
 
   hideLoadingScreen();
@@ -1083,6 +1084,25 @@ function enterWorldCupMode() {
 // ============================================================
 //  EVENT BINDINGS
 // ============================================================
+
+// Score kataklari (.score-input): fokus berilganda qiymat "0" bo'lsa bo'shatadi,
+// shunda foydalanuvchi ustiga yozish o'rniga to'g'ridan-to'g'ri raqam kiritadi.
+// Bo'sh qoldirilsa, fokus ketganda yana "0" ga qaytadi. Document darajasida —
+// barcha hozirgi va keyin yaratiladigan score-input'larga ishlaydi.
+function bindScoreInputClear() {
+  document.addEventListener("focusin", (e) => {
+    const el = e.target;
+    if (el && el.classList && el.classList.contains("score-input")) {
+      if (el.value === "0") el.value = "";
+    }
+  });
+  document.addEventListener("focusout", (e) => {
+    const el = e.target;
+    if (el && el.classList && el.classList.contains("score-input")) {
+      if (el.value.trim() === "") el.value = "0";
+    }
+  });
+}
 
 function bindEvents() {
   // Til almashtirish (header)

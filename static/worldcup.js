@@ -129,7 +129,7 @@ function renderWorldCup() {
 
   root.innerHTML = `
     <div class="wc-banner">
-      <img src="worldcup-banner.jpg?v=20260628l" alt="World Cup 2026" class="wc-banner-img" />
+      <img src="worldcup-banner.jpg?v=20260628m" alt="World Cup 2026" class="wc-banner-img" />
     </div>
     <div class="wc-header">
       <button class="wc-back" id="wc-back-btn">
