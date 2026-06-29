@@ -521,6 +521,40 @@ def wc_register(group_letter: str, team_name: str, user: dict = Depends(get_auth
     return {"status": "ok", "group_letter": group_letter, "team_name": team_name}
 
 
+# ============ GET /wc/players/{user_id}/profile ============
+
+@app.get("/wc/players/{user_id}/profile")
+def wc_get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_user)):
+    """
+    Boshqa bir o'yinchining World Cup ommaviy profilini qaytaradi (WC reyting
+    jadvalidan bosilganda). Liga'dagi /players/{user_id}/profile naqshiga mos,
+    lekin WC ma'lumotlari bilan (guruh/jamoa/WC statistika/WC o'yinlari).
+
+    Joriy foydalanuvchining avtorizatsiyasini talab qiladi; har qanday kirgan
+    foydalanuvchi boshqa o'yinchining WC profilini ko'ra oladi.
+    Xato holatlari: user_not_found → 404
+    """
+    target = get_user_by_id(user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="user_not_found")
+
+    reg = wc_get_user_registration(user_id)
+    position_info = None
+    if reg is not None:
+        from wc_rating import get_wc_player_position
+        position_info = get_wc_player_position(reg["group_letter"], user_id)
+
+    return {
+        "user_id": target["id"],
+        "nickname": target["nickname"],
+        "username": target["username"],
+        "group_letter": reg["group_letter"] if reg else None,
+        "team_name": reg["team_name"] if reg else None,
+        "rating": position_info,
+        "matches": _wc_annotate_locked(wc_get_user_matches(user_id)),
+    }
+
+
 def _wc_annotate_locked(matches: list[dict]) -> list[dict]:
     """Har WC match'ga 'is_locked' (matchday hali ochilmaganmi) qo'shadi."""
     open_cache: dict[str, int] = {}
