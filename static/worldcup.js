@@ -128,6 +128,9 @@ function renderWorldCup() {
   else                              body = wcRenderPlaceholder();
 
   root.innerHTML = `
+    <div class="wc-banner">
+      <img src="worldcup-banner.jpg?v=20260628i" alt="World Cup 2026" class="wc-banner-img" />
+    </div>
     <div class="wc-header">
       <button class="wc-back" id="wc-back-btn">
         <span class="back-btn-arrow" data-icon="back"></span>

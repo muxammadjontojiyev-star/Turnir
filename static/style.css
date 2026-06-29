@@ -1905,6 +1905,19 @@ table { border-collapse: collapse; width: 100%; }
 #worldcup-root.hidden { display: none; }
 
 /* --- WC header (Ortga + sarlavha) --- */
+.wc-banner {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0;
+  line-height: 0;
+}
+.wc-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
 .wc-header {
   display: flex;
   align-items: center;
