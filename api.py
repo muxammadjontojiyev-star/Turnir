@@ -53,6 +53,10 @@ from admin_roles import (
     is_super_admin, is_scope_admin, add_admin, remove_admin, list_admins,
     SCOPE_LEAGUE, SCOPE_WC,
 )
+from wc_chat import (
+    wc_send_chat_message, wc_get_chat_messages, wc_count_unread_messages,
+    wc_set_typing, wc_get_chat_state,
+)
 from config import REQUIRED_CHANNEL_USERNAME, REQUIRED_CHANNEL_URL
 
 app = FastAPI(title="eFootball Turnir Bot API")
@@ -689,6 +693,69 @@ def wc_admin_fix_confirmed(
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
+
+
+# ============ WC CHAT ============
+
+@app.get("/wc/matches/{match_id}/messages")
+def wc_get_match_messages(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """WC aktiv match xabarlari (vaqt tartibida). Access yo'q → 403."""
+    messages = wc_get_chat_messages(match_id, user["telegram_id"])
+    if messages is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"match_id": match_id, "messages": messages}
+
+
+@app.post("/wc/matches/{match_id}/messages")
+async def wc_post_match_message(
+    match_id: int,
+    text: str = Body(..., embed=True),
+    user: dict = Depends(get_authenticated_user),
+):
+    """WC aktiv match raqibiga xabar yuboradi. Body: {"text": "..."}."""
+    ok, reason, notify = wc_send_chat_message(match_id, user["telegram_id"], text)
+    if not ok:
+        if reason == "empty":
+            raise HTTPException(status_code=400, detail="empty")
+        raise HTTPException(status_code=403, detail="chat_no_access")
+
+    if notify is not None:
+        try:
+            recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            await notify_user(
+                notify["recipient_telegram_id"],
+                "notify_chat_message",
+                recipient.get("language") if recipient else None,
+                preview=notify["text_preview"],
+            )
+        except Exception:
+            pass
+
+    return {"ok": True}
+
+
+@app.get("/wc/matches/unread")
+def wc_get_unread_counts(user: dict = Depends(get_authenticated_user)):
+    """WC o'qilmagan chat xabarlari soni."""
+    return wc_count_unread_messages(user["telegram_id"])
+
+
+@app.post("/wc/matches/{match_id}/typing")
+def wc_post_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """WC chatda 'yozmoqda' signali."""
+    ok = wc_set_typing(match_id, user["telegram_id"])
+    if not ok:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"ok": True}
+
+
+@app.get("/wc/matches/{match_id}/state")
+def wc_get_match_state(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """WC raqibning chat holati (online / yozmoqda / oxirgi ko'rinish)."""
+    state = wc_get_chat_state(match_id, user["telegram_id"])
+    if state is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return state
 
 
 # ============ GET /wc/admin/players ============

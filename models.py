@@ -191,6 +191,38 @@ def init_db():
         )
     """)
 
+    # === WC CHAT (World Cup chati — liga chatidan alohida, wc_matches uchun) ===
+    # Liga messages/chat_notify/chat_typing naqshida, lekin match_id wc_matches'ga
+    # ishora qiladi. Alohida jadval — liga chatiga umuman tegmaydi, ID aralashmaydi.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES wc_matches(id),
+            FOREIGN KEY (sender_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_chat_notify (
+            match_id INTEGER NOT NULL,
+            recipient_id INTEGER NOT NULL,
+            last_notified_at TIMESTAMP,
+            PRIMARY KEY (match_id, recipient_id)
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_chat_typing (
+            match_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            typing_at TIMESTAMP,
+            PRIMARY KEY (match_id, user_id)
+        )
+    """)
+
     conn.commit()
 
     # === MIGRATSIYALAR ===
