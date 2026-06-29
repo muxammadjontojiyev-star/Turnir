@@ -17,6 +17,8 @@ const WC = {
   section:       "home", // Joriy WC bo'limi: home | rating | profile | prizes
   profile:       null,  // /wc/profile javobi (ro'yxatdan o'tgan bo'lsa)
   takenTeams:    [],     // Joriy guruhda band qilingan jamoalar
+  myMatches:     [],     // WC o'yinlarim (worldcup_matches.js)
+  activeMatchId: null,   // Natija/tasdiqlash modali uchun
 };
 
 // ---- 48 terma jamoa, 12 guruh (rasmga muvofiq) ----
@@ -120,6 +122,7 @@ function renderWorldCup() {
   let body = "";
   if (WC.section === "home")        body = wcRenderHome();
   else if (WC.section === "rating") body = wcRenderRating();
+  else if (WC.section === "profile") body = wcRenderProfile();
   else                              body = wcRenderPlaceholder();
 
   root.innerHTML = `
@@ -167,6 +170,7 @@ function renderWorldCup() {
   // Bo'limga xos hodisalar
   if (WC.section === "home")        wcBindHome();
   else if (WC.section === "rating") wcBindRating();
+  else if (WC.section === "profile") wcBindProfile();
 }
 
 // ============================================================
@@ -314,8 +318,13 @@ async function wcRegister() {
       { method: "POST" }
     );
     showToast(t.wc_registered_ok || "✅ World Cup'ga ro'yxatdan o'tdingiz!");
-    WC.profile = { registered: true, group_letter: WC.selectedGroup, team_name: WC.selectedTeam };
     WC.selectedTeam = null;
+    // To'liq profilni (user_id, rating bilan) qayta yuklab chizamiz
+    try {
+      WC.profile = await apiFetch("/wc/profile");
+    } catch (_) {
+      WC.profile = { registered: true, group_letter: WC.selectedGroup, team_name: WC.selectedTeam };
+    }
     renderWorldCup();
   } catch (e) {
     const msg = {
@@ -350,7 +359,7 @@ function wcRenderRating() {
     </div>`).join("");
 
   const teams = WC_GROUPS[WC.ratingGroup] || [];
-  // 2-bosqich: statistika hali yo'q (backend keyingi bosqichda) — 0 bilan ko'rsatamiz
+  // Dastlab jamoalarni 0 bilan ko'rsatamiz; real statistika wcLoadRating bilan keladi
   const rows = teams.map(([name, flag], idx) => `
     <tr>
       <td>${idx + 1}</td>
@@ -380,7 +389,7 @@ function wcRenderRating() {
             <th>${escHtml(t.th_gd || "GD")}</th>
           </tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody id="wc-rating-tbody">${rows}</tbody>
       </table>
     </div>
   `;
@@ -394,6 +403,38 @@ function wcBindRating() {
       renderWorldCup();
     });
   });
+  // Real reytingni yuklaymiz (band jamoalar statistikasi bilan)
+  void wcLoadRating();
+}
+
+// Guruh reytingini backenddan olib, jadvalni to'ldiradi
+async function wcLoadRating() {
+  const tbody = document.getElementById("wc-rating-tbody");
+  if (!tbody) return;
+  try {
+    const data = await apiFetch(`/wc/rating/${WC.ratingGroup}`);
+    const rating = data.rating || [];
+    if (rating.length === 0) return;  // bo'sh — dastlabki 0-jadval qoladi
+    tbody.innerHTML = rating.map((p, idx) => {
+      const flag = wcTeamFlag(p.team_name);
+      const gd = p.goal_difference > 0 ? `+${p.goal_difference}` : `${p.goal_difference}`;
+      return `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>
+            <span class="wc-row-flag">${flag}</span>
+            <span class="wc-row-name">${escHtml(p.team_name || "")}</span>
+          </td>
+          <td>${p.points}</td>
+          <td>${p.wins}</td>
+          <td>${p.draws}</td>
+          <td>${p.losses}</td>
+          <td>${p.goals_for}</td>
+          <td>${p.goals_against}</td>
+          <td>${gd}</td>
+        </tr>`;
+    }).join("");
+  } catch (_) { /* xato — dastlabki jadval qoladi */ }
 }
 
 // Profil / Sovrinlar — keyingi bosqichda

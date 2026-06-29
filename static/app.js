@@ -258,6 +258,17 @@ const TEXTS = {
     wc_group_full_err:    "Bu guruh to'lgan",
     wc_team_taken:        "Bu jamoa allaqachon band qilingan",
     wc_invalid:           "Noto'g'ri tanlov",
+    wc_not_registered:    "Siz hali World Cup'ga ro'yxatdan o'tmagansiz",
+    wc_no_matches:        "Hali o'yinlar yo'q",
+    awaiting_short:       "Kutilmoqda",
+    confirm_short:        "Tasdiqlash",
+    loading:              "Yuklanmoqda...",
+    confirmed_ok:         "✅ Natija tasdiqlandi",
+    rejected_ok:          "❌ Natija rad etildi",
+    already_submitted:    "Natija allaqachon kiritilgan",
+    not_participant:      "Siz bu o'yin ishtirokchisi emassiz",
+    wrong_status:         "Bu o'yin holati o'zgargan",
+    not_opponent:         "Siz bu natijani tasdiqlay olmaysiz",
   },
 
   ru: {
@@ -444,6 +455,17 @@ const TEXTS = {
     wc_group_full_err:    "Эта группа заполнена",
     wc_team_taken:        "Эта команда уже занята",
     wc_invalid:           "Неверный выбор",
+    wc_not_registered:    "Вы ещё не зарегистрированы в Чемпионате мира",
+    wc_no_matches:        "Пока нет игр",
+    awaiting_short:       "Ожидание",
+    confirm_short:        "Подтвердить",
+    loading:              "Загрузка...",
+    confirmed_ok:         "✅ Результат подтверждён",
+    rejected_ok:          "❌ Результат отклонён",
+    already_submitted:    "Результат уже введён",
+    not_participant:      "Вы не участник этой игры",
+    wrong_status:         "Статус этой игры изменился",
+    not_opponent:         "Вы не можете подтвердить этот результат",
   },
 
   en: {
@@ -630,6 +652,17 @@ const TEXTS = {
     wc_group_full_err:    "This group is full",
     wc_team_taken:        "This team is already taken",
     wc_invalid:           "Invalid selection",
+    wc_not_registered:    "You are not registered in the World Cup yet",
+    wc_no_matches:        "No matches yet",
+    awaiting_short:       "Awaiting",
+    confirm_short:        "Confirm",
+    loading:              "Loading...",
+    confirmed_ok:         "✅ Result confirmed",
+    rejected_ok:          "❌ Result rejected",
+    already_submitted:    "Result already submitted",
+    not_participant:      "You are not a participant in this match",
+    wrong_status:         "This match status has changed",
+    not_opponent:         "You cannot confirm this result",
   },
 };
 
@@ -938,7 +971,7 @@ function showModeSelect() {
   screen.classList.remove("hidden");
 
   const leagueLogos = MODE_LEAGUE_LOGOS
-    .map(src => `<img class="mode-league-logo" src="${src}?v=20260628c" alt="" />`)
+    .map(src => `<img class="mode-league-logo" src="${src}?v=20260628e" alt="" />`)
     .join("");
   const flags = MODE_WORLDCUP_FLAGS
     .map(f => `<span class="mode-flag">${f}</span>`)

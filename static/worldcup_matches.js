@@ -1,0 +1,290 @@
+// ============================================================
+//  worldcup_matches.js — World Cup profil bo'limi:
+//  o'yinlar ro'yxati + natija kiritish + tasdiqlash/rad etish.
+//
+//  worldcup.js dagi WC state va renderWorldCup'ga ulanadi (WC.section==="profile").
+//  Liga (api.js) natija mantig'i naqshiga izchil, lekin /wc/* endpointlari bilan.
+// ============================================================
+
+// WC profil bo'limidagi o'yinlar (yuklangach saqlanadi — modal uchun)
+WC.myMatches = [];
+
+// ---- PROFIL bo'limi (liga profili kabi: avatar+bayroq+statistika+o'yinlar) ----
+function wcRenderProfile() {
+  const t = APP.t;
+  const reg = WC.profile;
+
+  // Ro'yxatdan o'tmagan bo'lsa — eslatma
+  if (!reg || !reg.registered) {
+    return `
+      <div class="wc-placeholder">
+        <span class="wc-placeholder-icon" data-icon="user"></span>
+        <div class="wc-placeholder-text">${escHtml(t.wc_not_registered || "Siz hali World Cup'ga ro'yxatdan o'tmagansiz")}</div>
+      </div>`;
+  }
+
+  const flag = wcTeamFlag(reg.team_name);
+  const groupLabel = (t.wc_group || "{g} guruh").replace("{g}", reg.group_letter);
+
+  // Avatar: Telegram profil rasmi (bo'lmasa — bayroq). Liga kabi.
+  const photoUrl = APP.currentUser?.photo_url || null;
+  const nick = APP.currentUser?.first_name || reg.team_name || "?";
+  const avatarInner = photoUrl
+    ? `<img src="${escHtml(photoUrl)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.querySelector('.wc-profile-flag').style.display='block'" /><span class="wc-profile-flag" style="display:none">${flag}</span>`
+    : `<span class="wc-profile-flag">${flag}</span>`;
+
+  // Username linki (liga kabi)
+  const username = APP.currentUser?.username || null;
+  const subline = username
+    ? `${escHtml(nick)}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>`
+    : escHtml(groupLabel);
+
+  // Statistika (backend /wc/profile rating)
+  const r = reg.rating;
+  const pos = r ? `#${r.position}` : "—";
+  const wins = r ? r.wins : "—";
+  const draws = r ? r.draws : "—";
+  const losses = r ? r.losses : "—";
+
+  // O'ng tomondagi belgi: tanlangan davlat bayrog'i
+  const clubBadge = `<span class="wc-profile-badge-flag">${flag}</span>`;
+
+  return `
+    <div class="card card--profile">
+      <div class="profile-avatar">${avatarInner}</div>
+      <div class="profile-info">
+        <h2 class="profile-nickname">${escHtml(reg.team_name || "")}</h2>
+        <span class="profile-league">${subline}</span>
+      </div>
+      <div class="profile-club-badge">${clubBadge}</div>
+    </div>
+
+    <div class="section-label">${escHtml(t.my_stats || "STATISTIKA")}</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-card-value">${pos}</span>
+        <span class="stat-card-label">${escHtml(t.stat_pos || "O'rin")}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value neon-cyan">${wins}</span>
+        <span class="stat-card-label">${escHtml(t.stat_w || "G'alaba")}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value">${draws}</span>
+        <span class="stat-card-label">${escHtml(t.stat_d || "Durang")}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value neon-red">${losses}</span>
+        <span class="stat-card-label">${escHtml(t.stat_l || "Mag'lubiyat")}</span>
+      </div>
+    </div>
+
+    <div class="section-label">${escHtml(t.my_matches || "MENING O'YINLARIM")}</div>
+    <div id="wc-matches-list" class="matches-list">
+      <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
+    </div>
+
+    <!-- Natija kiritish modali -->
+    <div id="wc-modal-result" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title">${escHtml(t.submit_result || "Natija kiritish")}</div>
+        <div class="score-input-row">
+          <div class="score-input-group">
+            <div class="score-logo-input">
+              <span class="wc-result-flag" id="wc-result-flag1"></span>
+              <input id="wc-input-score1" class="score-input" type="number" min="0" max="99" value="0" />
+            </div>
+          </div>
+          <span class="score-separator">:</span>
+          <div class="score-input-group">
+            <div class="score-logo-input">
+              <input id="wc-input-score2" class="score-input" type="number" min="0" max="99" value="0" />
+              <span class="wc-result-flag" id="wc-result-flag2"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn--ghost" id="wc-btn-result-cancel">${escHtml(t.cancel || "Bekor")}</button>
+          <button class="btn btn--primary btn--glow" id="wc-btn-result-submit">${escHtml(t.submit || "Yuborish")}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasdiqlash modali -->
+    <div id="wc-modal-confirm" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title">${escHtml(t.confirm_result_title || "Natijani tasdiqlaysizmi?")}</div>
+        <div id="wc-confirm-score" class="confirm-score"></div>
+        <p class="confirm-warning">${escHtml(t.confirm_warning || "Faqat haqiqatan o'ynagan va natija to'g'ri bo'lsa tasdiqlang.")}</p>
+        <div class="modal-actions modal-actions--stacked">
+          <button class="btn btn--primary" id="wc-btn-confirm-yes">${escHtml(t.confirm_yes || "Ha, o'ynadik va to'g'ri")}</button>
+          <button class="btn btn--danger" id="wc-btn-confirm-no">${escHtml(t.confirm_no || "Yo'q, bunday o'yin bo'lmagan")}</button>
+          <button class="btn btn--ghost" id="wc-btn-confirm-cancel">${escHtml(t.cancel || "Bekor")}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function wcBindProfile() {
+  // Modal yopish tugmalari
+  document.getElementById("wc-btn-result-cancel")?.addEventListener("click", wcCloseResultModal);
+  document.getElementById("wc-btn-result-submit")?.addEventListener("click", wcSubmitResult);
+  document.getElementById("wc-btn-confirm-cancel")?.addEventListener("click", wcCloseConfirmModal);
+  document.getElementById("wc-btn-confirm-yes")?.addEventListener("click", () => wcConfirmAction("confirm"));
+  document.getElementById("wc-btn-confirm-no")?.addEventListener("click", () => wcConfirmAction("reject"));
+
+  void wcLoadMatches();
+}
+
+// ---- O'yinlar ro'yxatini yuklash ----
+async function wcLoadMatches() {
+  const list = document.getElementById("wc-matches-list");
+  if (!list) return;
+  try {
+    const data = await apiFetch("/wc/matches/my");
+    WC.myMatches = data.matches || [];
+  } catch (_) {
+    WC.myMatches = [];
+  }
+  wcRenderMatchesList();
+}
+
+function wcRenderMatchesList() {
+  const t = APP.t;
+  const list = document.getElementById("wc-matches-list");
+  if (!list) return;
+  if (WC.myMatches.length === 0) {
+    list.innerHTML = `<div class="wc-loading-row">${escHtml(t.wc_no_matches || "Hali o'yinlar yo'q")}</div>`;
+    return;
+  }
+  list.innerHTML = WC.myMatches.map(m => wcRenderMatchItem(m)).join("");
+  wcBindMatchActions();
+}
+
+// Bitta o'yin kartasi (liga renderMatchItem naqshiga o'xshash)
+function wcRenderMatchItem(m) {
+  const t = APP.t;
+  const flag1 = wcTeamFlag(m.player1_club);
+  const flag2 = wcTeamFlag(m.player2_club);
+  const hasScore = (m.score1 !== null && m.score1 !== undefined);
+  const center = hasScore
+    ? `<span class="wc-mc-flag">${flag1}</span><span class="match-score">${m.score1} : ${m.score2}</span><span class="wc-mc-flag">${flag2}</span>`
+    : `<span class="wc-mc-flag">${flag1}</span><span class="match-score">— : —</span><span class="wc-mc-flag">${flag2}</span>`;
+
+  // Amal tugmasi: status va lock holatiga qarab
+  let action = "";
+  const myTgId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || null;
+  const iSubmitted = m.submitted_by && (
+    (m.player1_id === m.submitted_by && m.player1_telegram_id === myTgId) ||
+    (m.player2_id === m.submitted_by && m.player2_telegram_id === myTgId)
+  );
+
+  if (m.is_locked && m.status === "pending") {
+    action = `<span class="match-locked" data-icon="lock"></span>`;
+  } else if (m.status === "pending") {
+    action = `<button class="btn btn--sm btn--primary wc-match-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
+  } else if (m.status === "awaiting_confirmation") {
+    if (iSubmitted) {
+      action = `<span class="wc-match-wait">${escHtml(t.awaiting_short || "Kutilmoqda")}</span>`;
+    } else {
+      action = `<button class="btn btn--sm btn--primary wc-match-confirm-btn" data-mid="${m.id}">${escHtml(t.confirm_short || "Tasdiqlash")}</button>`;
+    }
+  } else if (m.status === "confirmed") {
+    action = `<span class="wc-match-done" data-icon="check"></span>`;
+  }
+
+  return `
+    <div class="match-item">
+      <span class="match-names">#${m.id}</span>
+      <div class="match-center">${center}</div>
+      <div class="match-action">${action}</div>
+    </div>`;
+}
+
+function wcBindMatchActions() {
+  const root = document.getElementById("worldcup-root");
+  if (typeof applyIcons === "function") applyIcons(root);
+  root.querySelectorAll(".wc-match-result-btn").forEach(btn => {
+    btn.addEventListener("click", () => wcOpenResultModal(parseInt(btn.dataset.mid, 10)));
+  });
+  root.querySelectorAll(".wc-match-confirm-btn").forEach(btn => {
+    btn.addEventListener("click", () => wcOpenConfirmModal(parseInt(btn.dataset.mid, 10)));
+  });
+}
+
+// ---- Natija kiritish modali ----
+function wcOpenResultModal(matchId) {
+  WC.activeMatchId = matchId;
+  const m = WC.myMatches.find(x => x.id === matchId);
+  const f1 = document.getElementById("wc-result-flag1");
+  const f2 = document.getElementById("wc-result-flag2");
+  if (m && f1) f1.textContent = wcTeamFlag(m.player1_club);
+  if (m && f2) f2.textContent = wcTeamFlag(m.player2_club);
+  document.getElementById("wc-input-score1").value = "0";
+  document.getElementById("wc-input-score2").value = "0";
+  document.getElementById("wc-modal-result")?.classList.remove("hidden");
+}
+
+function wcCloseResultModal() {
+  document.getElementById("wc-modal-result")?.classList.add("hidden");
+  WC.activeMatchId = null;
+}
+
+async function wcSubmitResult() {
+  const t = APP.t;
+  const matchId = WC.activeMatchId;
+  if (!matchId) return;
+  const s1 = parseInt(document.getElementById("wc-input-score1").value, 10) || 0;
+  const s2 = parseInt(document.getElementById("wc-input-score2").value, 10) || 0;
+  try {
+    await apiFetch(`/wc/match/submit-result?match_id=${matchId}&score1=${s1}&score2=${s2}`, { method: "POST" });
+    showToast(t.result_submitted || "✅ Natija yuborildi");
+    wcCloseResultModal();
+    await wcLoadMatches();
+  } catch (e) {
+    const msg = {
+      matchday_locked:    t.matchday_locked || "Bu tur hali ochilmagan",
+      already_submitted:  t.already_submitted || "Natija allaqachon kiritilgan",
+      not_participant:    t.not_participant || "Siz bu o'yin ishtirokchisi emassiz",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+  }
+}
+
+// ---- Tasdiqlash modali ----
+function wcOpenConfirmModal(matchId) {
+  WC.activeMatchId = matchId;
+  const m = WC.myMatches.find(x => x.id === matchId);
+  const scoreEl = document.getElementById("wc-confirm-score");
+  if (m && scoreEl) {
+    const f1 = wcTeamFlag(m.player1_club), f2 = wcTeamFlag(m.player2_club);
+    scoreEl.innerHTML = `${f1} <b>${m.score1} : ${m.score2}</b> ${f2}`;
+  }
+  document.getElementById("wc-modal-confirm")?.classList.remove("hidden");
+}
+
+function wcCloseConfirmModal() {
+  document.getElementById("wc-modal-confirm")?.classList.add("hidden");
+  WC.activeMatchId = null;
+}
+
+async function wcConfirmAction(action) {
+  const t = APP.t;
+  const matchId = WC.activeMatchId;
+  if (!matchId) return;
+  try {
+    await apiFetch(`/wc/match/confirm?match_id=${matchId}&action=${action}`, { method: "POST" });
+    showToast(action === "confirm"
+      ? (t.confirmed_ok || "✅ Natija tasdiqlandi")
+      : (t.rejected_ok || "❌ Natija rad etildi"));
+    wcCloseConfirmModal();
+    await wcLoadMatches();
+  } catch (e) {
+    const msg = {
+      wrong_status:   t.wrong_status || "Bu o'yin holati o'zgargan",
+      not_opponent:   t.not_opponent || "Siz bu natijani tasdiqlay olmaysiz",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+  }
+}

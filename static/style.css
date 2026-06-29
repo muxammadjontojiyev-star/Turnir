@@ -2083,3 +2083,38 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-secondary);
   max-width: 280px;
 }
+
+/* --- WC profil/o'yinlar (worldcup_matches.js) --- */
+.wc-profile-flag {
+  font-size: 40px;
+  line-height: 1;
+}
+.wc-profile-badge-flag {
+  font-size: 28px;
+  line-height: 1;
+}
+.wc-mc-flag {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.wc-result-flag {
+  font-size: 30px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.wc-loading-row {
+  padding: 18px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.wc-match-wait {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.wc-match-done .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--cyan);
+}
