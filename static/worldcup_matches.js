@@ -167,7 +167,7 @@ function wcRenderMatchesList() {
   wcBindMatchActions();
 }
 
-// Bitta o'yin kartasi (liga renderMatchItem naqshiga o'xshash)
+// Bitta o'yin kartasi (liga renderMatchItem naqshi: status label + chat oqimi)
 function wcRenderMatchItem(m) {
   const t = APP.t;
   const flag1 = wcTeamFlag(m.player1_club);
@@ -177,33 +177,51 @@ function wcRenderMatchItem(m) {
     ? `<span class="wc-mc-flag">${flag1}</span><span class="match-score">${m.score1} : ${m.score2}</span><span class="wc-mc-flag">${flag2}</span>`
     : `<span class="wc-mc-flag">${flag1}</span><span class="match-score">— : —</span><span class="wc-mc-flag">${flag2}</span>`;
 
-  // Amal tugmasi: status va lock holatiga qarab
-  let action = "";
+  // Status label (liga kabi)
+  let statusCls  = "status--pending";
+  let statusText = t.status_pending || "KUTILMOQDA";
+  if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting";  statusText = t.status_awaiting  || "TASDIQ"; }
+  if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = t.status_confirmed || "TASDIQLANDI"; }
+
+  // Amal tugmasi: status va lock holatiga qarab (liga oqimi)
   const myTgId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || null;
   const iSubmitted = m.submitted_by && (
     (m.player1_id === m.submitted_by && m.player1_telegram_id === myTgId) ||
     (m.player2_id === m.submitted_by && m.player2_telegram_id === myTgId)
   );
 
-  if (m.is_locked && m.status === "pending") {
-    action = `<span class="match-locked" data-icon="lock"></span>`;
-  } else if (m.status === "pending") {
-    action = `<button class="btn btn--sm btn--primary wc-match-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
+  let action = "";
+  if (m.status === "pending") {
+    if (m.is_locked) {
+      action = `<span class="match-locked" data-icon="lock"></span>`;
+    } else {
+      // Avval raqib bilan chatlashish kerak: 💬 tugmasi. Chat ochilgach "Natija" ochiladi.
+      const chatDone = WC.chatOpened && WC.chatOpened.has(m.id);
+      if (chatDone) {
+        action = `<button class="btn btn--sm btn--primary wc-match-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
+      } else {
+        action = `<button class="match-action-btn match-chat-btn wc-match-chat-btn" data-mid="${m.id}" title="${escHtml(t.chat_first_hint || "Avval raqib bilan kelishing")}">${ICON.get("chat", 18)}</button>`;
+      }
+    }
   } else if (m.status === "awaiting_confirmation") {
     if (iSubmitted) {
       action = `<span class="wc-match-wait">${escHtml(t.awaiting_short || "Kutilmoqda")}</span>`;
     } else {
       action = `<button class="btn btn--sm btn--primary wc-match-confirm-btn" data-mid="${m.id}">${escHtml(t.confirm_short || "Tasdiqlash")}</button>`;
     }
-  } else if (m.status === "confirmed") {
-    action = `<span class="wc-match-done" data-icon="check"></span>`;
   }
+
+  // Markaz bosiluvchi (qulfsiz) — raqib modalini ochadi (liga kabi)
+  const isOpen = !m.is_locked;
+  const centerCls = isOpen ? "match-center match-center--clickable" : "match-center";
+  const centerAttr = isOpen ? `data-wc-open-match="${m.id}"` : "";
 
   return `
     <div class="match-item">
       <span class="match-names">#${m.id}</span>
-      <div class="match-center">${center}</div>
-      <div class="match-action">${action}</div>
+      <div class="${centerCls}" ${centerAttr}>${center}</div>
+      <span class="match-status ${statusCls}">${statusText}</span>
+      ${action}
     </div>`;
 }
 
@@ -215,6 +233,14 @@ function wcBindMatchActions() {
   });
   root.querySelectorAll(".wc-match-confirm-btn").forEach(btn => {
     btn.addEventListener("click", () => wcOpenConfirmModal(parseInt(btn.dataset.mid, 10)));
+  });
+  // Chat tugmasi (💬) — chat oynasini ochadi
+  root.querySelectorAll(".wc-match-chat-btn").forEach(btn => {
+    btn.addEventListener("click", () => wcOpenMatchChat(parseInt(btn.dataset.mid, 10)));
+  });
+  // Markaz bosish (qulfsiz o'yin) — raqib modalini ochadi
+  root.querySelectorAll("[data-wc-open-match]").forEach(el => {
+    el.addEventListener("click", () => wcOpenOpponentModal(parseInt(el.dataset.wcOpenMatch, 10)));
   });
 }
 

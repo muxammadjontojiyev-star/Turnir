@@ -20,6 +20,7 @@ const WC = {
   myMatches:     [],     // WC o'yinlarim (worldcup_matches.js)
   activeMatchId: null,   // Natija/tasdiqlash modali uchun
   viewedProfile: null,   // Reytingdan bosilgan boshqa o'yinchi profili (faqat ko'rish)
+  chatOpened:    null,    // Set: chat ochilgan WC matchlar (Natija tugmasi ochiladi)
 };
 
 // ---- 48 terma jamoa, 12 guruh (rasmga muvofiq) ----
@@ -129,7 +130,7 @@ function renderWorldCup() {
 
   root.innerHTML = `
     <div class="wc-banner">
-      <img src="worldcup-banner.jpg?v=20260628m" alt="World Cup 2026" class="wc-banner-img" />
+      <img src="worldcup-banner.jpg?v=20260628o" alt="World Cup 2026" class="wc-banner-img" />
     </div>
     <div class="wc-header">
       <button class="wc-back" id="wc-back-btn">
