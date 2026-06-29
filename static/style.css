@@ -1951,7 +1951,6 @@ table { border-collapse: collapse; width: 100%; }
 .wc-body {
   flex: 1;
   padding: 16px 16px calc(var(--nav-height) + 24px);
-  overflow-y: auto;
 }
 
 /* --- Guruh tablari (4 qatorli: A B C / D E F / ...) --- */
