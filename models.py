@@ -168,19 +168,43 @@ def init_db():
         )
     """)
 
-    # === admin_leagues (liga adminiga qaysi liga(lar) biriktirilgan) ===
-    # Bir liga admini (scope='league') bir yoki bir nechta ligaga qaray oladi.
-    # Bosh admin biriktiradi. Bu jadvalda yozuv bo'lmasa — admin hech qaysi
-    # ligani tuzata olmaydi (bosh admin biriktirishi shart).
-    # telegram_id: liga admini; league_id: leagues.id
+    # === WC PLAY-OFF (chiqib ketish bosqichi — 32 jamoa) ===
+    # Guruh bosqichidan keyin 32 jamoa: 12 g'olib + 12 ikkinchi + 8 eng yaxshi 3-o'rin.
+    # round: 'r32'(1/16) -> 'r16'(1/8) -> 'r8'(1/4) -> 'r4'(1/2) -> 'final' / 'bronze'.
+    # position: shu rounddagi o'yin tartibi (0-asosli) — bracket joylashuvi uchun.
+    # player1_id/player2_id: NULL bo'lishi mumkin (keyingi bosqich raqibi hali noma'lum).
+    # next_match_id + next_slot: g'olib qaysi keyingi matchning qaysi slotiga (1/2) o'tadi.
+    #   bronze uchun next yo'q (final mag'lublari bronza o'ynaydi — alohida mantiq).
+    # open_date: shu match qachon ochilgan (har kuni 1 match oqimi uchun, NULL=hali yopiq).
+    # status: 'pending'(o'ynalmagan) / 'awaiting_confirmation' / 'confirmed'.
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS admin_leagues (
+        CREATE TABLE IF NOT EXISTS wc_playoff_matches (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            telegram_id INTEGER NOT NULL,
-            league_id INTEGER NOT NULL,
-            added_by INTEGER,
-            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(telegram_id, league_id)
+            round TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            player1_id INTEGER,
+            player2_id INTEGER,
+            score1 INTEGER,
+            score2 INTEGER,
+            submitted_by INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            next_match_id INTEGER,
+            next_slot INTEGER,
+            open_date TIMESTAMP,
+            FOREIGN KEY (player1_id) REFERENCES users(id),
+            FOREIGN KEY (player2_id) REFERENCES users(id),
+            FOREIGN KEY (next_match_id) REFERENCES wc_playoff_matches(id)
+        )
+    """)
+
+    # === wc_playoff_state (play-off umumiy holati: boshlanganmi, qachon) ===
+    # Bitta qator (id=1). started=1 bo'lsa play-off boshlangan. start_date'dan
+    # har kuni 23:30 da yangi bosqich/match oqimi hisoblanadi (liga matchday kabi).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_playoff_state (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            started INTEGER NOT NULL DEFAULT 0,
+            start_date TIMESTAMP
         )
     """)
 
