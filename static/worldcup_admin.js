@@ -79,6 +79,8 @@ function wcRenderAdminPanel() {
       <div class="section-label">${escHtml(t.wc_admin_schedules_title || "O'YIN JADVALLARI")}</div>
       <button class="btn btn--ghost" id="wc-btn-fix-schedules" style="width:100%">${escHtml(t.wc_admin_fix_schedules_btn || "Yo'qolgan jadvallarni yaratish")}</button>
       <div class="admin-player-league" style="margin:6px 2px 0;text-align:center">${escHtml(t.wc_admin_fix_schedules_hint || "To'lgan, lekin o'yinlari yo'q guruhlar uchun")}</div>
+      <button class="btn btn--primary btn--glow" id="wc-btn-start-today" style="width:100%;margin-top:10px">${escHtml(t.wc_admin_start_today_btn || "Bugundan start berish")}</button>
+      <div class="admin-player-league" style="margin:6px 2px 0;text-align:center">${escHtml(t.wc_admin_start_today_hint || "Bugun 1-2 tur ochiq, ertaga oxirgi tur (23:30)")}</div>
 
       <div class="section-label">${escHtml(t.wc_admin_players_title || "WC ISHTIROKCHILAR")}</div>
       <div id="wc-admin-players-list" class="admin-players-list">
@@ -105,6 +107,24 @@ function wcBindAdminPanel() {
   if (WC_ADMIN.isSuper) {
     document.getElementById("wc-btn-admin-add")?.addEventListener("click", wcAdminAddRole);
     document.getElementById("wc-btn-fix-schedules")?.addEventListener("click", wcAdminFixSchedules);
+    document.getElementById("wc-btn-start-today")?.addEventListener("click", wcAdminStartToday);
+  }
+}
+
+// ---- Bugundan start berish (barcha o'yinli guruhlar draw_date = bugun) ----
+async function wcAdminStartToday() {
+  const t = APP.t;
+  if (!window.confirm(t.wc_admin_start_today_confirm || "Barcha guruhlarga bugundan start berilsinmi? Bugun 1-2 tur ochiq, ertaga oxirgi tur ochiladi.")) return;
+  try {
+    const r = await apiFetch("/wc/admin/start-today", { method: "POST" });
+    const started = r.started || [];
+    if (started.length === 0) {
+      showToast(t.wc_admin_start_today_none || "O'yinli guruh topilmadi");
+    } else {
+      showToast(`✅ ${started.length} ta guruh: ${started.join(", ")}`);
+    }
+  } catch (e) {
+    showToast("❌ " + e.message);
   }
 }
 
