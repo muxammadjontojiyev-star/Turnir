@@ -1727,3 +1727,40 @@ def wc_get_all_players() -> list[dict]:
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+
+def wc_fix_missing_schedules() -> dict:
+    """
+    Admin uchun: barcha to'lgan (4 jamoa) lekin o'yinlari yaratilmagan WC
+    guruhlarini topib, jadval (round-robin) generatsiya qiladi. Bu bug tuzatish
+    uchun — guruh to'lgan-u, lekin o'yin yo'q holatlari (eski guruhlar yoki
+    generatsiya o'tkazib yuborilgan holatlar).
+
+    Mavjud o'yinlarga TEGMAYDI — faqat o'yinsiz to'lgan guruhlarni yaratadi.
+
+    Qaytaradi: {fixed: [guruh harflari], skipped_not_full: [...], already_ok: [...]}
+    """
+    from wc_data import WC_GROUP_LETTERS, WC_TEAMS_PER_GROUP
+    from wc_schedule import wc_group_has_matches
+
+    fixed = []
+    skipped_not_full = []
+    already_ok = []
+
+    for letter in WC_GROUP_LETTERS:
+        players = wc_count_group_players(letter)
+        if players < WC_TEAMS_PER_GROUP:
+            skipped_not_full.append(letter)
+            continue
+        if wc_group_has_matches(letter):
+            already_ok.append(letter)
+            continue
+        # To'lgan, lekin o'yin yo'q — yaratamiz
+        _wc_try_generate_group(letter)
+        fixed.append(letter)
+
+    return {
+        "fixed": fixed,
+        "skipped_not_full": skipped_not_full,
+        "already_ok": already_ok,
+    }

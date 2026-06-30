@@ -44,7 +44,7 @@ from queries import (
     wc_get_user_matches, wc_get_match_by_id, wc_submit_match_result,
     wc_confirm_or_reject_match, wc_get_open_matchday,
     wc_admin_fix_confirmed_match, wc_admin_remove_player, wc_get_all_players,
-    wc_admin_set_score, wc_admin_reset_match,
+    wc_admin_set_score, wc_admin_reset_match, wc_fix_missing_schedules,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -825,6 +825,20 @@ def wc_admin_match_reset(
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
+
+
+# ============ POST /wc/admin/fix-schedules ============
+
+@app.post("/wc/admin/fix-schedules")
+def wc_admin_fix_schedules(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin: to'lgan (4 jamoa) lekin o'yinlari yaratilmagan WC guruhlarini
+    topib, jadval generatsiya qiladi (bug tuzatish). Mavjud o'yinlarga tegmaydi.
+
+    Qaytaradi: {fixed: [...], skipped_not_full: [...], already_ok: [...]}
+    """
+    result = wc_fix_missing_schedules()
+    return {"status": "ok", **result}
 
 
 # ============ ADMIN BOSHQARUV (faqat bosh admin) ============
