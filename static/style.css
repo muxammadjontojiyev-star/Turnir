@@ -773,6 +773,43 @@ table { border-collapse: collapse; width: 100%; }
   align-items: center;
   gap: 10px;
 }
+.admin-player-item--col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.admin-role-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.admin-league-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.admin-league-chips-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-right: 2px;
+}
+.admin-league-chip {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .15s;
+}
+.admin-league-chip.active {
+  background: rgba(0, 230, 195, .15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
 .admin-league-group {
   margin-bottom: 18px;
   display: flex;

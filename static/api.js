@@ -1026,28 +1026,79 @@ async function renderLeagueAdminRoles() {
   const list = document.getElementById("admin-roles-list");
   if (!list) return;
   try {
-    const data = await apiFetch("/admin/roles/league");
-    const admins = data.admins || [];
+    // Barcha ligalar (bir marta) + adminlar ro'yxati
+    const [rolesData, leaguesData] = await Promise.all([
+      apiFetch("/admin/roles/league"),
+      apiFetch("/admin/leagues/all"),
+    ]);
+    const admins = rolesData.admins || [];
+    const allLeagues = leaguesData.leagues || [];
+
     if (admins.length === 0) {
       list.innerHTML = `<div class="empty-state">${APP.t.admin_no_admins || "Tayinlangan admin yo'q"}</div>`;
       return;
     }
+
+    // Har admin uchun: biriktirilgan ligalarni olamiz
+    const adminLeagues = {};
+    await Promise.all(admins.map(async a => {
+      try {
+        const d = await apiFetch(`/admin/roles/league/${a.telegram_id}/leagues`);
+        adminLeagues[a.telegram_id] = d.league_ids || [];
+      } catch (_) { adminLeagues[a.telegram_id] = []; }
+    }));
+
     list.innerHTML = admins.map(a => {
       const name = a.username ? `@${escHtml(a.username)}` : (a.nickname ? escHtml(a.nickname) : `ID ${a.telegram_id}`);
+      const assigned = adminLeagues[a.telegram_id] || [];
+      // Liga chiplar — biriktirilgani "active"
+      const chips = allLeagues.map(lg => {
+        const isOn = assigned.includes(lg.id);
+        return `<button class="admin-league-chip ${isOn ? "active" : ""}"
+          data-tid="${a.telegram_id}" data-lid="${lg.id}" data-on="${isOn ? "1" : "0"}">${escHtml(lg.name)}</button>`;
+      }).join("");
       return `
-        <div class="admin-player-item">
-          <div class="admin-player-info">
-            ${name}
-            <div class="admin-player-league">ID ${a.telegram_id}</div>
+        <div class="admin-player-item admin-player-item--col">
+          <div class="admin-role-head">
+            <div class="admin-player-info">
+              ${name}
+              <div class="admin-player-league">ID ${a.telegram_id}</div>
+            </div>
+            <button class="admin-remove-btn" data-tid="${a.telegram_id}">${escHtml(APP.t.admin_remove_role || "O'chirish")}</button>
           </div>
-          <button class="admin-remove-btn" data-tid="${a.telegram_id}">${escHtml(APP.t.admin_remove_role || "O'chirish")}</button>
+          <div class="admin-league-chips">
+            <span class="admin-league-chips-label">${escHtml(APP.t.admin_assign_league_label || "Ligalar:")}</span>
+            ${chips}
+          </div>
         </div>`;
     }).join("");
+
     list.querySelectorAll(".admin-remove-btn").forEach(btn => {
       btn.addEventListener("click", () => leagueAdminRemoveRole(parseInt(btn.dataset.tid)));
     });
+    // Liga chip toggle
+    list.querySelectorAll(".admin-league-chip").forEach(chip => {
+      chip.addEventListener("click", () => toggleAdminLeague(
+        parseInt(chip.dataset.tid), parseInt(chip.dataset.lid), chip.dataset.on === "1"
+      ));
+    });
   } catch (_) {
     list.innerHTML = `<div class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</div>`;
+  }
+}
+
+// Liga adminiga ligani biriktirish/olib tashlash (chip bosilganda)
+async function toggleAdminLeague(telegramId, leagueId, isCurrentlyOn) {
+  const t = APP.t;
+  try {
+    if (isCurrentlyOn) {
+      await apiFetch(`/admin/roles/league/${telegramId}/leagues/${leagueId}`, { method: "DELETE" });
+    } else {
+      await apiFetch(`/admin/roles/league/${telegramId}/leagues/${leagueId}`, { method: "POST" });
+    }
+    await renderLeagueAdminRoles();  // qayta chizamiz (chip holati yangilanadi)
+  } catch (e) {
+    showToast("❌ " + e.message);
   }
 }
 
