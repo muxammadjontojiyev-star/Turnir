@@ -85,6 +85,28 @@ function wcRenderProfile() {
       <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
     </div>
 
+    <!-- Play-off o'yinlarim (async to'ldiriladi) -->
+    <div id="wc-playoff-mymatches"></div>
+
+    <!-- Play-off natija/tasdiqlash modali -->
+    <div id="wc-po-modal" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title" id="wc-po-modal-title">${escHtml(t.enter_result || "Natija kiritish")}</div>
+        <input type="hidden" id="wc-po-modal-mode" value="submit" />
+        <div class="score-input-row">
+          <input id="wc-po-score1" class="score-input" type="number" min="0" max="99" />
+          <span class="score-separator">:</span>
+          <input id="wc-po-score2" class="score-input" type="number" min="0" max="99" />
+        </div>
+        <p class="confirm-warning">${escHtml(t.wc_playoff_draw_hint || "Durang bo'lmaydi — g'olib aniq bo'lsin (penalti/qo'shimcha vaqt).")}</p>
+        <div class="modal-actions modal-actions--stacked">
+          <button class="btn btn--primary btn--glow" id="wc-po-modal-submit">${escHtml(t.submit || "Yuborish")}</button>
+          <button class="btn btn--danger hidden" id="wc-po-modal-reject">${escHtml(t.confirm_no || "Rad etish")}</button>
+          <button class="btn btn--ghost" id="wc-po-modal-cancel">${escHtml(t.cancel || "Bekor")}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- WC admin paneli (rolga qarab JS ko'rsatadi) -->
     <div id="wc-admin-panel" class="admin-panel hidden"></div>
 
@@ -140,6 +162,28 @@ function wcBindProfile() {
 
   void wcLoadMatches();
   if (typeof wcLoadAdminPanel === "function") void wcLoadAdminPanel();
+
+  // Play-off o'yinlarim (async to'ldiriladi) + modal listenerlar
+  if (typeof wcLoadPlayoffMyMatches === "function") void wcLoadPlayoffMyMatches();
+  document.getElementById("wc-po-modal-cancel")?.addEventListener("click", () => {
+    document.getElementById("wc-po-modal")?.classList.add("hidden");
+  });
+  document.getElementById("wc-po-modal-submit")?.addEventListener("click", () => {
+    if (typeof wcPlayoffSubmitFromModal === "function") wcPlayoffSubmitFromModal();
+  });
+  document.getElementById("wc-po-modal-reject")?.addEventListener("click", () => {
+    if (typeof wcPlayoffRejectFromModal === "function") wcPlayoffRejectFromModal();
+  });
+}
+
+// Play-off matchlarni profil konteyneriga yuklash
+async function wcLoadPlayoffMyMatches() {
+  const box = document.getElementById("wc-playoff-mymatches");
+  if (!box) return;
+  const html = await wcRenderPlayoffMyMatches();
+  box.innerHTML = html;
+  if (typeof wcBindPlayoffMyMatches === "function") wcBindPlayoffMyMatches();
+  // Tasdiqlash rejimida reject tugmasini ko'rsatish uchun modal ochilganda hal qilinadi
 }
 
 // ---- O'yinlar ro'yxatini yuklash ----

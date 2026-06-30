@@ -131,7 +131,7 @@ function renderWorldCup() {
 
   root.innerHTML = `
     <div class="wc-banner">
-      <img src="worldcup-banner.jpg?v=20260628v" alt="World Cup 2026" class="wc-banner-img" />
+      <img src="worldcup-banner.jpg?v=20260628x" alt="World Cup 2026" class="wc-banner-img" />
     </div>
     <div class="wc-header">
       <button class="wc-back" id="wc-back-btn">
@@ -358,12 +358,24 @@ async function wcRegister() {
 function wcRenderRating() {
   const t = APP.t;
 
-  // Rejim tugmalari: Guruhlar / To'p urarlar
+  // Rejim tugmalari: Guruhlar / To'p urarlar / Setka
   const modeTabs = `
     <div class="wc-mode-tabs">
       <button class="wc-mode-tab ${WC.ratingMode === "groups" ? "active" : ""}" data-rmode="groups">${escHtml(t.wc_mode_groups || "Guruhlar")}</button>
       <button class="wc-mode-tab ${WC.ratingMode === "top_scorers" ? "active" : ""}" data-rmode="top_scorers">${escHtml(t.tab_top_scorers || "⚽ To'p urarlar")}</button>
+      <button class="wc-mode-tab ${WC.ratingMode === "bracket" ? "active" : ""}" data-rmode="bracket">${escHtml(t.wc_mode_bracket || "Setka")}</button>
     </div>`;
+
+  // Setka (play-off bracket) rejimi
+  if (WC.ratingMode === "bracket") {
+    return `
+      <div class="section-label">${escHtml(t.rating_title || "REYTING JADVALI")}</div>
+      ${modeTabs}
+      <div id="wc-bracket-box">
+        <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
+      </div>
+    `;
+  }
 
   // To'p urarlar rejimi
   if (WC.ratingMode === "top_scorers") {
@@ -452,6 +464,10 @@ function wcBindRating() {
 
   if (WC.ratingMode === "top_scorers") {
     void wcLoadTopScorers();
+    return;
+  }
+  if (WC.ratingMode === "bracket") {
+    void wcLoadBracket();
     return;
   }
 

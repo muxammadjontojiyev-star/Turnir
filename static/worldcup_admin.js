@@ -82,6 +82,10 @@ function wcRenderAdminPanel() {
       <button class="btn btn--primary btn--glow" id="wc-btn-start-today" style="width:100%;margin-top:10px">${escHtml(t.wc_admin_start_today_btn || "Bugundan start berish")}</button>
       <div class="admin-player-league" style="margin:6px 2px 0;text-align:center">${escHtml(t.wc_admin_start_today_hint || "Bugun 1-2 tur ochiq, ertaga oxirgi tur (23:30)")}</div>
 
+      <div class="section-label">${escHtml(t.wc_admin_playoff_title || "PLAY-OFF")}</div>
+      <button class="btn btn--primary btn--glow" id="wc-btn-playoff-start" style="width:100%">${escHtml(t.wc_admin_playoff_start_btn || "Play-off boshlash")}</button>
+      <div class="admin-player-league" id="wc-playoff-status-hint" style="margin:6px 2px 0;text-align:center">${escHtml(t.wc_admin_playoff_hint || "32 jamoa: 12 g'olib + 12 ikkinchi + 8 eng yaxshi 3-o'rin")}</div>
+
       <div class="section-label">${escHtml(t.wc_admin_players_title || "WC ISHTIROKCHILAR")}</div>
       <div id="wc-admin-players-list" class="admin-players-list">
         <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
@@ -108,6 +112,47 @@ function wcBindAdminPanel() {
     document.getElementById("wc-btn-admin-add")?.addEventListener("click", wcAdminAddRole);
     document.getElementById("wc-btn-fix-schedules")?.addEventListener("click", wcAdminFixSchedules);
     document.getElementById("wc-btn-start-today")?.addEventListener("click", wcAdminStartToday);
+    document.getElementById("wc-btn-playoff-start")?.addEventListener("click", wcAdminPlayoffStart);
+    void wcLoadPlayoffStatus();
+  }
+}
+
+// ---- Play-off holatini yuklash (tugma matnini moslash) ----
+async function wcLoadPlayoffStatus() {
+  const hint = document.getElementById("wc-playoff-status-hint");
+  const btn = document.getElementById("wc-btn-playoff-start");
+  if (!hint || !btn) return;
+  const t = APP.t;
+  try {
+    const s = await apiFetch("/wc/playoff/status");
+    if (s.started) {
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      hint.textContent = t.wc_admin_playoff_already || "✅ Play-off allaqachon boshlangan";
+    } else if (s.ready) {
+      hint.textContent = t.wc_admin_playoff_ready || "✅ 32 jamoa tayyor — boshlash mumkin";
+    } else {
+      hint.textContent = t.wc_admin_playoff_notready || "⏳ Barcha guruhlar hali tugamagan";
+    }
+  } catch (_) {}
+}
+
+// ---- Play-off boshlash ----
+async function wcAdminPlayoffStart() {
+  const t = APP.t;
+  if (!window.confirm(t.wc_admin_playoff_confirm || "Play-off boshlansinmi? 32 jamoa saralanadi va setka tuziladi. Bu amalni ortga qaytarib bo'lmaydi.")) return;
+  try {
+    const r = await apiFetch("/wc/admin/playoff/start", { method: "POST" });
+    window.alert(`✅ Play-off boshlandi! ${r.created} ta o'yin yaratildi.`);
+    void wcLoadPlayoffStatus();
+  } catch (e) {
+    const msg = {
+      already_started: t.wc_admin_playoff_already || "Play-off allaqachon boshlangan",
+      not_ready:       t.wc_admin_playoff_notready || "Barcha guruhlar hali tugamagan",
+    }[e.message] || (e.message && e.message.indexOf("incomplete") >= 0
+      ? (t.wc_admin_playoff_notready || "Barcha guruhlar hali tugamagan")
+      : e.message);
+    showToast("❌ " + msg);
   }
 }
 
