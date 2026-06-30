@@ -152,6 +152,38 @@ def init_db():
         )
     """)
 
+    # === admin_leagues (liga adminini AYNAN qaysi ligalarga biriktirish) ===
+    # Bir liga admini (scope='league') bir nechta ligaga biriktirilishi mumkin.
+    # Bu jadval bo'sh bo'lsa (admin hech qaysi ligaga biriktirilmagan) — u hech
+    # qaysi liga natijasini tuzata olmaydi. Bosh admin esa hamma ligaga ega.
+    # UNIQUE(telegram_id, league_id): takror biriktirishni oldini oladi.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS admin_leagues (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telegram_id INTEGER NOT NULL,
+            league_id INTEGER NOT NULL,
+            added_by INTEGER,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(telegram_id, league_id)
+        )
+    """)
+
+    # === admin_leagues (liga adminiga qaysi liga(lar) biriktirilgan) ===
+    # Bir liga admini (scope='league') bir yoki bir nechta ligaga qaray oladi.
+    # Bosh admin biriktiradi. Bu jadvalda yozuv bo'lmasa — admin hech qaysi
+    # ligani tuzata olmaydi (bosh admin biriktirishi shart).
+    # telegram_id: liga admini; league_id: leagues.id
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS admin_leagues (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telegram_id INTEGER NOT NULL,
+            league_id INTEGER NOT NULL,
+            added_by INTEGER,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(telegram_id, league_id)
+        )
+    """)
+
     # === messages (WebApp chat — aktiv match raqibi bilan) ===
     # sender_id = users.id (kim yuborgan). is_read = raqib o'qidimi (ikkita ✓ uchun).
     cursor.execute("""

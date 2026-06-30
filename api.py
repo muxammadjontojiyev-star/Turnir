@@ -52,6 +52,7 @@ from notify import notify_members, notify_user
 from membership import is_user_subscribed
 from admin_roles import (
     is_super_admin, is_scope_admin, add_admin, remove_admin, list_admins,
+    assign_league, unassign_league, get_admin_league_ids, can_manage_league,
     SCOPE_LEAGUE, SCOPE_WC,
 )
 from wc_chat import (
@@ -870,6 +871,41 @@ def admin_remove_role(scope: str, telegram_id: int, admin: dict = Depends(get_au
     return {"status": "ok", "telegram_id": telegram_id, "scope": scope}
 
 
+# ============ ADMIN-LIGA BIRIKTIRISH (faqat bosh admin) ============
+
+@app.get("/admin/leagues/all")
+def admin_all_leagues(admin: dict = Depends(get_authenticated_super_admin)):
+    """Barcha ligalar ro'yxati (admin biriktirish UI uchun). Faqat bosh admin."""
+    leagues = get_all_leagues()
+    return {"leagues": [{"id": lg["id"], "name": lg["name"]} for lg in leagues]}
+
+
+@app.get("/admin/roles/league/{telegram_id}/leagues")
+def admin_get_admin_leagues(telegram_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """Liga adminiga biriktirilgan liga ID'lari. Faqat bosh admin."""
+    return {"telegram_id": telegram_id, "league_ids": get_admin_league_ids(telegram_id)}
+
+
+@app.post("/admin/roles/league/{telegram_id}/leagues/{league_id}")
+def admin_assign_league(telegram_id: int, league_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Liga adminiga ligani biriktiradi (faqat bosh admin).
+    Xato: not_league_admin, league_not_found, already_assigned → 400
+    """
+    success, reason = assign_league(telegram_id, league_id, admin["telegram_id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "telegram_id": telegram_id, "league_id": league_id}
+
+
+@app.delete("/admin/roles/league/{telegram_id}/leagues/{league_id}")
+def admin_unassign_league(telegram_id: int, league_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """Liga adminidan ligani olib tashlaydi (faqat bosh admin)."""
+    if not unassign_league(telegram_id, league_id):
+        raise HTTPException(status_code=400, detail="not_found")
+    return {"status": "ok", "telegram_id": telegram_id, "league_id": league_id}
+
+
 @app.get("/admin/whoami")
 def admin_whoami(x_telegram_init_data: str = Header(...)):
     """
@@ -1149,8 +1185,15 @@ def admin_fix_confirmed(
     qo'lda tuzatadi (status o'zgarmaydi, faqat score yangilanadi).
 
     Query params: match_id, score1, score2
-    Xato holatlari: match_not_found, wrong_status → 400
+    Xato holatlari: match_not_found, wrong_status, league_not_allowed → 400/403
     """
+    # Liga admini faqat o'ziga biriktirilgan ligani tuzata oladi (bosh admin — hammasini)
+    match = get_match_by_id(match_id)
+    if match is None:
+        raise HTTPException(status_code=400, detail="match_not_found")
+    if not can_manage_league(admin["telegram_id"], match["league_id"]):
+        raise HTTPException(status_code=403, detail="league_not_allowed")
+
     success, reason = admin_fix_confirmed_match(match_id, score1, score2)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
