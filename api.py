@@ -45,6 +45,7 @@ from queries import (
     wc_confirm_or_reject_match, wc_get_open_matchday,
     wc_admin_fix_confirmed_match, wc_admin_remove_player, wc_get_all_players,
     wc_admin_set_score, wc_admin_reset_match, wc_fix_missing_schedules,
+    wc_start_all_today,
 )
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
@@ -838,6 +839,21 @@ def wc_admin_fix_schedules(admin: dict = Depends(get_authenticated_super_admin))
     Qaytaradi: {fixed: [...], skipped_not_full: [...], already_ok: [...]}
     """
     result = wc_fix_missing_schedules()
+    return {"status": "ok", **result}
+
+
+# ============ POST /wc/admin/start-today ============
+
+@app.post("/wc/admin/start-today")
+def wc_admin_start_today(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin: barcha o'yinli WC guruhlarga BUGUNDAN start beradi (draw_date =
+    hozir). Matchday-lock bugundan: bugun matchday 1-2 ochiq, ertaga 23:30 da
+    matchday 3 ochiladi (liga kabi).
+
+    Qaytaradi: {started: [...]}
+    """
+    result = wc_start_all_today()
     return {"status": "ok", **result}
 
 

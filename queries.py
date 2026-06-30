@@ -1787,3 +1787,25 @@ def wc_fix_missing_schedules() -> dict:
         "skipped_not_full": skipped_not_full,
         "already_ok": already_ok,
     }
+
+
+def wc_start_all_today() -> dict:
+    """
+    Admin uchun: o'yinlari yaratilgan barcha WC guruhlarning draw_date'ini
+    HOZIRGI vaqtga qo'yadi — ya'ni bugundan start beradi. Shunda matchday-lock
+    bugundan boshlanadi: bugun matchday 1..MATCHDAYS_PER_UNLOCK ochiq, keyingi
+    turlar har kun 23:30 (Toshkent) da ochiladi (liga kabi).
+
+    Faqat o'yinlari bor (to'lgan) guruhlarga ta'sir qiladi.
+    Qaytaradi: {started: [guruh harflari]}
+    """
+    from wc_data import WC_GROUP_LETTERS
+    from wc_schedule import wc_group_has_matches
+
+    started = []
+    now = _tournament_now()
+    for letter in WC_GROUP_LETTERS:
+        if wc_group_has_matches(letter):
+            wc_set_group_draw_date(letter, now)
+            started.append(letter)
+    return {"started": started}
