@@ -107,3 +107,26 @@ def get_wc_player_position(group_letter: str, user_id: int) -> dict | None:
         if player["user_id"] == user_id:
             return {"position": index, **player}
     return None
+
+
+def calculate_wc_top_scorers() -> list[dict]:
+    """
+    Barcha WC guruhlardagi o'yinchilarni eng ko'p gol (goals_for) bo'yicha
+    tartiblaydi. Liga top-scorers naqshining WC versiyasi.
+
+    Faqat gol urgan (goals_for > 0) o'yinchilar. Har biriga group_letter qo'shiladi.
+    Format: [{user_id, nickname, username, team_name, group_letter, goals_for, ...}, ...]
+    """
+    from wc_data import WC_GROUP_LETTERS
+
+    all_players = []
+    for letter in WC_GROUP_LETTERS:
+        rating = calculate_wc_group_rating(letter)
+        for player in rating:
+            player["group_letter"] = letter
+            all_players.append(player)
+
+    # Faqat gol urganlar, gol bo'yicha kamayish tartibida
+    scorers = [p for p in all_players if p.get("goals_for", 0) > 0]
+    scorers.sort(key=lambda p: p["goals_for"], reverse=True)
+    return scorers

@@ -636,6 +636,13 @@ def wc_rating(group_letter: str):
     return {"group": group_letter, "rating": calculate_wc_group_rating(group_letter)}
 
 
+@app.get("/wc/top-scorers")
+def wc_top_scorers():
+    """World Cup to'p urarlari — barcha guruhlardan eng ko'p gol urganlar."""
+    from wc_rating import calculate_wc_top_scorers
+    return {"scorers": calculate_wc_top_scorers()}
+
+
 @app.post("/wc/match/submit-result")
 def wc_submit_result(
     match_id: int,
