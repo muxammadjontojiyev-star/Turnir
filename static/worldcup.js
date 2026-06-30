@@ -14,6 +14,7 @@ const WC = {
   selectedGroup: "A",   // Home'da tanlangan guruh (ro'yxatdan o'tish uchun)
   selectedTeam:  null,  // Tanlangan terma jamoa nomi
   ratingGroup:   "A",   // Reyting bo'limida ko'rilayotgan guruh
+  ratingMode:    "groups", // Reyting rejimi: groups | top_scorers
   section:       "home", // Joriy WC bo'limi: home | rating | profile | prizes | viewplayer
   profile:       null,  // /wc/profile javobi (ro'yxatdan o'tgan bo'lsa)
   takenTeams:    [],     // Joriy guruhda band qilingan jamoalar
@@ -130,7 +131,7 @@ function renderWorldCup() {
 
   root.innerHTML = `
     <div class="wc-banner">
-      <img src="worldcup-banner.jpg?v=20260628u" alt="World Cup 2026" class="wc-banner-img" />
+      <img src="worldcup-banner.jpg?v=20260628v" alt="World Cup 2026" class="wc-banner-img" />
     </div>
     <div class="wc-header">
       <button class="wc-back" id="wc-back-btn">
@@ -357,6 +358,37 @@ async function wcRegister() {
 function wcRenderRating() {
   const t = APP.t;
 
+  // Rejim tugmalari: Guruhlar / To'p urarlar
+  const modeTabs = `
+    <div class="wc-mode-tabs">
+      <button class="wc-mode-tab ${WC.ratingMode === "groups" ? "active" : ""}" data-rmode="groups">${escHtml(t.wc_mode_groups || "Guruhlar")}</button>
+      <button class="wc-mode-tab ${WC.ratingMode === "top_scorers" ? "active" : ""}" data-rmode="top_scorers">${escHtml(t.tab_top_scorers || "⚽ To'p urarlar")}</button>
+    </div>`;
+
+  // To'p urarlar rejimi
+  if (WC.ratingMode === "top_scorers") {
+    return `
+      <div class="section-label">${escHtml(t.rating_title || "REYTING JADVALI")}</div>
+      ${modeTabs}
+      <div class="card card--flat card--table">
+        <table class="rating-table" id="wc-scorers-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>${escHtml(t.th_player || "O'yinchi")}</th>
+              <th>${escHtml(t.th_group || "Guruh")}</th>
+              <th>${escHtml(t.th_goals_col || "Gol")}</th>
+            </tr>
+          </thead>
+          <tbody id="wc-scorers-tbody">
+            <tr><td colspan="4" class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Guruhlar rejimi (standart)
   // Guruh tablari (4 qatorli, home bilan bir xil joylashuv)
   const groupTabs = WC_GROUP_ROWS.map(row => `
     <div class="wc-group-row">
@@ -384,9 +416,10 @@ function wcRenderRating() {
 
   return `
     <div class="section-label">${escHtml(t.rating_title || "REYTING JADVALI")}</div>
+    ${modeTabs}
     <div class="wc-group-tabs">${groupTabs}</div>
     <div class="card card--flat card--table">
-      <table class="rating-table">
+      <table class="rating-table" id="wc-rating-table">
         <thead>
           <tr>
             <th>#</th>
@@ -408,6 +441,20 @@ function wcRenderRating() {
 
 function wcBindRating() {
   const root = document.getElementById("worldcup-root");
+
+  // Rejim tugmalari (Guruhlar / To'p urarlar)
+  root.querySelectorAll(".wc-mode-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      WC.ratingMode = btn.dataset.rmode;
+      renderWorldCup();
+    });
+  });
+
+  if (WC.ratingMode === "top_scorers") {
+    void wcLoadTopScorers();
+    return;
+  }
+
   root.querySelectorAll(".wc-group-tab").forEach(btn => {
     btn.addEventListener("click", () => {
       WC.ratingGroup = btn.dataset.rgroup;
@@ -416,6 +463,45 @@ function wcBindRating() {
   });
   // Real reytingni yuklaymiz (band jamoalar statistikasi bilan)
   void wcLoadRating();
+}
+
+// Barcha guruhlardan eng ko'p gol urganlar (to'p urarlar)
+async function wcLoadTopScorers() {
+  const tbody = document.getElementById("wc-scorers-tbody");
+  if (!tbody) return;
+  const t = APP.t;
+  try {
+    const data = await apiFetch("/wc/top-scorers");
+    const scorers = data.scorers || [];
+    if (scorers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${escHtml(t.no_data || "Ma'lumot yo'q")}</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = scorers.map((p, i) => {
+      const flag = wcTeamFlag(p.team_name);
+      const userLine = p.username
+        ? `<span class="wc-row-user">@${escHtml(p.username)}</span>`
+        : (p.nickname ? `<span class="wc-row-user">${escHtml(p.nickname)}</span>` : "");
+      const rankCls = (i + 1) <= 3 ? `rank-${i + 1}` : "";
+      return `
+        <tr>
+          <td class="${rankCls}">${i + 1}</td>
+          <td>
+            <div class="wc-row-cell">
+              <span class="wc-row-flag">${flag}</span>
+              <div class="wc-row-text">
+                <span class="wc-row-name">${escHtml(p.team_name || "")}</span>
+                ${userLine}
+              </div>
+            </div>
+          </td>
+          <td>${escHtml(p.group_letter || "")}</td>
+          <td><strong>${p.goals_for}</strong></td>
+        </tr>`;
+    }).join("");
+  } catch (_) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${escHtml(t.no_data || "Ma'lumot yo'q")}</td></tr>`;
+  }
 }
 
 // Guruh reytingini backenddan olib, jadvalni to'ldiradi
