@@ -153,3 +153,32 @@ PLAYOFF_ROUNDS = [
     ("final", 1),  # final — 1 o'yin
     ("bronze", 1), # bronza (3-o'rin) — 1 o'yin
 ]
+
+
+def wc_playoff_start() -> dict:
+    """
+    Play-off'ni boshlaydi (admin tugmasi chaqiradi):
+    1. Barcha 12 guruh tugaganini tekshiradi (32 jamoa ready).
+    2. 32 jamoani saralaydi va 1/16 juftliklarni tuzadi.
+    3. Bracketni DB'ga yozadi (barcha bosqich matchlari + bog'lanishlar).
+
+    Qaytaradi: (success, reason, data)
+      Sabablar: ok / already_started / not_ready / <group>_incomplete
+    """
+    import queries
+
+    if queries.wc_playoff_is_started() or queries.wc_playoff_has_matches():
+        return {"success": False, "reason": "already_started"}
+
+    qualified = wc_get_qualified_teams()
+    if not qualified["ready"]:
+        return {"success": False, "reason": qualified["reason"]}
+
+    pairings = wc_build_r32_pairings(qualified)
+    result = queries.wc_playoff_build_bracket(pairings)
+
+    return {
+        "success": True,
+        "reason": "ok",
+        "created": result["created"],
+    }

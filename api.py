@@ -864,6 +864,111 @@ def wc_admin_start_today(admin: dict = Depends(get_authenticated_super_admin)):
     return {"status": "ok", **result}
 
 
+# ============ WC PLAY-OFF ============
+
+@app.get("/wc/playoff/status")
+def wc_playoff_status():
+    """Play-off holati: boshlanganmi va 32 jamoa tayyormi (admin tugmasi uchun)."""
+    import queries
+    from wc_playoff import wc_get_qualified_teams
+    started = queries.wc_playoff_is_started()
+    result = {"started": started}
+    if not started:
+        q = wc_get_qualified_teams()
+        result["ready"] = q["ready"]
+        result["reason"] = q["reason"]
+    return result
+
+
+@app.post("/wc/admin/playoff/start")
+def wc_admin_playoff_start(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin play-off'ni boshlaydi: 32 jamoani saralaydi va bracketni yaratadi.
+    Barcha 12 guruh tugagan bo'lishi shart.
+
+    Xato: already_started, not_ready, group_X_incomplete → 400
+    """
+    from wc_playoff import wc_playoff_start
+    result = wc_playoff_start()
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["reason"])
+    return {"status": "ok", "created": result["created"]}
+
+
+@app.get("/wc/playoff/my-matches")
+def wc_playoff_my_matches(user: dict = Depends(get_authenticated_user)):
+    """O'yinchining play-off matchlari (ochiq bosqichlargacha, ketma-ket)."""
+    import queries
+    matches = queries.wc_playoff_get_user_matches(user["id"])
+    return {"matches": matches, "open_round_index": queries.wc_playoff_get_open_round_index()}
+
+
+@app.get("/wc/playoff/bracket")
+def wc_playoff_bracket():
+    """To'liq play-off setkasi (barcha bosqichlar, o'yinchi nomlari bilan)."""
+    import queries
+    if not queries.wc_playoff_is_started():
+        return {"started": False, "rounds": {}}
+    conn = queries.get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT p.id, p.round, p.position, p.player1_id, p.player2_id,
+               p.score1, p.score2, p.status,
+               u1.nickname AS p1_nick, u1.username AS p1_user, r1.team_name AS p1_team,
+               u2.nickname AS p2_nick, u2.username AS p2_user, r2.team_name AS p2_team
+        FROM wc_playoff_matches p
+        LEFT JOIN users u1 ON u1.id = p.player1_id
+        LEFT JOIN users u2 ON u2.id = p.player2_id
+        LEFT JOIN wc_registrations r1 ON r1.user_id = p.player1_id
+        LEFT JOIN wc_registrations r2 ON r2.user_id = p.player2_id
+        ORDER BY p.position
+        """
+    )
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    # Bosqichlarga ajratamiz
+    rounds = {}
+    for m in rows:
+        rounds.setdefault(m["round"], []).append(m)
+    return {"started": True, "rounds": rounds, "open_round_index": queries.wc_playoff_get_open_round_index()}
+
+
+@app.post("/wc/playoff/submit-result")
+def wc_playoff_submit(
+    match_id: int,
+    score1: int,
+    score2: int,
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    Play-off match natijasini kiritadi. Durang qabul qilinmaydi (g'olib aniq shart).
+    Xato: draw_not_allowed, not_open, not_participant, ... → 400
+    """
+    import queries
+    success, reason = queries.wc_playoff_submit_result(match_id, score1, score2, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@app.post("/wc/playoff/confirm-result")
+def wc_playoff_confirm(
+    match_id: int,
+    accept: bool = True,
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    Play-off natijasini tasdiqlaydi (accept=True) yoki rad etadi (False).
+    Tasdiqlansa g'olib keyingi bosqichga o'tadi.
+    """
+    import queries
+    success, reason = queries.wc_playoff_confirm_result(match_id, user["id"], accept)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
 # ============ ADMIN BOSHQARUV (faqat bosh admin) ============
 
 @app.get("/admin/roles/{scope}")
