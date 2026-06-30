@@ -114,12 +114,18 @@ async function wcAdminFixSchedules() {
   if (!window.confirm(t.wc_admin_fix_schedules_confirm || "To'lgan, lekin o'yinsiz guruhlar uchun jadval yaratilsinmi?")) return;
   try {
     const r = await apiFetch("/wc/admin/fix-schedules", { method: "POST" });
-    const fixed = (r.fixed || []);
-    if (fixed.length === 0) {
-      showToast(t.wc_admin_fix_schedules_none || "✅ Hamma jadval joyida (yangi yaratilmadi)");
-    } else {
-      showToast(`✅ ${fixed.length} ta guruh: ${fixed.join(", ")}`);
-    }
+    const fixed = r.fixed || [];
+    const notFull = r.skipped_not_full || [];
+    const okAlready = r.already_ok || [];
+
+    // Batafsil diagnostika: qaysi guruh qaysi holatda
+    let lines = [];
+    if (fixed.length) lines.push(`✅ Yaratildi: ${fixed.join(", ")}`);
+    if (okAlready.length) lines.push(`☑️ Allaqachon bor: ${okAlready.join(", ")}`);
+    if (notFull.length) lines.push(`⏳ To'lmagan: ${notFull.join(", ")}`);
+
+    const msg = lines.length ? lines.join("\n") : (t.wc_admin_fix_schedules_none || "✅ Hamma jadval joyida");
+    window.alert(msg);
   } catch (e) {
     showToast("❌ " + e.message);
   }
