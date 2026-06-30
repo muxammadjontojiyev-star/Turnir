@@ -1731,17 +1731,24 @@ def wc_get_all_players() -> list[dict]:
 
 def wc_fix_missing_schedules() -> dict:
     """
-    Admin uchun: barcha to'lgan (4 jamoa) lekin o'yinlari yaratilmagan WC
-    guruhlarini topib, jadval (round-robin) generatsiya qiladi. Bu bug tuzatish
-    uchun — guruh to'lgan-u, lekin o'yin yo'q holatlari (eski guruhlar yoki
-    generatsiya o'tkazib yuborilgan holatlar).
+    Admin uchun: barcha to'lgan (4 jamoa) lekin o'yinlari yaratilmagan YOKI
+    o'yinlari to'liq bo'lmagan WC guruhlarini topib, jadval (round-robin)
+    generatsiya qiladi. Bug tuzatish uchun.
 
-    Mavjud o'yinlarga TEGMAYDI — faqat o'yinsiz to'lgan guruhlarni yaratadi.
+    4 jamoali guruhda aniq 6 o'yin bo'lishi kerak (round-robin). Agar guruh
+    to'lgan-u, o'yinlar yo'q yoki 6 tadan kam bo'lsa — eski (chala) o'yinlar
+    o'chiriladi va qayta to'liq yaratiladi.
 
-    Qaytaradi: {fixed: [guruh harflari], skipped_not_full: [...], already_ok: [...]}
+    Qaytaradi: {fixed: [...], skipped_not_full: [...], already_ok: [...]}
     """
     from wc_data import WC_GROUP_LETTERS, WC_TEAMS_PER_GROUP
-    from wc_schedule import wc_group_has_matches
+    from wc_schedule import (
+        wc_group_has_matches, wc_get_group_player_ids,
+        generate_wc_group_schedule, wc_delete_group_matches,
+    )
+
+    # 4 jamoali round-robin: C(4,2) = 6 o'yin
+    expected_matches = WC_TEAMS_PER_GROUP * (WC_TEAMS_PER_GROUP - 1) // 2
 
     fixed = []
     skipped_not_full = []
@@ -1752,11 +1759,27 @@ def wc_fix_missing_schedules() -> dict:
         if players < WC_TEAMS_PER_GROUP:
             skipped_not_full.append(letter)
             continue
-        if wc_group_has_matches(letter):
+
+        # Guruhda nechta o'yin bor?
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) as cnt FROM wc_matches WHERE group_letter = ?",
+            (letter,),
+        )
+        match_count = cursor.fetchone()["cnt"]
+        conn.close()
+
+        if match_count == expected_matches:
             already_ok.append(letter)
             continue
-        # To'lgan, lekin o'yin yo'q — yaratamiz
-        _wc_try_generate_group(letter)
+
+        # O'yin yo'q yoki chala (6 tadan kam/ko'p) — eskisini tozalab qayta yaratamiz
+        if match_count > 0:
+            wc_delete_group_matches(letter)
+        player_ids = wc_get_group_player_ids(letter)
+        generate_wc_group_schedule(letter, player_ids)
+        wc_set_group_draw_date(letter)
         fixed.append(letter)
 
     return {
