@@ -76,6 +76,10 @@ function wcRenderAdminPanel() {
   // --- Faqat bosh admin: o'yinchi chiqarish + admin tayinlash ---
   if (WC_ADMIN.isSuper) {
     html += `
+      <div class="section-label">${escHtml(t.wc_admin_schedules_title || "O'YIN JADVALLARI")}</div>
+      <button class="btn btn--ghost" id="wc-btn-fix-schedules" style="width:100%">${escHtml(t.wc_admin_fix_schedules_btn || "Yo'qolgan jadvallarni yaratish")}</button>
+      <div class="admin-player-league" style="margin:6px 2px 0;text-align:center">${escHtml(t.wc_admin_fix_schedules_hint || "To'lgan, lekin o'yinlari yo'q guruhlar uchun")}</div>
+
       <div class="section-label">${escHtml(t.wc_admin_players_title || "WC ISHTIROKCHILAR")}</div>
       <div id="wc-admin-players-list" class="admin-players-list">
         <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
@@ -100,6 +104,24 @@ function wcBindAdminPanel() {
   document.getElementById("wc-btn-admin-reset")?.addEventListener("click", wcAdminResetMatch);
   if (WC_ADMIN.isSuper) {
     document.getElementById("wc-btn-admin-add")?.addEventListener("click", wcAdminAddRole);
+    document.getElementById("wc-btn-fix-schedules")?.addEventListener("click", wcAdminFixSchedules);
+  }
+}
+
+// ---- Yo'qolgan WC jadvallarni yaratish (to'lgan-o'yinsiz guruhlar) ----
+async function wcAdminFixSchedules() {
+  const t = APP.t;
+  if (!window.confirm(t.wc_admin_fix_schedules_confirm || "To'lgan, lekin o'yinsiz guruhlar uchun jadval yaratilsinmi?")) return;
+  try {
+    const r = await apiFetch("/wc/admin/fix-schedules", { method: "POST" });
+    const fixed = (r.fixed || []);
+    if (fixed.length === 0) {
+      showToast(t.wc_admin_fix_schedules_none || "✅ Hamma jadval joyida (yangi yaratilmadi)");
+    } else {
+      showToast(`✅ ${fixed.length} ta guruh: ${fixed.join(", ")}`);
+    }
+  } catch (e) {
+    showToast("❌ " + e.message);
   }
 }
 
