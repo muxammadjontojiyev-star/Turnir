@@ -2046,10 +2046,17 @@ def wc_playoff_get_user_matches(user_id: int) -> list[dict]:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT * FROM wc_playoff_matches
-        WHERE (player1_id = ? OR player2_id = ?)
+        SELECT p.*,
+               u1.nickname AS p1_nick, u1.username AS p1_user, r1.team_name AS p1_team,
+               u2.nickname AS p2_nick, u2.username AS p2_user, r2.team_name AS p2_team
+        FROM wc_playoff_matches p
+        LEFT JOIN users u1 ON u1.id = p.player1_id
+        LEFT JOIN users u2 ON u2.id = p.player2_id
+        LEFT JOIN wc_registrations r1 ON r1.user_id = p.player1_id
+        LEFT JOIN wc_registrations r2 ON r2.user_id = p.player2_id
+        WHERE (p.player1_id = ? OR p.player2_id = ?)
         ORDER BY
-            CASE round
+            CASE p.round
                 WHEN 'r32' THEN 0 WHEN 'r16' THEN 1 WHEN 'r8' THEN 2
                 WHEN 'r4' THEN 3 WHEN 'final' THEN 4 WHEN 'bronze' THEN 4
             END
