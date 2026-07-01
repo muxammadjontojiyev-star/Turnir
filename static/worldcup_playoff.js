@@ -235,3 +235,44 @@ async function wcLoadBracket() {
   if (!box) return;
   box.innerHTML = await wcRenderBracket();
 }
+
+
+// ===== WC SOVRINLAR (kubok + chempion) =====
+function wcRenderPrizes() {
+  const t = APP.t;
+  return `
+    <div class="section-label">${escHtml(t.prizes_title || "SOVRINLAR")}</div>
+    <div class="card card--prize wc-prize-card">
+      <div class="prize-icon wc-trophy-icon">
+        <img src="wc-trophy.png?v=20260628y" alt="World Cup" class="wc-trophy-img" />
+      </div>
+      <div class="prize-info">
+        <div class="prize-name">${escHtml(t.wc_trophy_name || "Jahon Chempionati Kubogi")}</div>
+        <div class="prize-desc">${escHtml(t.wc_trophy_desc || "Play-off g'olibi — jahon chempioni")}</div>
+        <div class="prize-holder" id="wc-champion-name">—</div>
+        <div class="prize-club" id="wc-champion-user"></div>
+      </div>
+    </div>
+  `;
+}
+
+async function wcBindPrizes() {
+  const t = APP.t;
+  const nameEl = document.getElementById("wc-champion-name");
+  const userEl = document.getElementById("wc-champion-user");
+  if (!nameEl) return;
+  try {
+    const data = await apiFetch("/wc/playoff/champion");
+    if (data.champion) {
+      const c = data.champion;
+      const flag = c.team_name ? wcTeamFlag(c.team_name) : "🏆";
+      nameEl.innerHTML = `${flag} ${escHtml(c.team_name || "")}`;
+      userEl.textContent = c.username ? `@${c.username}` : (c.nickname || "");
+    } else {
+      nameEl.textContent = t.wc_champion_pending || "Hali aniqlanmagan";
+      userEl.textContent = "";
+    }
+  } catch (_) {
+    nameEl.textContent = t.wc_champion_pending || "Hali aniqlanmagan";
+  }
+}
