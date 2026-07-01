@@ -71,24 +71,32 @@ function wcPlayoffMatchItem(m) {
       action = `<button class="match-action-btn wc-po-confirm-btn" data-mid="${m.id}">✔</button>`;
     }
   } else {
-    // pending — avval raqib bilan chatlashish (💬), chat ochilgach "Natija" (guruh oqimi kabi)
+    // pending — natija kiritish yoki chat. Markaz (bayroqlar) bosilsa VS modal,
+    // o'ngdagi 💬 to'g'ridan-to'g'ri Telegram. Natija chat ochilgach ochiladi.
     if (m.player1_id && m.player2_id) {
       statusBadge = `<span class="match-status pending">${escHtml(t.pending_short || "Kutilmoqda")}</span>`;
       const chatDone = WC.chatOpened && WC.chatOpened.has(m.id);
       if (chatDone) {
         action = `<button class="match-action-btn wc-po-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
       } else {
-        action = `<button class="match-action-btn match-chat-btn wc-po-chat-btn" data-mid="${m.id}" title="${escHtml(t.chat_first_hint || "Avval raqib bilan kelishing")}">${ICON.get("chat", 18)}</button>`;
+        // O'ngdagi belgi — to'g'ridan-to'g'ri Telegram chatiga o'tadi
+        action = `<button class="match-action-btn match-chat-btn wc-po-tgchat-btn" data-mid="${m.id}" title="${escHtml(t.opp_write_button || "Raqib chatiga yozish")}">${ICON.get("chat", 18)}</button>`;
       }
     } else {
       statusBadge = `<span class="match-status pending">${escHtml(t.wc_playoff_waiting_opp || "Raqib kutilmoqda")}</span>`;
     }
   }
 
+  // Markaz (bayroqlar) bosiluvchi — VS modalni ochadi (guruh o'yinlari kabi).
+  // Faqat ikkala o'yinchi aniq va match ochiq bo'lsa.
+  const centerClickable = m.is_open && m.player1_id && m.player2_id;
+  const centerCls = centerClickable ? "wc-po-score wc-po-score--clickable" : "wc-po-score";
+  const centerAttr = centerClickable ? `data-wc-po-open="${m.id}"` : "";
+
   return `
     <div class="wc-match-card wc-po-card">
       <div class="wc-po-round">${escHtml(roundName)}</div>
-      <div class="wc-po-score">${scoreText}</div>
+      <div class="${centerCls}" ${centerAttr}>${scoreText}</div>
       ${statusBadge}
       ${action}
     </div>`;
@@ -104,10 +112,41 @@ function wcBindPlayoffMyMatches() {
   root.querySelectorAll(".wc-po-confirm-btn").forEach(btn => {
     btn.addEventListener("click", () => wcPlayoffOpenConfirmModal(parseInt(btn.dataset.mid)));
   });
-  // Chat tugmasi (💬) — raqib bilan Telegram chatini ochadi, keyin "Natija" ochiladi
-  root.querySelectorAll(".wc-po-chat-btn").forEach(btn => {
-    btn.addEventListener("click", () => wcOpenPlayoffChat(parseInt(btn.dataset.mid)));
+  // Markaz (bayroqlar) bosilsa — VS modal (Chatni ochish / Raqib chatiga yozish)
+  root.querySelectorAll("[data-wc-po-open]").forEach(el => {
+    el.addEventListener("click", () => wcOpenPlayoffChat(parseInt(el.dataset.wcPoOpen)));
   });
+  // O'ngdagi 💬 — to'g'ridan-to'g'ri Telegram chatiga o'tadi
+  root.querySelectorAll(".wc-po-tgchat-btn").forEach(btn => {
+    btn.addEventListener("click", () => wcOpenPlayoffTelegram(parseInt(btn.dataset.mid)));
+  });
+}
+
+// O'ngdagi 💬 — raqib Telegram chatini to'g'ridan-to'g'ri ochadi, "Natija" tugmasini ochadi.
+async function wcOpenPlayoffTelegram(matchId) {
+  const t = APP.t;
+  const me = WC.profile ? WC.profile.user_id : null;
+  let m = null;
+  try {
+    const data = await apiFetch("/wc/playoff/my-matches");
+    m = (data.matches || []).find(x => x.id === matchId);
+  } catch (_) { /* pastda tekshiramiz */ }
+  if (!m) {
+    if (typeof showToast === "function") showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
+    return;
+  }
+  const iAmP1 = m.player1_id === me;
+  const oppUser = iAmP1 ? m.p2_user : m.p1_user;
+
+  if (!WC.chatOpened) WC.chatOpened = new Set();
+  WC.chatOpened.add(matchId);
+
+  if (oppUser && typeof wcOpenTelegramChat === "function") {
+    wcOpenTelegramChat({ username: oppUser, tg: null });
+  } else if (typeof showToast === "function") {
+    showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
+  }
+  if (typeof wcLoadPlayoffMyMatches === "function") await wcLoadPlayoffMyMatches();
 }
 
 // Play-off raqibi bilan Telegram chatini ochadi (guruh oqimi kabi).
@@ -211,7 +250,24 @@ function wcPlayoffOpenResultModal(matchId) {
   document.getElementById("wc-po-modal-mode").value = "submit";
   document.getElementById("wc-po-modal-reject")?.classList.add("hidden");
   document.getElementById("wc-po-modal-submit").textContent = t.submit || "Yuborish";
+  // Bayroqlar (tanlangan jamoalar)
+  wcPlayoffSetModalFlags(matchId);
   modal.classList.remove("hidden");
+}
+
+// Play-off natija modalidagi bayroqlarni match jamoalaridan to'ldiradi.
+async function wcPlayoffSetModalFlags(matchId) {
+  const f1 = document.getElementById("wc-po-flag1");
+  const f2 = document.getElementById("wc-po-flag2");
+  if (!f1 || !f2) return;
+  try {
+    const data = await apiFetch("/wc/playoff/my-matches");
+    const m = (data.matches || []).find(x => x.id === matchId);
+    if (m) {
+      f1.textContent = m.p1_team ? wcTeamFlag(m.p1_team) : "";
+      f2.textContent = m.p2_team ? wcTeamFlag(m.p2_team) : "";
+    }
+  } catch (_) { /* jim — bayroqsiz ham modal ishlaydi */ }
 }
 
 // Tasdiqlash modali (raqib kiritgan natijani ko'rib tasdiqlash/rad etish)
@@ -233,6 +289,11 @@ async function wcPlayoffOpenConfirmModal(matchId) {
     document.getElementById("wc-po-modal-submit").textContent = t.confirm_yes || "Tasdiqlash";
     document.getElementById("wc-po-score1").readOnly = true;
     document.getElementById("wc-po-score2").readOnly = true;
+    // Bayroqlar (m allaqachon olingan)
+    const f1 = document.getElementById("wc-po-flag1");
+    const f2 = document.getElementById("wc-po-flag2");
+    if (f1) f1.textContent = m.p1_team ? wcTeamFlag(m.p1_team) : "";
+    if (f2) f2.textContent = m.p2_team ? wcTeamFlag(m.p2_team) : "";
     modal.classList.remove("hidden");
   } catch (_) {}
 }

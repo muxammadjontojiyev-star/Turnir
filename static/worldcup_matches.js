@@ -97,9 +97,19 @@ function wcRenderProfile() {
         <div class="modal-title" id="wc-po-modal-title">${escHtml(t.enter_result || "Natija kiritish")}</div>
         <input type="hidden" id="wc-po-modal-mode" value="submit" />
         <div class="score-input-row">
-          <input id="wc-po-score1" class="score-input" type="number" min="0" max="99" />
+          <div class="score-input-group">
+            <div class="score-logo-input">
+              <span class="wc-result-flag" id="wc-po-flag1"></span>
+              <input id="wc-po-score1" class="score-input" type="number" min="0" max="99" />
+            </div>
+          </div>
           <span class="score-separator">:</span>
-          <input id="wc-po-score2" class="score-input" type="number" min="0" max="99" />
+          <div class="score-input-group">
+            <div class="score-logo-input">
+              <span class="wc-result-flag" id="wc-po-flag2"></span>
+              <input id="wc-po-score2" class="score-input" type="number" min="0" max="99" />
+            </div>
+          </div>
         </div>
         <p class="confirm-warning">${escHtml(t.wc_playoff_draw_hint || "Durang bo'lmaydi — g'olib aniq bo'lsin (penalti/qo'shimcha vaqt).")}</p>
         <div class="modal-actions modal-actions--stacked">

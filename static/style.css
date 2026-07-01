@@ -2355,6 +2355,7 @@ table { border-collapse: collapse; width: 100%; }
   min-width: 52px;
   text-align: center;
 }
+.wc-po-score--clickable { cursor: pointer; }
 
 /* Bracket setka (gorizontal scroll, ustunlar bosqichma-bosqich) */
 .wc-bracket-scroll {
