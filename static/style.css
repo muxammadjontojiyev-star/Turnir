@@ -341,6 +341,15 @@ table { border-collapse: collapse; width: 100%; }
   background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
   border-color: rgba(123,47,255,0.3);
 }
+/* Har sovrin turi o'z aksenti bilan ajraladi (chap chiziq) */
+.card--prize--gold {
+  border-color: rgba(245,185,66,0.3);
+  border-left: 3px solid #f5b942;
+}
+.card--prize--cyan {
+  border-color: var(--border-accent);
+  border-left: 3px solid var(--cyan);
+}
 .prize-icon { font-size: 36px; flex-shrink: 0; }
 .prize-icon-img {
   width: 56px;
@@ -565,7 +574,7 @@ table { border-collapse: collapse; width: 100%; }
   border-bottom: 1px solid var(--border);
 }
 .rating-table th {
-  padding: 10px 10px;
+  padding: 8px 10px;
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 600;
@@ -600,7 +609,7 @@ table { border-collapse: collapse; width: 100%; }
   opacity: 0.85;
 }
 .rating-table td {
-  padding: 10px 10px;
+  padding: 7px 10px;
   font-size: 13px;
   color: var(--text-primary);
 }
@@ -728,6 +737,11 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-secondary);
   letter-spacing: 0.5px;
 }
+/* O'rin — asosiy ko'rsatkich (cyan fon + ramka bilan ajraladi) */
+.stat-card--primary {
+  background: var(--cyan-dim);
+  border-color: var(--border-accent);
+}
 
 /* ============================================================
    MATCHES LIST
@@ -768,7 +782,7 @@ table { border-collapse: collapse; width: 100%; }
 }
 .match-score {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-heading);
   min-width: 44px;
@@ -776,10 +790,10 @@ table { border-collapse: collapse; width: 100%; }
   flex-shrink: 0;
 }
 .match-status {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.8px;
-  padding: 3px 8px;
+  letter-spacing: 0.5px;
+  padding: 3px 7px;
   border-radius: 20px;
   flex-shrink: 0;
 }

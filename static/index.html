@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260628a9" />
+  <link rel="stylesheet" href="style.css?v=20260628b4" />
 </head>
 <body>
 
@@ -176,8 +176,8 @@
         <!-- Statistika -->
         <div class="section-label" data-i18n="my_stats">STATISTIKA</div>
         <div class="stats-grid" id="profile-stats-grid">
-          <div class="stat-card">
-            <span class="stat-card-value" id="stat-position">—</span>
+          <div class="stat-card stat-card--primary">
+            <span class="stat-card-value neon-cyan" id="stat-position">—</span>
             <span class="stat-card-label" data-i18n="stat_pos">O'rin</span>
           </div>
           <div class="stat-card">
@@ -358,8 +358,8 @@
         <div class="section-label" data-i18n="prizes_title">SOVRINLAR</div>
 
         <!-- Oltin Butsa -->
-        <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-boot.png?v=20260628a9" alt="Oltin Butsa" class="prize-icon-img" /></div>
+        <div class="card card--prize card--prize--gold">
+          <div class="prize-icon"><img src="golden-boot.png?v=20260628b4" alt="Oltin Butsa" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_boot">Oltin Butsa</div>
             <div class="prize-desc" data-i18n="golden_boot_desc">Eng ko'p gol urgan o'yinchi</div>
@@ -369,8 +369,8 @@
         </div>
 
         <!-- Oltin To'p -->
-        <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-ball.png?v=20260628a9" alt="Oltin To'p" class="prize-icon-img" /></div>
+        <div class="card card--prize card--prize--gold">
+          <div class="prize-icon"><img src="golden-ball.png?v=20260628b4" alt="Oltin To'p" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_ball">Oltin To'p</div>
             <div class="prize-desc" data-i18n="golden_ball_desc">Turnir g'olibi</div>
@@ -380,7 +380,7 @@
         </div>
 
         <!-- Liga Kubogi (filterga qarab o'zgaradi) -->
-        <div class="card card--prize" id="league-trophy-card" style="display:none;">
+        <div class="card card--prize card--prize--cyan" id="league-trophy-card" style="display:none;">
           <div class="prize-icon"><img src="" alt="Liga Kubogi" class="prize-icon-img" id="league-trophy-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="league_trophy">Liga Kubogi</div>
@@ -422,8 +422,8 @@
         <!-- Statistika -->
         <div class="section-label" data-i18n="my_stats">STATISTIKA</div>
         <div class="stats-grid">
-          <div class="stat-card">
-            <span class="stat-card-value" id="player-stat-position">—</span>
+          <div class="stat-card stat-card--primary">
+            <span class="stat-card-value neon-cyan" id="player-stat-position">—</span>
             <span class="stat-card-label" data-i18n="stat_pos">O'rin</span>
           </div>
           <div class="stat-card">
@@ -477,12 +477,12 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260628a9"></script>
-  <script src="api.js?v=20260628a9"></script>
-  <script src="worldcup.js?v=20260628a9"></script>
-  <script src="worldcup_matches.js?v=20260628a9"></script>
-  <script src="worldcup_admin.js?v=20260628a9"></script>
-  <script src="worldcup_chat.js?v=20260628a9"></script>
-  <script src="worldcup_playoff.js?v=20260628a9"></script>
+  <script src="app.js?v=20260628b4"></script>
+  <script src="api.js?v=20260628b4"></script>
+  <script src="worldcup.js?v=20260628b4"></script>
+  <script src="worldcup_matches.js?v=20260628b4"></script>
+  <script src="worldcup_admin.js?v=20260628b4"></script>
+  <script src="worldcup_chat.js?v=20260628b4"></script>
+  <script src="worldcup_playoff.js?v=20260628b4"></script>
 </body>
 </html>

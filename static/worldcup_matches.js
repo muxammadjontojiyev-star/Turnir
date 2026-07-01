@@ -65,8 +65,8 @@ function wcRenderProfile() {
 
     <div class="section-label">${escHtml(t.my_stats || "STATISTIKA")}</div>
     <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-card-value">${pos}</span>
+      <div class="stat-card stat-card--primary">
+        <span class="stat-card-value neon-cyan">${pos}</span>
         <span class="stat-card-label">${escHtml(t.stat_pos || "O'rin")}</span>
       </div>
       <div class="stat-card">
@@ -431,8 +431,8 @@ function wcRenderViewProfile() {
 
     <div class="section-label">${escHtml(t.my_stats || "STATISTIKA")}</div>
     <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-card-value">${pos}</span>
+      <div class="stat-card stat-card--primary">
+        <span class="stat-card-value neon-cyan">${pos}</span>
         <span class="stat-card-label">${escHtml(t.stat_pos || "O'rin")}</span>
       </div>
       <div class="stat-card">
