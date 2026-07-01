@@ -723,11 +723,66 @@ async function loadProfile() {
     const data = await apiFetch("/profile");
     APP.profileData = data;
     renderProfile(data);
+    await loadMyPrizes(data.user_id);
     await loadMyMatches();
     await loadAdminPanel();
   } catch (e) {
     showToast("❌ " + e.message);
   }
+}
+
+// Sovrinlarim — foydalanuvchi qo'lga kiritgan sovrinlar (liga + WC)
+async function loadMyPrizes(userId) {
+  const box = document.getElementById("my-prizes-section");
+  if (!box || !userId) return;
+  const t = APP.t;
+  try {
+    const data = await apiFetch(`/users/${userId}/prizes`);
+    const prizes = data.prizes || [];
+    if (prizes.length === 0) { box.innerHTML = ""; return; }
+    box.innerHTML = renderMyPrizes(prizes);
+  } catch (_) {
+    box.innerHTML = "";
+  }
+}
+
+// Sovrin turini rasm + nomga aylantirish
+function prizeVisual(p) {
+  const t = APP.t;
+  if (p.prize_type === "golden_ball") {
+    return { img: "golden-ball.png", name: t.golden_ball || "Oltin To'p" };
+  }
+  if (p.prize_type === "golden_boot") {
+    return { img: "golden-boot.png", name: t.golden_boot || "Oltin Butsa" };
+  }
+  if (p.prize_type === "wc_cup") {
+    return { img: "wc-trophy.png", name: t.wc_trophy_name || "JCH Kubogi" };
+  }
+  if (p.prize_type === "league_cup") {
+    const trophyFile = LEAGUE_TROPHIES[p.league_name] || null;
+    return { img: trophyFile, name: (p.league_name || "") + " " + (t.league_trophy || "Kubogi") };
+  }
+  return { img: null, name: p.prize_type };
+}
+
+function renderMyPrizes(prizes) {
+  const t = APP.t;
+  const items = prizes.map(p => {
+    const v = prizeVisual(p);
+    const imgHtml = v.img
+      ? `<img src="${v.img}?v=20260628y" alt="" class="my-prize-img" onerror="this.style.display='none'" />`
+      : `<span class="my-prize-emoji">🏆</span>`;
+    return `
+      <div class="my-prize-card">
+        <div class="my-prize-icon">${imgHtml}</div>
+        <div class="my-prize-name">${escHtml(v.name)}</div>
+        <div class="my-prize-season">${escHtml(t.season_label || "Mavsum")} ${p.season_number}</div>
+      </div>`;
+  }).join("");
+  return `
+    <div class="section-label">${escHtml(t.my_prizes_title || "SOVRINLARIM")}</div>
+    <div class="my-prizes-grid">${items}</div>
+  `;
 }
 
 function renderProfile(data) {
@@ -990,10 +1045,39 @@ async function loadAdminPanel() {
       await loadRejectedMatches();
     } catch (_) { /* xato — bu qism bo'sh qoladi */ }
     await loadLeagueAdminRoles();
+    await loadSeasonInfo();
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
     superOnly?.classList.add("hidden");
     document.getElementById("admin-manage-section")?.classList.add("hidden");
+  }
+}
+
+// Mavsum ma'lumoti va yakunlash (bosh admin)
+async function loadSeasonInfo() {
+  const hint = document.getElementById("season-current-hint");
+  const btn = document.getElementById("btn-finalize-season");
+  if (!hint) return;
+  try {
+    const d = await apiFetch("/season/current");
+    hint.textContent = (APP.t.season_current || "Joriy mavsum") + ": " + d.season;
+  } catch (_) {}
+  if (btn && !btn._bound) {
+    btn._bound = true;
+    btn.addEventListener("click", finalizeSeason);
+  }
+}
+
+async function finalizeSeason() {
+  const t = APP.t;
+  if (!window.confirm(t.season_finalize_confirm || "Mavsumni yakunlaysizmi? Sovrinlar hisoblanib saqlanadi va mavsum raqami oshadi. Bu amalni ortga qaytarib bo'lmaydi.")) return;
+  try {
+    const r = await apiFetch("/season/finalize", { method: "POST" });
+    const c = r.counts || {};
+    window.alert(`✅ ${t.season_finalized || "Mavsum yakunlandi"} (#${r.season})\n🏆 ${c.league_cups || 0} liga kubogi, ⚽ ${c.golden_boot || 0} oltin butsa, 🥇 ${c.golden_ball || 0} oltin to'p, 🌍 ${c.wc_cup || 0} JCH kubogi`);
+    await loadSeasonInfo();
+  } catch (e) {
+    showToast("❌ " + e.message);
   }
 }
 

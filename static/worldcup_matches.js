@@ -60,6 +60,9 @@ function wcRenderProfile() {
       <div class="profile-club-badge">${clubBadge}</div>
     </div>
 
+    <!-- Sovrinlarim (async — rasm bilan statistika orasida) -->
+    <div id="wc-my-prizes-section"></div>
+
     <div class="section-label">${escHtml(t.my_stats || "STATISTIKA")}</div>
     <div class="stats-grid">
       <div class="stat-card">
@@ -162,6 +165,9 @@ function wcBindProfile() {
 
   void wcLoadMatches();
   if (typeof wcLoadAdminPanel === "function") void wcLoadAdminPanel();
+
+  // Sovrinlarim (liga renderMyPrizes'ni qayta ishlatamiz)
+  void wcLoadMyPrizes();
 
   // Play-off o'yinlarim (async to'ldiriladi) + modal listenerlar
   if (typeof wcLoadPlayoffMyMatches === "function") void wcLoadPlayoffMyMatches();
@@ -467,4 +473,21 @@ function wcBindViewProfile() {
   const root = document.getElementById("worldcup-root");
   if (typeof applyIcons === "function") applyIcons(root);
   document.getElementById("wc-viewplayer-back")?.addEventListener("click", wcBackToRating);
+}
+
+
+// WC profil sovrinlarim (liga renderMyPrizes'ni qayta ishlatadi)
+async function wcLoadMyPrizes() {
+  const box = document.getElementById("wc-my-prizes-section");
+  if (!box) return;
+  const uid = WC.profile ? WC.profile.user_id : null;
+  if (!uid) { box.innerHTML = ""; return; }
+  try {
+    const data = await apiFetch(`/users/${uid}/prizes`);
+    const prizes = data.prizes || [];
+    if (prizes.length === 0 || typeof renderMyPrizes !== "function") { box.innerHTML = ""; return; }
+    box.innerHTML = renderMyPrizes(prizes);
+  } catch (_) {
+    box.innerHTML = "";
+  }
 }

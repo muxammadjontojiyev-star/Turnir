@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260628y" />
+  <link rel="stylesheet" href="style.css?v=20260628z" />
 </head>
 <body>
 
@@ -170,6 +170,9 @@
           <div class="profile-club-badge" id="profile-club-badge"></div>
         </div>
 
+        <!-- Sovrinlarim (async to'ldiriladi — rasm bilan statistika orasida) -->
+        <div id="my-prizes-section"></div>
+
         <!-- Statistika -->
         <div class="section-label" data-i18n="my_stats">STATISTIKA</div>
         <div class="stats-grid" id="profile-stats-grid">
@@ -216,6 +219,11 @@
             <div id="admin-rejected-list" class="admin-players-list">
               <!-- JS tomonidan to'ldiriladi -->
             </div>
+
+            <div class="section-label" data-i18n="season_title">MAVSUM</div>
+            <div class="admin-player-league" id="season-current-hint" style="margin:0 2px 8px">—</div>
+            <button class="btn btn--danger" id="btn-finalize-season" style="width:100%" data-i18n="season_finalize_btn">Mavsumni yakunlash</button>
+            <div class="admin-player-league" style="margin:6px 2px 0" data-i18n="season_finalize_hint">Sovrinlar hisoblanadi va saqlanadi, mavsum raqami oshadi</div>
           </div>
 
           <div class="section-label" data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</div>
@@ -351,7 +359,7 @@
 
         <!-- Oltin Butsa -->
         <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-boot.png?v=20260628y" alt="Oltin Butsa" class="prize-icon-img" /></div>
+          <div class="prize-icon"><img src="golden-boot.png?v=20260628z" alt="Oltin Butsa" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_boot">Oltin Butsa</div>
             <div class="prize-desc" data-i18n="golden_boot_desc">Eng ko'p gol urgan o'yinchi</div>
@@ -362,7 +370,7 @@
 
         <!-- Oltin To'p -->
         <div class="card card--prize">
-          <div class="prize-icon"><img src="golden-ball.png?v=20260628y" alt="Oltin To'p" class="prize-icon-img" /></div>
+          <div class="prize-icon"><img src="golden-ball.png?v=20260628z" alt="Oltin To'p" class="prize-icon-img" /></div>
           <div class="prize-info">
             <div class="prize-name" data-i18n="golden_ball">Oltin To'p</div>
             <div class="prize-desc" data-i18n="golden_ball_desc">Turnir g'olibi</div>
@@ -469,12 +477,12 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260628y"></script>
-  <script src="api.js?v=20260628y"></script>
-  <script src="worldcup.js?v=20260628y"></script>
-  <script src="worldcup_matches.js?v=20260628y"></script>
-  <script src="worldcup_admin.js?v=20260628y"></script>
-  <script src="worldcup_chat.js?v=20260628y"></script>
-  <script src="worldcup_playoff.js?v=20260628y"></script>
+  <script src="app.js?v=20260628z"></script>
+  <script src="api.js?v=20260628z"></script>
+  <script src="worldcup.js?v=20260628z"></script>
+  <script src="worldcup_matches.js?v=20260628z"></script>
+  <script src="worldcup_admin.js?v=20260628z"></script>
+  <script src="worldcup_chat.js?v=20260628z"></script>
+  <script src="worldcup_playoff.js?v=20260628z"></script>
 </body>
 </html>

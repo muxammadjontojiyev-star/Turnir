@@ -244,7 +244,7 @@ function wcRenderPrizes() {
     <div class="section-label">${escHtml(t.prizes_title || "SOVRINLAR")}</div>
     <div class="card card--prize wc-prize-card">
       <div class="prize-icon wc-trophy-icon">
-        <img src="wc-trophy.png?v=20260628y" alt="World Cup" class="wc-trophy-img" />
+        <img src="wc-trophy.png?v=20260628z" alt="World Cup" class="wc-trophy-img" />
       </div>
       <div class="prize-info">
         <div class="prize-name">${escHtml(t.wc_trophy_name || "Jahon Chempionati Kubogi")}</div>

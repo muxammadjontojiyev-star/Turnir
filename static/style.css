@@ -2324,3 +2324,46 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--cyan);
   margin-top: 6px;
 }
+
+/* ===== SOVRINLARIM (profil) ===== */
+.my-prizes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.my-prize-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.my-prize-icon {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.my-prize-img {
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 8px rgba(255, 200, 0, 0.25));
+}
+.my-prize-emoji { font-size: 40px; }
+.my-prize-name {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+.my-prize-season {
+  font-size: 10px;
+  color: var(--cyan);
+  font-weight: 700;
+}
