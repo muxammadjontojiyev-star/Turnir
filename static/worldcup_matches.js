@@ -106,8 +106,8 @@ function wcRenderProfile() {
           <span class="score-separator">:</span>
           <div class="score-input-group">
             <div class="score-logo-input">
-              <span class="wc-result-flag" id="wc-po-flag2"></span>
               <input id="wc-po-score2" class="score-input" type="number" min="0" max="99" />
+              <span class="wc-result-flag" id="wc-po-flag2"></span>
             </div>
           </div>
         </div>
