@@ -2240,3 +2240,38 @@ def wc_auto_resolve_all_groups() -> dict:
             total_p += r["pending_resolved"]
             total_a += r["awaiting_resolved"]
     return {"groups": result, "total_pending": total_p, "total_awaiting": total_a}
+
+
+def wc_playoff_get_champion() -> dict | None:
+    """
+    Play-off chempioni (final g'olibi). Final 'confirmed' bo'lmasa None.
+
+    Qaytaradi: {user_id, nickname, username, team_name} yoki None.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT p.player1_id, p.player2_id, p.score1, p.score2, p.status,
+               u1.nickname AS n1, u1.username AS us1, r1.team_name AS t1,
+               u2.nickname AS n2, u2.username AS us2, r2.team_name AS t2
+        FROM wc_playoff_matches p
+        LEFT JOIN users u1 ON u1.id = p.player1_id
+        LEFT JOIN users u2 ON u2.id = p.player2_id
+        LEFT JOIN wc_registrations r1 ON r1.user_id = p.player1_id
+        LEFT JOIN wc_registrations r2 ON r2.user_id = p.player2_id
+        WHERE p.round = 'final'
+        LIMIT 1
+        """
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row is None or row["status"] != "confirmed":
+        return None
+    if row["score1"] is None or row["score2"] is None:
+        return None
+    if row["score1"] > row["score2"]:
+        return {"user_id": row["player1_id"], "nickname": row["n1"], "username": row["us1"], "team_name": row["t1"]}
+    elif row["score2"] > row["score1"]:
+        return {"user_id": row["player2_id"], "nickname": row["n2"], "username": row["us2"], "team_name": row["t2"]}
+    return None

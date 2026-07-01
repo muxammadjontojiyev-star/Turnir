@@ -934,6 +934,14 @@ def wc_playoff_bracket():
     return {"started": True, "rounds": rounds, "open_round_index": queries.wc_playoff_get_open_round_index()}
 
 
+@app.get("/wc/playoff/champion")
+def wc_playoff_champion():
+    """Play-off chempioni (final g'olibi). Final tugamagan bo'lsa champion=null."""
+    import queries
+    champion = queries.wc_playoff_get_champion()
+    return {"champion": champion}
+
+
 @app.post("/wc/playoff/submit-result")
 def wc_playoff_submit(
     match_id: int,
