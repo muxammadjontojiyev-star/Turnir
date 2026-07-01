@@ -44,10 +44,15 @@ function wcPlayoffMatchItem(m) {
   const oppScore = iAmP1 ? m.score2 : m.score1;
   const oppName = iAmP1 ? (m.player2_id ? "?" : "—") : (m.player1_id ? "?" : "—");
 
-  // Skor ko'rinishi
-  const scoreText = (m.score1 != null && m.score2 != null)
+  // Skor ko'rinishi — ikki jamoa bayrog'i bilan (guruh o'yinlari kabi)
+  const flag1 = m.p1_team ? wcTeamFlag(m.p1_team) : "";
+  const flag2 = m.p2_team ? wcTeamFlag(m.p2_team) : "";
+  const scoreNum = (m.score1 != null && m.score2 != null)
     ? `${m.score1} : ${m.score2}`
     : "— : —";
+  const scoreText = `<span class="wc-mc-flag">${flag1}</span>`
+    + `<span class="wc-po-score-num">${escHtml(scoreNum)}</span>`
+    + `<span class="wc-mc-flag">${flag2}</span>`;
 
   // Holat / amal
   let statusBadge = "";
@@ -78,7 +83,7 @@ function wcPlayoffMatchItem(m) {
   return `
     <div class="wc-match-card wc-po-card">
       <div class="wc-po-round">${escHtml(roundName)}</div>
-      <div class="wc-po-score">${escHtml(scoreText)}</div>
+      <div class="wc-po-score">${scoreText}</div>
       ${statusBadge}
       ${action}
     </div>`;

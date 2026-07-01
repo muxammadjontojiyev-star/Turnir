@@ -2346,6 +2346,13 @@ table { border-collapse: collapse; width: 100%; }
   font-size: 16px;
   font-weight: 700;
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.wc-po-score-num {
+  min-width: 52px;
   text-align: center;
 }
 
