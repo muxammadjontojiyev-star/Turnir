@@ -71,10 +71,15 @@ function wcPlayoffMatchItem(m) {
       action = `<button class="match-action-btn wc-po-confirm-btn" data-mid="${m.id}">✔</button>`;
     }
   } else {
-    // pending — natija kiritish (ikkala o'yinchi ham aniq bo'lsa)
+    // pending — avval raqib bilan chatlashish (💬), chat ochilgach "Natija" (guruh oqimi kabi)
     if (m.player1_id && m.player2_id) {
       statusBadge = `<span class="match-status pending">${escHtml(t.pending_short || "Kutilmoqda")}</span>`;
-      action = `<button class="match-action-btn wc-po-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
+      const chatDone = WC.chatOpened && WC.chatOpened.has(m.id);
+      if (chatDone) {
+        action = `<button class="match-action-btn wc-po-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
+      } else {
+        action = `<button class="match-action-btn match-chat-btn wc-po-chat-btn" data-mid="${m.id}" title="${escHtml(t.chat_first_hint || "Avval raqib bilan kelishing")}">${ICON.get("chat", 18)}</button>`;
+      }
     } else {
       statusBadge = `<span class="match-status pending">${escHtml(t.wc_playoff_waiting_opp || "Raqib kutilmoqda")}</span>`;
     }
@@ -92,12 +97,48 @@ function wcPlayoffMatchItem(m) {
 function wcBindPlayoffMyMatches() {
   const root = document.getElementById("worldcup-root");
   if (!root) return;
+  if (typeof applyIcons === "function") applyIcons(root);
   root.querySelectorAll(".wc-po-result-btn").forEach(btn => {
     btn.addEventListener("click", () => wcPlayoffOpenResultModal(parseInt(btn.dataset.mid)));
   });
   root.querySelectorAll(".wc-po-confirm-btn").forEach(btn => {
     btn.addEventListener("click", () => wcPlayoffOpenConfirmModal(parseInt(btn.dataset.mid)));
   });
+  // Chat tugmasi (💬) — raqib bilan Telegram chatini ochadi, keyin "Natija" ochiladi
+  root.querySelectorAll(".wc-po-chat-btn").forEach(btn => {
+    btn.addEventListener("click", () => wcOpenPlayoffChat(parseInt(btn.dataset.mid)));
+  });
+}
+
+// Play-off raqibi bilan Telegram chatini ochadi (guruh oqimi kabi).
+// Chat ochilgach WC.chatOpened ga belgilanadi va ro'yxat yangilanib "Natija" ochiladi.
+async function wcOpenPlayoffChat(matchId) {
+  const t = APP.t;
+  const me = WC.profile ? WC.profile.user_id : null;
+  let m = null;
+  try {
+    const data = await apiFetch("/wc/playoff/my-matches");
+    m = (data.matches || []).find(x => x.id === matchId);
+  } catch (_) { /* pastda tekshiramiz */ }
+  if (!m) {
+    if (typeof showToast === "function") showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
+    return;
+  }
+  // Raqib tomonini aniqlaymiz (men p1 bo'lsam — raqib p2, aks holda p1)
+  const iAmP1 = m.player1_id === me;
+  const oppUser = iAmP1 ? m.p2_user : m.p1_user;
+
+  // Chat ochilgan deb belgilaymiz — "Natija" tugmasi ochiladi
+  if (!WC.chatOpened) WC.chatOpened = new Set();
+  WC.chatOpened.add(matchId);
+
+  if (typeof wcOpenTelegramChat === "function") {
+    wcOpenTelegramChat({ username: oppUser || null, tg: null });
+  }
+  // Play-off ro'yxatini qayta chizamiz (chat ochilgani uchun "Natija" ko'rinadi)
+  if (typeof wcLoadPlayoffMyMatches === "function") {
+    await wcLoadPlayoffMyMatches();
+  }
 }
 
 // Natija kiritish modali
