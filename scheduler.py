@@ -32,6 +32,7 @@ from queries import (
     get_deadline_passed_matchday,
     get_leagues_needing_deadline_notice,
     set_deadline_notice_sent,
+    wc_auto_resolve_all_groups,
 )
 from notify import notify_members
 
@@ -103,6 +104,19 @@ async def _check_and_notify_once() -> None:
             logger.warning(
                 "Scheduler: '%s' deadline eslatmasida xato: %s", lg["name"], exc
             )
+
+    # === WORLD CUP: deadline o'tgan guruh o'yinlarini avtomatik yopish ===
+    # Deadline (23:30) o'tgan, lekin o'ynalmagan WC guruh o'yinlari 0:0 durang
+    # qilinadi; bir tomon kiritgani tasdiqlanadi. Liga bilan bir xil mantiq.
+    try:
+        wc_result = wc_auto_resolve_all_groups()
+        if wc_result["total_pending"] or wc_result["total_awaiting"]:
+            logger.info(
+                "Scheduler: WC guruhlarida avtomatik tasdiq — 0:0 durang: %d, awaiting: %d.",
+                wc_result["total_pending"], wc_result["total_awaiting"],
+            )
+    except Exception as exc:
+        logger.warning("Scheduler: WC avtomatik yopishda xato: %s", exc)
 
 
 async def _scheduler_loop() -> None:
