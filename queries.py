@@ -2146,3 +2146,97 @@ def wc_playoff_confirm_result(match_id: int, user_id: int, accept: bool) -> tupl
         conn.commit()
         conn.close()
         return True, "ok"
+
+
+# ---- WC guruh: deadline o'tgan matchday + avtomatik 0:0 yopish ----
+
+def wc_get_deadline_passed_matchday(group_letter: str) -> int:
+    """
+    WC guruh uchun deadline (23:30) o'tgan eng yuqori matchday raqami.
+    Liga get_deadline_passed_matchday mantig'i, lekin guruh draw_date bo'yicha.
+
+    days_passed=0 (start kuni): ochiq turlar deadline'i hali o'tmagan → 0.
+    days_passed=N: N*MATCHDAYS_PER_UNLOCK tur deadline o'tdi (WC_TOTAL bilan cheklangan).
+    """
+    grp = wc_get_group(group_letter)
+    if grp is None:
+        return 0
+    draw_dt = _parse_draw_date(grp["draw_date"] if "draw_date" in grp.keys() else None)
+    if draw_dt is None:
+        return 0
+
+    now = _tournament_now()
+
+    def unlock_day(d: datetime):
+        shifted = d - timedelta(hours=MATCHDAY_UNLOCK_HOUR, minutes=MATCHDAY_UNLOCK_MINUTE)
+        return shifted.date()
+
+    days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
+    if days_passed < 1:
+        return 0
+    passed = days_passed * MATCHDAYS_PER_UNLOCK
+    if passed > WC_TOTAL_MATCHDAYS:
+        passed = WC_TOTAL_MATCHDAYS
+    return passed
+
+
+def wc_auto_resolve_group(group_letter: str, up_to_matchday: int) -> dict:
+    """
+    WC guruhda deadline o'tgan (up_to_matchday gacha) o'ynalmagan o'yinlarni
+    avtomatik yopadi. Liga auto_resolve_matches naqshi, wc_matches uchun.
+
+    - 'pending' (hech kim kiritmagan) → 0:0 durang, 'confirmed'.
+    - 'awaiting_confirmation' (bir tomon kiritgan) → kiritilgan natija 'confirmed'.
+
+    Qaytaradi: {pending_resolved, awaiting_resolved}
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE wc_matches
+        SET score1 = 0, score2 = 0, status = 'confirmed'
+        WHERE group_letter = ? AND matchday <= ? AND status = 'pending'
+        """,
+        (group_letter, up_to_matchday),
+    )
+    pending_resolved = cursor.rowcount
+
+    cursor.execute(
+        """
+        UPDATE wc_matches
+        SET status = 'confirmed'
+        WHERE group_letter = ? AND matchday <= ? AND status = 'awaiting_confirmation'
+        """,
+        (group_letter, up_to_matchday),
+    )
+    awaiting_resolved = cursor.rowcount
+
+    conn.commit()
+    conn.close()
+    return {"pending_resolved": pending_resolved, "awaiting_resolved": awaiting_resolved}
+
+
+def wc_auto_resolve_all_groups() -> dict:
+    """
+    Barcha WC guruhlarda deadline o'tgan o'ynalmagan o'yinlarni 0:0 yopadi.
+    Scheduler (har kuni) yoki admin tugmasi chaqiradi.
+
+    Qaytaradi: {groups: {harf: {pending_resolved, awaiting_resolved}}, total_pending, total_awaiting}
+    """
+    from wc_data import WC_GROUP_LETTERS
+
+    result = {}
+    total_p = 0
+    total_a = 0
+    for letter in WC_GROUP_LETTERS:
+        up_to = wc_get_deadline_passed_matchday(letter)
+        if up_to < 1:
+            continue
+        r = wc_auto_resolve_group(letter, up_to)
+        if r["pending_resolved"] or r["awaiting_resolved"]:
+            result[letter] = r
+            total_p += r["pending_resolved"]
+            total_a += r["awaiting_resolved"]
+    return {"groups": result, "total_pending": total_p, "total_awaiting": total_a}
