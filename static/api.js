@@ -209,9 +209,10 @@ function renderHeroCard(league) {
   badge.textContent = league.is_full
     ? (t.league_full || "TO'LIQ")
     : (t.league_open || "OCHIQ — RO'YXAT DAVOM ETMOQDA");
-  badge.style.color = league.is_full
-    ? "var(--red-neon)"
-    : "var(--cyan)";
+  // Fon+ramka+matn rangi holatga qarab (badge--full qizil / badge--open cyan)
+  badge.classList.remove("badge--full", "badge--open");
+  badge.classList.add(league.is_full ? "badge--full" : "badge--open");
+  badge.style.color = "";
 
   name.innerHTML = renderLeagueLogo(league.name, "hero-league-logo") + `<span>${escHtml(league.name)}</span>`;
   count.textContent = league.current_players;
