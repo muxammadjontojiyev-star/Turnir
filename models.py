@@ -79,6 +79,36 @@ def init_db():
         )
     """)
 
+    # === SEASON PRIZES (sovrin tarixi — mavsum bo'yicha) ===
+    # Har mavsum yakunlanganda ishtirokchilar qo'lga kiritgan sovrinlar shu yerda
+    # saqlanadi. "Sovrinlarim" profil bo'limi shu jadvaldan o'qiydi.
+    # prize_type: 'golden_ball'(5 liga eng ko'p ochko), 'golden_boot'(5 liga eng
+    #   ko'p gol), 'league_cup'(liga 1-o'rni — league_id bilan), 'wc_cup'(WC chempioni).
+    # league_id: faqat league_cup uchun (qaysi liga kubogi); boshqalarda NULL.
+    # season_number: mavsum raqami (1, 2, 3...).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS season_prizes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            prize_type TEXT NOT NULL,
+            league_id INTEGER,
+            season_number INTEGER NOT NULL,
+            awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (league_id) REFERENCES leagues(id)
+        )
+    """)
+
+    # === season_state (joriy mavsum raqami) ===
+    # Bitta qator (id=1). current_season har "Mavsumni yakunlash" da oshadi.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS season_state (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            current_season INTEGER NOT NULL DEFAULT 1
+        )
+    """)
+    cursor.execute("INSERT OR IGNORE INTO season_state (id, current_season) VALUES (1, 1)")
+
     # === prizes ===
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS prizes (

@@ -942,6 +942,40 @@ def wc_playoff_champion():
     return {"champion": champion}
 
 
+# ============ SOVRINLAR (mavsum) ============
+
+@app.get("/season/current")
+def season_current():
+    """Joriy mavsum raqami."""
+    from season_prizes import get_current_season
+    return {"season": get_current_season()}
+
+
+@app.get("/season/prizes/preview")
+def season_prizes_preview(admin: dict = Depends(get_authenticated_super_admin)):
+    """Joriy sovrin egalarini oldindan ko'rsatadi (SAQLAMAYDI). Bosh admin."""
+    from season_prizes import calculate_season_prizes, get_current_season
+    return {"season": get_current_season(), "prizes": calculate_season_prizes()}
+
+
+@app.post("/season/finalize")
+def season_finalize(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin mavsumni yakunlaydi: sovrinlar hisoblanadi, tarixga saqlanadi,
+    mavsum raqami oshadi. Bu amalni ortga qaytarib bo'lmaydi.
+    """
+    from season_prizes import finalize_season
+    result = finalize_season()
+    return {"status": "ok", "season": result["season"], "counts": result["counts"]}
+
+
+@app.get("/users/{user_id}/prizes")
+def user_prizes(user_id: int):
+    """Foydalanuvchining barcha sovrinlari (mavsum bo'yicha)."""
+    from season_prizes import get_user_prizes
+    return {"prizes": get_user_prizes(user_id)}
+
+
 @app.post("/wc/playoff/submit-result")
 def wc_playoff_submit(
     match_id: int,
