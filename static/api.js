@@ -371,7 +371,10 @@ function renderRules() {
   const t = APP.t;
   const rules = t.rules_list || [];
   const ul = document.getElementById("rules-list");
-  ul.innerHTML = rules.map(r => `<li>${r}</li>`).join("");
+  // **so'z** → muhim so'z (cyan qalin). Avval escHtml (xavfsiz), keyin marker.
+  const renderRuleText = (r) =>
+    escHtml(r).replace(/\*\*([^*]+)\*\*/g, '<strong class="rule-hl">$1</strong>');
+  ul.innerHTML = rules.map(r => `<li>${renderRuleText(r)}</li>`).join("");
 
   // Batafsil ma'lumot (kanal yangiliklari + kelajak rejalar)
   // Har bir ma'noli qator turi bo'yicha alohida "kartacha"ga o'raladi:

@@ -427,6 +427,11 @@ table { border-collapse: collapse; width: 100%; }
   line-height: 1.35;
   color: var(--cyan);
 }
+/* Qoidadagi muhim so'z (vaqt, son, holat) — cyan qalin */
+.rule-hl {
+  color: var(--cyan);
+  font-weight: 600;
+}
 .rules-detail {
   margin-top: 14px;
   padding-top: 12px;
