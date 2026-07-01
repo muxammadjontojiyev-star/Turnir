@@ -373,16 +373,33 @@ function renderRules() {
   ul.innerHTML = rules.map(r => `<li>${r}</li>`).join("");
 
   // Batafsil ma'lumot (kanal yangiliklari + kelajak rejalar)
+  // Har bir ma'noli qator turi bo'yicha alohida "kartacha"ga o'raladi:
+  //   📢 → kanal e'loni (cyan aksent), 🏆 → sovrin (gold aksent),
+  //   qolgani → batafsil (nozik ramka). Matn o'zgarmaydi, faqat ko'rinish.
   const detail = document.getElementById("rules-detail");
   if (detail) {
-    const lines = t.rules_detail || [];
+    const lines = (t.rules_detail || []).filter(l => l !== "");
     detail.innerHTML = lines.map(line => {
-      if (line === "") return "<br>";
-      // Qator boshidagi emojilarni premium SVG ikon bilan almashtiramiz
-      let html = escHtml(line)
-        .replace(/^📢\s*/, `${ICON.get("megaphone", 18)} `)
-        .replace(/^🏆\s*/, `${ICON.get("trophy", 18)} `);
-      return `<p class="rules-detail-line">${html}</p>`;
+      const raw = escHtml(line);
+      if (/^📢\s*/.test(line)) {
+        const body = raw.replace(/^📢\s*/, "");
+        return `<div class="rules-block rules-block--channel">`
+             + `<div class="rules-block-label">${ICON.get("megaphone", 15)} <span>${t.rules_label_channel || ""}</span></div>`
+             + `<p class="rules-block-text">${body}</p></div>`;
+      }
+      if (/^🏆\s*/.test(line)) {
+        const body = raw.replace(/^🏆\s*/, "");
+        return `<div class="rules-block rules-block--prize">`
+             + `<div class="rules-block-label">${ICON.get("trophy", 15)} <span>${t.rules_label_prize || ""}</span></div>`
+             + `<p class="rules-block-text">${body}</p></div>`;
+      }
+      // "Batafsil:" prefiksini sarlavhaga ajratamiz (bo'lsa)
+      const m = line.match(/^(\S+?):\s*([\s\S]*)$/);
+      const label = m ? escHtml(m[1]) : (t.rules_label_detail || "");
+      const body  = m ? escHtml(m[2]) : raw;
+      return `<div class="rules-block rules-block--detail">`
+           + `<div class="rules-block-label"><span>${label}</span></div>`
+           + `<p class="rules-block-text">${body}</p></div>`;
     }).join("");
   }
 }
