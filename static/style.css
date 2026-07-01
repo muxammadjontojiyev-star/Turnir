@@ -400,17 +400,21 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-heading);
   letter-spacing: 1px;
 }
-.rules-list { display: flex; flex-direction: column; gap: 8px; }
+.rules-list { display: flex; flex-direction: column; gap: 11px; }
 .rules-list li {
   font-size: 13px;
+  line-height: 1.5;
   color: var(--text-secondary);
-  padding-left: 14px;
+  padding-left: 20px;
   position: relative;
 }
 .rules-list li::before {
   content: '▸';
   position: absolute;
   left: 0;
+  top: 0;
+  font-size: 15px;
+  line-height: 1.35;
   color: var(--cyan);
 }
 .rules-detail {
