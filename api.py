@@ -799,12 +799,12 @@ def wc_admin_match_set_score(
     match_id: int,
     score1: int,
     score2: int,
-    admin: dict = Depends(get_authenticated_super_admin),
+    admin: dict = Depends(get_authenticated_wc_admin),
 ):
     """
-    Bosh admin har qanday holatdagi WC matchning natijasini to'g'ri songa
-    o'zgartiradi (status → confirmed). O'yinchilar o'ynamasdan noto'g'ri
-    kiritgan natijani tuzatish uchun.
+    WC admin (bosh yoki biriktirilgan) har qanday holatdagi WC matchning
+    natijasini to'g'ri songa o'zgartiradi (status → confirmed). O'yinchilar
+    o'ynamasdan noto'g'ri kiritgan natijani tuzatish uchun.
 
     Query params: match_id, score1, score2
     Xato: match_not_found → 400
@@ -820,11 +820,12 @@ def wc_admin_match_set_score(
 @app.post("/wc/admin/match/reset")
 def wc_admin_match_reset(
     match_id: int,
-    admin: dict = Depends(get_authenticated_super_admin),
+    admin: dict = Depends(get_authenticated_wc_admin),
 ):
     """
-    Bosh admin noto'g'ri kiritilgan WC natijani BEKOR qiladi: o'yin qayta
-    'pending' (— : —) holatiga qaytadi, o'yinchilar qaytadan kiritishi mumkin.
+    WC admin (bosh yoki biriktirilgan) noto'g'ri kiritilgan WC natijani BEKOR
+    qiladi: o'yin qayta 'pending' (— : —) holatiga qaytadi, o'yinchilar
+    qaytadan kiritishi mumkin.
 
     Query param: match_id
     Xato: match_not_found, already_pending → 400
