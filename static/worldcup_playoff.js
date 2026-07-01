@@ -253,6 +253,17 @@ function wcRenderPrizes() {
         <div class="prize-club" id="wc-champion-user"></div>
       </div>
     </div>
+    <div class="card card--prize wc-prize-card">
+      <div class="prize-icon wc-trophy-icon">
+        <img src="wc-goldenball.png?v=20260628b6" alt="Golden Ball" class="wc-trophy-img" />
+      </div>
+      <div class="prize-info">
+        <div class="prize-name">${escHtml(t.wc_scorer_name || "Jahon Chempionati To'purari")}</div>
+        <div class="prize-desc">${escHtml(t.wc_scorer_desc || "Eng ko'p gol urgan o'yinchi")}</div>
+        <div class="prize-holder" id="wc-scorer-name">—</div>
+        <div class="prize-club" id="wc-scorer-user"></div>
+      </div>
+    </div>
   `;
 }
 
@@ -274,5 +285,26 @@ async function wcBindPrizes() {
     }
   } catch (_) {
     nameEl.textContent = t.wc_champion_pending || "Hali aniqlanmagan";
+  }
+
+  // To'purar (Oltin To'p) — /wc/top-scorers dan eng ko'p gol urgan (birinchi qator)
+  const scorerNameEl = document.getElementById("wc-scorer-name");
+  const scorerUserEl = document.getElementById("wc-scorer-user");
+  if (scorerNameEl) {
+    try {
+      const sd = await apiFetch("/wc/top-scorers");
+      const top = (sd.scorers || [])[0];
+      if (top && (top.goals_for || 0) > 0) {
+        const flag = top.team_name ? wcTeamFlag(top.team_name) : "⚽";
+        const goalsTxt = t.wc_scorer_goals || "gol";
+        scorerNameEl.innerHTML = `${flag} ${escHtml(top.team_name || "")} — ${top.goals_for} ${escHtml(goalsTxt)}`;
+        scorerUserEl.textContent = top.username ? `@${top.username}` : (top.nickname || "");
+      } else {
+        scorerNameEl.textContent = t.wc_champion_pending || "Hali aniqlanmagan";
+        scorerUserEl.textContent = "";
+      }
+    } catch (_) {
+      scorerNameEl.textContent = t.wc_champion_pending || "Hali aniqlanmagan";
+    }
   }
 }
