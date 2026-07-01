@@ -708,9 +708,9 @@ def wc_admin_fix_confirmed(
 # ============ WC CHAT ============
 
 @app.get("/wc/matches/{match_id}/messages")
-def wc_get_match_messages(match_id: int, user: dict = Depends(get_authenticated_user)):
-    """WC aktiv match xabarlari (vaqt tartibida). Access yo'q → 403."""
-    messages = wc_get_chat_messages(match_id, user["telegram_id"])
+def wc_get_match_messages(match_id: int, is_playoff: int = 0, user: dict = Depends(get_authenticated_user)):
+    """WC aktiv match xabarlari (vaqt tartibida). is_playoff=1 → play-off. Access yo'q → 403."""
+    messages = wc_get_chat_messages(match_id, user["telegram_id"], is_playoff)
     if messages is None:
         raise HTTPException(status_code=403, detail="chat_no_access")
     return {"match_id": match_id, "messages": messages}
@@ -720,10 +720,11 @@ def wc_get_match_messages(match_id: int, user: dict = Depends(get_authenticated_
 async def wc_post_match_message(
     match_id: int,
     text: str = Body(..., embed=True),
+    is_playoff: int = 0,
     user: dict = Depends(get_authenticated_user),
 ):
-    """WC aktiv match raqibiga xabar yuboradi. Body: {"text": "..."}."""
-    ok, reason, notify = wc_send_chat_message(match_id, user["telegram_id"], text)
+    """WC aktiv match raqibiga xabar yuboradi. Body: {"text": "..."}. is_playoff=1 → play-off."""
+    ok, reason, notify = wc_send_chat_message(match_id, user["telegram_id"], text, is_playoff)
     if not ok:
         if reason == "empty":
             raise HTTPException(status_code=400, detail="empty")
@@ -751,18 +752,18 @@ def wc_get_unread_counts(user: dict = Depends(get_authenticated_user)):
 
 
 @app.post("/wc/matches/{match_id}/typing")
-def wc_post_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
-    """WC chatda 'yozmoqda' signali."""
-    ok = wc_set_typing(match_id, user["telegram_id"])
+def wc_post_typing(match_id: int, is_playoff: int = 0, user: dict = Depends(get_authenticated_user)):
+    """WC chatda 'yozmoqda' signali. is_playoff=1 → play-off."""
+    ok = wc_set_typing(match_id, user["telegram_id"], is_playoff)
     if not ok:
         raise HTTPException(status_code=403, detail="chat_no_access")
     return {"ok": True}
 
 
 @app.get("/wc/matches/{match_id}/state")
-def wc_get_match_state(match_id: int, user: dict = Depends(get_authenticated_user)):
-    """WC raqibning chat holati (online / yozmoqda / oxirgi ko'rinish)."""
-    state = wc_get_chat_state(match_id, user["telegram_id"])
+def wc_get_match_state(match_id: int, is_playoff: int = 0, user: dict = Depends(get_authenticated_user)):
+    """WC raqibning chat holati (online / yozmoqda / oxirgi ko'rinish). is_playoff=1 → play-off."""
+    state = wc_get_chat_state(match_id, user["telegram_id"], is_playoff)
     if state is None:
         raise HTTPException(status_code=403, detail="chat_no_access")
     return state

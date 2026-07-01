@@ -287,8 +287,8 @@ def init_db():
             sender_id INTEGER NOT NULL,
             text TEXT NOT NULL,
             is_read INTEGER NOT NULL DEFAULT 0,
+            is_playoff INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (match_id) REFERENCES wc_matches(id),
             FOREIGN KEY (sender_id) REFERENCES users(id)
         )
     """)
@@ -296,16 +296,18 @@ def init_db():
         CREATE TABLE IF NOT EXISTS wc_chat_notify (
             match_id INTEGER NOT NULL,
             recipient_id INTEGER NOT NULL,
+            is_playoff INTEGER NOT NULL DEFAULT 0,
             last_notified_at TIMESTAMP,
-            PRIMARY KEY (match_id, recipient_id)
+            PRIMARY KEY (match_id, recipient_id, is_playoff)
         )
     """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS wc_chat_typing (
             match_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL,
+            is_playoff INTEGER NOT NULL DEFAULT 0,
             typing_at TIMESTAMP,
-            PRIMARY KEY (match_id, user_id)
+            PRIMARY KEY (match_id, user_id, is_playoff)
         )
     """)
 
@@ -320,6 +322,9 @@ def init_db():
         "ALTER TABLE leagues ADD COLUMN last_notified_matchday INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE leagues ADD COLUMN last_deadline_notice_date TEXT",
         "ALTER TABLE users ADD COLUMN last_seen TIMESTAMP",
+        "ALTER TABLE wc_messages ADD COLUMN is_playoff INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE wc_chat_notify ADD COLUMN is_playoff INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE wc_chat_typing ADD COLUMN is_playoff INTEGER NOT NULL DEFAULT 0",
     ]
     for sql in migrations:
         try:
