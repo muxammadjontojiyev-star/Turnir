@@ -484,6 +484,11 @@ table { border-collapse: collapse; width: 100%; }
   border-color: var(--border-accent);
   background: var(--cyan-dim);
 }
+/* Tanlangan liga — aniq cyan aksent chiziq (hover'dan farqli) */
+.league-item.selected {
+  border-left: 3px solid var(--cyan);
+  padding-left: 13px;
+}
 .league-item-name {
   font-family: var(--font-display);
   font-size: 15px;
