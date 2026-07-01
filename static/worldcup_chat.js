@@ -15,6 +15,7 @@ const WC_CHAT = {
   oppLabel: null,
   lastTypingSent: 0,
   poll: null,
+  isPlayoff: 0,
 };
 
 // Raqib modali (VS — "Chatni ochish" / "Raqib chatiga yozish")
@@ -141,11 +142,12 @@ function wcOpenTelegramChat(opp) {
 }
 
 // ---- WebApp ichki chat oynasi ----
-function wcOpenWebChat(matchId, opponentLabel) {
+function wcOpenWebChat(matchId, opponentLabel, isPlayoff = 0) {
   const t = APP.t;
   WC_CHAT.matchId = matchId;
   WC_CHAT.oppLabel = opponentLabel || (t.webchat_opponent || "Raqib");
   WC_CHAT.lastTypingSent = 0;
+  WC_CHAT.isPlayoff = isPlayoff ? 1 : 0;
 
   // Chat ochildi — Natija tugmasi ochiladi
   if (!WC.chatOpened) WC.chatOpened = new Set();
@@ -196,7 +198,7 @@ function wcOpenWebChat(matchId, opponentLabel) {
     const now = Date.now();
     if (now - WC_CHAT.lastTypingSent > TYPING_SEND_THROTTLE_MS) {
       WC_CHAT.lastTypingSent = now;
-      apiFetch(`/wc/matches/${matchId}/typing`, { method: "POST" }).catch(() => {});
+      apiFetch(`/wc/matches/${matchId}/typing?is_playoff=${WC_CHAT.isPlayoff}`, { method: "POST" }).catch(() => {});
     }
   });
 
@@ -221,7 +223,7 @@ async function wcLoadWebChatMessages() {
   const matchId = WC_CHAT.matchId;
   if (!matchId) return;
   try {
-    const data = await apiFetch(`/wc/matches/${matchId}/messages`);
+    const data = await apiFetch(`/wc/matches/${matchId}/messages?is_playoff=${WC_CHAT.isPlayoff}`);
     wcRenderWebChatMessages(data.messages || []);
   } catch (e) {
     const box = document.getElementById("wc-webchat-messages");
@@ -234,7 +236,7 @@ async function wcLoadWebChatState() {
   const matchId = WC_CHAT.matchId;
   if (!matchId) return;
   try {
-    const state = await apiFetch(`/wc/matches/${matchId}/state`);
+    const state = await apiFetch(`/wc/matches/${matchId}/state?is_playoff=${WC_CHAT.isPlayoff}`);
     wcRenderWebChatStatus(state);
   } catch (_) { /* jim */ }
 }
@@ -325,7 +327,7 @@ async function wcSendWebChatMessage() {
 
   input.value = "";
   try {
-    await apiFetch(`/wc/matches/${matchId}/messages`, {
+    await apiFetch(`/wc/matches/${matchId}/messages?is_playoff=${WC_CHAT.isPlayoff}`, {
       method: "POST",
       body: JSON.stringify({ text }),
     });

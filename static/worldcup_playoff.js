@@ -111,7 +111,8 @@ function wcBindPlayoffMyMatches() {
 }
 
 // Play-off raqibi bilan Telegram chatini ochadi (guruh oqimi kabi).
-// Chat ochilgach WC.chatOpened ga belgilanadi va ro'yxat yangilanib "Natija" ochiladi.
+// Play-off raqib modali (VS — "Chatni ochish" ichki / "Raqib chatiga yozish" Telegram).
+// Liga wcOpenOpponentModal naqshi, lekin play-off match strukturasi (p1_team/p2_team/p1_user/p2_user).
 async function wcOpenPlayoffChat(matchId) {
   const t = APP.t;
   const me = WC.profile ? WC.profile.user_id : null;
@@ -124,20 +125,75 @@ async function wcOpenPlayoffChat(matchId) {
     if (typeof showToast === "function") showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
     return;
   }
+
   // Raqib tomonini aniqlaymiz (men p1 bo'lsam — raqib p2, aks holda p1)
   const iAmP1 = m.player1_id === me;
-  const oppUser = iAmP1 ? m.p2_user : m.p1_user;
+  const opp = iAmP1
+    ? { username: m.p2_user, nickname: m.p2_nick, club: m.p2_team }
+    : { username: m.p1_user, nickname: m.p1_nick, club: m.p1_team };
+
+  // Telegram chatiga yozish tugmasi (username bo'lsa)
+  const chatBtn = opp.username
+    ? `<button class="opp-chat-btn" id="wc-po-opp-tg-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
+    : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
+
+  // Ichki webchat — faqat aktiv match (pending / awaiting_confirmation)
+  const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
+  const webChatBtn = chatActive
+    ? `<button class="opp-chat-btn opp-webchat-btn" id="wc-po-opp-web-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
+    : "";
+
+  let modal = document.getElementById("wc-modal-po-opponent");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "wc-modal-po-opponent";
+    modal.className = "modal hidden";
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box opp-modal-box">
+      <button class="modal-close" id="wc-po-opp-close">${ICON.get("close", 18)}</button>
+      <div class="opp-vs">
+        ${wcRenderOpponentSide(m.p1_team, m.p1_user, m.p1_nick)}
+        <div class="opp-vs-sep">VS</div>
+        ${wcRenderOpponentSide(m.p2_team, m.p2_user, m.p2_nick)}
+      </div>
+      ${webChatBtn}
+      ${chatBtn}
+    </div>
+  `;
+  modal.classList.remove("hidden");
+  if (typeof applyIcons === "function") applyIcons(modal);
+
+  const closeModal = () => modal.classList.add("hidden");
+  document.getElementById("wc-po-opp-close").addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
   // Chat ochilgan deb belgilaymiz — "Natija" tugmasi ochiladi
-  if (!WC.chatOpened) WC.chatOpened = new Set();
-  WC.chatOpened.add(matchId);
+  const markChatOpened = () => {
+    if (!WC.chatOpened) WC.chatOpened = new Set();
+    WC.chatOpened.add(matchId);
+    if (typeof wcLoadPlayoffMyMatches === "function") void wcLoadPlayoffMyMatches();
+  };
 
-  if (typeof wcOpenTelegramChat === "function") {
-    wcOpenTelegramChat({ username: oppUser || null, tg: null });
+  // "Raqib chatiga yozish" → Telegram
+  const tgBtn = document.getElementById("wc-po-opp-tg-btn");
+  if (tgBtn && opp.username && typeof wcOpenTelegramChat === "function") {
+    tgBtn.addEventListener("click", () => {
+      markChatOpened();
+      wcOpenTelegramChat({ username: opp.username, tg: null });
+    });
   }
-  // Play-off ro'yxatini qayta chizamiz (chat ochilgani uchun "Natija" ko'rinadi)
-  if (typeof wcLoadPlayoffMyMatches === "function") {
-    await wcLoadPlayoffMyMatches();
+
+  // "Chatni ochish" → WebApp ichki chat (play-off rejimida)
+  const webBtn = document.getElementById("wc-po-opp-web-btn");
+  if (webBtn && typeof wcOpenWebChat === "function") {
+    const oppLabel = opp.nickname || (opp.username ? "@" + String(opp.username).replace(/^@/, "") : (t.webchat_opponent || "Raqib"));
+    webBtn.addEventListener("click", () => {
+      closeModal();
+      markChatOpened();
+      wcOpenWebChat(matchId, oppLabel, 1);  // 3-arg: is_playoff=1
+    });
   }
 }
 
