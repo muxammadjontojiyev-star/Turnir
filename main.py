@@ -37,6 +37,12 @@ def main() -> None:
     seed_leagues()
     logger.info("Ma'lumotlar bazasi va ligalar tayyor.")
 
+    # Play-off ta'mirlash: ilgari confirmed bo'lib, g'olibi o'tmay qolgan
+    # matchlarni keyingi bosqichga o'tkazamiz (idempotent, har startda xavfsiz)
+    from queries import wc_playoff_backfill_advancements
+    fixed = wc_playoff_backfill_advancements()
+    logger.info("Play-off backfill: %d ta confirmed match qayta ishlandi.", fixed)
+
     # API ni alohida threadda ishga tushirish
     api_thread = threading.Thread(target=run_api, daemon=True)
     api_thread.start()

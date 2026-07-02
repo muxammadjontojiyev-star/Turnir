@@ -2038,8 +2038,8 @@ def wc_playoff_advance_winner(match_id: int) -> None:
     if match["round"] == "r4":
         cursor.execute("SELECT id, player1_id, player2_id FROM wc_playoff_matches WHERE round = 'bronze' LIMIT 1")
         bronze = cursor.fetchone()
-        if bronze:
-            # Bo'sh slotga qo'yamiz
+        if bronze and loser not in (bronze["player1_id"], bronze["player2_id"]):
+            # Bo'sh slotga qo'yamiz (loser allaqachon bo'lsa — takror yozmaymiz)
             if bronze["player1_id"] is None:
                 cursor.execute("UPDATE wc_playoff_matches SET player1_id = ? WHERE id = ?", (loser, bronze["id"]))
             elif bronze["player2_id"] is None:
@@ -2047,6 +2047,37 @@ def wc_playoff_advance_winner(match_id: int) -> None:
 
     conn.commit()
     conn.close()
+
+
+def wc_playoff_backfill_advancements() -> int:
+    """
+    Bir martalik ta'mirlash: ilgari confirmed bo'lgan, lekin g'olibi keyingi
+    bosqichga o'tkazilmay qolgan play-off matchlarni to'g'rilaydi.
+    Server startida chaqiriladi; idempotent — takror ishlashi xavfsiz
+    (advance slotni bir xil g'olib bilan yozadi, bronze takrorlanmaydi).
+
+    Bosqich tartibida yuriladi (r32→r16→r8→r4), shunda avval pastki
+    bosqich slotlari to'ladi. Qaytaradi: qayta ishlangan matchlar soni.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id FROM wc_playoff_matches
+        WHERE status = 'confirmed' AND score1 IS NOT NULL AND score2 IS NOT NULL
+        ORDER BY
+            CASE round
+                WHEN 'r32' THEN 0 WHEN 'r16' THEN 1 WHEN 'r8' THEN 2
+                WHEN 'r4' THEN 3 ELSE 4
+            END, id
+        """
+    )
+    ids = [r["id"] for r in cursor.fetchall()]
+    conn.close()
+
+    for mid in ids:
+        wc_playoff_advance_winner(mid)
+    return len(ids)
 
 
 def wc_playoff_get_user_matches(user_id: int) -> list[dict]:
