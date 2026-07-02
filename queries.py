@@ -1656,6 +1656,12 @@ def wc_admin_set_score(match_id: int, score1: int, score2: int, is_playoff: int 
     )
     conn.commit()
     conn.close()
+
+    # Play-off bo'lsa — g'olibni keyingi bosqichga o'tkazamiz
+    # (wc_playoff_confirm_result bilan bir xil oqim; admin tasdig'ida ham ishlashi shart)
+    if is_playoff:
+        wc_playoff_advance_winner(match_id)
+
     return True, "ok"
 
 

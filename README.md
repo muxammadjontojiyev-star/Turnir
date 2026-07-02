@@ -27,7 +27,7 @@ repo/
 ├── config.py                  ✅ yaratilgan — constant qiymatlar (+ WEBAPP_URL, MAX_SCORE=30 — gol yuqori chegarasi)
 ├── texts.py                    ✅ yaratilgan — 3 tilli matnlar (24 ta, UZ/RU/EN)
 ├── models.py                   ✅ yaratilgan — SQLite jadval sxemalari (+ mustahkamlik: WAL, busy_timeout=15s, synchronous=NORMAL — bot/API/scheduler parallel ishlashi uchun)
-├── queries.py                  ✅ yaratilgan — users/leagues/registrations CRUD
+├── queries.py                  ✅ yaratilgan — users/leagues/registrations CRUD (+ FIX: wc_admin_set_score playoff'da wc_playoff_advance_winner chaqiradi — admin tasdig'ida ham g'olib keyingi bosqichga o'tadi)
 ├── schedule.py                 ✅ yaratilgan — round-robin (circle method) generatsiya
 ├── rating.py                   ✅ yaratilgan — liga reyting jadvalini hisoblash
 ├── api.py                      ✅ yaratilgan — FastAPI backend (1- va 2-bosqich: 9 ta endpoint) (+ mustahkamlik: hmac.compare_digest, initData 24h replay himoyasi, global exception handler, CORS faqat WEBAPP_URL origin (fallback: *), validate_scores umumiy tekshiruv (score_negative/score_too_big), user rate-limit 40 so'rov/10s)
