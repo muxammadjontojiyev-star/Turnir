@@ -591,6 +591,7 @@ def wc_get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated
     if target is None:
         raise HTTPException(status_code=404, detail="user_not_found")
 
+    import queries
     reg = wc_get_user_registration(user_id)
     position_info = None
     if reg is not None:
@@ -605,6 +606,7 @@ def wc_get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated
         "team_name": reg["team_name"] if reg else None,
         "rating": position_info,
         "matches": _wc_annotate_locked(wc_get_user_matches(user_id)),
+        "playoff_matches": queries.wc_playoff_get_user_matches(user_id),
     }
 
 
