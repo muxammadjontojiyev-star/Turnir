@@ -316,6 +316,8 @@ const TEXTS = {
     worldcup_soon:        "Jahon Chempionati tez orada ishga tushadi!",
     // World Cup — home/reyting
     wc_open:              "OCHIQ — RO'YXAT DAVOM ETMOQDA",
+    wc_playoff_stage:     "PLAY-OFF BOSQICHI",
+    wc_group_full_badge:  "TO'LGAN — RO'YXAT YOPILGAN",
     wc_group:             "{g} guruh",
     wc_teams:             "Jamoalar",
     wc_choose_group:      "GURUH TANLASH",
@@ -583,6 +585,8 @@ const TEXTS = {
     worldcup_soon:        "Чемпионат мира скоро запустится!",
     // World Cup — home/reyting
     wc_open:              "ОТКРЫТА — РЕГИСТРАЦИЯ ИДЁТ",
+    wc_playoff_stage:     "СТАДИЯ ПЛЕЙ-ОФФ",
+    wc_group_full_badge:  "ЗАПОЛНЕНА — РЕГИСТРАЦИЯ ЗАКРЫТА",
     wc_group:             "Группа {g}",
     wc_teams:             "Команды",
     wc_choose_group:      "ВЫБОР ГРУППЫ",
@@ -850,6 +854,8 @@ const TEXTS = {
     worldcup_soon:        "World Cup is launching soon!",
     // World Cup — home/reyting
     wc_open:              "OPEN — REGISTRATION ONGOING",
+    wc_playoff_stage:     "PLAY-OFF STAGE",
+    wc_group_full_badge:  "FULL — REGISTRATION CLOSED",
     wc_group:             "Group {g}",
     wc_teams:             "Teams",
     wc_choose_group:      "CHOOSE GROUP",

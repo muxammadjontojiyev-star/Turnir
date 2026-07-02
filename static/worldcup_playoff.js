@@ -398,10 +398,13 @@ async function wcRenderBracket() {
     return `
       <div class="section-label">${escHtml(t.wc_bracket_title || "PLAY-OFF SETKASI")}</div>
       <div class="wc-bracket-scroll">
-        <div class="wc-bracket wc-bracket--two-sided">
-          ${leftCols.join("")}
-          ${centerCol}
-          ${rightCols.join("")}
+        <div class="wc-bracket-inner">
+          <svg class="wc-bracket-lines" preserveAspectRatio="none"></svg>
+          <div class="wc-bracket wc-bracket--two-sided">
+            ${leftCols.join("")}
+            ${centerCol}
+            ${rightCols.join("")}
+          </div>
         </div>
       </div>
     `;
@@ -422,7 +425,8 @@ function wcBracketCard(m, side = "left") {
   const attr = openUid ? `data-wc-bracket-uid="${openUid}"` : "";
   const sideCls = side === "right" ? "wc-bracket-card--right" : "wc-bracket-card--left";
   return `
-    <div class="wc-bracket-card ${sideCls} ${clickable}" ${attr}>
+    <div class="wc-bracket-card ${sideCls} ${clickable}" ${attr}
+         data-br-round="${escHtml(m.round)}" data-br-pos="${m.position}" data-br-side="${side}">
       <div class="wc-bracket-side ${win1 ? "winner" : ""}">${p1}</div>
       <div class="wc-bracket-side ${win2 ? "winner" : ""}">${p2}</div>
     </div>`;
@@ -456,6 +460,73 @@ async function wcLoadBracket() {
     card.addEventListener("click", () => {
       const uid = parseInt(card.dataset.wcBracketUid);
       if (uid && typeof wcOpenPlayerProfile === "function") wcOpenPlayerProfile(uid);
+    });
+  });
+  // Bog'lovchi chiziqlarni chizamiz (layout tayyor bo'lgach)
+  requestAnimationFrame(() => wcDrawBracketLines());
+}
+
+// Bracket bog'lovchi chiziqlari — har kartaning haqiqiy pozitsiyasini o'lchab,
+// juftlik → keyingi raund katagiga SVG path chizadi (namunadagi daraxt kabi).
+function wcDrawBracketLines() {
+  const inner = document.querySelector(".wc-bracket-inner");
+  const svg = inner ? inner.querySelector(".wc-bracket-lines") : null;
+  const bracket = inner ? inner.querySelector(".wc-bracket") : null;
+  if (!inner || !svg || !bracket) return;
+
+  const W = bracket.scrollWidth, H = bracket.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = "";
+
+  const baseRect = bracket.getBoundingClientRect();
+  const cards = Array.from(bracket.querySelectorAll(".wc-bracket-card[data-br-round]"));
+  // round+pos bo'yicha karta pozitsiyasini indekslaymiz
+  const map = {};
+  cards.forEach(c => {
+    const r = c.dataset.brRound, p = parseInt(c.dataset.brPos), side = c.dataset.brSide;
+    const rc = c.getBoundingClientRect();
+    map[`${r}:${p}:${side}`] = {
+      top: rc.top - baseRect.top, left: rc.left - baseRect.left,
+      w: rc.width, h: rc.height,
+    };
+  });
+
+  const ORDER = ["r32", "r16", "r8", "r4"];  // keyingi: child.pos = floor(pos/2)
+  const NS = "http://www.w3.org/2000/svg";
+  const stroke = "rgba(255,255,255,0.22)";
+
+  function line(x1, y1, x2, y2) {
+    const path = document.createElementNS(NS, "path");
+    // Ortogonal (to'g'ri burchakli) yo'l: gorizontal → vertikal → gorizontal
+    const midX = (x1 + x2) / 2;
+    path.setAttribute("d", `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", stroke);
+    path.setAttribute("stroke-width", "2");
+    svg.appendChild(path);
+  }
+
+  ORDER.forEach((r, ri) => {
+    const nextR = ORDER[ri + 1] || "final";
+    ["left", "right"].forEach(side => {
+      // Shu raunddagi shu tomondagi kartalar
+      const items = cards.filter(c => c.dataset.brRound === r && c.dataset.brSide === side);
+      items.forEach(c => {
+        const pos = parseInt(c.dataset.brPos);
+        const childPos = Math.floor(pos / 2);
+        const cur = map[`${r}:${pos}:${side}`];
+        const nxt = map[`${nextR}:${childPos}:${side}`];
+        if (!cur || !nxt) return;
+        if (side === "left") {
+          // kartaning o'ng chetidan keyingi katak chap chetiga
+          line(cur.left + cur.w, cur.top + cur.h / 2, nxt.left, nxt.top + nxt.h / 2);
+        } else {
+          // o'ng yarim: kartaning chap chetidan keyingi katak o'ng chetiga
+          line(cur.left, cur.top + cur.h / 2, nxt.left + nxt.w, nxt.top + nxt.h / 2);
+        }
+      });
     });
   });
 }

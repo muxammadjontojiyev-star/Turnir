@@ -98,6 +98,13 @@ async function wcLoadProfileThenRender() {
   } catch (_) {
     WC.takenTeams = [];
   }
+  // Play-off boshlangan-boshlanmaganini aniqlaymiz (bosh sahifa holati uchun)
+  try {
+    const pb = await apiFetch("/wc/playoff/bracket");
+    WC.playoffStarted = !!(pb && pb.started);
+  } catch (_) {
+    WC.playoffStarted = false;
+  }
   renderWorldCup();
 }
 
@@ -192,8 +199,20 @@ function wcRenderHome() {
   const alreadyRegistered = !!(WC.profile && WC.profile.registered);
   const teamSelected = !!WC.selectedTeam;
 
-  // Hero karta — tanlangan guruh bo'yicha (4 jamoa max, liga bilan izchil)
-  const heroBadge = t.wc_open || "OCHIQ — RO'YXAT DAVOM ETMOQDA";
+  // Hero karta holati: play-off boshlangan bo'lsa → play-off bosqichi;
+  // guruh to'lgan (4 jamoa band) bo'lsa → to'lgan; aks holda → ochiq.
+  const groupFull = teams.length > 0 && WC.takenTeams.length >= teams.length;
+  let heroBadge, heroBadgeColor;
+  if (WC.playoffStarted) {
+    heroBadge = t.wc_playoff_stage || "PLAY-OFF BOSQICHI";
+    heroBadgeColor = "var(--violet)";
+  } else if (groupFull) {
+    heroBadge = t.wc_group_full_badge || "TO'LGAN — RO'YXAT YOPILGAN";
+    heroBadgeColor = "var(--red-neon)";
+  } else {
+    heroBadge = t.wc_open || "OCHIQ — RO'YXAT DAVOM ETMOQDA";
+    heroBadgeColor = "var(--cyan)";
+  }
   const groupLabel = (t.wc_group || "{g} guruh").replace("{g}", WC.selectedGroup);
 
   const flagItems = teams.map(([name, flag]) => {
@@ -224,7 +243,7 @@ function wcRenderHome() {
 
   return `
     <div class="card card--hero">
-      <div class="card-eyebrow" style="color:var(--cyan)">${escHtml(heroBadge)}</div>
+      <div class="card-eyebrow" style="color:${heroBadgeColor}">${escHtml(heroBadge)}</div>
       <h2 class="card-title">${escHtml(groupLabel)}</h2>
       <div class="card-stats">
         <div class="stat">

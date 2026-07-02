@@ -2443,21 +2443,19 @@ table { border-collapse: collapse; width: 100%; }
 .wc-bracket-side:last-child { border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
 .wc-bracket-card--clickable { cursor: pointer; }
 .wc-bracket-card--clickable:active { opacity: 0.8; }
-/* Bog'lovchi chiziqlar: har juftlikdan keyingi raundga qisqa gorizontal ulanish.
-   Chap yarim o'ngga, o'ng yarim chapga chiqadi. */
+/* Bog'lovchi chiziqlar SVG overlay bilan chiziladi (wcDrawBracketLines).
+   CSS pseudo-connectorlar olib tashlandi — SVG aniqroq va barqaror. */
+.wc-bracket-inner { position: relative; width: max-content; }
+.wc-bracket-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.wc-bracket { position: relative; z-index: 1; }
 .wc-bracket-card--left,
 .wc-bracket-card--right { position: relative; }
-.wc-bracket-card--left::after,
-.wc-bracket-card--right::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 12px;
-  height: 2px;
-  background: rgba(255,255,255,0.18);
-}
-.wc-bracket-card--left::after { right: -12px; }
-.wc-bracket-card--right::after { left: -12px; }
 /* Markaz ustundagi final/bronza kartalarida connector kerak emas */
 .wc-bracket-col--center .wc-bracket-card::after { display: none; }
 .wc-bracket-side {
