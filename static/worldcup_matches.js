@@ -424,6 +424,13 @@ function wcRenderViewProfile() {
     ? `<div class="wc-loading-row">${escHtml(t.no_matches || "Hali o'yinlar yo'q")}</div>`
     : matches.map(m => wcRenderViewMatchItem(m)).join("");
 
+  // Play-off o'yinlari (match ID bilan — admin xato hisobni topishi uchun)
+  const poMatches = data.playoff_matches || [];
+  const poHtml = poMatches.length
+    ? `<div class="section-label">${escHtml(t.wc_playoff_my_title || "PLAY-OFF O'YINLARI")}</div>
+       <div class="matches-list">${poMatches.map(m => wcRenderViewPlayoffItem(m)).join("")}</div>`
+    : "";
+
   return `
     <button class="back-btn" id="wc-viewplayer-back">
       <span class="back-btn-arrow" data-icon="back"></span>
@@ -461,7 +468,25 @@ function wcRenderViewProfile() {
 
     <div class="section-label">${escHtml(t.player_matches || t.my_matches || "O'YINLAR")}</div>
     <div class="matches-list">${matchesHtml}</div>
+    ${poHtml}
   `;
+}
+
+// Boshqa o'yinchi profilida play-off o'yin kartasi (faqat ko'rish, match ID bilan).
+function wcRenderViewPlayoffItem(m) {
+  const roundName = (typeof WC_PLAYOFF_ROUND_NAMES !== "undefined" && WC_PLAYOFF_ROUND_NAMES[m.round]) || m.round || "";
+  const flag1 = m.p1_team ? wcTeamFlag(m.p1_team) : "";
+  const flag2 = m.p2_team ? wcTeamFlag(m.p2_team) : "";
+  const scoreNum = (m.score1 != null && m.score2 != null) ? `${m.score1} : ${m.score2}` : "— : —";
+  return `
+    <div class="match-item">
+      <span class="match-names">${escHtml(roundName)} <span class="wc-po-id">#${m.id}</span></span>
+      <div class="match-center">
+        <span class="wc-mc-flag">${flag1}</span>
+        <span class="match-score">${escHtml(scoreNum)}</span>
+        <span class="wc-mc-flag">${flag2}</span>
+      </div>
+    </div>`;
 }
 
 // O'yin kartasi (faqat ko'rish — tugmasiz, liga renderPlayerMatchItem naqshida)

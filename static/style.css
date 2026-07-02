@@ -2430,6 +2430,8 @@ table { border-collapse: collapse; width: 100%; }
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
+.wc-bracket-card--clickable { cursor: pointer; }
+.wc-bracket-card--clickable:active { opacity: 0.8; }
 .wc-bracket-side {
   display: flex;
   align-items: center;

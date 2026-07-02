@@ -414,8 +414,13 @@ function wcBracketCard(m, side = "left") {
   const p2 = wcBracketSide(m.p2_team, m.p2_user, m.p2_nick, m.score2, m.status, side);
   const win1 = m.status === "confirmed" && m.score1 > m.score2;
   const win2 = m.status === "confirmed" && m.score2 > m.score1;
+  // Kartaga bosilsa — juftlikdagi ishtirokchilardan birining profili ochiladi
+  // (u yerda play-off match ID ko'rinadi — admin xato hisobni tez topadi).
+  const openUid = m.player1_id || m.player2_id || null;
+  const clickable = openUid ? "wc-bracket-card--clickable" : "";
+  const attr = openUid ? `data-wc-bracket-uid="${openUid}"` : "";
   return `
-    <div class="wc-bracket-card">
+    <div class="wc-bracket-card ${clickable}" ${attr}>
       <div class="wc-bracket-side ${win1 ? "winner" : ""}">${p1}</div>
       <div class="wc-bracket-side ${win2 ? "winner" : ""}">${p2}</div>
     </div>`;
@@ -444,6 +449,13 @@ async function wcLoadBracket() {
   const box = document.getElementById("wc-bracket-box");
   if (!box) return;
   box.innerHTML = await wcRenderBracket();
+  // Juftlik kartasiga bosilsa — ishtirokchi profilini ochadi (match ID ko'rinadi)
+  box.querySelectorAll("[data-wc-bracket-uid]").forEach(card => {
+    card.addEventListener("click", () => {
+      const uid = parseInt(card.dataset.wcBracketUid);
+      if (uid && typeof wcOpenPlayerProfile === "function") wcOpenPlayerProfile(uid);
+    });
+  });
 }
 
 
