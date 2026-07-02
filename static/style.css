@@ -3174,3 +3174,91 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .rating-table tbody tr:has(.rank-1) { animation: none; }
 }
+
+/* ============================================================
+   DESIGN v4.8 — WC BANNER: jonli sahna
+   (kubok oltin pulse + shine, salyut uchqunlari, Ken Burns zoom)
+   Faqat .wc-banner va .wc-banner-img override. HTML/JS tegilmagan.
+   ============================================================ */
+.wc-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 18px 18px; /* img radiusi bilan mos */
+}
+/* Rasm — juda sekin nafas oluvchi zoom (jonli sahna) */
+.wc-banner-img {
+  animation: v4-kenburns 14s ease-in-out infinite alternate;
+  transform-origin: 50% 45%;
+  will-change: transform;
+}
+@keyframes v4-kenburns {
+  from { transform: scale(1); }
+  to   { transform: scale(1.06); }
+}
+
+/* Kubok ustida: oltin pulse nur + o'tuvchi yorug'lik chizig'i */
+.wc-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    /* yaltiroq chiziq (kubok bo'ylab o'tadi — aylanish taassuroti) */
+    linear-gradient(75deg,
+      transparent 44%,
+      rgba(255,240,180,0.00) 46%,
+      rgba(255,240,180,0.28) 50%,
+      rgba(255,240,180,0.00) 54%,
+      transparent 56%),
+    /* kubok atrofida nafas oluvchi oltin halo (markazda) */
+    radial-gradient(28% 42% at 50% 46%,
+      rgba(255,200,60,0.30), rgba(255,170,30,0.12) 55%, transparent 75%);
+  background-size: 300% 100%, 100% 100%;
+  background-position: 120% 0, 0 0;
+  animation: v4-cup-shine 6s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+@keyframes v4-cup-shine {
+  0%, 55%   { background-position: 130% 0, 0 0; opacity: 0.75; }
+  75%       { opacity: 1; }
+  100%      { background-position: -30% 0, 0 0; opacity: 0.75; }
+}
+
+/* Salyut uchqunlari: 2 guruh, navbatma-navbat portlab so'nadi */
+.wc-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    /* chap-yuqori portlash guruhi */
+    radial-gradient(2.5px 2.5px at 16% 18%, rgba(255,120,180,0.95), transparent 70%),
+    radial-gradient(2px 2px   at 20% 26%, rgba(120,220,255,0.9),  transparent 70%),
+    radial-gradient(2px 2px   at 12% 28%, rgba(255,230,140,0.9),  transparent 70%),
+    radial-gradient(1.5px 1.5px at 24% 14%, rgba(180,140,255,0.85), transparent 70%),
+    /* o'ng-yuqori portlash guruhi */
+    radial-gradient(2.5px 2.5px at 84% 20%, rgba(120,220,255,0.95), transparent 70%),
+    radial-gradient(2px 2px   at 78% 12%, rgba(255,230,140,0.9),  transparent 70%),
+    radial-gradient(2px 2px   at 90% 30%, rgba(255,120,180,0.9),  transparent 70%),
+    radial-gradient(1.5px 1.5px at 74% 26%, rgba(160,255,190,0.85), transparent 70%);
+  transform-origin: 50% 20%;
+  animation: v4-fireworks 3.2s ease-out infinite;
+  mix-blend-mode: screen;
+}
+@keyframes v4-fireworks {
+  0%   { transform: scale(0.55); opacity: 0; }
+  12%  { opacity: 1; }                        /* portlash */
+  45%  { transform: scale(1.15); opacity: 0.35; } /* tarqalish */
+  70%  { transform: scale(1.3);  opacity: 0; }    /* so'nish */
+  100% { transform: scale(1.3);  opacity: 0; }    /* pauza */
+}
+
+/* Harakat kamaytirilgan rejim hurmati */
+@media (prefers-reduced-motion: reduce) {
+  .wc-banner-img,
+  .wc-banner::before,
+  .wc-banner::after { animation: none; }
+  .wc-banner::after { opacity: 0; }
+}
