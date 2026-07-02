@@ -58,6 +58,10 @@ function wcRenderAdminPanel() {
     <div class="admin-fix-form">
       <input id="wc-admin-fix-match-id" class="modal-input" type="number" min="1"
         placeholder="${escHtml(t.admin_fix_match_id_placeholder || "Match ID")}" />
+      <label class="admin-fix-playoff-check">
+        <input id="wc-admin-fix-is-playoff" type="checkbox" />
+        <span>${escHtml(t.admin_fix_is_playoff || "Play-off o'yini")}</span>
+      </label>
       <div class="score-input-row">
         <div class="score-input-group">
           <span class="score-input-label">P1</span>
@@ -202,12 +206,13 @@ async function wcAdminFixResult() {
   const matchId = parseInt(document.getElementById("wc-admin-fix-match-id").value);
   const score1 = parseInt(document.getElementById("wc-admin-fix-score1").value);
   const score2 = parseInt(document.getElementById("wc-admin-fix-score2").value);
+  const isPlayoff = document.getElementById("wc-admin-fix-is-playoff")?.checked ? 1 : 0;
   if (!matchId || isNaN(score1) || isNaN(score2)) {
     showToast("❌ " + (t.admin_fix_invalid || "Match ID va natijani to'g'ri kiriting"));
     return;
   }
   try {
-    await apiFetch(`/wc/admin/match/set-score?match_id=${matchId}&score1=${score1}&score2=${score2}`, { method: "POST" });
+    await apiFetch(`/wc/admin/match/set-score?match_id=${matchId}&score1=${score1}&score2=${score2}&is_playoff=${isPlayoff}`, { method: "POST" });
     showToast(t.admin_fix_done || "✅ Natija tuzatildi");
     document.getElementById("wc-admin-fix-match-id").value = "";
   } catch (e) {
@@ -222,13 +227,14 @@ async function wcAdminFixResult() {
 async function wcAdminResetMatch() {
   const t = APP.t;
   const matchId = parseInt(document.getElementById("wc-admin-fix-match-id").value);
+  const isPlayoff = document.getElementById("wc-admin-fix-is-playoff")?.checked ? 1 : 0;
   if (!matchId) {
     showToast("❌ " + (t.admin_fix_invalid || "Match ID ni kiriting"));
     return;
   }
   if (!window.confirm(t.admin_reset_confirm || "Bu o'yin natijasini bekor qilasizmi? O'yin qayta — : — bo'ladi.")) return;
   try {
-    await apiFetch(`/wc/admin/match/reset?match_id=${matchId}`, { method: "POST" });
+    await apiFetch(`/wc/admin/match/reset?match_id=${matchId}&is_playoff=${isPlayoff}`, { method: "POST" });
     showToast(t.admin_reset_done || "✅ Natija bekor qilindi");
     document.getElementById("wc-admin-fix-match-id").value = "";
   } catch (e) {

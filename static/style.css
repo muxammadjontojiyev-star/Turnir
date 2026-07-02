@@ -1048,6 +1048,16 @@ table { border-collapse: collapse; width: 100%; }
   flex-direction: column;
   gap: 10px;
 }
+.admin-fix-playoff-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.admin-fix-playoff-check input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--cyan); }
 
 /* ============================================================
    BUTTONS
@@ -2384,6 +2394,8 @@ table { border-collapse: collapse; width: 100%; }
   justify-content: space-around;
   gap: 8px;
   min-width: 130px;
+  position: relative;
+  padding-top: 28px;
 }
 .wc-bracket-round-label {
   font-family: var(--font-display);
@@ -2391,8 +2403,11 @@ table { border-collapse: collapse; width: 100%; }
   font-weight: 700;
   color: var(--text-secondary);
   text-align: center;
-  margin-bottom: 4px;
   letter-spacing: 0.5px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 /* Ikki tomonlama setka: markaz ustuni (final + bronza) vertikal markazda */
 .wc-bracket--two-sided { align-items: stretch; }
@@ -2402,6 +2417,11 @@ table { border-collapse: collapse; width: 100%; }
   min-width: 140px;
 }
 .wc-bracket-final-label { color: var(--cyan); }
+/* Markaz ustunda 2 ta label bo'lgani uchun ular oqim ichida (absolute emas) */
+.wc-bracket-col--center .wc-bracket-round-label {
+  position: static;
+  margin-bottom: 4px;
+}
 .wc-bracket-bronze-label { color: #f5b942; margin-top: 10px; }
 .wc-bracket-card {
   background: var(--bg-card);
