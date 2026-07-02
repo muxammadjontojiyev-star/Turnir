@@ -3262,3 +3262,41 @@ body::before {
   .wc-banner::after { animation: none; }
   .wc-banner::after { opacity: 0; }
 }
+
+/* ============================================================
+   DESIGN v4.9 — PLAY-OFF SETKA KUBOGI: o'z o'qi atrofida aylanish
+   Faqat .wc-bracket-trophy override. HTML/JS tegilmagan.
+   ============================================================ */
+.wc-bracket-trophy {
+  animation: v4-trophy-spin 7s linear infinite;
+  transform-style: preserve-3d;
+  will-change: transform, filter;
+  backface-visibility: visible; /* orqa tomoni ham ko'rinsin (uzluksiz aylanish) */
+}
+@keyframes v4-trophy-spin {
+  0% {
+    transform: perspective(600px) rotateY(0deg);
+    filter: drop-shadow(0 6px 18px rgba(255,200,0,0.25));
+  }
+  /* Yon tomonga burilganda nur kuchayadi — metall yaltirashi */
+  25% {
+    transform: perspective(600px) rotateY(90deg);
+    filter: drop-shadow(0 6px 26px rgba(255,215,60,0.55));
+  }
+  50% {
+    transform: perspective(600px) rotateY(180deg);
+    filter: drop-shadow(0 6px 18px rgba(255,200,0,0.25));
+  }
+  75% {
+    transform: perspective(600px) rotateY(270deg);
+    filter: drop-shadow(0 6px 26px rgba(255,215,60,0.55));
+  }
+  100% {
+    transform: perspective(600px) rotateY(360deg);
+    filter: drop-shadow(0 6px 18px rgba(255,200,0,0.25));
+  }
+}
+/* Harakat kamaytirilgan rejim hurmati */
+@media (prefers-reduced-motion: reduce) {
+  .wc-bracket-trophy { animation: none; }
+}
