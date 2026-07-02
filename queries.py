@@ -1631,24 +1631,27 @@ def wc_admin_fix_confirmed_match(match_id: int, score1: int, score2: int) -> tup
     return True, "ok"
 
 
-def wc_admin_set_score(match_id: int, score1: int, score2: int) -> tuple[bool, str]:
+def wc_admin_set_score(match_id: int, score1: int, score2: int, is_playoff: int = 0) -> tuple[bool, str]:
     """
     WC admin har qanday holatdagi (pending/awaiting/confirmed) WC matchning
     natijasini to'g'ri songa o'zgartiradi va statusni 'confirmed' qiladi.
+    is_playoff=0 → wc_matches (guruh), is_playoff=1 → wc_playoff_matches (play-off).
     O'yinchilar o'ynamasdan noto'g'ri kiritgan natijani admin tuzatishi uchun.
 
     Reyting dinamik (wc_matches'dan hisoblanadi), shuning uchun avtomat yangilanadi.
 
     Qaytaradi: (success, reason). Sabablar: ok / match_not_found
     """
-    match = wc_get_match_by_id(match_id)
-    if match is None:
-        return False, "match_not_found"
-
+    table = "wc_playoff_matches" if is_playoff else "wc_matches"
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute(f"SELECT id FROM {table} WHERE id = ?", (match_id,))
+    if cursor.fetchone() is None:
+        conn.close()
+        return False, "match_not_found"
+
     cursor.execute(
-        "UPDATE wc_matches SET score1 = ?, score2 = ?, status = 'confirmed' WHERE id = ?",
+        f"UPDATE {table} SET score1 = ?, score2 = ?, status = 'confirmed' WHERE id = ?",
         (score1, score2, match_id),
     )
     conn.commit()
@@ -1656,25 +1659,31 @@ def wc_admin_set_score(match_id: int, score1: int, score2: int) -> tuple[bool, s
     return True, "ok"
 
 
-def wc_admin_reset_match(match_id: int) -> tuple[bool, str]:
+def wc_admin_reset_match(match_id: int, is_playoff: int = 0) -> tuple[bool, str]:
     """
     WC admin noto'g'ri kiritilgan natijani BEKOR qiladi: skorni tozalaydi va
     o'yinni qayta 'pending' (— : —) holatiga qaytaradi. O'yinchilar qaytadan
     to'g'ri natija kiritishi mumkin bo'ladi.
+    is_playoff=0 → wc_matches (guruh), is_playoff=1 → wc_playoff_matches (play-off).
 
     Qaytaradi: (success, reason). Sabablar: ok / match_not_found / already_pending
     """
-    match = wc_get_match_by_id(match_id)
-    if match is None:
-        return False, "match_not_found"
-
-    if match["status"] == "pending" and match["score1"] is None:
-        return False, "already_pending"
-
+    table = "wc_playoff_matches" if is_playoff else "wc_matches"
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute(f"SELECT status, score1 FROM {table} WHERE id = ?", (match_id,))
+    row = cursor.fetchone()
+    if row is None:
+        conn.close()
+        return False, "match_not_found"
+
+    r = dict(row)
+    if r["status"] == "pending" and r["score1"] is None:
+        conn.close()
+        return False, "already_pending"
+
     cursor.execute(
-        "UPDATE wc_matches SET score1 = NULL, score2 = NULL, submitted_by = NULL, status = 'pending' WHERE id = ?",
+        f"UPDATE {table} SET score1 = NULL, score2 = NULL, submitted_by = NULL, status = 'pending' WHERE id = ?",
         (match_id,),
     )
     conn.commit()

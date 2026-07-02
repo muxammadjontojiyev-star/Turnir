@@ -800,6 +800,7 @@ def wc_admin_match_set_score(
     match_id: int,
     score1: int,
     score2: int,
+    is_playoff: int = 0,
     admin: dict = Depends(get_authenticated_wc_admin),
 ):
     """
@@ -807,10 +808,10 @@ def wc_admin_match_set_score(
     natijasini to'g'ri songa o'zgartiradi (status → confirmed). O'yinchilar
     o'ynamasdan noto'g'ri kiritgan natijani tuzatish uchun.
 
-    Query params: match_id, score1, score2
+    Query params: match_id, score1, score2, is_playoff (0=guruh, 1=play-off)
     Xato: match_not_found → 400
     """
-    success, reason = wc_admin_set_score(match_id, score1, score2)
+    success, reason = wc_admin_set_score(match_id, score1, score2, is_playoff)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
@@ -821,6 +822,7 @@ def wc_admin_match_set_score(
 @app.post("/wc/admin/match/reset")
 def wc_admin_match_reset(
     match_id: int,
+    is_playoff: int = 0,
     admin: dict = Depends(get_authenticated_wc_admin),
 ):
     """
@@ -828,10 +830,10 @@ def wc_admin_match_reset(
     qiladi: o'yin qayta 'pending' (— : —) holatiga qaytadi, o'yinchilar
     qaytadan kiritishi mumkin.
 
-    Query param: match_id
+    Query param: match_id, is_playoff (0=guruh, 1=play-off)
     Xato: match_not_found, already_pending → 400
     """
-    success, reason = wc_admin_reset_match(match_id)
+    success, reason = wc_admin_reset_match(match_id, is_playoff)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
