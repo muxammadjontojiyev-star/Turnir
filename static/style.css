@@ -2888,3 +2888,245 @@ body::before {
     0 10px 26px -12px rgba(91,61,245,0.45),
     0 0 14px rgba(34,211,238,0.12);
 }
+
+/* ============================================================
+   DESIGN v4.3 — REYTING SAHIFASI (tab filter + jadval)
+   Faqat override: .tab-btn, .card--table, .rating-table
+   Liga va WC reytingi umumiy classlarda — ikkalasiga taalluqli.
+   ============================================================ */
+
+/* Tab filter — premium pill'lar */
+.tab-btn {
+  padding: 8px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0) 50%),
+    var(--bg-card);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  transition: color .2s, background .25s, border-color .2s, box-shadow .25s, transform .12s;
+}
+.tab-btn:active { transform: scale(0.95); }
+/* Aktiv tab — nav bilan bir xil gradient pill (hover'dan ustun keladi) */
+.tab-btn.active {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #5b3df5 0%, #7c4dff 45%, var(--cyan) 130%);
+  box-shadow:
+    0 8px 18px -8px rgba(97,61,245,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+/* Jadval konteyneri — shisha karta */
+.card--table {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 14px 36px -18px rgba(0,0,0,0.8);
+}
+
+/* Jadval sarlavhasi — frosted panel */
+.rating-table thead tr {
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Qatorlar — nafasli, yumshoq ajratkichlar */
+.rating-table td { border-bottom: none; }
+.rating-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+/* Mening qatorim — gradient chiziqli premium ajratish */
+.rating-table tbody tr.is-me {
+  background: linear-gradient(90deg, rgba(91,61,245,0.20), rgba(34,211,238,0.08) 70%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--cyan);
+}
+
+/* ============================================================
+   DESIGN v4.4 — PROFIL SAHIFASI
+   Faqat override: .card--profile, .profile-avatar, .stat-card,
+   .match-item. Liga va WC profili umumiy classlarda.
+   ============================================================ */
+
+/* Profil kartasi — hero bilan bir oilada, shisha + gradient hoshiya */
+.card--profile {
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(145deg, #1c1c3a, #12122a) padding-box,
+    linear-gradient(130deg, rgba(91,61,245,0.65), rgba(34,211,238,0.45)) border-box;
+  box-shadow:
+    0 16px 40px -18px rgba(91,61,245,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+/* Avatar — gradient halqa (reference: profil rasmi) */
+.profile-avatar {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--violet-dim), var(--violet-dim)) padding-box,
+    linear-gradient(135deg, #5b3df5, var(--cyan)) border-box;
+  box-shadow: 0 0 16px rgba(91,61,245,0.45);
+}
+
+/* Statistika grid — reference'dagi 4 plitka uslubi */
+.stat-card {
+  border-radius: 16px;
+  padding: 14px 8px;
+  border: 1px solid rgba(255,255,255,0.09);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0) 45%),
+    var(--bg-card);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 8px 22px -14px rgba(0,0,0,0.7);
+}
+.stat-card-value { font-variant-numeric: tabular-nums; }
+/* O'rin — asosiy plitka: gradient hoshiya + glow */
+.stat-card--primary {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+    linear-gradient(120deg, #5b3df5, var(--cyan)) border-box;
+  box-shadow:
+    0 10px 24px -12px rgba(91,61,245,0.5),
+    0 0 12px rgba(34,211,238,0.12);
+}
+
+/* O'yinlar ro'yxati — Recent Activity uslubidagi qatorlar */
+.match-item {
+  border-radius: 16px;
+  padding: 13px 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0) 45%),
+    var(--bg-card);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 8px 22px -14px rgba(0,0,0,0.7);
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.match-item:active { transform: scale(0.985); }
+
+/* ============================================================
+   DESIGN v4.5 — SOVRINLAR SAHIFASI
+   Faqat override: .card--prize (+ --gold / --cyan variantlar).
+   WC kuboklari ham .card--prize ishlatadi (wc-prize-card) —
+   ikkala rejim qamrab olinadi.
+   ============================================================ */
+
+.card--prize {
+  border-radius: 20px;
+  padding: 18px 16px;
+  border: 1px solid rgba(255,255,255,0.09);
+  background:
+    radial-gradient(120% 100% at 100% 0%, rgba(91,61,245,0.10), transparent 55%),
+    linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0) 45%),
+    linear-gradient(135deg, #1a1a32, #0f0f20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 14px 36px -18px rgba(0,0,0,0.8);
+}
+
+/* Oltin sovrinlar (Butsa/To'p) — iliq oltin nur */
+.card--prize--gold {
+  border-color: rgba(245,185,66,0.35);
+  border-left: 3px solid #f5b942;
+  background:
+    radial-gradient(120% 100% at 100% 0%, rgba(245,185,66,0.12), transparent 55%),
+    linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0) 45%),
+    linear-gradient(135deg, #1d1a2e, #100f1e);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 14px 36px -16px rgba(245,185,66,0.28),
+    0 10px 28px -18px rgba(0,0,0,0.8);
+}
+
+/* Cyan sovrin (Liga Kubogi) — sovuq neon nur */
+.card--prize--cyan {
+  border-color: rgba(34,211,238,0.30);
+  border-left: 3px solid var(--cyan);
+  background:
+    radial-gradient(120% 100% at 100% 0%, rgba(0,240,255,0.10), transparent 55%),
+    linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0) 45%),
+    linear-gradient(135deg, #162030, #0e1220);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 14px 36px -16px rgba(0,240,255,0.22),
+    0 10px 28px -18px rgba(0,0,0,0.8);
+}
+
+/* Kubok rasmi — yumshoq porlash bilan sahnaning markazi */
+.prize-icon-img {
+  filter: drop-shadow(0 6px 14px rgba(245,185,66,0.35));
+}
+.card--prize--cyan .prize-icon-img {
+  filter: drop-shadow(0 6px 14px rgba(0,240,255,0.30));
+}
+
+/* ============================================================
+   DESIGN v4.6 — MODAL, INPUT va WC HEADER (yakuniy sayqal)
+   Faqat override: .modal-box, .modal-input, .score-input,
+   .webchat-input, .wc-header, .wc-banner-img
+   ============================================================ */
+
+/* Modal — pastdan chiquvchi premium sheet */
+.modal-box {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, #1b1b38, #12122a) padding-box,
+    linear-gradient(120deg, rgba(91,61,245,0.55), rgba(34,211,238,0.40)) border-box;
+  border-bottom: none;
+  border-radius: 26px 26px 0 0;
+}
+/* Sheet "tutqich" chizig'i (native his) */
+.modal-box::before {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.18);
+  margin: -8px auto 0;
+}
+
+/* Inputlar — frosted, gradient fokus halqasi */
+.modal-input,
+.score-input,
+.webchat-input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.30);
+  transition: border-color .2s, box-shadow .2s;
+}
+.modal-input { border-radius: 14px; }
+.score-input { border-radius: 16px; }
+.modal-input:focus,
+.score-input:focus,
+.webchat-input:focus {
+  border-color: rgba(124,77,255,0.8);
+  box-shadow:
+    inset 0 2px 8px rgba(0,0,0,0.30),
+    0 0 0 3px rgba(91,61,245,0.22),
+    0 0 14px rgba(34,211,238,0.15);
+}
+.score-input:focus { transform: scale(1.03); }
+
+/* WC header — frosted panel, banner yumshoq pastki burchak */
+.wc-header {
+  background: rgba(13,13,26,0.85);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.wc-banner-img {
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 14px 30px -18px rgba(0,0,0,0.8);
+}
+.wc-back {
+  border-radius: 18px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  transition: background .2s, transform .12s;
+}
+.wc-back:active { transform: scale(0.95); }
