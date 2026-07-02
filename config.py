@@ -62,6 +62,11 @@ DEFAULT_LANGUAGE = LANGUAGE_UZ
 # === Ma'lumotlar bazasi ===
 DB_PATH = os.getenv("DB_PATH", "efootball_bot.db")
 
+# === Validatsiya ===
+# Bitta o'yinda kiritilishi mumkin bo'lgan maksimal gol soni (real 8-daqiqalik
+# o'yin uchun yetarli; noto'g'ri/zararli kiritishdan himoya)
+MAX_SCORE = int(os.getenv("MAX_SCORE", "30"))
+
 # === WebApp ===
 # ⚠️ PLACEHOLDER — WebApp hostingga joylashgach, haqiqiy URL bilan almashtirilishi kerak
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://example.com/webapp")

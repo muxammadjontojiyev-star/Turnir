@@ -10,9 +10,19 @@ from config import DB_PATH
 
 
 def get_connection():
-    """Yangi DB ulanish qaytaradi."""
-    conn = sqlite3.connect(DB_PATH)
+    """Yangi DB ulanish qaytaradi.
+
+    MUSTAHKAMLIK: bot + API + scheduler bitta SQLite faylni bo'lishadi,
+    shuning uchun:
+      - timeout=15      → qulf kutish (Python darajasida)
+      - busy_timeout    → qulf kutish (SQLite darajasida, ms)
+      - WAL журнали     → o'qish va yozish bir-birini bloklamaydi
+    """
+    conn = sqlite3.connect(DB_PATH, timeout=15)
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 15000")
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA synchronous = NORMAL")
     conn.row_factory = sqlite3.Row
     return conn
 

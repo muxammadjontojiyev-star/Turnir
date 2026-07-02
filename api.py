@@ -14,15 +14,17 @@ imzolangan). Har bir so'rovda "X-Telegram-Init-Data" header yuborilishi kerak.
 import hashlib
 import hmac
 import json
-from urllib.parse import parse_qsl
+import logging
+import time
+from urllib.parse import parse_qsl, urlparse
 
 import httpx
 from fastapi import FastAPI, Header, HTTPException, Depends, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 
-from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS, MATCHDAYS_PER_UNLOCK
+from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS, MATCHDAYS_PER_UNLOCK, WEBAPP_URL, MAX_SCORE
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
@@ -64,10 +66,32 @@ from config import REQUIRED_CHANNEL_USERNAME, REQUIRED_CHANNEL_URL
 
 app = FastAPI(title="eFootball Turnir Bot API")
 
-# WebApp boshqa origin'dan so'rov yuborgani uchun CORS kerak
+
+# MUSTAHKAMLIK: kutilmagan xatoda API yiqilmaydi — log'ga yoziladi,
+# foydalanuvchiga toza JSON 500 qaytadi (traceback sizib chiqmaydi).
+logger = logging.getLogger("api")
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc):
+    logger.exception("Kutilmagan xato: %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Serverda kutilmagan xato yuz berdi. Keyinroq urinib ko'ring."},
+    )
+
+# WebApp boshqa origin'dan so'rov yuborgani uchun CORS kerak.
+# MUSTAHKAMLIK: faqat o'z domenimizga ruxsat (WEBAPP_URL'dan olinadi).
+# WEBAPP_URL o'rnatilmagan/standart bo'lsa — eski "*" holati saqlanadi (uzilish bo'lmasin).
+_webapp_origin = None
+if WEBAPP_URL and "example.com" not in WEBAPP_URL:
+    _p = urlparse(WEBAPP_URL)
+    if _p.scheme and _p.netloc:
+        _webapp_origin = f"{_p.scheme}://{_p.netloc}"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[_webapp_origin] if _webapp_origin else ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -89,6 +113,18 @@ async def no_cache_for_html(request, call_next):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
+
+
+def validate_scores(score1: int, score2: int):
+    """
+    MUSTAHKAMLIK: gol qiymatlari umumiy tekshiruvi (barcha submit endpointlar uchun).
+    Manfiy → 400 score_negative (eski xabar saqlangan),
+    MAX_SCORE'dan katta → 400 score_too_big.
+    """
+    if score1 < 0 or score2 < 0:
+        raise HTTPException(status_code=400, detail="score_negative")
+    if score1 > MAX_SCORE or score2 > MAX_SCORE:
+        raise HTTPException(status_code=400, detail="score_too_big")
 
 
 def verify_telegram_init_data(init_data: str) -> dict:
@@ -115,8 +151,13 @@ def verify_telegram_init_data(init_data: str) -> dict:
             secret_key, data_check_string.encode(), hashlib.sha256
         ).hexdigest()
 
-        if computed_hash != received_hash:
+        if not hmac.compare_digest(computed_hash, received_hash):
             raise ValueError("hash mos kelmadi")
+
+        # Replay himoyasi: initData 24 soatdan eski bo'lsa — rad etiladi
+        auth_date = int(parsed.get("auth_date", "0"))
+        if auth_date <= 0 or (time.time() - auth_date) > 86400:
+            raise ValueError("initData muddati o'tgan")
 
         user_json = parsed.get("user")
         if not user_json:
@@ -128,6 +169,28 @@ def verify_telegram_init_data(init_data: str) -> dict:
         raise HTTPException(status_code=401, detail="Noto'g'ri Telegram autentifikatsiya") from exc
 
 
+# MUSTAHKAMLIK: oddiy xotiradagi rate-limit (har bir user: 10 sekundda 40 so'rov).
+# Oddiy foydalanishga xalaqit bermaydi, flood/skriptdan himoya qiladi.
+RATE_LIMIT_MAX = 40
+RATE_LIMIT_WINDOW = 10  # sekund
+_rate_buckets: dict = {}
+
+
+def _check_rate_limit(telegram_id: int):
+    now = time.time()
+    bucket = _rate_buckets.get(telegram_id)
+    if bucket is None or now - bucket["start"] > RATE_LIMIT_WINDOW:
+        _rate_buckets[telegram_id] = {"start": now, "count": 1}
+        # Xotira o'smasligi uchun eski yozuvlarni vaqti-vaqti bilan tozalash
+        if len(_rate_buckets) > 5000:
+            for tid in [t for t, b in _rate_buckets.items() if now - b["start"] > RATE_LIMIT_WINDOW]:
+                _rate_buckets.pop(tid, None)
+        return
+    bucket["count"] += 1
+    if bucket["count"] > RATE_LIMIT_MAX:
+        raise HTTPException(status_code=429, detail="too_many_requests")
+
+
 def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
     """
     FastAPI dependency: initData'ni tekshiradi va DB'dagi user yozuvini qaytaradi.
@@ -137,6 +200,7 @@ def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
     """
     telegram_user = verify_telegram_init_data(x_telegram_init_data)
     telegram_id   = telegram_user["id"]
+    _check_rate_limit(telegram_id)
     first_name    = telegram_user.get("first_name", f"user_{telegram_id}")
     username      = telegram_user.get("username")
 
@@ -659,8 +723,7 @@ def wc_submit_result(
     Xato holatlari: score_negative, match_not_found, not_participant,
                     already_submitted, matchday_locked → 400
     """
-    if score1 < 0 or score2 < 0:
-        raise HTTPException(status_code=400, detail="score_negative")
+    validate_scores(score1, score2)
     success, reason = wc_submit_match_result(match_id, score1, score2, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -993,6 +1056,7 @@ def wc_playoff_submit(
     Play-off match natijasini kiritadi. Durang qabul qilinmaydi (g'olib aniq shart).
     Xato: draw_not_allowed, not_open, not_participant, ... → 400
     """
+    validate_scores(score1, score2)
     import queries
     success, reason = queries.wc_playoff_submit_result(match_id, score1, score2, user["id"])
     if not success:
@@ -1239,8 +1303,7 @@ async def submit_result(
     Xato holatlari: match_not_found, not_participant, already_submitted,
                     matchday_locked (tur hali ochilmagan) → 400
     """
-    if score1 < 0 or score2 < 0:
-        raise HTTPException(status_code=400, detail="score_negative")
+    validate_scores(score1, score2)
 
     # Matchday qulfi: faqat ochilgan turlarning natijasini kiritish mumkin.
     # Har kuni 01:00 (Toshkent) da bitta yangi tur ochiladi (get_open_matchday).
