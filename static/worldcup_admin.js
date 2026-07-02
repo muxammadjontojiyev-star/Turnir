@@ -112,6 +112,19 @@ function wcRenderAdminPanel() {
 function wcBindAdminPanel() {
   document.getElementById("wc-btn-admin-fix-submit")?.addEventListener("click", wcAdminFixResult);
   document.getElementById("wc-btn-admin-reset")?.addEventListener("click", wcAdminResetMatch);
+  // "Play-off o'yini" checkbox holatini tiklash + o'zgarishda saqlash
+  // (admin o'zi o'chirmaguncha yoniq qoladi — ilova qayta ochilsa ham).
+  const poCheck = document.getElementById("wc-admin-fix-is-playoff");
+  if (poCheck) {
+    try {
+      poCheck.checked = localStorage.getItem("wc_admin_fix_playoff") === "1";
+    } catch (_) { /* localStorage yo'q — default o'chiq */ }
+    poCheck.addEventListener("change", () => {
+      try {
+        localStorage.setItem("wc_admin_fix_playoff", poCheck.checked ? "1" : "0");
+      } catch (_) { /* jim */ }
+    });
+  }
   if (WC_ADMIN.isSuper) {
     document.getElementById("wc-btn-admin-add")?.addEventListener("click", wcAdminAddRole);
     document.getElementById("wc-btn-fix-schedules")?.addEventListener("click", wcAdminFixSchedules);

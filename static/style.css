@@ -2417,6 +2417,15 @@ table { border-collapse: collapse; width: 100%; }
   min-width: 140px;
 }
 .wc-bracket-final-label { color: var(--cyan); }
+/* Final ustidagi World Cup kubogi (shaffof fon, katakchalarga mos o'lcham) */
+.wc-bracket-trophy {
+  display: block;
+  height: 110px;
+  width: auto;
+  margin: 0 auto 6px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 18px rgba(255, 200, 0, 0.25));
+}
 /* Markaz ustunda 2 ta label bo'lgani uchun ular oqim ichida (absolute emas) */
 .wc-bracket-col--center .wc-bracket-round-label {
   position: static;
@@ -2427,11 +2436,30 @@ table { border-collapse: collapse; width: 100%; }
   background: var(--bg-card);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 10px;
-  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
+/* Ichki tomonlar burchakdan chiqmasligi uchun birinchi/oxirgi radius */
+.wc-bracket-side:first-child { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+.wc-bracket-side:last-child { border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
 .wc-bracket-card--clickable { cursor: pointer; }
 .wc-bracket-card--clickable:active { opacity: 0.8; }
+/* Bog'lovchi chiziqlar: har juftlikdan keyingi raundga qisqa gorizontal ulanish.
+   Chap yarim o'ngga, o'ng yarim chapga chiqadi. */
+.wc-bracket-card--left,
+.wc-bracket-card--right { position: relative; }
+.wc-bracket-card--left::after,
+.wc-bracket-card--right::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  background: rgba(255,255,255,0.18);
+}
+.wc-bracket-card--left::after { right: -12px; }
+.wc-bracket-card--right::after { left: -12px; }
+/* Markaz ustundagi final/bronza kartalarida connector kerak emas */
+.wc-bracket-col--center .wc-bracket-card::after { display: none; }
 .wc-bracket-side {
   display: flex;
   align-items: center;

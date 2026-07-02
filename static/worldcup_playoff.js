@@ -389,6 +389,7 @@ async function wcRenderBracket() {
       const finalCards = finalMatches.map(m => wcBracketCard(m, "left")).join("");
       const bronzeCards = bronzeMatches.map(m => wcBracketCard(m, "left")).join("");
       centerCol = `<div class="wc-bracket-col wc-bracket-col--center">
+        ${finalMatches.length ? `<img src="wc-trophy.png?v=20260628a3" alt="World Cup" class="wc-bracket-trophy" />` : ""}
         ${finalMatches.length ? `<div class="wc-bracket-round-label wc-bracket-final-label">${escHtml(WC_PLAYOFF_ROUND_NAMES["final"] || "Final")}</div>${finalCards}` : ""}
         ${bronzeMatches.length ? `<div class="wc-bracket-round-label wc-bracket-bronze-label">${escHtml(WC_PLAYOFF_ROUND_NAMES["bronze"] || "Bronza")}</div>${bronzeCards}` : ""}
       </div>`;
@@ -419,8 +420,9 @@ function wcBracketCard(m, side = "left") {
   const openUid = m.player1_id || m.player2_id || null;
   const clickable = openUid ? "wc-bracket-card--clickable" : "";
   const attr = openUid ? `data-wc-bracket-uid="${openUid}"` : "";
+  const sideCls = side === "right" ? "wc-bracket-card--right" : "wc-bracket-card--left";
   return `
-    <div class="wc-bracket-card ${clickable}" ${attr}>
+    <div class="wc-bracket-card ${sideCls} ${clickable}" ${attr}>
       <div class="wc-bracket-side ${win1 ? "winner" : ""}">${p1}</div>
       <div class="wc-bracket-side ${win2 ? "winner" : ""}">${p2}</div>
     </div>`;
