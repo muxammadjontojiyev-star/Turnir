@@ -289,7 +289,10 @@ function wcBindHome() {
   const ul = document.getElementById("wc-rules-list");
   if (ul) {
     const rules = APP.t.rules_list || [];
-    ul.innerHTML = rules.map(r => `<li>${r}</li>`).join("");
+    // Liga bilan bir xil: escHtml + **so'z** → cyan qalin (api.js renderRules mantiqiga mos)
+    const renderRuleText = (r) =>
+      escHtml(r).replace(/\*\*([^*]+)\*\*/g, '<strong class="rule-hl">$1</strong>');
+    ul.innerHTML = rules.map(r => `<li>${renderRuleText(r)}</li>`).join("");
   }
 
   const alreadyRegistered = !!(WC.profile && WC.profile.registered);

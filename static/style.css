@@ -3295,3 +3295,34 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .wc-bracket-trophy { animation: none; }
 }
+
+/* ============================================================
+   DESIGN v4.10 — TUZATISHLAR
+   1) Android ko'k tap-flash o'chirildi (barcha tugmalar)
+   2) Rejim tanlash: bayroqlar 1 qator, WC karta = Liga karta o'lchami
+   ============================================================ */
+
+/* 1) Bosilgandagi ko'k to'rtburchak (tap highlight) — butunlay o'chirish */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
+.match-item, .wc-group-tab, .wc-flag-item, .wc-back, .modal-btn {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+/* 2) Rejim kartalari — bir xil o'lcham, bayroqlar bir qator */
+.mode-card {
+  min-height: 132px;           /* ikkala karta teng bo'yda */
+  justify-content: center;
+}
+.mode-card-row {
+  flex-wrap: nowrap;           /* ikki qatorga o'tmasin */
+  gap: 8px;
+  min-height: 40px;            /* logo (38px) va bayroq qatori bir balandlikda */
+  align-items: center;
+}
+.mode-flag {
+  font-size: 25px;             /* 8 ta bayroq 324px ichiga bemalol sig'adi */
+}
