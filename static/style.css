@@ -3326,3 +3326,58 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 .mode-flag {
   font-size: 25px;             /* 8 ta bayroq 324px ichiga bemalol sig'adi */
 }
+
+/* ============================================================
+   DESIGN v4.11 — 2/3-O'RIN yulduz yog'ilishi
+   2-o'rin: kumush, 3-o'rin: bronza. Qatlam tuzilishi va harakat
+   v4.7 bilan bir xil — v4-gold-rain keyframe qayta ishlatiladi.
+   ============================================================ */
+
+/* 2-o'rin — kumush yulduzchalar */
+.rating-table tbody tr:has(.rank-2) {
+  background:
+    radial-gradient(2.2px 2.2px at 12% 15%, rgba(235,240,255,0.95), transparent 70%),
+    radial-gradient(2.2px 2.2px at 48% 55%, rgba(200,208,225,0.85), transparent 70%),
+    radial-gradient(2.2px 2.2px at 78% 30%, rgba(245,248,255,0.9),  transparent 70%),
+    radial-gradient(1.6px 1.6px at 28% 75%, rgba(200,208,225,0.7),  transparent 70%),
+    radial-gradient(1.6px 1.6px at 62% 10%, rgba(225,230,245,0.65), transparent 70%),
+    radial-gradient(1.6px 1.6px at 90% 65%, rgba(245,248,255,0.7),  transparent 70%),
+    radial-gradient(1px 1px at 8% 45%,  rgba(200,208,225,0.5),  transparent 70%),
+    radial-gradient(1px 1px at 40% 25%, rgba(245,248,255,0.45), transparent 70%),
+    radial-gradient(1px 1px at 70% 85%, rgba(200,208,225,0.5),  transparent 70%),
+    radial-gradient(1px 1px at 95% 20%, rgba(225,230,245,0.45), transparent 70%),
+    linear-gradient(90deg, rgba(192,197,206,0.12), transparent 75%);
+  background-size:
+    120px 90px, 120px 90px, 120px 90px,
+    90px 70px,  90px 70px,  90px 70px,
+    60px 50px,  60px 50px,  60px 50px, 60px 50px,
+    100% 100%;
+  animation: v4-gold-rain 5s linear infinite;
+}
+
+/* 3-o'rin — bronza yulduzchalar */
+.rating-table tbody tr:has(.rank-3) {
+  background:
+    radial-gradient(2.2px 2.2px at 12% 15%, rgba(255,180,110,0.95), transparent 70%),
+    radial-gradient(2.2px 2.2px at 48% 55%, rgba(205,127,50,0.85),  transparent 70%),
+    radial-gradient(2.2px 2.2px at 78% 30%, rgba(240,160,90,0.9),   transparent 70%),
+    radial-gradient(1.6px 1.6px at 28% 75%, rgba(205,127,50,0.7),   transparent 70%),
+    radial-gradient(1.6px 1.6px at 62% 10%, rgba(230,150,80,0.65),  transparent 70%),
+    radial-gradient(1.6px 1.6px at 90% 65%, rgba(240,160,90,0.7),   transparent 70%),
+    radial-gradient(1px 1px at 8% 45%,  rgba(205,127,50,0.5),   transparent 70%),
+    radial-gradient(1px 1px at 40% 25%, rgba(240,160,90,0.45),  transparent 70%),
+    radial-gradient(1px 1px at 70% 85%, rgba(205,127,50,0.5),   transparent 70%),
+    radial-gradient(1px 1px at 95% 20%, rgba(230,150,80,0.45),  transparent 70%),
+    linear-gradient(90deg, rgba(205,127,50,0.12), transparent 75%);
+  background-size:
+    120px 90px, 120px 90px, 120px 90px,
+    90px 70px,  90px 70px,  90px 70px,
+    60px 50px,  60px 50px,  60px 50px, 60px 50px,
+    100% 100%;
+  animation: v4-gold-rain 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-table tbody tr:has(.rank-2),
+  .rating-table tbody tr:has(.rank-3) { animation: none; }
+}
