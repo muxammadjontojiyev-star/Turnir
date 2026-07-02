@@ -42,7 +42,7 @@ repo/
 ├── main.py                     ✅ yaratilgan — bot ishga tushish nuqtasi (entrypoint)
 └── static/
     ├── index.html              ✅ yaratilgan — Web App HTML, barcha 4 bo'lim shu yerda
-    ├── style.css                ✅ yaratilgan — Web App stillari (+ fayl oxirida "DESIGN v3 — Stadium Premium" override blok: aurora hero, gradient statlar, sheen tugma, podium jadval, frosted nav, shimmer loading; HTML/JS'ga tegilmagan)
+    ├── style.css                ✅ yaratilgan — Web App stillari (+ fayl oxirida "DESIGN v3 — Stadium Premium" override blok: aurora hero, gradient statlar, sheen tugma, podium jadval, frosted nav, shimmer loading; HTML/JS'ga tegilmagan; + fayl oxirida "DESIGN v4 — Premium Floating Nav" blok: .bottom-nav va .wc-nav suzuvchi pill panel, aktiv tab gradient kartochka, .nav-glow o'chirilgan)
     ├── app.js                   ✅ yaratilgan — init, i18n (til tizimi), navigatsiya, eventlar
     ├── api.js                   ✅ yaratilgan — backend API chaqiruvlari
     └── worldcup.js              ✅ yaratilgan — Jahon Chempionati (World Cup) rejimi: 48 jamoa/12 guruh, home+reyting+profil
