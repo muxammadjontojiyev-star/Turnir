@@ -2750,3 +2750,72 @@ body::before {
   .card--hero::before, .btn--primary::after, .loading-title { animation: none; }
   .btn, .nav-item, .modal-box { transition: none; animation: none; }
 }
+
+/* ============================================================
+   DESIGN v4 — Premium Floating Nav (faqat pastki navigatsiya)
+   .bottom-nav (liga) + .wc-nav (World Cup) — ikkalasi bir xil.
+   HTML/JS o'zgartirilmagan, faqat override.
+   ============================================================ */
+
+/* Suzuvchi pill panel */
+.bottom-nav,
+.wc-nav {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  width: calc(100% - 24px);
+  max-width: 456px;
+  height: 62px;
+  border-radius: 31px;
+  background: linear-gradient(180deg, rgba(24,24,42,0.92), rgba(13,13,26,0.96));
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-top: 1px solid rgba(255,255,255,0.14);
+  box-shadow:
+    0 18px 40px -14px rgba(0,0,0,0.85),
+    0 4px 14px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  padding: 6px;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Tab elementlari */
+.nav-item,
+.wc-nav-item {
+  height: 100%;
+  border-radius: 25px;
+  gap: 2px;
+  transition: color .2s ease, background .25s ease, box-shadow .25s ease, transform .15s ease;
+}
+
+/* Aktiv tab — gradient pill kartochka */
+.nav-item.active,
+.wc-nav-item.active {
+  color: #fff;
+  background: linear-gradient(135deg, #5b3df5 0%, #7c4dff 45%, var(--cyan) 130%);
+  box-shadow:
+    0 8px 20px -6px rgba(97,61,245,0.55),
+    0 0 14px rgba(34,211,238,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.nav-item.active .nav-label,
+.wc-nav-item.active .wc-nav-label { color: #fff; }
+.nav-item.active .nav-icon {
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.35));
+  transform: none;
+}
+
+/* Eski neon ostki chiziq endi kerak emas (pill o'zi indikator) */
+.nav-glow { display: none; }
+
+/* Bosilganda yumshoq feedback */
+.nav-item:active,
+.wc-nav-item:active { transform: scale(0.96); }
+
+/* Reduced motion hurmati */
+@media (prefers-reduced-motion: reduce) {
+  .nav-item, .wc-nav-item { transition: none; }
+}
