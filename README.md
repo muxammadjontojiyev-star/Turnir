@@ -42,7 +42,7 @@ repo/
 ├── main.py                     ✅ yaratilgan — bot ishga tushish nuqtasi (entrypoint)
 └── static/
     ├── index.html              ✅ yaratilgan — Web App HTML, barcha 4 bo'lim shu yerda
-    ├── style.css                ✅ yaratilgan — Web App stillari
+    ├── style.css                ✅ yaratilgan — Web App stillari (+ fayl oxirida "DESIGN v2" override blok: ambient fon, karta/tugma/nav/modal polish; HTML/JS'ga tegilmagan)
     ├── app.js                   ✅ yaratilgan — init, i18n (til tizimi), navigatsiya, eventlar
     ├── api.js                   ✅ yaratilgan — backend API chaqiruvlari
     └── worldcup.js              ✅ yaratilgan — Jahon Chempionati (World Cup) rejimi: 48 jamoa/12 guruh, home+reyting+profil
