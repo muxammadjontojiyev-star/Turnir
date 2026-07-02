@@ -95,7 +95,7 @@ function wcPlayoffMatchItem(m) {
 
   return `
     <div class="wc-match-card wc-po-card">
-      <div class="wc-po-round">${escHtml(roundName)}</div>
+      <div class="wc-po-round">${escHtml(roundName)}<span class="wc-po-id">#${m.id}</span></div>
       <div class="${centerCls}" ${centerAttr}>${scoreText}</div>
       ${statusBadge}
       ${action}
@@ -340,8 +340,11 @@ async function wcPlayoffRejectFromModal() {
   }
 }
 
-// ===== BRACKET SETKA (rasmona) =====
+// ===== BRACKET SETKA (ikki tomonlama — namuna: FIFA 2026) =====
+// Chap yarim chapdan markazga, o'ng yarim o'ngdan markazga o'sadi, final markazda.
 const WC_BRACKET_ORDER = ["r32", "r16", "r8", "r4", "final", "bronze"];
+// Markazgacha bo'lgan bosqichlar (final/bronza markazda alohida)
+const WC_BRACKET_SIDE_ROUNDS = ["r32", "r16", "r8", "r4"];
 
 async function wcRenderBracket() {
   const t = APP.t;
@@ -351,27 +354,64 @@ async function wcRenderBracket() {
       return `<div class="empty-state">${escHtml(t.wc_playoff_not_started || "Play-off hali boshlanmagan")}</div>`;
     }
     const rounds = data.rounds || {};
-    const cols = WC_BRACKET_ORDER.filter(r => rounds[r] && rounds[r].length).map(r => {
-      const matches = rounds[r].sort((a, b) => a.position - b.position);
-      const cards = matches.map(m => wcBracketCard(m)).join("");
-      return `
-        <div class="wc-bracket-col">
-          <div class="wc-bracket-round-label">${escHtml(WC_PLAYOFF_ROUND_NAMES[r] || r)}</div>
-          ${cards}
-        </div>`;
-    }).join("");
+
+    // Har bosqich matchlarini position bo'yicha saralab, chap/o'ng yarimga bo'lamiz.
+    const leftCols = [];
+    const rightCols = [];
+    WC_BRACKET_SIDE_ROUNDS.forEach(r => {
+      const list = (rounds[r] || []).slice().sort((a, b) => a.position - b.position);
+      if (!list.length) return;
+      const half = Math.ceil(list.length / 2);
+      const leftMatches = list.slice(0, half);
+      const rightMatches = list.slice(half);
+      const label = escHtml(WC_PLAYOFF_ROUND_NAMES[r] || r);
+      if (leftMatches.length) {
+        leftCols.push(`<div class="wc-bracket-col">
+          <div class="wc-bracket-round-label">${label}</div>
+          ${leftMatches.map(m => wcBracketCard(m, "left")).join("")}
+        </div>`);
+      }
+      if (rightMatches.length) {
+        rightCols.push(`<div class="wc-bracket-col">
+          <div class="wc-bracket-round-label">${label}</div>
+          ${rightMatches.map(m => wcBracketCard(m, "right")).join("")}
+        </div>`);
+      }
+    });
+    // O'ng yarim ustunlari teskari tartibda (markazdan tashqariga: r4 markazga yaqin)
+    rightCols.reverse();
+
+    // Markaz ustuni: final + bronza
+    const finalMatches = (rounds["final"] || []).slice().sort((a, b) => a.position - b.position);
+    const bronzeMatches = (rounds["bronze"] || []).slice().sort((a, b) => a.position - b.position);
+    let centerCol = "";
+    if (finalMatches.length || bronzeMatches.length) {
+      const finalCards = finalMatches.map(m => wcBracketCard(m, "left")).join("");
+      const bronzeCards = bronzeMatches.map(m => wcBracketCard(m, "left")).join("");
+      centerCol = `<div class="wc-bracket-col wc-bracket-col--center">
+        ${finalMatches.length ? `<div class="wc-bracket-round-label wc-bracket-final-label">${escHtml(WC_PLAYOFF_ROUND_NAMES["final"] || "Final")}</div>${finalCards}` : ""}
+        ${bronzeMatches.length ? `<div class="wc-bracket-round-label wc-bracket-bronze-label">${escHtml(WC_PLAYOFF_ROUND_NAMES["bronze"] || "Bronza")}</div>${bronzeCards}` : ""}
+      </div>`;
+    }
+
     return `
       <div class="section-label">${escHtml(t.wc_bracket_title || "PLAY-OFF SETKASI")}</div>
-      <div class="wc-bracket-scroll"><div class="wc-bracket">${cols}</div></div>
+      <div class="wc-bracket-scroll">
+        <div class="wc-bracket wc-bracket--two-sided">
+          ${leftCols.join("")}
+          ${centerCol}
+          ${rightCols.join("")}
+        </div>
+      </div>
     `;
   } catch (_) {
     return `<div class="empty-state">${escHtml(t.no_data || "Ma'lumot yo'q")}</div>`;
   }
 }
 
-function wcBracketCard(m) {
-  const p1 = wcBracketSide(m.p1_team, m.p1_user, m.p1_nick, m.score1, m.status);
-  const p2 = wcBracketSide(m.p2_team, m.p2_user, m.p2_nick, m.score2, m.status);
+function wcBracketCard(m, side = "left") {
+  const p1 = wcBracketSide(m.p1_team, m.p1_user, m.p1_nick, m.score1, m.status, side);
+  const p2 = wcBracketSide(m.p2_team, m.p2_user, m.p2_nick, m.score2, m.status, side);
   const win1 = m.status === "confirmed" && m.score1 > m.score2;
   const win2 = m.status === "confirmed" && m.score2 > m.score1;
   return `
@@ -381,10 +421,17 @@ function wcBracketCard(m) {
     </div>`;
 }
 
-function wcBracketSide(team, user, nick, score, status) {
+// side="right" bo'lsa bayroq/nom/score o'ngdan chapga tartibda (oyna aks-tasviri).
+function wcBracketSide(team, user, nick, score, status, side = "left") {
   const name = team || "—";
   const flag = team ? wcTeamFlag(team) : "";
   const scoreTxt = (score != null) ? score : "";
+  if (side === "right") {
+    return `
+      <span class="wc-bracket-score">${scoreTxt}</span>
+      <span class="wc-bracket-name">${escHtml(name)}</span>
+      <span class="wc-bracket-flag">${flag}</span>`;
+  }
   return `
     <span class="wc-bracket-flag">${flag}</span>
     <span class="wc-bracket-name">${escHtml(name)}</span>
