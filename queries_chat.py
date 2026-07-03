@@ -8,6 +8,20 @@ Barcha funksiyalar VERBATIM ko'chirilgan, mantiq o'zgartirilmagan.
 from models import get_connection
 from queries_users import get_user_by_telegram_id
 
+# (2026-07-03 hotfix: bo'lishda queries_matches.py'ga tushib qolgan edi — o'z joyiga qaytarildi.
+#  wc_chat.py bularni `from queries import ...` orqali oladi — facade eksporti saqlanadi.)
+# WebApp chat faqat AKTIV (o'ynalmagan / tasdiq kutilayotgan) o'yinlarda ishlaydi.
+CHAT_ACTIVE_MATCH_STATUSES = ("pending", "awaiting_confirmation")
+
+# Bot bildirishnomasi anti-spam: shu (match, raqib) uchun ketma-ket bot xabarlari
+# orasidagi minimal vaqt (soniya). 60s = 1 daqiqada bir martadan ko'p emas.
+CHAT_NOTIFY_THROTTLE_SECONDS = 60
+
+# Online deb hisoblash chegarasi: oxirgi faollikdan shuncha soniyada online.
+ONLINE_THRESHOLD_SECONDS = 35
+# "Yozmoqda" signali shuncha soniyagacha amal qiladi (yangilanmasa o'chadi).
+TYPING_THRESHOLD_SECONDS = 6
+
 
 def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None:
     """

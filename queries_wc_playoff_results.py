@@ -6,7 +6,11 @@ Barcha funksiyalar VERBATIM ko'chirilgan, mantiq o'zgartirilmagan.
 """
 
 from models import get_connection
-from queries_wc_playoff import wc_playoff_advance_winner, wc_playoff_get_match_by_id, wc_playoff_get_open_round_index, wc_playoff_round_is_open
+from queries_wc_playoff import (
+    WC_PLAYOFF_ROUND_ORDER,  # 2026-07-03 hotfix: round tartibi core modulda qolgan edi
+    wc_playoff_advance_winner, wc_playoff_get_match_by_id,
+    wc_playoff_get_open_round_index, wc_playoff_round_is_open,
+)
 
 
 def wc_playoff_get_user_matches(user_id: int) -> list[dict]:

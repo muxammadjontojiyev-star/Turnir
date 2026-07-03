@@ -49,18 +49,9 @@ def get_match_by_id(match_id: int) -> dict | None:
     conn.close()
     return dict(row) if row else None
 
-
-# WebApp chat faqat AKTIV (o'ynalmagan / tasdiq kutilayotgan) o'yinlarda ishlaydi.
-CHAT_ACTIVE_MATCH_STATUSES = ("pending", "awaiting_confirmation")
-
-# Bot bildirishnomasi anti-spam: shu (match, raqib) uchun ketma-ket bot xabarlari
-# orasidagi minimal vaqt (soniya). 60s = 1 daqiqada bir martadan ko'p emas.
-CHAT_NOTIFY_THROTTLE_SECONDS = 60
-
-# Online deb hisoblash chegarasi: oxirgi faollikdan shuncha soniyada online.
-ONLINE_THRESHOLD_SECONDS = 35
-# "Yozmoqda" signali shuncha soniyagacha amal qiladi (yangilanmasa o'chadi).
-TYPING_THRESHOLD_SECONDS = 6
+# ESLATMA (2026-07-03 hotfix): chat konstantalari (CHAT_ACTIVE_MATCH_STATUSES,
+# CHAT_NOTIFY_THROTTLE_SECONDS, ONLINE_THRESHOLD_SECONDS, TYPING_THRESHOLD_SECONDS)
+# o'z joyiga — queries_chat.py'ga ko'chirildi (bo'lishda shu chunk'ka tushib qolgan edi).
 
 
 def submit_match_result(match_id: int, score1: int, score2: int, submitted_by: int) -> tuple[bool, str]:
