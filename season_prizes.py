@@ -11,6 +11,7 @@ Mavsum "Mavsumni yakunlash" admin tugmasi bilan yakunlanadi: sovrinlar
 hisoblanadi, season_prizes'ga saqlanadi, mavsum raqami oshadi.
 """
 
+from config import SEASON_FINALIZE_COOLDOWN_SECONDS
 from models import get_connection
 
 
@@ -104,14 +105,65 @@ def finalize_season() -> dict:
     Mavsumni yakunlaydi: sovrinlarni hisoblaydi, season_prizes'ga saqlaydi,
     mavsum raqamini oshiradi.
 
-    Qaytaradi: {season, saved: {golden_ball, golden_boot, league_cups, wc_cup},
-                counts: {...}}
-    """
-    season = get_current_season()
-    prizes = calculate_season_prizes()
+    IDEMPOTENTLIK (audit A3): butun amal BEGIN IMMEDIATE tranzaksiyasida.
+    Joriy mavsum uchun season_prizes'da yozuv ALLAQACHON bo'lsa —
+    {"already": True} qaytadi (tugma 2 marta bosilsa dublikat yozilmaydi,
+    mavsum raqami ham sakramaydi). Parallel ikki so'rovda BEGIN IMMEDIATE
+    ularni navbatga qo'yadi — faqat bittasi yakunlaydi.
 
+    Qaytaradi: {season, already, counts: {...}, prizes: {...}}
+    """
     conn = get_connection()
+    conn.isolation_level = None  # tranzaksiyani qo'lda boshqaramiz
     cursor = conn.cursor()
+    try:
+        return _finalize_season_locked(conn, cursor)
+    except Exception:
+        # Yarim yozilgan holat qolmasin, yozish qulfi bo'shatilsin
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass  # tranzaksiya allaqachon yopilgan bo'lishi mumkin
+        conn.close()
+        raise
+
+
+def _finalize_season_locked(conn, cursor) -> dict:
+    """finalize_season'ning tranzaksiya ichidagi asosiy qismi (yordamchi)."""
+    cursor.execute("BEGIN IMMEDIATE")
+
+    cursor.execute("SELECT current_season, last_finalized_at FROM season_state WHERE id = 1")
+    row = cursor.fetchone()
+    season = row["current_season"] if row else 1
+    last_at = row["last_finalized_at"] if row else None
+
+    # COOLDOWN (audit A3, qoida #38): yakunlashda mavsum raqami oshgani uchun
+    # "shu mavsumda yozuv bormi" tekshiruvi yolg'iz o'zi takror bosishni to'sa
+    # olmaydi (ikkinchi bosish "yangi" mavsumni yakunlab yuborardi). Shuning
+    # uchun asosiy himoya — oxirgi yakunlashdan beri o'tgan vaqt: cooldown
+    # ichidagi har qanday takror so'rov "allaqachon yakunlangan" deb qaytariladi.
+    if last_at is not None:
+        cursor.execute(
+            "SELECT (julianday('now') - julianday(?)) * 86400 AS diff", (last_at,)
+        )
+        diff = cursor.fetchone()["diff"]
+        if diff is not None and diff < SEASON_FINALIZE_COOLDOWN_SECONDS:
+            cursor.execute("ROLLBACK")
+            conn.close()
+            return {"season": season, "already": True, "counts": {}, "prizes": None}
+
+    # Shu mavsum uchun sovrinlar allaqachon saqlanganmi? (qo'shimcha himoya qatlami)
+    cursor.execute(
+        "SELECT 1 FROM season_prizes WHERE season_number = ? LIMIT 1", (season,)
+    )
+    if cursor.fetchone() is not None:
+        cursor.execute("ROLLBACK")
+        conn.close()
+        return {"season": season, "already": True, "counts": {}, "prizes": None}
+
+    # Hisoblash o'qish-faqat (o'z ulanishlari bilan) — WAL rejimida yozish
+    # qulfi ostida ham bemalol ishlaydi.
+    prizes = calculate_season_prizes()
 
     def save(user_id, prize_type, league_id=None):
         cursor.execute(
@@ -137,13 +189,16 @@ def finalize_season() -> dict:
         save(prizes["wc_cup"]["user_id"], "wc_cup")
         counts["wc_cup"] = 1
 
-    # Mavsum raqamini oshiramiz
-    cursor.execute("UPDATE season_state SET current_season = current_season + 1 WHERE id = 1")
+    # Mavsum raqamini oshiramiz va yakunlash vaqtini yozamiz (cooldown uchun)
+    cursor.execute(
+        "UPDATE season_state SET current_season = current_season + 1, "
+        "last_finalized_at = datetime('now') WHERE id = 1"
+    )
 
-    conn.commit()
+    cursor.execute("COMMIT")
     conn.close()
 
-    return {"season": season, "counts": counts, "prizes": prizes}
+    return {"season": season, "already": False, "counts": counts, "prizes": prizes}
 
 
 def get_user_prizes(user_id: int) -> list[dict]:

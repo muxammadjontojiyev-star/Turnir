@@ -24,7 +24,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response, JSONResponse
 
-from config import BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS, MATCHDAYS_PER_UNLOCK, WEBAPP_URL, MAX_SCORE
+from config import (
+    BOT_TOKEN, ADMIN_TELEGRAM_IDS, LEAGUE_STATUS_IN_PROGRESS, TOTAL_MATCHDAYS,
+    MATCHDAYS_PER_UNLOCK, WEBAPP_URL, MAX_SCORE,
+    IP_RATE_LIMIT_MAX, IP_RATE_LIMIT_WINDOW,
+    PHOTO_CACHE_TTL_SECONDS, PHOTO_CACHE_NEGATIVE_TTL_SECONDS, PHOTO_CACHE_MAX_ENTRIES,
+)
+
+# XAVFSIZLIK GUARD (audit B7): BOT_TOKEN bo'sh bo'lsa initData HMAC kaliti
+# hammaga ma'lum qiymatdan hisoblanадi — istalgan kishi soxta initData yasay
+# olardi. main.py buni tekshiradi, lekin API alohida (`uvicorn api:app`)
+# ishga tushirilganda ham himoya bo'lishi shart.
+if not BOT_TOKEN:
+    raise RuntimeError(
+        "BOT_TOKEN topilmadi — API ishga tushirilmaydi "
+        "(initData tekshiruvi himoyasiz bo'lib qolardi)."
+    )
 from queries import (
     get_all_leagues, get_user_by_telegram_id, get_or_create_user,
     get_league_by_id, count_league_players, get_user_registration,
@@ -174,21 +189,47 @@ def verify_telegram_init_data(init_data: str) -> dict:
 RATE_LIMIT_MAX = 40
 RATE_LIMIT_WINDOW = 10  # sekund
 _rate_buckets: dict = {}
+_ip_buckets: dict = {}
+
+
+def _bucket_hit(buckets: dict, key, max_count: int, window: int) -> bool:
+    """
+    Umumiy rate-limit hisoblagichi (user va IP limitlari uchun bitta mantiq —
+    qoida #26 DRY). True → limit oshib ketdi.
+    """
+    now = time.time()
+    bucket = buckets.get(key)
+    if bucket is None or now - bucket["start"] > window:
+        buckets[key] = {"start": now, "count": 1}
+        # Xotira o'smasligi uchun eski yozuvlarni vaqti-vaqti bilan tozalash
+        if len(buckets) > 5000:
+            for k in [k for k, b in buckets.items() if now - b["start"] > window]:
+                buckets.pop(k, None)
+        return False
+    bucket["count"] += 1
+    return bucket["count"] > max_count
 
 
 def _check_rate_limit(telegram_id: int):
-    now = time.time()
-    bucket = _rate_buckets.get(telegram_id)
-    if bucket is None or now - bucket["start"] > RATE_LIMIT_WINDOW:
-        _rate_buckets[telegram_id] = {"start": now, "count": 1}
-        # Xotira o'smasligi uchun eski yozuvlarni vaqti-vaqti bilan tozalash
-        if len(_rate_buckets) > 5000:
-            for tid in [t for t, b in _rate_buckets.items() if now - b["start"] > RATE_LIMIT_WINDOW]:
-                _rate_buckets.pop(tid, None)
-        return
-    bucket["count"] += 1
-    if bucket["count"] > RATE_LIMIT_MAX:
+    if _bucket_hit(_rate_buckets, telegram_id, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW):
         raise HTTPException(status_code=429, detail="too_many_requests")
+
+
+# AUDIT A4: IP darajasidagi limit — auth'siz endpointlarni ham qamrab oladi
+# (/players/{id}/photo, /rating, /leagues va h.k.). /webapp statik fayllari
+# hisobga olinmaydi (sahifa yuklanishida ko'p fayl birdan keladi).
+@app.middleware("http")
+async def ip_rate_limit(request, call_next):
+    path = request.url.path
+    if not path.startswith("/webapp"):
+        # Railway/proxy ortida haqiqiy IP X-Forwarded-For'ning birinchi qiymatida
+        fwd = request.headers.get("x-forwarded-for", "")
+        ip = fwd.split(",")[0].strip() if fwd else (
+            request.client.host if request.client else "unknown"
+        )
+        if _bucket_hit(_ip_buckets, ip, IP_RATE_LIMIT_MAX, IP_RATE_LIMIT_WINDOW):
+            return JSONResponse(status_code=429, content={"detail": "too_many_requests"})
+    return await call_next(request)
 
 
 def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
@@ -208,8 +249,9 @@ def get_authenticated_user(x_telegram_init_data: str = Header(...)) -> dict:
     # Online holati uchun: foydalanuvchi ilovani ishlatgan har lahzada faollik vaqti yangilanadi
     try:
         touch_last_seen(telegram_id)
-    except Exception:
-        pass
+    except Exception as exc:
+        # Online-holat yangilanmasa ham so'rov davom etadi, lekin jim yutmaymiz (qoida #44)
+        logger.debug("touch_last_seen xatosi (tg=%s): %s", telegram_id, exc)
     return user
 
 
@@ -435,6 +477,26 @@ def get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_us
 
 # ============ GET /players/{user_id}/photo ============
 
+# Rasm keshi: user_id -> (expires_at, cached_at, content|None, media_type).
+# content=None → "rasm yo'q" (negativ kesh, qisqa muddat).
+_photo_cache: dict[int, tuple[float, float, bytes | None, str]] = {}
+
+
+def _photo_cache_put(user_id: int, content: bytes | None, media_type: str) -> None:
+    """Rasm/negativ natijani keshga yozadi; hajm chegarasidan oshsa tozalaydi."""
+    now = time.time()
+    ttl = PHOTO_CACHE_TTL_SECONDS if content is not None else PHOTO_CACHE_NEGATIVE_TTL_SECONDS
+    _photo_cache[user_id] = (now + ttl, now, content, media_type)
+    if len(_photo_cache) > PHOTO_CACHE_MAX_ENTRIES:
+        # Avval muddati o'tganlarni tashlaymiz, yetmasa eng eskilarini
+        expired = [k for k, v in _photo_cache.items() if v[0] <= now]
+        for k in expired:
+            _photo_cache.pop(k, None)
+        while len(_photo_cache) > PHOTO_CACHE_MAX_ENTRIES:
+            oldest = min(_photo_cache, key=lambda k: _photo_cache[k][1])
+            _photo_cache.pop(oldest, None)
+
+
 @app.get("/players/{user_id}/photo")
 async def get_player_photo(user_id: int):
     """
@@ -445,6 +507,18 @@ async def get_player_photo(user_id: int):
     qismi. Bot token URL'da oshkor bo'lmasligi uchun rasm baytlari server orqali
     uzatiladi. Rasm yo'q, maxfiy yoki xato bo'lsa — 404 (frontend ism harfini ko'rsatadi).
     """
+    # AUDIT A4: kesh — har chaqiriqda Telegram API'ga 3 tagacha so'rov ketardi,
+    # begona skript bot tokenining Telegram limitini yeb qo'yishi mumkin edi.
+    # Topilgan rasm PHOTO_CACHE_TTL_SECONDS, "rasm yo'q" holati esa qisqa
+    # (NEGATIVE_TTL) muddatga keshlanadi.
+    now = time.time()
+    cached = _photo_cache.get(user_id)
+    if cached is not None and cached[0] > now:
+        _, _, content, media_type = cached
+        if content is None:
+            raise HTTPException(status_code=404, detail="no_photo")
+        return Response(content=content, media_type=media_type)
+
     target = get_user_by_id(user_id)
     if target is None:
         raise HTTPException(status_code=404, detail="user_not_found")
@@ -462,6 +536,7 @@ async def get_player_photo(user_id: int):
             data1 = r1.json()
             photos = data1.get("result", {}).get("photos", [])
             if not photos or not photos[0]:
+                _photo_cache_put(user_id, None, "")
                 raise HTTPException(status_code=404, detail="no_photo")
 
             # Eng kichik o'lchamni olamiz (avatar uchun yetarli, tez yuklanadi)
@@ -471,19 +546,23 @@ async def get_player_photo(user_id: int):
             r2 = await client.get(f"{base}/getFile", params={"file_id": file_id})
             file_path = r2.json().get("result", {}).get("file_path")
             if not file_path:
+                _photo_cache_put(user_id, None, "")
                 raise HTTPException(status_code=404, detail="no_file_path")
 
             # 3) Haqiqiy rasmni yuklab olish
             r3 = await client.get(f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}")
             if r3.status_code != 200:
+                _photo_cache_put(user_id, None, "")
                 raise HTTPException(status_code=404, detail="photo_fetch_failed")
 
             media_type = r3.headers.get("content-type", "image/jpeg")
+            _photo_cache_put(user_id, r3.content, media_type)
             return Response(content=r3.content, media_type=media_type)
 
     except HTTPException:
         raise
     except Exception:
+        _photo_cache_put(user_id, None, "")
         raise HTTPException(status_code=404, detail="photo_unavailable")
 
 
@@ -764,6 +843,7 @@ def wc_admin_fix_confirmed(
     Query params: match_id, score1, score2
     Xato holatlari: match_not_found, wrong_status → 400
     """
+    validate_scores(score1, score2)  # AUDIT B2: admin xatosi ham reytingni buzmasin
     success, reason = wc_admin_fix_confirmed_match(match_id, score1, score2)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -775,6 +855,7 @@ def wc_admin_fix_confirmed(
 @app.get("/wc/matches/{match_id}/messages")
 def wc_get_match_messages(match_id: int, is_playoff: int = 0, user: dict = Depends(get_authenticated_user)):
     """WC aktiv match xabarlari (vaqt tartibida). is_playoff=1 → play-off. Access yo'q → 403."""
+    is_playoff = 1 if is_playoff else 0  # AUDIT B8: faqat 0/1
     messages = wc_get_chat_messages(match_id, user["telegram_id"], is_playoff)
     if messages is None:
         raise HTTPException(status_code=403, detail="chat_no_access")
@@ -789,6 +870,7 @@ async def wc_post_match_message(
     user: dict = Depends(get_authenticated_user),
 ):
     """WC aktiv match raqibiga xabar yuboradi. Body: {"text": "..."}. is_playoff=1 → play-off."""
+    is_playoff = 1 if is_playoff else 0  # AUDIT B8: faqat 0/1
     ok, reason, notify = wc_send_chat_message(match_id, user["telegram_id"], text, is_playoff)
     if not ok:
         if reason == "empty":
@@ -804,8 +886,10 @@ async def wc_post_match_message(
                 recipient.get("language") if recipient else None,
                 preview=notify["text_preview"],
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            # Xabar DB'ga yozildi — bot bildirishnomasi yiqilsa javobni buzmaymiz,
+            # lekin log qoldiramiz (qoida #44)
+            logger.warning("Chat bot bildirishnomasi yuborilmadi: %s", exc)
 
     return {"ok": True}
 
@@ -819,6 +903,7 @@ def wc_get_unread_counts(user: dict = Depends(get_authenticated_user)):
 @app.post("/wc/matches/{match_id}/typing")
 def wc_post_typing(match_id: int, is_playoff: int = 0, user: dict = Depends(get_authenticated_user)):
     """WC chatda 'yozmoqda' signali. is_playoff=1 → play-off."""
+    is_playoff = 1 if is_playoff else 0  # AUDIT B8: faqat 0/1
     ok = wc_set_typing(match_id, user["telegram_id"], is_playoff)
     if not ok:
         raise HTTPException(status_code=403, detail="chat_no_access")
@@ -828,6 +913,7 @@ def wc_post_typing(match_id: int, is_playoff: int = 0, user: dict = Depends(get_
 @app.get("/wc/matches/{match_id}/state")
 def wc_get_match_state(match_id: int, is_playoff: int = 0, user: dict = Depends(get_authenticated_user)):
     """WC raqibning chat holati (online / yozmoqda / oxirgi ko'rinish). is_playoff=1 → play-off."""
+    is_playoff = 1 if is_playoff else 0  # AUDIT B8: faqat 0/1
     state = wc_get_chat_state(match_id, user["telegram_id"], is_playoff)
     if state is None:
         raise HTTPException(status_code=403, detail="chat_no_access")
@@ -876,6 +962,8 @@ def wc_admin_match_set_score(
     Query params: match_id, score1, score2, is_playoff (0=guruh, 1=play-off)
     Xato: match_not_found → 400
     """
+    validate_scores(score1, score2)  # AUDIT B2
+    is_playoff = 1 if is_playoff else 0  # AUDIT B8: faqat 0/1
     success, reason = wc_admin_set_score(match_id, score1, score2, is_playoff)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -898,6 +986,7 @@ def wc_admin_match_reset(
     Query param: match_id, is_playoff (0=guruh, 1=play-off)
     Xato: match_not_found, already_pending → 400
     """
+    is_playoff = 1 if is_playoff else 0  # AUDIT B8: faqat 0/1
     success, reason = wc_admin_reset_match(match_id, is_playoff)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -1035,6 +1124,9 @@ def season_finalize(admin: dict = Depends(get_authenticated_super_admin)):
     """
     from season_prizes import finalize_season
     result = finalize_season()
+    if result.get("already"):
+        # AUDIT A3: tugma takror bosildi — dublikat yozilmadi, mavsum oshmadi
+        raise HTTPException(status_code=400, detail="already_finalized")
     return {"status": "ok", "season": result["season"], "counts": result["counts"]}
 
 
@@ -1246,8 +1338,10 @@ async def post_match_message(
                 recipient.get("language") if recipient else None,
                 preview=notify["text_preview"],
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            # Xabar DB'ga yozildi — bot bildirishnomasi yiqilsa javobni buzmaymiz,
+            # lekin log qoldiramiz (qoida #44)
+            logger.warning("Chat bot bildirishnomasi yuborilmadi: %s", exc)
 
     return {"ok": True}
 
@@ -1418,6 +1512,8 @@ def admin_resolve_rejected_match(
     Query params: match_id, action ("set_result" yoki "reset"), score1, score2 (set_result uchun shart)
     Xato holatlari: match_not_found, wrong_status, invalid_action, score_missing → 400
     """
+    if score1 is not None and score2 is not None:
+        validate_scores(score1, score2)  # AUDIT B2 (set_result holati)
     success, reason = admin_resolve_match(match_id, action, score1, score2)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
@@ -1447,6 +1543,7 @@ def admin_fix_confirmed(
     if not can_manage_league(admin["telegram_id"], match["league_id"]):
         raise HTTPException(status_code=403, detail="league_not_allowed")
 
+    validate_scores(score1, score2)  # AUDIT B2: admin xatosi ham reytingni buzmasin
     success, reason = admin_fix_confirmed_match(match_id, score1, score2)
     if not success:
         raise HTTPException(status_code=400, detail=reason)

@@ -67,6 +67,26 @@ DB_PATH = os.getenv("DB_PATH", "efootball_bot.db")
 # o'yin uchun yetarli; noto'g'ri/zararli kiritishdan himoya)
 MAX_SCORE = int(os.getenv("MAX_SCORE", "30"))
 
+# === IP darajasidagi rate-limit (auth'siz endpointlar uchun ham) ===
+# Bitta IP'dan 10 sekundda maksimal so'rovlar soni. /webapp statik fayllar
+# hisobga olinmaydi. Oddiy foydalanish (chat polling ~15 so'rov/10s) bemalol
+# sig'adi; skript/flood 429 oladi.
+IP_RATE_LIMIT_MAX = int(os.getenv("IP_RATE_LIMIT_MAX", "120"))
+IP_RATE_LIMIT_WINDOW = 10  # sekund
+
+# === Mavsum yakunlash himoyasi ===
+# "Mavsumni yakunlash" tugmasi takror bosilsa (yoki so'rov qayta yuborilsa),
+# shu soniya ichida ikkinchi yakunlash rad etiladi (audit A3, qoida #38).
+# Haqiqiy keyingi mavsum yakunlashi haftalar keyin bo'ladi — 5 daqiqa yetarli.
+SEASON_FINALIZE_COOLDOWN_SECONDS = int(os.getenv("SEASON_FINALIZE_COOLDOWN_SECONDS", "300"))
+
+# === Profil rasm proxy keshi ===
+# /players/{id}/photo har chaqiriqda Telegram API'ga 3 tagacha so'rov qilardi —
+# kesh bot tokenining Telegram limitini himoya qiladi (audit A4).
+PHOTO_CACHE_TTL_SECONDS = int(os.getenv("PHOTO_CACHE_TTL_SECONDS", "600"))   # topilgan rasm
+PHOTO_CACHE_NEGATIVE_TTL_SECONDS = 60   # rasm yo'q/maxfiy holat qisqa keshlanadi
+PHOTO_CACHE_MAX_ENTRIES = 500           # xotira o'smasligi uchun yuqori chegara
+
 # === WebApp ===
 # ⚠️ PLACEHOLDER — WebApp hostingga joylashgach, haqiqiy URL bilan almashtirilishi kerak
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://example.com/webapp")
@@ -76,8 +96,12 @@ PRIZE_TOP_SCORER = "golden_boot"   # Eng ko'p gol urgan — Oltin Butsa
 PRIZE_WINNER = "golden_ball"       # Turnir g'olibi — Oltin To'p znachogi
 
 # === Adminlar ===
-# Shu Telegram ID'lar WebApp'da admin paneliga kira oladi
-ADMIN_TELEGRAM_IDS = [6829293074]
+# Shu Telegram ID'lar WebApp'da admin paneliga kira oladi (bosh admin).
+# Env'dan o'qiladi (qoida #46): ADMIN_TELEGRAM_IDS="6829293074" yoki
+# vergul bilan bir nechta: "111,222". Env yo'q bo'lsa joriy qiymat ishlaydi
+# (mavjud deploy buzilmasligi uchun).
+_admin_ids_raw = os.getenv("ADMIN_TELEGRAM_IDS", "6829293074")
+ADMIN_TELEGRAM_IDS = [int(x) for x in _admin_ids_raw.replace(" ", "").split(",") if x]
 
 # === Majburiy kanal a'zoligi ===
 # Foydalanuvchi botdan/WebApp'dan foydalanish uchun shu kanalga a'zo bo'lishi shart.

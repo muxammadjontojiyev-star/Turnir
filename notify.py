@@ -52,8 +52,9 @@ async def notify_user(telegram_id: int, text_key: str, language: str, **fmt) -> 
     if fmt:
         try:
             message = message.format(**fmt)
-        except Exception:
-            pass  # placeholder mos kelmasa — xom matn yuboriladi
+        except (KeyError, IndexError, ValueError) as exc:
+            # Placeholder mos kelmasa — xom matn yuboriladi, lekin log qoldiramiz (qoida #44)
+            logger.warning("Bildirishnoma format xatosi (%s): %s", text_key, exc)
     return await _send_message(telegram_id, message)
 
 

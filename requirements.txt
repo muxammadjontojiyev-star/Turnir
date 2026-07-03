@@ -1,4 +1,9 @@
-python-telegram-bot
-fastapi
-uvicorn
-httpx
+# Versiya chegaralari (audit B6, qoida #47): major-versiya sakrashi deploy'ni
+# kutilmaganda sindirmasligi uchun. httpx yuqori chegarasi python-telegram-bot
+# o'zining httpx talabi bilan to'qnashmasligi uchun tor qo'yildi.
+# TAVSIYA: Railway'da hozir ishlayotgan aniq versiyalarni `pip freeze` bilan
+# olib, shu yerga == bilan qotirib qo'ysangiz yanada barqaror bo'ladi.
+python-telegram-bot>=21.0,<23
+fastapi>=0.110,<1.0
+uvicorn>=0.29,<1.0
+httpx>=0.27,<0.29

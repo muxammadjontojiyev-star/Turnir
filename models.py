@@ -5,8 +5,11 @@ Bu fayl faqat jadval strukturasini belgilaydi (CREATE TABLE).
 CRUD amallari uchun queries.py ga qarang.
 """
 
+import logging
 import sqlite3
 from config import DB_PATH
+
+logger = logging.getLogger(__name__)
 
 
 def get_connection():
@@ -335,15 +338,29 @@ def init_db():
         "ALTER TABLE wc_messages ADD COLUMN is_playoff INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE wc_chat_notify ADD COLUMN is_playoff INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE wc_chat_typing ADD COLUMN is_playoff INTEGER NOT NULL DEFAULT 0",
+        # A3: takror "Mavsumni yakunlash" bosishdan himoya uchun oxirgi yakunlash vaqti
+        "ALTER TABLE season_state ADD COLUMN last_finalized_at TIMESTAMP",
     ]
     for sql in migrations:
         try:
             cursor.execute(sql)
             conn.commit()
-        except Exception:
-            pass  # Ustun allaqachon mavjud — xato e'tiborsiz qoldiriladi
+        except sqlite3.OperationalError as exc:
+            # "duplicate column" — ustun allaqachon mavjud, bu normal (idempotent).
+            # Boshqa har qanday xato — sxema buzilishi, jim yutmaymiz (qoida #44).
+            if "duplicate column" in str(exc).lower():
+                logger.debug("Migratsiya o'tkazib yuborildi (ustun bor): %s", sql)
+            else:
+                logger.error("Migratsiya xatosi: %s — %s", sql, exc)
+                raise
 
     conn.close()
+
+    # Tuzatuvchi migratsiyalar (jadval rebuild + UNIQUE + indekslar) —
+    # db_migrations.py'da, oddiy ALTER'lardan KEYIN ishlashi shart
+    # (is_playoff ustuni allaqachon qo'shilgan bo'ladi).
+    from db_migrations import run_migrations  # lokal import — circular oldini olish
+    run_migrations()
 
 
 def seed_leagues():

@@ -696,35 +696,67 @@ def register_user_to_league(user_id: int, league_id: int, club_name: str | None 
     """
     Foydalanuvchini ligaga ro'yxatdan o'tkazadi.
 
+    RACE HIMOYASI (audit A2): barcha tekshiruvlar va INSERT bitta BEGIN IMMEDIATE
+    tranzaksiyasida — ikki kishi bir vaqtda bossa ham bitta klub ikki kishiga
+    yozilmaydi va liga max_players'dan oshmaydi. Qo'shimcha qatlam:
+    UNIQUE(league_id, club_name) indeksi (db_migrations.py) IntegrityError beradi.
+
     Qaytaradi: (muvaffaqiyat: bool, sabab: str)
-    Sabablar: "ok", "already_registered", "league_full", "club_taken"
+    Sabablar: "ok", "already_registered", "league_full", "league_not_found", "club_taken"
     """
-    existing = get_user_registration(user_id)
-    if existing is not None:
-        return False, "already_registered"
-
-    league = get_league_by_id(league_id)
-    if league is None:
-        return False, "league_not_found"
-
-    current_count = count_league_players(league_id)
-    if current_count >= league["max_players"]:
-        return False, "league_full"
-
-    if club_name is not None:
-        taken = get_taken_clubs(league_id)
-        if club_name in taken:
-            return False, "club_taken"
+    import sqlite3
 
     conn = get_connection()
+    conn.isolation_level = None  # tranzaksiyani qo'lda boshqaramiz
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO registrations (user_id, league_id, club_name) VALUES (?, ?, ?)",
-        (user_id, league_id, club_name),
-    )
-    conn.commit()
-    conn.close()
-    return True, "ok"
+    try:
+        cursor.execute("BEGIN IMMEDIATE")  # yozish qulfi — parallel so'rovlar navbatda
+
+        cursor.execute("SELECT 1 FROM registrations WHERE user_id = ?", (user_id,))
+        if cursor.fetchone() is not None:
+            cursor.execute("ROLLBACK")
+            return False, "already_registered"
+
+        cursor.execute("SELECT max_players FROM leagues WHERE id = ?", (league_id,))
+        league_row = cursor.fetchone()
+        if league_row is None:
+            cursor.execute("ROLLBACK")
+            return False, "league_not_found"
+
+        cursor.execute(
+            "SELECT COUNT(*) AS cnt FROM registrations WHERE league_id = ?",
+            (league_id,),
+        )
+        if cursor.fetchone()["cnt"] >= league_row["max_players"]:
+            cursor.execute("ROLLBACK")
+            return False, "league_full"
+
+        if club_name is not None:
+            cursor.execute(
+                "SELECT 1 FROM registrations WHERE league_id = ? AND club_name = ?",
+                (league_id, club_name),
+            )
+            if cursor.fetchone() is not None:
+                cursor.execute("ROLLBACK")
+                return False, "club_taken"
+
+        cursor.execute(
+            "INSERT INTO registrations (user_id, league_id, club_name) VALUES (?, ?, ?)",
+            (user_id, league_id, club_name),
+        )
+        cursor.execute("COMMIT")
+        return True, "ok"
+    except sqlite3.IntegrityError as exc:
+        # UNIQUE indeks ishga tushdi (qo'shimcha himoya qatlami)
+        cursor.execute("ROLLBACK")
+        if "user_id" in str(exc):
+            return False, "already_registered"
+        return False, "club_taken"
+    except Exception:
+        cursor.execute("ROLLBACK")
+        raise
+    finally:
+        conn.close()
 
 
 # ============ MATCHES ============
@@ -1368,34 +1400,64 @@ def wc_register_user(user_id: int, group_letter: str, team_name: str) -> tuple[b
               "wc_invalid_group", "wc_invalid_team", "wc_team_taken"
     """
     # WC_TEAMS_PER_GROUP markazlashtirilgan (wc_data) — guruh to'lganini tekshirish uchun
+    import sqlite3
     from wc_data import wc_is_valid_group, wc_team_in_group, WC_TEAMS_PER_GROUP
 
-    # Foydalanuvchi WC'da allaqachon ro'yxatdan o'tganmi (1 marta qoidasi)
-    existing = wc_get_user_registration(user_id)
-    if existing is not None:
-        return False, "wc_already_registered"
-
+    # Statik (DB'siz) validatsiyalar — tranzaksiyadan tashqarida tez fail
     if not wc_is_valid_group(group_letter):
         return False, "wc_invalid_group"
 
     if not wc_team_in_group(group_letter, team_name):
         return False, "wc_invalid_team"
 
-    # Guruh to'lgan bo'lsa (4 jamoa band)
-    if wc_count_group_players(group_letter) >= WC_TEAMS_PER_GROUP:
-        return False, "wc_group_full"
-
-    # Jamoa allaqachon band qilinganmi (race condition uchun ham backend himoyasi)
-    if team_name in wc_get_taken_teams(group_letter):
-        return False, "wc_team_taken"
-
+    # RACE HIMOYASI (audit A2): tekshiruv + INSERT bitta BEGIN IMMEDIATE
+    # tranzaksiyasida (liga register_user_to_league bilan bir xil naqsh — qoida #10).
+    # Qo'shimcha qatlam: UNIQUE(group_letter, team_name) indeksi (db_migrations.py).
     conn = get_connection()
+    conn.isolation_level = None
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO wc_registrations (user_id, group_letter, team_name) VALUES (?, ?, ?)",
-        (user_id, group_letter, team_name),
-    )
-    conn.commit()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+
+        # Foydalanuvchi WC'da allaqachon ro'yxatdan o'tganmi (1 marta qoidasi)
+        cursor.execute("SELECT 1 FROM wc_registrations WHERE user_id = ?", (user_id,))
+        if cursor.fetchone() is not None:
+            cursor.execute("ROLLBACK")
+            return False, "wc_already_registered"
+
+        # Guruh to'lgan bo'lsa (4 jamoa band)
+        cursor.execute(
+            "SELECT COUNT(*) AS cnt FROM wc_registrations WHERE group_letter = ?",
+            (group_letter,),
+        )
+        if cursor.fetchone()["cnt"] >= WC_TEAMS_PER_GROUP:
+            cursor.execute("ROLLBACK")
+            return False, "wc_group_full"
+
+        # Jamoa allaqachon band qilinganmi
+        cursor.execute(
+            "SELECT 1 FROM wc_registrations WHERE group_letter = ? AND team_name = ?",
+            (group_letter, team_name),
+        )
+        if cursor.fetchone() is not None:
+            cursor.execute("ROLLBACK")
+            return False, "wc_team_taken"
+
+        cursor.execute(
+            "INSERT INTO wc_registrations (user_id, group_letter, team_name) VALUES (?, ?, ?)",
+            (user_id, group_letter, team_name),
+        )
+        cursor.execute("COMMIT")
+    except sqlite3.IntegrityError as exc:
+        cursor.execute("ROLLBACK")
+        conn.close()
+        if "user_id" in str(exc):
+            return False, "wc_already_registered"
+        return False, "wc_team_taken"
+    except Exception:
+        cursor.execute("ROLLBACK")
+        conn.close()
+        raise
     conn.close()
 
     # Guruh shu registratsiya bilan 4 jamoaga to'ldimi? To'lgan bo'lsa — avtomatik
