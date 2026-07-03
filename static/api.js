@@ -1098,7 +1098,10 @@ async function finalizeSeason() {
     window.alert(`✅ ${t.season_finalized || "Mavsum yakunlandi"} (#${r.season})\n🏆 ${c.league_cups || 0} liga kubogi, ⚽ ${c.golden_boot || 0} oltin butsa, 🥇 ${c.golden_ball || 0} oltin to'p, 🌍 ${c.wc_cup || 0} JCH kubogi`);
     await loadSeasonInfo();
   } catch (e) {
-    showToast("❌ " + e.message);
+    const errMap = {
+      already_finalized: t.season_already_finalized || "Bu mavsum allaqachon yakunlangan",
+    };
+    showToast("❌ " + (errMap[e.message] || e.message));
   }
 }
 
