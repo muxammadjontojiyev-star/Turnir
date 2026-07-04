@@ -959,26 +959,38 @@ def wc_admin_match_info(
     Jamoa nomi WC ro'yxatidan (wc_registrations) olinadi.
     """
     is_playoff = 1 if is_playoff else 0
-    if is_playoff:
-        match = wc_playoff_get_match_by_id(match_id)
-    else:
-        match = wc_get_match_by_id(match_id)
-    if match is None:
+    table = "wc_playoff_matches" if is_playoff else "wc_matches"
+
+    # Jamoa nomlari bracket bilan BIR XIL usulda — wc_registrations JOIN
+    # (guruh ham, play-off ham; registration o'chirilgan chekka holatda NULL).
+    conn = queries.get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            f"""
+            SELECT p.id, p.player1_id, p.player2_id, p.score1, p.score2, p.status,
+                   r1.team_name AS team1, r2.team_name AS team2
+            FROM {table} p
+            LEFT JOIN wc_registrations r1 ON r1.user_id = p.player1_id
+            LEFT JOIN wc_registrations r2 ON r2.user_id = p.player2_id
+            WHERE p.id = ?
+            """,
+            (match_id,),
+        )
+        row = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
         raise HTTPException(status_code=404, detail="match_not_found")
 
-    def team_of(user_id):
-        if not user_id:
-            return None
-        reg = wc_get_user_registration(user_id)
-        return reg["team_name"] if reg else None
-
     return {
-        "id": match["id"],
-        "team1": team_of(match.get("player1_id")),
-        "team2": team_of(match.get("player2_id")),
-        "score1": match.get("score1"),
-        "score2": match.get("score2"),
-        "status": match.get("status"),
+        "id": row["id"],
+        "team1": row["team1"],
+        "team2": row["team2"],
+        "score1": row["score1"],
+        "score2": row["score2"],
+        "status": row["status"],
         "is_playoff": is_playoff,
     }
 
