@@ -3464,16 +3464,16 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
    v4.14 — Admin fix formasi: logo slotlari + "tomchi" animatsiyasi
    ============================================================ */
 .admin-fix-logo-slot {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 .admin-fix-logo-slot .match-club-logo {
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
 }
 /* Tomchi: tepadan tushib, biroz cho'zilib-sakrab joylashadi */
 @keyframes v4-logo-drop {
@@ -3491,7 +3491,7 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 
 /* v4.15 — JCH admin fix: bayroq slot ichida yirikroq emoji */
 .admin-fix-logo-slot .wc-fix-flag {
-  font-size: 28px;
+  font-size: 40px;
   line-height: 1;
   display: inline-block;
 }
