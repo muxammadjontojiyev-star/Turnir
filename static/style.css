@@ -2825,15 +2825,18 @@ body::before {
    Faqat override: .card--hero, .card-stats, .league-item
    ============================================================ */
 
-/* Hero — chuqur binafsha gradient karta (reference: balans kartasi) */
+/* Hero — stadion fotosi fonda (biroz xiralashtirilgan), yozuvlar aniq qoladi.
+   Qatlamlar (ustkidan pastga): qoraytirgich gradient → cyan brend nuri →
+   stadion rasmi → rasm yuklanmasa zaxira rang. */
 .card--hero {
   border-radius: 24px;
   padding: 22px 20px 20px;
   border: 1px solid rgba(255,255,255,0.14);
   background:
-    radial-gradient(140% 100% at 100% 0%, rgba(0,240,255,0.14), transparent 50%),
-    radial-gradient(130% 110% at 0% 100%, rgba(255,60,172,0.10), transparent 55%),
-    linear-gradient(140deg, #3b2a8f 0%, #2a1e6e 35%, #171442 75%, #0f0d30 100%);
+    linear-gradient(160deg, rgba(30,22,80,0.62) 0%, rgba(16,13,48,0.74) 55%, rgba(9,8,30,0.85) 100%),
+    radial-gradient(140% 100% at 100% 0%, rgba(0,240,255,0.12), transparent 50%),
+    url("hero-bg.jpg?v=20260703") center 32% / cover no-repeat,
+    #171442;
   box-shadow:
     0 24px 55px -20px rgba(91,61,245,0.55),
     0 10px 30px -14px rgba(0,0,0,0.8),
