@@ -3459,3 +3459,32 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 @media (prefers-reduced-motion: reduce) {
   .stat-card--rain-1, .stat-card--rain-2, .stat-card--rain-3 { animation: none; }
 }
+
+/* ============================================================
+   v4.14 — Admin fix formasi: logo slotlari + "tomchi" animatsiyasi
+   ============================================================ */
+.admin-fix-logo-slot {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.admin-fix-logo-slot .match-club-logo {
+  width: 34px;
+  height: 34px;
+}
+/* Tomchi: tepadan tushib, biroz cho'zilib-sakrab joylashadi */
+@keyframes v4-logo-drop {
+  0%   { opacity: 0; transform: translateY(-22px) scale(0.4); }
+  55%  { opacity: 1; transform: translateY(5px)  scale(1.1, 0.92); }
+  75%  {             transform: translateY(-3px) scale(0.96, 1.04); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.logo-drop-in {
+  animation: v4-logo-drop 0.55s cubic-bezier(0.22, 0.9, 0.3, 1.15) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-drop-in { animation: none; }
+}

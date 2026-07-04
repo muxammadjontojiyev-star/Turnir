@@ -2473,3 +2473,42 @@ function applyPositionRain(valueEl, position) {
     tile.classList.add(`stat-card--rain-${position}`);
   }
 }
+
+/* ============================================================
+   v4.14 — ADMIN FIX: Match ID yozilganda o'yin logolari
+   ID kiritilgach 350ms debounce bilan /admin/match/{id}/info
+   so'raladi va ikkala klub logosi score kataklari yonida
+   "tomchi" animatsiyasi bilan paydo bo'ladi.
+   Tartib: [logo] [P1] : [P2] [logo]. Topilmasa — bo'sh qoladi.
+   ============================================================ */
+(function initAdminFixPreview() {
+  let debounceTimer = null;
+  let lastRequestedId = 0;
+
+  document.addEventListener("input", (e) => {
+    if (!e.target || e.target.id !== "admin-fix-match-id") return;
+    clearTimeout(debounceTimer);
+    const raw = e.target.value;
+    debounceTimer = setTimeout(() => refreshAdminFixPreview(raw), 350);
+  });
+
+  async function refreshAdminFixPreview(raw) {
+    const slot1 = document.getElementById("admin-fix-logo1");
+    const slot2 = document.getElementById("admin-fix-logo2");
+    if (!slot1 || !slot2) return;
+    const id = parseInt(raw, 10);
+    if (!id || id <= 0) { slot1.innerHTML = ""; slot2.innerHTML = ""; return; }
+    lastRequestedId = id;
+    try {
+      const info = await apiFetch(`/admin/match/${id}/info`);
+      if (lastRequestedId !== id) return; // eskirgan javob (yangi ID yozildi)
+      slot1.innerHTML = renderClubBadge(info.club1);
+      slot2.innerHTML = renderClubBadge(info.club2);
+      if (slot1.firstElementChild) slot1.firstElementChild.classList.add("logo-drop-in");
+      if (slot2.firstElementChild) slot2.firstElementChild.classList.add("logo-drop-in");
+    } catch (err) {
+      if (lastRequestedId !== id) return;
+      slot1.innerHTML = ""; slot2.innerHTML = "";  // topilmadi — jimgina bo'sh
+    }
+  }
+})();
