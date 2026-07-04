@@ -1522,6 +1522,34 @@ def admin_resolve_rejected_match(
 
 # ============ POST /admin/match/fix-confirmed ============
 
+@app.get("/admin/match/{match_id}/info")
+def admin_match_info(
+    match_id: int,
+    admin: dict = Depends(get_authenticated_league_admin),
+):
+    """
+    Admin formalari uchun qisqa ma'lumot (2026-07-04): Match ID kiritilganda
+    frontend qaysi o'yin ekanini (klublar -> logolar) jonli ko'rsatadi.
+    """
+    match = get_match_by_id(match_id)
+    if match is None:
+        raise HTTPException(status_code=404, detail="match_not_found")
+    reg1 = get_user_registration(match["player1_id"])
+    reg2 = get_user_registration(match["player2_id"])
+    p1 = get_user_by_id(match["player1_id"])
+    p2 = get_user_by_id(match["player2_id"])
+    return {
+        "id": match["id"],
+        "club1": reg1["club_name"] if reg1 else None,
+        "club2": reg2["club_name"] if reg2 else None,
+        "nickname1": p1["nickname"] if p1 else None,
+        "nickname2": p2["nickname"] if p2 else None,
+        "score1": match["score1"],
+        "score2": match["score2"],
+        "status": match["status"],
+    }
+
+
 @app.post("/admin/match/fix-confirmed")
 def admin_fix_confirmed(
     match_id: int,
