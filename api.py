@@ -946,6 +946,43 @@ def wc_admin_delete_player(user_id: int, admin: dict = Depends(get_authenticated
 
 # ============ POST /wc/admin/match/set-score ============
 
+@app.get("/wc/admin/match/{match_id}/info")
+def wc_admin_match_info(
+    match_id: int,
+    is_playoff: int = 0,
+    admin: dict = Depends(get_authenticated_wc_admin),
+):
+    """
+    JCH admin formasi uchun jonli ma'lumot (2026-07-04): Match ID kiritilganda
+    frontend qaysi o'yin ekanini (jamoalar -> bayroqlar) ko'rsatadi.
+    is_playoff=1 bo'lsa setka o'yini (wc_playoff_matches), aks holda guruh.
+    Jamoa nomi WC ro'yxatidan (wc_registrations) olinadi.
+    """
+    is_playoff = 1 if is_playoff else 0
+    if is_playoff:
+        match = wc_playoff_get_match_by_id(match_id)
+    else:
+        match = wc_get_match_by_id(match_id)
+    if match is None:
+        raise HTTPException(status_code=404, detail="match_not_found")
+
+    def team_of(user_id):
+        if not user_id:
+            return None
+        reg = wc_get_user_registration(user_id)
+        return reg["team_name"] if reg else None
+
+    return {
+        "id": match["id"],
+        "team1": team_of(match.get("player1_id")),
+        "team2": team_of(match.get("player2_id")),
+        "score1": match.get("score1"),
+        "score2": match.get("score2"),
+        "status": match.get("status"),
+        "is_playoff": is_playoff,
+    }
+
+
 @app.post("/wc/admin/match/set-score")
 def wc_admin_match_set_score(
     match_id: int,
