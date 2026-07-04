@@ -126,6 +126,30 @@ def calculate_wc_top_scorers() -> list[dict]:
             player["group_letter"] = letter
             all_players.append(player)
 
+    # PLAY-OFF gollari ham qo'shiladi (2026-07-04): to'purarlar jadvali
+    # guruh + setka JAMI gollarni ko'rsatadi. Faqat tasdiqlangan (confirmed)
+    # o'yinlar; bronza uchrashuvi ham hisobga kiradi.
+    from models import get_connection
+
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT player1_id, player2_id, score1, score2 FROM wc_playoff_matches "
+            "WHERE status = 'confirmed' AND score1 IS NOT NULL AND score2 IS NOT NULL"
+        )
+        playoff_goals: dict[int, int] = {}
+        for row in cursor.fetchall():
+            if row["player1_id"] is not None:
+                playoff_goals[row["player1_id"]] = playoff_goals.get(row["player1_id"], 0) + row["score1"]
+            if row["player2_id"] is not None:
+                playoff_goals[row["player2_id"]] = playoff_goals.get(row["player2_id"], 0) + row["score2"]
+    finally:
+        conn.close()
+
+    for player in all_players:
+        player["goals_for"] = player.get("goals_for", 0) + playoff_goals.get(player["user_id"], 0)
+
     # Faqat gol urganlar, gol bo'yicha kamayish tartibida
     scorers = [p for p in all_players if p.get("goals_for", 0) > 0]
     scorers.sort(key=lambda p: p["goals_for"], reverse=True)
