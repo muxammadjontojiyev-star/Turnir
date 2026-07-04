@@ -63,6 +63,7 @@ function wcRenderAdminPanel() {
         <span>${escHtml(t.admin_fix_is_playoff || "Play-off o'yini")}</span>
       </label>
       <div class="score-input-row">
+        <span class="admin-fix-logo-slot" id="wc-admin-fix-flag1"></span>
         <div class="score-input-group">
           <span class="score-input-label">P1</span>
           <input id="wc-admin-fix-score1" class="score-input" type="number" min="0" max="99" value="0" />
@@ -72,6 +73,7 @@ function wcRenderAdminPanel() {
           <span class="score-input-label">P2</span>
           <input id="wc-admin-fix-score2" class="score-input" type="number" min="0" max="99" value="0" />
         </div>
+        <span class="admin-fix-logo-slot" id="wc-admin-fix-flag2"></span>
       </div>
       <button class="btn btn--primary btn--glow" id="wc-btn-admin-fix-submit">${escHtml(t.admin_fix_submit || "Tuzatish")}</button>
       <button class="btn btn--ghost" id="wc-btn-admin-reset" style="margin-top:8px;color:var(--red-neon);border-color:rgba(255,69,96,.3)">${escHtml(t.admin_reset_btn || "Natijani bekor qilish")}</button>
@@ -115,6 +117,10 @@ function wcBindAdminPanel() {
   // "Play-off o'yini" checkbox holatini tiklash + o'zgarishda saqlash
   // (admin o'zi o'chirmaguncha yoniq qoladi — ilova qayta ochilsa ham).
   const poCheck = document.getElementById("wc-admin-fix-is-playoff");
+  // v4.15: Match ID yoki play-off belgisi o'zgarsa — bayroqlarni jonli ko'rsatish
+  const wcFixIdInput = document.getElementById("wc-admin-fix-match-id");
+  if (wcFixIdInput) wcFixIdInput.addEventListener("input", scheduleWcFixPreview);
+  if (poCheck) poCheck.addEventListener("change", () => refreshWcFixPreview());
   if (poCheck) {
     try {
       poCheck.checked = localStorage.getItem("wc_admin_fix_playoff") === "1";
@@ -366,5 +372,62 @@ async function wcAdminRemoveRole(telegramId) {
     void wcLoadAdminRoles();
   } catch (e) {
     showToast("❌ " + e.message);
+  }
+}
+
+/* ============================================================
+   v4.15 — JCH admin fix: Match ID yozilganda jamoa bayroqlari
+   /wc/admin/match/{id}/info (is_playoff bilan) so'raladi va ikkala
+   bayroq score kataklari yonida "tomchi" animatsiyasi bilan chiqadi.
+   Tartib: [bayroq] [P1] : [P2] [bayroq].
+   ============================================================ */
+let _wcFixDebounce = null;
+let _wcFixLastKey = "";
+
+// Jamoa nomi -> bayroq emoji (WC_GROUPS'dan bir marta yig'iladi)
+const WC_TEAM_FLAGS = (() => {
+  const map = {};
+  if (typeof WC_GROUPS !== "undefined") {
+    for (const letter of Object.keys(WC_GROUPS)) {
+      for (const [name, flag] of WC_GROUPS[letter]) map[name] = flag;
+    }
+  }
+  return map;
+})();
+
+function renderWcFlagBadge(teamName) {
+  const flag = teamName ? WC_TEAM_FLAGS[teamName] : null;
+  const safe = escHtml(teamName || "");
+  if (flag) {
+    return `<span class="wc-fix-flag" title="${safe}">${flag}</span>`;
+  }
+  return `<span class="match-club-logo match-club-logo--empty" title="${safe}"></span>`;
+}
+
+function scheduleWcFixPreview() {
+  clearTimeout(_wcFixDebounce);
+  _wcFixDebounce = setTimeout(refreshWcFixPreview, 350);
+}
+
+async function refreshWcFixPreview() {
+  const slot1 = document.getElementById("wc-admin-fix-flag1");
+  const slot2 = document.getElementById("wc-admin-fix-flag2");
+  const idEl = document.getElementById("wc-admin-fix-match-id");
+  if (!slot1 || !slot2 || !idEl) return;
+  const id = parseInt(idEl.value, 10);
+  const isPlayoff = document.getElementById("wc-admin-fix-is-playoff")?.checked ? 1 : 0;
+  if (!id || id <= 0) { slot1.innerHTML = ""; slot2.innerHTML = ""; return; }
+  const key = `${id}:${isPlayoff}`;
+  _wcFixLastKey = key;
+  try {
+    const info = await apiFetch(`/wc/admin/match/${id}/info?is_playoff=${isPlayoff}`);
+    if (_wcFixLastKey !== key) return; // eskirgan javob
+    slot1.innerHTML = renderWcFlagBadge(info.team1);
+    slot2.innerHTML = renderWcFlagBadge(info.team2);
+    if (slot1.firstElementChild) slot1.firstElementChild.classList.add("logo-drop-in");
+    if (slot2.firstElementChild) slot2.firstElementChild.classList.add("logo-drop-in");
+  } catch (err) {
+    if (_wcFixLastKey !== key) return;
+    slot1.innerHTML = ""; slot2.innerHTML = "";
   }
 }

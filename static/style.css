@@ -3488,3 +3488,10 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 @media (prefers-reduced-motion: reduce) {
   .logo-drop-in { animation: none; }
 }
+
+/* v4.15 — JCH admin fix: bayroq slot ichida yirikroq emoji */
+.admin-fix-logo-slot .wc-fix-flag {
+  font-size: 28px;
+  line-height: 1;
+  display: inline-block;
+}
