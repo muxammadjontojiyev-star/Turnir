@@ -701,7 +701,9 @@ function renderPlayerModal(data) {
 
   // Statistika
   const r = data.rating;
-  document.getElementById("player-stat-position").textContent = r ? `#${r.position}` : "—";
+  const posValueElP = document.getElementById("player-stat-position");
+  posValueElP.textContent = r ? `#${r.position}` : "—";
+  applyPositionRain(posValueElP, r ? r.position : 0);  // v4.12: top-3 yulduz yog'ilishi
   document.getElementById("player-stat-wins").textContent     = r ? r.wins   : "—";
   document.getElementById("player-stat-draws").textContent    = r ? r.draws  : "—";
   document.getElementById("player-stat-losses").textContent   = r ? r.losses : "—";
@@ -859,7 +861,9 @@ function renderProfile(data) {
   }
 
   const r = data.rating;
-  document.getElementById("stat-position").textContent = r ? `#${r.position}` : "—";
+  const posValueEl = document.getElementById("stat-position");
+  posValueEl.textContent = r ? `#${r.position}` : "—";
+  applyPositionRain(posValueEl, r ? r.position : 0);  // v4.12: top-3 yulduz yog'ilishi
   document.getElementById("stat-wins").textContent     = r ? r.wins    : "—";
   document.getElementById("stat-draws").textContent    = r ? r.draws   : "—";
   document.getElementById("stat-losses").textContent   = r ? r.losses  : "—";
@@ -2452,4 +2456,20 @@ function escHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+
+/* ============================================================
+   v4.12 — Profil "O'rin" plitkasi: reytingdagi podium (1/2/3)
+   yulduz-yog'ilishi effektini plitkaga qo'shadi/olib tashlaydi.
+   CSS: .stat-card--rain-1/2/3 (style.css v4.12 bloki).
+   ============================================================ */
+function applyPositionRain(valueEl, position) {
+  if (!valueEl) return;
+  const tile = valueEl.closest(".stat-card");
+  if (!tile) return;
+  tile.classList.remove("stat-card--rain-1", "stat-card--rain-2", "stat-card--rain-3");
+  if (position >= 1 && position <= 3) {
+    tile.classList.add(`stat-card--rain-${position}`);
+  }
 }
