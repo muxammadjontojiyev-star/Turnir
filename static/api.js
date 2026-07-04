@@ -666,7 +666,7 @@ function renderPlayerModal(data) {
     const img = new Image();
     img.src = `${API_BASE}/players/${data.user_id}/photo`;
     img.alt = escHtml(data.nickname || "");
-    img.style.cssText = "width:56px;height:56px;object-fit:cover;border-radius:50%;";
+    img.className = "avatar-card-img";  // v4.13: eFootball karta ramkasi
     img.onload = () => {
       avatarEl.textContent = "";
       avatarEl.appendChild(img);
@@ -821,7 +821,7 @@ function renderProfile(data) {
   // Avatar: telegram profil rasmi (bo'lmasa — ism harfi)
   const photoUrl = APP.currentUser?.photo_url || null;
   if (photoUrl) {
-    avatarEl.innerHTML = `<img src="${escHtml(photoUrl)}" alt="${escHtml(data.nickname || "")}" style="width:56px;height:56px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.textContent='${(data.nickname || "?")[0].toUpperCase()}'" />`;
+    avatarEl.innerHTML = `<img src="${escHtml(photoUrl)}" alt="${escHtml(data.nickname || "")}" class="avatar-card-img" onerror="this.style.display='none';this.parentElement.textContent='${(data.nickname || "?")[0].toUpperCase()}'" />`;
   } else {
     avatarEl.textContent = (data.nickname || "?")[0].toUpperCase();
   }

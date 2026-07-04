@@ -3459,3 +3459,84 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 @media (prefers-reduced-motion: reduce) {
   .stat-card--rain-1, .stat-card--rain-2, .stat-card--rain-3 { animation: none; }
 }
+
+/* ============================================================
+   DESIGN v4.13 — PROFIL AVATARI: eFOOTBALL O'YIN KARTASI
+   Dumaloq avatar o'rniga portret karta: oltin gradient ramka,
+   qirqilgan burchaklar (clip-path chamfer), pastda 5 yulduzli
+   plastina (::after). 4 joyda ishlaydi: liga profili, o'yinchi
+   profili, JCH profili va JCH o'yinchi profili (bir xil
+   .profile-avatar klassi — qoida #10). Rasm bo'lmasa harf/bayroq
+   fallback karta ichida markazda qoladi.
+   ============================================================ */
+.profile-avatar {
+  position: relative;
+  width: 86px;
+  height: 118px;               /* portret karta nisbati */
+  border: none;
+  border-radius: 0;
+  padding: 3px;                /* oltin ramka qalinligi */
+  background: linear-gradient(165deg,
+    #6b520f 0%, #f1d888 22%, #8a6a1f 45%, #ffe9a8 68%, #7a5c12 100%);
+  clip-path: polygon(7% 0, 93% 0, 100% 4.5%, 100% 95.5%, 93% 100%, 7% 100%, 0 95.5%, 0 4.5%);
+  box-shadow:
+    0 12px 26px -12px rgba(0,0,0,0.85),
+    0 0 20px -6px rgba(241,216,136,0.55);
+  display: block;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+/* Ichki maydon (liga: harf-fallback konteyneri) */
+#profile-avatar-letter,
+#player-avatar-letter {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(91,61,245,0.35), transparent 60%),
+    linear-gradient(180deg, #1b1d34, #0d0e1f);
+  clip-path: polygon(7% 0, 93% 0, 100% 4.5%, 100% 95.5%, 93% 100%, 7% 100%, 0 95.5%, 0 4.5%);
+}
+/* JCH: bayroq-fallback karta ichida markazda */
+.profile-avatar > .wc-profile-flag {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(91,61,245,0.35), transparent 60%),
+    linear-gradient(180deg, #1b1d34, #0d0e1f);
+  clip-path: polygon(7% 0, 93% 0, 100% 4.5%, 100% 95.5%, 93% 100%, 7% 100%, 0 95.5%, 0 4.5%);
+}
+/* Rasm — kartani to'ldiradi (inline 56px doira style o'rniga) */
+.avatar-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  clip-path: polygon(7% 0, 93% 0, 100% 4.5%, 100% 95.5%, 93% 100%, 7% 100%, 0 95.5%, 0 4.5%);
+}
+/* Pastki plastina: 5 yulduz (namunadagi kabi trapetsiya) */
+.profile-avatar::after {
+  content: "\2605 \2605 \2605 \2605 \2605";
+  position: absolute;
+  left: 13%;
+  right: 13%;
+  bottom: 4px;
+  height: 15px;
+  line-height: 15px;
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  text-align: center;
+  color: #ffd54a;
+  text-shadow: 0 0 6px rgba(255,213,74,0.85);
+  background: linear-gradient(180deg, #272b34, #0a0c11 85%);
+  border: 1px solid rgba(241,216,136,0.6);
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}

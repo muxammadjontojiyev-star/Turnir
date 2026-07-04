@@ -31,7 +31,7 @@ function wcRenderProfile() {
   const photoUrl = APP.currentUser?.photo_url || null;
   const nick = APP.currentUser?.first_name || reg.team_name || "?";
   const avatarInner = photoUrl
-    ? `<img src="${escHtml(photoUrl)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.querySelector('.wc-profile-flag').style.display='block'" /><span class="wc-profile-flag" style="display:none">${flag}</span>`
+    ? `<img src="${escHtml(photoUrl)}" alt="" class="avatar-card-img" onerror="this.style.display='none';this.parentElement.querySelector('.wc-profile-flag').style.display='block'" /><span class="wc-profile-flag" style="display:none">${flag}</span>`
     : `<span class="wc-profile-flag">${flag}</span>`;
 
   // Username linki (liga kabi)
@@ -403,7 +403,7 @@ function wcRenderViewProfile() {
 
   // Avatar: boshqa o'yinchining Telegram rasmi (proxy orqali), bo'lmasa bayroq
   const avatarInner = data.user_id
-    ? `<img src="${API_BASE}/players/${data.user_id}/photo" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.querySelector('.wc-profile-flag').style.display='block'" /><span class="wc-profile-flag" style="display:none">${flag}</span>`
+    ? `<img src="${API_BASE}/players/${data.user_id}/photo" alt="" class="avatar-card-img" onerror="this.style.display='none';this.parentElement.querySelector('.wc-profile-flag').style.display='block'" /><span class="wc-profile-flag" style="display:none">${flag}</span>`
     : `<span class="wc-profile-flag">${flag}</span>`;
 
   // Username linki yoki "Username yo'q"
