@@ -92,6 +92,11 @@ function wcRenderAdminPanel() {
       <button class="btn btn--primary btn--glow" id="wc-btn-playoff-start" style="width:100%">${escHtml(t.wc_admin_playoff_start_btn || "Play-off boshlash")}</button>
       <div class="admin-player-league" id="wc-playoff-status-hint" style="margin:6px 2px 0;text-align:center">${escHtml(t.wc_admin_playoff_hint || "32 jamoa: 12 g'olib + 12 ikkinchi + 8 eng yaxshi 3-o'rin")}</div>
 
+      <div class="section-label">${escHtml(t.wc_season_title || "WC MAVSUMI")}</div>
+      <div class="admin-player-league" id="wc-season-current-hint" style="margin:0 2px 8px">—</div>
+      <button class="btn btn--danger" id="wc-btn-finalize-season" style="width:100%">${escHtml(t.wc_season_finalize_btn || "WC mavsumini yakunlash")}</button>
+      <div class="admin-player-league" style="margin:6px 2px 0">${escHtml(t.wc_season_finalize_hint || "WC kubogi (play-off chempioni) saqlanadi, WC mavsumi oshadi")}</div>
+
       <div class="section-label">${escHtml(t.wc_admin_players_title || "WC ISHTIROKCHILAR")}</div>
       <div id="wc-admin-players-list" class="admin-players-list">
         <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
@@ -136,7 +141,35 @@ function wcBindAdminPanel() {
     document.getElementById("wc-btn-fix-schedules")?.addEventListener("click", wcAdminFixSchedules);
     document.getElementById("wc-btn-start-today")?.addEventListener("click", wcAdminStartToday);
     document.getElementById("wc-btn-playoff-start")?.addEventListener("click", wcAdminPlayoffStart);
+    document.getElementById("wc-btn-finalize-season")?.addEventListener("click", wcFinalizeSeason);
     void wcLoadPlayoffStatus();
+    void wcLoadSeasonInfo();
+  }
+}
+
+// ---- WC mavsum ma'lumoti + yakunlash (bosh admin) ----
+async function wcLoadSeasonInfo() {
+  const hint = document.getElementById("wc-season-current-hint");
+  if (!hint) return;
+  try {
+    const d = await apiFetch("/season/current");
+    hint.textContent = (APP.t.wc_season_current || "Joriy WC mavsumi") + ": " + (d.wc_season ?? "—");
+  } catch (_) {}
+}
+
+async function wcFinalizeSeason() {
+  const t = APP.t;
+  if (!window.confirm(t.wc_season_finalize_confirm || "WC mavsumini yakunlaysizmi? Play-off chempioni saqlanadi va WC mavsumi oshadi. Bu amalni ortga qaytarib bo'lmaydi.")) return;
+  try {
+    const r = await apiFetch("/season/wc/finalize", { method: "POST" });
+    const c = r.counts || {};
+    window.alert(`✅ ${t.wc_season_finalized || "WC mavsumi yakunlandi"} (#${r.season})\n🌍 ${c.wc_cup || 0} JCH kubogi`);
+    void wcLoadSeasonInfo();
+  } catch (e) {
+    const errMap = {
+      already_finalized: t.season_already_finalized || "Bu mavsum allaqachon yakunlangan",
+    };
+    showToast("❌ " + (errMap[e.message] || e.message));
   }
 }
 

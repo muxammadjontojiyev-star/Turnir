@@ -466,6 +466,8 @@ function wcRenderViewProfile() {
       </div>
     </div>
 
+    <div id="wc-view-prizes-section"></div>
+
     <div class="section-label">${escHtml(t.player_matches || t.my_matches || "O'YINLAR")}</div>
     <div class="matches-list">${matchesHtml}</div>
     ${poHtml}
@@ -508,6 +510,9 @@ function wcBindViewProfile() {
   const root = document.getElementById("worldcup-root");
   if (typeof applyIcons === "function") applyIcons(root);
   document.getElementById("wc-viewplayer-back")?.addEventListener("click", wcBackToRating);
+  // Sovrinlar (liga + WC) — boshqa o'yinchi ko'rilганда ham; liga loadPrizesInto qayta ishlatiladi
+  const uid = WC.viewedProfile && WC.viewedProfile.user_id;
+  if (uid && typeof loadPrizesInto === "function") void loadPrizesInto(uid, "wc-view-prizes-section");
 }
 
 

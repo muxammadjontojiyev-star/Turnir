@@ -708,6 +708,9 @@ function renderPlayerModal(data) {
   document.getElementById("player-stat-draws").textContent    = r ? r.draws  : "—";
   document.getElementById("player-stat-losses").textContent   = r ? r.losses : "—";
 
+  // Sovrinlar (boshqa o'yinchi ham — liga + WC; public endpoint)
+  if (data.user_id) void loadPrizesInto(data.user_id, "player-prizes-section");
+
   // O'yinlar tarixi (faqat ko'rsatish — tugmasiz, chunki bu boshqa odam)
   const list = document.getElementById("player-matches-list");
   const matches = data.matches || [];
@@ -756,9 +759,13 @@ async function loadProfile() {
 
 // Sovrinlarim — foydalanuvchi qo'lga kiritgan sovrinlar (liga + WC)
 async function loadMyPrizes(userId) {
-  const box = document.getElementById("my-prizes-section");
+  await loadPrizesInto(userId, "my-prizes-section");
+}
+
+// Sovrinlarni berilgan konteynerga yuklaydi (o'z profil + boshqa o'yinchi profili — DRY)
+async function loadPrizesInto(userId, containerId) {
+  const box = document.getElementById(containerId);
   if (!box || !userId) return;
-  const t = APP.t;
   try {
     const data = await apiFetch(`/users/${userId}/prizes`);
     const prizes = data.prizes || [];
