@@ -98,7 +98,10 @@ def init_db():
     # prize_type: 'golden_ball'(5 liga eng ko'p ochko), 'golden_boot'(5 liga eng
     #   ko'p gol), 'league_cup'(liga 1-o'rni — league_id bilan), 'wc_cup'(WC chempioni).
     # league_id: faqat league_cup uchun (qaysi liga kubogi); boshqalarda NULL.
-    # season_number: mavsum raqami (1, 2, 3...).
+    # season_number: mavsum raqami (1, 2, 3...) — o'z turi (kind) ichida.
+    # season_kind: 'league' (golden_ball/golden_boot/league_cup) yoki 'wc' (wc_cup).
+    #   Liga va WC mavsumi alohida yakunlangani uchun season_number ular uchun
+    #   mustaqil sanaladi — kind bilan birga o'qiladi.
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS season_prizes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,6 +109,7 @@ def init_db():
             prize_type TEXT NOT NULL,
             league_id INTEGER,
             season_number INTEGER NOT NULL,
+            season_kind TEXT NOT NULL DEFAULT 'league',
             awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (league_id) REFERENCES leagues(id)
@@ -113,11 +117,14 @@ def init_db():
     """)
 
     # === season_state (joriy mavsum raqami) ===
-    # Bitta qator (id=1). current_season har "Mavsumni yakunlash" da oshadi.
+    # Bitta qator (id=1). Liga va WC mavsumi ALOHIDA yakunlanadi:
+    #   current_season — LIGA mavsumi ("Liga mavsumini yakunlash" da oshadi).
+    #   wc_season      — WC mavsumi ("WC mavsumini yakunlash" da oshadi).
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS season_state (
             id INTEGER PRIMARY KEY CHECK (id = 1),
-            current_season INTEGER NOT NULL DEFAULT 1
+            current_season INTEGER NOT NULL DEFAULT 1,
+            wc_season INTEGER NOT NULL DEFAULT 1
         )
     """)
     cursor.execute("INSERT OR IGNORE INTO season_state (id, current_season) VALUES (1, 1)")
@@ -340,6 +347,11 @@ def init_db():
         "ALTER TABLE wc_chat_typing ADD COLUMN is_playoff INTEGER NOT NULL DEFAULT 0",
         # A3: takror "Mavsumni yakunlash" bosishdan himoya uchun oxirgi yakunlash vaqti
         "ALTER TABLE season_state ADD COLUMN last_finalized_at TIMESTAMP",
+        # Liga/WC mavsumini ajratish: WC uchun alohida mavsum raqami + cooldown vaqti
+        "ALTER TABLE season_state ADD COLUMN wc_season INTEGER NOT NULL DEFAULT 1",
+        "ALTER TABLE season_state ADD COLUMN wc_last_finalized_at TIMESTAMP",
+        # Sovrin yozuvini liga/WC turiga ajratish (eski yozuvlar quyida to'g'rilanadi)
+        "ALTER TABLE season_prizes ADD COLUMN season_kind TEXT NOT NULL DEFAULT 'league'",
     ]
     for sql in migrations:
         try:
@@ -353,6 +365,19 @@ def init_db():
             else:
                 logger.error("Migratsiya xatosi: %s — %s", sql, exc)
                 raise
+
+    # Data-fix (bir martalik, idempotent): eski wc_cup sovrinlari yangi
+    # season_kind ustunida default 'league' bo'lib qolmasin — 'wc' ga to'g'rilanadi.
+    # Liga turlari (golden_ball/golden_boot/league_cup) allaqachon 'league' — tegilmaydi.
+    try:
+        cursor.execute(
+            "UPDATE season_prizes SET season_kind = 'wc' "
+            "WHERE prize_type = 'wc_cup' AND season_kind != 'wc'"
+        )
+        conn.commit()
+    except sqlite3.OperationalError as exc:
+        logger.error("season_kind data-fix xatosi: %s", exc)
+        raise
 
     conn.close()
 

@@ -1153,28 +1153,51 @@ def wc_playoff_champion():
 
 @app.get("/season/current")
 def season_current():
-    """Joriy mavsum raqami."""
-    from season_prizes import get_current_season
-    return {"season": get_current_season()}
+    """
+    Joriy mavsum raqamlari. Liga va WC mavsumi ALOHIDA.
+    `season` — orqaga moslik uchun liga mavsumi (eski frontend uni o'qiydi).
+    """
+    from season_prizes import get_league_season, get_wc_season
+    league = get_league_season()
+    return {"season": league, "league_season": league, "wc_season": get_wc_season()}
 
 
 @app.get("/season/prizes/preview")
 def season_prizes_preview(admin: dict = Depends(get_authenticated_super_admin)):
-    """Joriy sovrin egalarini oldindan ko'rsatadi (SAQLAMAYDI). Bosh admin."""
-    from season_prizes import calculate_season_prizes, get_current_season
-    return {"season": get_current_season(), "prizes": calculate_season_prizes()}
+    """Joriy sovrin egalarini oldindan ko'rsatadi (SAQLAMAYDI, liga+WC). Bosh admin."""
+    from season_prizes import calculate_season_prizes, get_league_season, get_wc_season
+    return {
+        "league_season": get_league_season(),
+        "wc_season": get_wc_season(),
+        "prizes": calculate_season_prizes(),
+    }
 
 
 @app.post("/season/finalize")
 def season_finalize(admin: dict = Depends(get_authenticated_super_admin)):
     """
-    Bosh admin mavsumni yakunlaydi: sovrinlar hisoblanadi, tarixga saqlanadi,
-    mavsum raqami oshadi. Bu amalni ortga qaytarib bo'lmaydi.
+    Bosh admin LIGA mavsumini yakunlaydi: liga sovrinlari (oltin to'p/butsa,
+    liga kubogi) hisoblanib saqlanadi, liga mavsum raqami oshadi. Qaytarib bo'lmaydi.
+    (WC mavsumi bundan mustaqil — /season/wc/finalize.)
     """
-    from season_prizes import finalize_season
-    result = finalize_season()
+    from season_prizes import finalize_league_season
+    result = finalize_league_season()
     if result.get("already"):
         # AUDIT A3: tugma takror bosildi — dublikat yozilmadi, mavsum oshmadi
+        raise HTTPException(status_code=400, detail="already_finalized")
+    return {"status": "ok", "season": result["season"], "counts": result["counts"]}
+
+
+@app.post("/season/wc/finalize")
+def season_wc_finalize(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin WC mavsumini yakunlaydi: play-off chempioni (WC kubogi)
+    saqlanadi, WC mavsum raqami oshadi. Qaytarib bo'lmaydi.
+    (Liga mavsumidan mustaqil.)
+    """
+    from season_prizes import finalize_wc_season
+    result = finalize_wc_season()
+    if result.get("already"):
         raise HTTPException(status_code=400, detail="already_finalized")
     return {"status": "ok", "season": result["season"], "counts": result["counts"]}
 
