@@ -128,12 +128,18 @@ def calculate_league_prizes() -> dict:
 
 def calculate_wc_prizes() -> dict:
     """
-    WC sovrinlari (wc_cup) — joriy holatga ko'ra.
+    WC sovrinlari — joriy holatga ko'ra.
 
-    Qaytaradi: {"wc_cup": {user_id, nickname, username, team_name} | None}
+    Qaytaradi: {
+      "wc_cup": {user_id, nickname, username, team_name} | None,   # chempion
+      "wc_golden_boot": {user_id, ..., goals_for} | None,          # eng ko'p gol (guruh+play-off)
+    }
     """
     from queries import wc_playoff_get_champion
-    return {"wc_cup": wc_playoff_get_champion()}
+    from wc_rating import calculate_wc_top_scorers
+    scorers = calculate_wc_top_scorers()
+    top = scorers[0] if scorers else None
+    return {"wc_cup": wc_playoff_get_champion(), "wc_golden_boot": top}
 
 
 def calculate_season_prizes() -> dict:
@@ -148,6 +154,7 @@ def calculate_season_prizes() -> dict:
         "golden_boot": lg["golden_boot"],
         "league_cups": lg["league_cups"],
         "wc_cup": wc["wc_cup"],
+        "wc_golden_boot": wc["wc_golden_boot"],
     }
 
 
@@ -320,8 +327,8 @@ def _finalize_wc_locked(conn, cursor) -> dict:
 
     prizes = calculate_wc_prizes()
 
-    counts = {"wc_cup": 0}
-    if prizes["wc_cup"]:
+    counts = {"wc_cup": 0, "wc_golden_boot": 0}
+    if prizes.get("wc_cup"):
         _uid = prizes["wc_cup"]["user_id"]
         cursor.execute(
             "INSERT INTO season_prizes (user_id, telegram_id, prize_type, league_id, season_number, season_kind) "
@@ -329,6 +336,14 @@ def _finalize_wc_locked(conn, cursor) -> dict:
             (_uid, _telegram_id_for(cursor, _uid), season),
         )
         counts["wc_cup"] = 1
+    if prizes.get("wc_golden_boot"):
+        _uid = prizes["wc_golden_boot"]["user_id"]
+        cursor.execute(
+            "INSERT INTO season_prizes (user_id, telegram_id, prize_type, league_id, season_number, season_kind) "
+            "VALUES (?, ?, 'wc_golden_boot', NULL, ?, 'wc')",
+            (_uid, _telegram_id_for(cursor, _uid), season),
+        )
+        counts["wc_golden_boot"] = 1
 
     cursor.execute(
         "UPDATE season_state SET wc_season = wc_season + 1, "
