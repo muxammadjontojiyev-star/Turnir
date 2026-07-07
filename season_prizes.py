@@ -15,8 +15,12 @@ MUHIM: Liga va WC mavsumi ALOHIDA yakunlanadi (loyiha egasining qarori):
 Har biri o'z cooldowni + idempotentligi bilan (audit A3 naqshi).
 """
 
+import logging
+
 from config import SEASON_FINALIZE_COOLDOWN_SECONDS
 from models import get_connection
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -168,6 +172,15 @@ def _cooldown_active(cursor, last_at_col: str) -> bool:
     return diff is not None and diff < SEASON_FINALIZE_COOLDOWN_SECONDS
 
 
+def _telegram_id_for(cursor, user_id) -> int | None:
+    """user_id (DB id) -> telegram_id. Topilmasa None. Sovrinni doimiy bog'lash uchun."""
+    if user_id is None:
+        return None
+    cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    return row["telegram_id"] if row else None
+
+
 # ============================================================
 #  LIGA mavsumini yakunlash
 # ============================================================
@@ -222,9 +235,9 @@ def _finalize_league_locked(conn, cursor) -> dict:
 
     def save(user_id, prize_type, league_id=None):
         cursor.execute(
-            "INSERT INTO season_prizes (user_id, prize_type, league_id, season_number, season_kind) "
-            "VALUES (?, ?, ?, ?, 'league')",
-            (user_id, prize_type, league_id, season),
+            "INSERT INTO season_prizes (user_id, telegram_id, prize_type, league_id, season_number, season_kind) "
+            "VALUES (?, ?, ?, ?, ?, 'league')",
+            (user_id, _telegram_id_for(cursor, user_id), prize_type, league_id, season),
         )
 
     counts = {"golden_ball": 0, "golden_boot": 0, "league_cups": 0}
@@ -244,12 +257,20 @@ def _finalize_league_locked(conn, cursor) -> dict:
     )
     cursor.execute("COMMIT")
     conn.close()
-    return {"season": season, "already": False, "counts": counts, "prizes": prizes}
 
+    # Sovrinlar saqlanib, mavsum oshdi — endi liga ma'lumotini tozalaymiz
+    # (yangi mavsumda hamma yangidan ro'yxatdan o'tadi). users/season_prizes tegilmaydi.
+    # Alohida ulanish (FK OFF) — COMMIT'dan KEYIN chaqiriladi.
+    reset_info = None
+    try:
+        from season_reset import reset_league_data
+        reset_info = reset_league_data()
+    except Exception:
+        # Reset xatosi sovrin saqlanishini bekor qilmasin (sovrin allaqachon commit bo'ldi).
+        logger.exception("Liga reset xatosi (sovrinlar saqlangan)")
 
-# ============================================================
-#  WC mavsumini yakunlash
-# ============================================================
+    return {"season": season, "already": False, "counts": counts,
+            "prizes": prizes, "reset": reset_info}
 
 def finalize_wc_season() -> dict:
     """
@@ -301,10 +322,11 @@ def _finalize_wc_locked(conn, cursor) -> dict:
 
     counts = {"wc_cup": 0}
     if prizes["wc_cup"]:
+        _uid = prizes["wc_cup"]["user_id"]
         cursor.execute(
-            "INSERT INTO season_prizes (user_id, prize_type, league_id, season_number, season_kind) "
-            "VALUES (?, 'wc_cup', NULL, ?, 'wc')",
-            (prizes["wc_cup"]["user_id"], season),
+            "INSERT INTO season_prizes (user_id, telegram_id, prize_type, league_id, season_number, season_kind) "
+            "VALUES (?, ?, 'wc_cup', NULL, ?, 'wc')",
+            (_uid, _telegram_id_for(cursor, _uid), season),
         )
         counts["wc_cup"] = 1
 
@@ -314,7 +336,18 @@ def _finalize_wc_locked(conn, cursor) -> dict:
     )
     cursor.execute("COMMIT")
     conn.close()
-    return {"season": season, "already": False, "counts": counts, "prizes": prizes}
+
+    # Sovrin saqlanib, WC mavsumi oshdi — WC ma'lumotini tozalaymiz
+    # (yangi mavsumda hamma yangidan ro'yxatdan o'tadi). users/season_prizes tegilmaydi.
+    reset_info = None
+    try:
+        from season_reset import reset_wc_data
+        reset_info = reset_wc_data()
+    except Exception:
+        logger.exception("WC reset xatosi (sovrinlar saqlangan)")
+
+    return {"season": season, "already": False, "counts": counts,
+            "prizes": prizes, "reset": reset_info}
 
 
 # ============================================================
@@ -325,23 +358,48 @@ def get_user_prizes(user_id: int) -> list[dict]:
     """
     Foydalanuvchining barcha sovrinlari (liga + WC, tarix bo'yicha).
 
+    MUHIM: sovrinlar telegram_id ga bog'langan (users reset'da o'chsa ham qoladi).
+    Berilgan user_id (joriy DB id) -> telegram_id aniqlanadi va sovrinlar SHU
+    telegram_id bo'yicha olinadi. Shu tarzda odam yangi mavsumda qayta ro'yxatdan
+    o'tib yangi user_id olsa ham, eski sovrinlari (o'sha telegram_id) ko'rinadi.
+    Zaxira: telegram_id topilmasa — eski user_id bo'yicha (eski yozuvlar uchun).
+
     Qaytaradi: [{prize_type, league_id, league_name, season_number,
-                 season_kind, awarded_at}, ...]
-    Eng yangi birinchi.
+                 season_kind, awarded_at}, ...] — eng yangi birinchi.
     """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT sp.prize_type, sp.league_id, sp.season_number, sp.season_kind,
-               sp.awarded_at, l.name AS league_name
-        FROM season_prizes sp
-        LEFT JOIN leagues l ON l.id = sp.league_id
-        WHERE sp.user_id = ?
-        ORDER BY sp.season_number DESC, sp.id ASC
-        """,
-        (user_id,),
-    )
+
+    cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (user_id,))
+    urow = cursor.fetchone()
+    tg = urow["telegram_id"] if urow else None
+
+    if tg is not None:
+        cursor.execute(
+            """
+            SELECT sp.prize_type, sp.league_id, sp.season_number, sp.season_kind,
+                   sp.awarded_at, l.name AS league_name
+            FROM season_prizes sp
+            LEFT JOIN leagues l ON l.id = sp.league_id
+            WHERE sp.telegram_id = ? OR (sp.telegram_id IS NULL AND sp.user_id = ?)
+            ORDER BY sp.season_number DESC, sp.id ASC
+            """,
+            (tg, user_id),
+        )
+    else:
+        # telegram_id topilmadi (user o'chган/noma'lum) — eski user_id bo'yicha
+        cursor.execute(
+            """
+            SELECT sp.prize_type, sp.league_id, sp.season_number, sp.season_kind,
+                   sp.awarded_at, l.name AS league_name
+            FROM season_prizes sp
+            LEFT JOIN leagues l ON l.id = sp.league_id
+            WHERE sp.user_id = ?
+            ORDER BY sp.season_number DESC, sp.id ASC
+            """,
+            (user_id,),
+        )
+
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return rows

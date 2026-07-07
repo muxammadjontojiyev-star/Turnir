@@ -102,16 +102,19 @@ def init_db():
     # season_kind: 'league' (golden_ball/golden_boot/league_cup) yoki 'wc' (wc_cup).
     #   Liga va WC mavsumi alohida yakunlangani uchun season_number ular uchun
     #   mustaqil sanaladi — kind bilan birga o'qiladi.
+    # telegram_id: sovrin egasining Telegram ID'si — DOIMIY bog'lanish. users
+    #   jadvali mavsum resetida o'chsa ham sovrin tarixi telegram_id orqali
+    #   egasiga bog'liq qoladi (odam qayta kirsa o'sha telegram_id bilan tanaladi).
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS season_prizes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            user_id INTEGER,
+            telegram_id INTEGER,
             prize_type TEXT NOT NULL,
             league_id INTEGER,
             season_number INTEGER NOT NULL,
             season_kind TEXT NOT NULL DEFAULT 'league',
             awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (league_id) REFERENCES leagues(id)
         )
     """)
@@ -352,6 +355,8 @@ def init_db():
         "ALTER TABLE season_state ADD COLUMN wc_last_finalized_at TIMESTAMP",
         # Sovrin yozuvini liga/WC turiga ajratish (eski yozuvlar quyida to'g'rilanadi)
         "ALTER TABLE season_prizes ADD COLUMN season_kind TEXT NOT NULL DEFAULT 'league'",
+        # Sovrinni DOIMIY telegram_id ga bog'lash (users o'chsa ham tarix qoladi)
+        "ALTER TABLE season_prizes ADD COLUMN telegram_id INTEGER",
     ]
     for sql in migrations:
         try:
@@ -377,6 +382,19 @@ def init_db():
         conn.commit()
     except sqlite3.OperationalError as exc:
         logger.error("season_kind data-fix xatosi: %s", exc)
+        raise
+
+    # Data-fix: eski sovrinlarga telegram_id ni users'dan to'ldiramiz (users hali
+    # o'chirilmagan bo'lsa). Keyin reset users'ni o'chirsa ham telegram_id qoladi.
+    try:
+        cursor.execute(
+            "UPDATE season_prizes SET telegram_id = ("
+            "  SELECT u.telegram_id FROM users u WHERE u.id = season_prizes.user_id"
+            ") WHERE telegram_id IS NULL AND user_id IS NOT NULL"
+        )
+        conn.commit()
+    except sqlite3.OperationalError as exc:
+        logger.error("telegram_id backfill xatosi: %s", exc)
         raise
 
     conn.close()
