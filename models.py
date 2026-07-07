@@ -397,6 +397,40 @@ def init_db():
         logger.error("telegram_id backfill xatosi: %s", exc)
         raise
 
+    # BIR MARTALIK TUZATISH (guarded flag bilan — faqat 1 marta ishlaydi):
+    # Sinov paytida WC bir necha marta yakunlanib, wc_season 3 ga chiqib ketgan va
+    # 2-mavsum WC sovrinlari (kubok/to'purar) yozilib qolgan. Aslida faqat 1-mavsum
+    # yakunlangan (chempion 1-mavsum g'olibi). Shuning uchun:
+    #   - season_number >= 2 bo'lgan barcha WC sovrinlari o'chiriladi (fantom yozuvlar),
+    #   - wc_season 2 ga qaytariladi (2-mavsum endi boshlanadi).
+    # Faqat WC ga tegadi (season_kind='wc'); liga sovrinlariga TEGMAYDI.
+    # Guard: season_state.wc_season_fix_done = 1 belgisi — qayta ishlamaydi (idempotent
+    # va kelajakda haqiqiy 3-mavsumni buzib qo'ymaydi).
+    try:
+        cursor.execute("ALTER TABLE season_state ADD COLUMN wc_season_fix_done INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+    except sqlite3.OperationalError as exc:
+        if "duplicate column" not in str(exc).lower():
+            logger.error("wc_season_fix_done ustun xatosi: %s", exc)
+            raise
+    try:
+        cursor.execute("SELECT wc_season_fix_done, wc_season FROM season_state WHERE id = 1")
+        row = cursor.fetchone()
+        if row is not None and not row["wc_season_fix_done"]:
+            cursor.execute(
+                "DELETE FROM season_prizes WHERE season_kind = 'wc' AND season_number >= 2"
+            )
+            deleted = cursor.rowcount
+            cursor.execute(
+                "UPDATE season_state SET wc_season = 2, wc_last_finalized_at = NULL, "
+                "wc_season_fix_done = 1 WHERE id = 1"
+            )
+            conn.commit()
+            logger.info("WC mavsum tuzatildi: wc_season=2, o'chirilgan fantom WC sovrini=%s", deleted)
+    except sqlite3.OperationalError as exc:
+        logger.error("WC mavsum tuzatish xatosi: %s", exc)
+        raise
+
     conn.close()
 
     # Tuzatuvchi migratsiyalar (jadval rebuild + UNIQUE + indekslar) —
