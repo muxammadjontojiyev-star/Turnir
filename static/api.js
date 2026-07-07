@@ -798,6 +798,9 @@ function prizeVisual(p) {
   if (p.prize_type === "wc_cup") {
     return { img: "wc-trophy.png", name: t.wc_trophy_name || "JCH Kubogi" };
   }
+  if (p.prize_type === "wc_golden_boot") {
+    return { img: "wc-goldenball.png", name: t.wc_scorer_name || "JCH To'purari" };
+  }
   if (p.prize_type === "league_cup") {
     const trophyFile = LEAGUE_TROPHIES[p.league_name] || null;
     return { img: trophyFile, name: (p.league_name || "") + " " + (t.league_trophy || "Kubogi") };
@@ -807,14 +810,34 @@ function prizeVisual(p) {
 
 function renderMyPrizes(prizes) {
   const t = APP.t;
-  const items = prizes.map(p => {
+  // Bir xil turdagi sovrinlarni guruhlab, faqat 1 ta (eng yangisi) + soni (×N) ko'rsatamiz.
+  // Guruh kaliti: league_cup uchun tur+liga (har liga alohida kubok), qolganlari tur bo'yicha.
+  // Sovrinlar season DESC tartibda keladi — har guruhning birinchisi eng yangisi.
+  const groups = [];
+  const byKey = {};
+  prizes.forEach(p => {
+    const key = p.prize_type === "league_cup"
+      ? "league_cup:" + (p.league_name || "")
+      : p.prize_type;
+    if (!byKey[key]) {
+      byKey[key] = { first: p, count: 0 };
+      groups.push(byKey[key]);
+    }
+    byKey[key].count += 1;
+  });
+
+  const items = groups.map(g => {
+    const p = g.first;
     const v = prizeVisual(p);
     const imgHtml = v.img
       ? `<img src="${v.img}?v=20260628y" alt="" class="my-prize-img" onerror="this.style.display='none'" />`
       : `<span class="my-prize-emoji">🏆</span>`;
+    const countBadge = g.count > 1
+      ? `<span class="my-prize-count">×${g.count}</span>`
+      : "";
     return `
       <div class="my-prize-card">
-        <div class="my-prize-icon">${imgHtml}</div>
+        <div class="my-prize-icon">${imgHtml}${countBadge}</div>
         <div class="my-prize-name">${escHtml(v.name)}</div>
         <div class="my-prize-season">${escHtml(t.season_label || "Mavsum")} ${p.season_number}</div>
       </div>`;

@@ -2535,6 +2535,23 @@ table { border-collapse: collapse; width: 100%; }
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+.my-prize-count {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--accent, #38bdf8);
+  color: #001018;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 .my-prize-img {
   height: 54px;

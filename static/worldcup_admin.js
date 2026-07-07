@@ -163,7 +163,7 @@ async function wcFinalizeSeason() {
   try {
     const r = await apiFetch("/season/wc/finalize", { method: "POST" });
     const c = r.counts || {};
-    window.alert(`✅ ${t.wc_season_finalized || "WC mavsumi yakunlandi"} (#${r.season})\n🌍 ${c.wc_cup || 0} JCH kubogi`);
+    window.alert(`✅ ${t.wc_season_finalized || "WC mavsumi yakunlandi"} (#${r.season})\n🌍 ${c.wc_cup || 0} JCH kubogi, 👟 ${c.wc_golden_boot || 0} JCH to'purari`);
     // Mavsum raqami + tozalangan holat darhol ko'rinsin: WC ekranini qayta yuklaymiz
     if (typeof loadSeasons === "function") { try { await loadSeasons(); } catch (_) {} }
     if (typeof wcLoadProfileThenRender === "function") { void wcLoadProfileThenRender(); }
