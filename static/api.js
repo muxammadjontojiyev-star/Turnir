@@ -174,6 +174,15 @@ async function apiFetch(path, options = {}) {
 //  HOME SECTION
 // ============================================================
 
+async function loadSeasons() {
+  // Joriy mavsum raqamlarini (liga/WC) yuklab APP.seasons ga saqlaydi (hero kartalar uchun)
+  try {
+    const d = await apiFetch("/season/current");
+    APP.seasons.league = d.league_season ?? d.season ?? 1;
+    APP.seasons.wc = d.wc_season ?? 1;
+  } catch (_) { /* xato — default 1 qoladi */ }
+}
+
 async function loadHome() {
   try {
     const leagues = await apiFetch("/leagues");
@@ -190,6 +199,7 @@ async function loadHome() {
       APP.profileData = profile;
     } catch (_) { /* Foydalanuvchi topilmasa — null qoladi */ }
 
+    await loadSeasons();
     renderLeagues(leagues);
     renderHeroCard(open || null);
     renderRules();
@@ -218,8 +228,8 @@ function renderHeroCard(league) {
   count.textContent = league.current_players;
   max.textContent   = league.max_players;
 
-  // Mavsum raqami — hozircha barcha ligalarda 1-mavsum
-  document.getElementById("home-matchday").textContent = "1";
+  // Mavsum raqami (liga) — DB'dan (APP.seasons.league)
+  document.getElementById("home-matchday").textContent = String(APP.seasons.league ?? 1);
 
   const btn = document.getElementById("btn-register");
   // Liga to'liq bo'lsa yoki klub tanlanmagan bo'lsa — disabled
@@ -1092,7 +1102,7 @@ async function loadSeasonInfo() {
   if (!hint) return;
   try {
     const d = await apiFetch("/season/current");
-    hint.textContent = (APP.t.season_current || "Joriy mavsum") + ": " + d.season;
+    hint.textContent = (APP.t.season_current || "Joriy liga mavsumi") + ": " + (d.league_season ?? d.season);
   } catch (_) {}
   if (btn && !btn._bound) {
     btn._bound = true;
@@ -1106,8 +1116,10 @@ async function finalizeSeason() {
   try {
     const r = await apiFetch("/season/finalize", { method: "POST" });
     const c = r.counts || {};
-    window.alert(`✅ ${t.season_finalized || "Mavsum yakunlandi"} (#${r.season})\n🏆 ${c.league_cups || 0} liga kubogi, ⚽ ${c.golden_boot || 0} oltin butsa, 🥇 ${c.golden_ball || 0} oltin to'p, 🌍 ${c.wc_cup || 0} JCH kubogi`);
+    window.alert(`✅ ${t.season_finalized || "Liga mavsumi yakunlandi"} (#${r.season})\n🏆 ${c.league_cups || 0} liga kubogi, ⚽ ${c.golden_boot || 0} oltin butsa, 🥇 ${c.golden_ball || 0} oltin to'p`);
     await loadSeasonInfo();
+    // Mavsum raqami + tozalangan holat darhol ko'rinsin: bosh sahifani qayta yuklaymiz
+    if (typeof loadHome === "function") { try { await loadHome(); } catch (_) {} }
   } catch (e) {
     const errMap = {
       already_finalized: t.season_already_finalized || "Bu mavsum allaqachon yakunlangan",

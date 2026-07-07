@@ -59,6 +59,7 @@ const APP = {
   chatMatchId:      null,   // WebApp chat: ochiq match id
   chatPoll:         null,   // WebApp chat: polling interval handle
   unread:           { total: 0, by_match: {} },  // O'qilmagan chat xabarlari (rozetka)
+  seasons:          { league: 1, wc: 1 },  // Joriy mavsum raqamlari (liga/WC — hero kartalarda)
 };
 
 // ============================================================

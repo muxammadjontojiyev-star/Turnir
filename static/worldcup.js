@@ -105,6 +105,8 @@ async function wcLoadProfileThenRender() {
   } catch (_) {
     WC.playoffStarted = false;
   }
+  // Joriy mavsum raqamlari (hero kartada WC mavsumini ko'rsatish uchun)
+  if (typeof loadSeasons === "function") { try { await loadSeasons(); } catch (_) {} }
   renderWorldCup();
 }
 
@@ -257,7 +259,7 @@ function wcRenderHome() {
         </div>
         <div class="stat-divider"></div>
         <div class="stat">
-          <span class="stat-value">1</span>
+          <span class="stat-value">${(APP.seasons && APP.seasons.wc) ?? 1}</span>
           <span class="stat-label">${escHtml(t.season || "Mavsum")}</span>
         </div>
       </div>
