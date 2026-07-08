@@ -739,6 +739,7 @@ function renderPlayerMatchItem(m) {
   if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting"; statusText = t.status_awaiting || "TASDIQ"; }
   if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = t.status_confirmed || "TASDIQLANDI"; }
   if (m.status === "rejected")              { statusCls = "status--rejected";  statusText = t.status_rejected  || "RAD ETILDI"; }
+  if (m.status === "admin_pending")         { statusCls = "status--awaiting"; statusText = t.status_admin_pending || "ADMIN TASDIG'I"; }
 
   return `
     <div class="match-item">
@@ -1021,6 +1022,7 @@ function renderMatchItem(m) {
   if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting"; statusText = t.status_awaiting || "TASDIQ"; }
   if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = t.status_confirmed || "TASDIQLANDI"; }
   if (m.status === "rejected")              { statusCls = "status--rejected";  statusText = t.status_rejected  || "RAD ETILDI"; }
+  if (m.status === "admin_pending")         { statusCls = "status--awaiting"; statusText = t.status_admin_pending || "ADMIN TASDIG'I"; }
 
   let actionBtn = "";
   if (m.status === "pending") {
@@ -1099,6 +1101,9 @@ async function loadAdminPanel() {
   }
 
   panel.classList.remove("hidden");
+
+  // Katta hisob (admin_pending) ro'yxati — barcha liga adminlariga
+  await loadPendingMatches();
 
   if (who.is_super) {
     // Bosh admin — hamma narsa
@@ -1632,6 +1637,66 @@ async function loadRejectedMatches() {
     renderRejectedMatches(matches);
   } catch (e) {
     list.innerHTML = `<div class="empty-state">${e.message}</div>`;
+  }
+}
+
+// Katta hisob (admin_pending) — admin tasdig'ini kutayotgan liga o'yinlari
+async function loadPendingMatches() {
+  const list = document.getElementById("admin-pending-list");
+  if (!list) return;
+  try {
+    const res = await apiFetch("/admin/match/pending");
+    renderPendingMatches(res.matches || []);
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state">${e.message}</div>`;
+  }
+}
+
+function renderPendingMatches(matches) {
+  const t = APP.t;
+  const list = document.getElementById("admin-pending-list");
+  if (!list) return;
+  if (matches.length === 0) {
+    list.innerHTML = `<div class="empty-state">${t.admin_pending_empty || "Kutayotgan katta hisob yo'q"}</div>`;
+    return;
+  }
+  list.innerHTML = matches.map(m => {
+    const p1 = m.p1_nick || (m.p1_user ? "@" + m.p1_user : "?");
+    const p2 = m.p2_nick || (m.p2_user ? "@" + m.p2_user : "?");
+    return `
+    <div class="admin-player-item">
+      <div class="admin-player-info">
+        <span class="match-id">#${m.id}</span> ${escHtml(p1)} <b>${m.score1}:${m.score2}</b> ${escHtml(p2)}
+        <div class="admin-player-league">${escHtml(m.league_name || "")} · ${t.matchday || "Tur"} ${m.matchday}</div>
+      </div>
+      <button class="admin-remove-btn admin-pending-confirm-btn" data-match-id="${m.id}">
+        ${t.admin_pending_confirm || "Tasdiqlash"}
+      </button>
+      <button class="admin-remove-btn admin-pending-reject-btn" data-match-id="${m.id}">
+        ${t.admin_pending_reject || "Rad etish"}
+      </button>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll(".admin-pending-confirm-btn").forEach(btn => {
+    btn.addEventListener("click", () => resolvePendingMatch(parseInt(btn.dataset.matchId), "confirm"));
+  });
+  list.querySelectorAll(".admin-pending-reject-btn").forEach(btn => {
+    btn.addEventListener("click", () => resolvePendingMatch(parseInt(btn.dataset.matchId), "reject"));
+  });
+}
+
+async function resolvePendingMatch(matchId, action) {
+  const t = APP.t;
+  try {
+    await apiFetch(`/admin/match/pending/resolve?match_id=${matchId}&action=${action}`, { method: "POST" });
+    showToast(action === "confirm"
+      ? (t.admin_match_resolved || "✅ Tasdiqlandi")
+      : (t.admin_match_resolved || "✅ Rad etildi"));
+    await loadPendingMatches();
+    await refreshMatchViews();
+  } catch (e) {
+    showToast("❌ " + e.message);
   }
 }
 
@@ -2384,12 +2449,16 @@ async function submitMatchResult() {
   const score2  = parseInt(document.getElementById("input-score2").value) || 0;
 
   try {
-    await apiFetch(
+    const res = await apiFetch(
       `/match/submit-result?match_id=${matchId}&score1=${score1}&score2=${score2}`,
       { method: "POST" }
     );
     closeResultModal();
-    showToast(APP.t.result_submitted || "✅ Natija yuborildi");
+    if (res && res.reason === "ok_admin_pending") {
+      showToast(APP.t.result_admin_pending || "✅ Natija yuborildi. Katta hisob — adminga skrinshot yuboring.");
+    } else {
+      showToast(APP.t.result_submitted || "✅ Natija yuborildi");
+    }
     await refreshMatchViews();
   } catch (e) {
     const msg = {

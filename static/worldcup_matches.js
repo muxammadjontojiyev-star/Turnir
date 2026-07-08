@@ -241,6 +241,7 @@ function wcRenderMatchItem(m) {
   let statusCls  = "status--pending";
   let statusText = t.status_pending || "KUTILMOQDA";
   if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting";  statusText = t.status_awaiting  || "TASDIQ"; }
+  if (m.status === "admin_pending")         { statusCls = "status--awaiting";  statusText = t.status_admin_pending || "ADMIN TASDIG'I"; }
   if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = t.status_confirmed || "TASDIQLANDI"; }
 
   // Amal tugmasi: status va lock holatiga qarab (liga oqimi)
@@ -331,8 +332,12 @@ async function wcSubmitResult() {
   const s1 = parseInt(document.getElementById("wc-input-score1").value, 10) || 0;
   const s2 = parseInt(document.getElementById("wc-input-score2").value, 10) || 0;
   try {
-    await apiFetch(`/wc/match/submit-result?match_id=${matchId}&score1=${s1}&score2=${s2}`, { method: "POST" });
-    showToast(t.result_submitted || "✅ Natija yuborildi");
+    const res = await apiFetch(`/wc/match/submit-result?match_id=${matchId}&score1=${s1}&score2=${s2}`, { method: "POST" });
+    if (res && res.reason === "ok_admin_pending") {
+      showToast(t.result_admin_pending || "✅ Natija yuborildi. Katta hisob — adminga skrinshot yuboring.");
+    } else {
+      showToast(t.result_submitted || "✅ Natija yuborildi");
+    }
     wcCloseResultModal();
     await wcLoadMatches();
   } catch (e) {

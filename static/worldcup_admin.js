@@ -52,6 +52,11 @@ function wcRenderAdminPanel() {
   const t = APP.t;
   let html = `<div class="section-label">${escHtml(t.admin_panel_title || "ADMIN PANEL")}</div>`;
 
+  // Katta hisob (admin_pending) — barcha WC adminlariga
+  html += `
+    <div class="section-label">${escHtml(t.admin_pending_title || "ADMIN TASDIG'I (KATTA HISOB)")}</div>
+    <div id="wc-admin-pending-list" class="admin-players-list"></div>`;
+
   // --- Natija tuzatish (bosh + oddiy WC admin) ---
   html += `
     <div class="section-label">${escHtml(t.admin_fix_title || "TASDIQLANGAN NATIJANI TUZATISH")}</div>
@@ -144,6 +149,66 @@ function wcBindAdminPanel() {
     document.getElementById("wc-btn-finalize-season")?.addEventListener("click", wcFinalizeSeason);
     void wcLoadPlayoffStatus();
     void wcLoadSeasonInfo();
+  }
+  // Katta hisob ro'yxati — barcha WC adminlariga (bosh + oddiy)
+  void wcLoadPendingMatches();
+}
+
+// ---- Katta hisob (admin_pending) — WC admin tasdig'ini kutayotgan o'yinlar ----
+async function wcLoadPendingMatches() {
+  const list = document.getElementById("wc-admin-pending-list");
+  if (!list) return;
+  try {
+    const res = await apiFetch("/wc/admin/match/pending");
+    wcRenderPendingMatches(res.matches || []);
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state">${escHtml(e.message)}</div>`;
+  }
+}
+
+function wcRenderPendingMatches(matches) {
+  const t = APP.t;
+  const list = document.getElementById("wc-admin-pending-list");
+  if (!list) return;
+  if (matches.length === 0) {
+    list.innerHTML = `<div class="empty-state">${escHtml(t.admin_pending_empty || "Kutayotgan katta hisob yo'q")}</div>`;
+    return;
+  }
+  list.innerHTML = matches.map(m => {
+    const p1 = m.p1_team || m.p1_nick || (m.p1_user ? "@" + m.p1_user : "?");
+    const p2 = m.p2_team || m.p2_nick || (m.p2_user ? "@" + m.p2_user : "?");
+    return `
+    <div class="admin-player-item">
+      <div class="admin-player-info">
+        <span class="match-id">#${m.id}</span> ${escHtml(p1)} <b>${m.score1}:${m.score2}</b> ${escHtml(p2)}
+        <div class="admin-player-league">${escHtml(m.group_letter || "")} · ${escHtml(t.matchday || "Tur")} ${m.matchday}</div>
+      </div>
+      <button class="admin-remove-btn wc-pending-confirm-btn" data-match-id="${m.id}">
+        ${escHtml(t.admin_pending_confirm || "Tasdiqlash")}
+      </button>
+      <button class="admin-remove-btn wc-pending-reject-btn" data-match-id="${m.id}">
+        ${escHtml(t.admin_pending_reject || "Rad etish")}
+      </button>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll(".wc-pending-confirm-btn").forEach(btn => {
+    btn.addEventListener("click", () => wcResolvePendingMatch(parseInt(btn.dataset.matchId), "confirm"));
+  });
+  list.querySelectorAll(".wc-pending-reject-btn").forEach(btn => {
+    btn.addEventListener("click", () => wcResolvePendingMatch(parseInt(btn.dataset.matchId), "reject"));
+  });
+}
+
+async function wcResolvePendingMatch(matchId, action) {
+  const t = APP.t;
+  try {
+    await apiFetch(`/wc/admin/match/pending/resolve?match_id=${matchId}&action=${action}`, { method: "POST" });
+    showToast(t.admin_match_resolved || "✅ Bajarildi");
+    await wcLoadPendingMatches();
+    if (typeof wcLoadMatches === "function") { try { await wcLoadMatches(); } catch (_) {} }
+  } catch (e) {
+    showToast("❌ " + escHtml(e.message));
   }
 }
 
