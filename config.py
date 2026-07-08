@@ -80,6 +80,13 @@ IP_RATE_LIMIT_WINDOW = 10  # sekund
 # Haqiqiy keyingi mavsum yakunlashi haftalar keyin bo'ladi — 5 daqiqa yetarli.
 SEASON_FINALIZE_COOLDOWN_SECONDS = int(os.getenv("SEASON_FINALIZE_COOLDOWN_SECONDS", "300"))
 
+# === Katta hisob (score farming) himoyasi ===
+# Bir tomon shu qiymatdan KO'P gol kiritsa (masalan 20:0), natija darhol
+# tasdiqlanmaydi — 'admin_pending' holatiga tushadi va bosh admin tasdig'ini kutadi.
+# 0..MAX_NORMAL_SCORE oralig'idagi hisoblar oddiy oqim (raqib tasdig'i) bilan o'tadi.
+# Maqsad: oltin to'p/butsa reytingini soxta katta hisoblar bilan shishirishni to'xtatish.
+MAX_NORMAL_SCORE = int(os.getenv("MAX_NORMAL_SCORE", "5"))
+
 # === Profil rasm proxy keshi ===
 # /players/{id}/photo har chaqiriqda Telegram API'ga 3 tagacha so'rov qilardi —
 # kesh bot tokenining Telegram limitini himoya qiladi (audit A4).

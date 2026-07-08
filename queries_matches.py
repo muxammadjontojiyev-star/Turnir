@@ -54,12 +54,26 @@ def get_match_by_id(match_id: int) -> dict | None:
 # o'z joyiga — queries_chat.py'ga ko'chirildi (bo'lishda shu chunk'ka tushib qolgan edi).
 
 
+def _result_status_for(score1: int, score2: int) -> str:
+    """
+    Kiritilgan hisobga qarab yangi status: agar biror tomon MAX_NORMAL_SCORE dan
+    ko'p gol ursa -> 'admin_pending' (bosh admin tasdig'i), aks holda oddiy oqim
+    ('awaiting_confirmation' — raqib tasdig'i). Liga va WC uchun umumiy (DRY).
+    """
+    from config import MAX_NORMAL_SCORE
+    if score1 > MAX_NORMAL_SCORE or score2 > MAX_NORMAL_SCORE:
+        return "admin_pending"
+    return "awaiting_confirmation"
+
+
 def submit_match_result(match_id: int, score1: int, score2: int, submitted_by: int) -> tuple[bool, str]:
     """
     Match natijasini kiritadi (faqat o'sha matchning player1 yoki player2 kira oladi).
 
     Qaytaradi: (muvaffaqiyat: bool, sabab: str)
-    Sabablar: "ok", "match_not_found", "not_participant", "already_submitted"
+    Sabablar: "ok", "ok_admin_pending", "match_not_found", "not_participant",
+              "already_submitted"
+    Katta hisob (MAX_NORMAL_SCORE dan ko'p) -> 'admin_pending', sabab "ok_admin_pending".
     """
     match = get_match_by_id(match_id)
     if match is None:
@@ -71,19 +85,20 @@ def submit_match_result(match_id: int, score1: int, score2: int, submitted_by: i
     if match["status"] != "pending":
         return False, "already_submitted"
 
+    new_status = _result_status_for(score1, score2)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
         UPDATE matches
-        SET score1 = ?, score2 = ?, submitted_by = ?, status = 'awaiting_confirmation'
+        SET score1 = ?, score2 = ?, submitted_by = ?, status = ?
         WHERE id = ?
         """,
-        (score1, score2, submitted_by, match_id),
+        (score1, score2, submitted_by, new_status, match_id),
     )
     conn.commit()
     conn.close()
-    return True, "ok"
+    return True, ("ok_admin_pending" if new_status == "admin_pending" else "ok")
 
 
 def confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tuple[bool, str]:
@@ -134,6 +149,65 @@ def confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tu
     conn.commit()
     conn.close()
     return True, "ok"
+
+
+def admin_resolve_pending(match_id: int, action: str) -> tuple[bool, str]:
+    """
+    Bosh admin katta hisobli (admin_pending) liga o'yinini tasdiqlaydi yoki rad etadi.
+
+    action: "confirm" -> 'confirmed' (natija hisobga, reytingga o'tadi)
+            "reject"  -> 'pending' + score NULL (o'yinchi qayta kiritadi)
+    Faqat status 'admin_pending' bo'lgan o'yinga ta'sir qiladi (idempotent himoya).
+    Sabablar: ok, match_not_found, wrong_status, invalid_action
+    """
+    if action not in ("confirm", "reject"):
+        return False, "invalid_action"
+    match = get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+    if match["status"] != "admin_pending":
+        return False, "wrong_status"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    if action == "confirm":
+        cursor.execute("UPDATE matches SET status = 'confirmed' WHERE id = ?", (match_id,))
+    else:
+        cursor.execute(
+            "UPDATE matches SET status = 'pending', score1 = NULL, score2 = NULL, "
+            "submitted_by = NULL WHERE id = ?",
+            (match_id,),
+        )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def get_admin_pending_matches() -> list[dict]:
+    """
+    Barcha liga bo'ylab admin tasdig'ini kutayotgan (admin_pending) o'yinlar.
+    Admin panelda ro'yxat sifatida ko'rsatish uchun. Eng yangisi (id DESC) birinchi.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT m.id, m.league_id, m.matchday, m.player1_id, m.player2_id,
+               m.score1, m.score2, m.submitted_by,
+               l.name AS league_name,
+               u1.nickname AS p1_nick, u1.username AS p1_user,
+               u2.nickname AS p2_nick, u2.username AS p2_user
+        FROM matches m
+        LEFT JOIN leagues l ON l.id = m.league_id
+        LEFT JOIN users u1 ON u1.id = m.player1_id
+        LEFT JOIN users u2 ON u2.id = m.player2_id
+        WHERE m.status = 'admin_pending'
+        ORDER BY m.id DESC
+        """
+    )
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
 
 
 def auto_resolve_matches(league_id: int, up_to_matchday: int) -> dict:

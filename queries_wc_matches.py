@@ -117,19 +117,21 @@ def wc_submit_match_result(match_id: int, score1: int, score2: int, submitted_by
     if match["matchday"] > open_md:
         return False, "matchday_locked"
 
+    from queries_matches import _result_status_for
+    new_status = _result_status_for(score1, score2)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
         UPDATE wc_matches
-        SET score1 = ?, score2 = ?, submitted_by = ?, status = 'awaiting_confirmation'
+        SET score1 = ?, score2 = ?, submitted_by = ?, status = ?
         WHERE id = ?
         """,
-        (score1, score2, submitted_by, match_id),
+        (score1, score2, submitted_by, new_status, match_id),
     )
     conn.commit()
     conn.close()
-    return True, "ok"
+    return True, ("ok_admin_pending" if new_status == "admin_pending" else "ok")
 
 
 def wc_confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) -> tuple[bool, str]:
@@ -167,6 +169,61 @@ def wc_confirm_or_reject_match(match_id: int, action: str, confirmed_by: int) ->
     conn.commit()
     conn.close()
     return True, "ok"
+
+
+def wc_admin_resolve_pending(match_id: int, action: str) -> tuple[bool, str]:
+    """
+    Bosh admin katta hisobli (admin_pending) WC guruh o'yinini tasdiqlaydi/rad etadi.
+    Liga admin_resolve_pending kabi. Sabablar: ok, match_not_found, wrong_status, invalid_action
+    """
+    if action not in ("confirm", "reject"):
+        return False, "invalid_action"
+    match = wc_get_match_by_id(match_id)
+    if match is None:
+        return False, "match_not_found"
+    if match["status"] != "admin_pending":
+        return False, "wrong_status"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    if action == "confirm":
+        cursor.execute("UPDATE wc_matches SET status = 'confirmed' WHERE id = ?", (match_id,))
+    else:
+        cursor.execute(
+            "UPDATE wc_matches SET status = 'pending', score1 = NULL, score2 = NULL, "
+            "submitted_by = NULL WHERE id = ?",
+            (match_id,),
+        )
+    conn.commit()
+    conn.close()
+    return True, "ok"
+
+
+def wc_get_admin_pending_matches() -> list[dict]:
+    """
+    Barcha WC guruhlar bo'ylab admin tasdig'ini kutayotgan (admin_pending) o'yinlar.
+    Eng yangisi (id DESC) birinchi.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT w.id, w.group_letter, w.matchday, w.player1_id, w.player2_id,
+               w.score1, w.score2, w.submitted_by,
+               u1.nickname AS p1_nick, u1.username AS p1_user, r1.team_name AS p1_team,
+               u2.nickname AS p2_nick, u2.username AS p2_user, r2.team_name AS p2_team
+        FROM wc_matches w
+        LEFT JOIN users u1 ON u1.id = w.player1_id
+        LEFT JOIN users u2 ON u2.id = w.player2_id
+        LEFT JOIN wc_registrations r1 ON r1.user_id = w.player1_id
+        LEFT JOIN wc_registrations r2 ON r2.user_id = w.player2_id
+        WHERE w.status = 'admin_pending'
+        ORDER BY w.id DESC
+        """
+    )
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
 
 
 # ---- WC guruh: deadline o'tgan matchday + avtomatik 0:0 yopish ----

@@ -45,6 +45,8 @@ from queries import (
     get_league_by_id, count_league_players, get_user_registration,
     register_user_to_league, update_user_nickname, get_taken_clubs,
     get_user_matches, submit_match_result, confirm_or_reject_match,
+    admin_resolve_pending, get_admin_pending_matches,
+    wc_admin_resolve_pending, wc_get_admin_pending_matches,
     get_all_users_with_registration, remove_user_completely,
     get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
     get_user_by_id, update_league_status, league_has_matches,
@@ -806,7 +808,7 @@ def wc_submit_result(
     success, reason = wc_submit_match_result(match_id, score1, score2, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)
-    return {"status": "ok", "match_id": match_id}
+    return {"status": "ok", "match_id": match_id, "reason": reason}
 
 
 @app.post("/wc/match/confirm")
@@ -1040,6 +1042,28 @@ def wc_admin_match_reset(
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
+
+
+@app.get("/wc/admin/match/pending")
+def wc_admin_pending_list(admin: dict = Depends(get_authenticated_wc_admin)):
+    """Katta hisob (admin_pending) tufayli admin tasdig'ini kutayotgan WC guruh o'yinlari."""
+    return {"matches": wc_get_admin_pending_matches()}
+
+
+@app.post("/wc/admin/match/pending/resolve")
+def wc_admin_pending_resolve(
+    match_id: int,
+    action: str,
+    admin: dict = Depends(get_authenticated_wc_admin),
+):
+    """
+    WC admin katta hisobli guruh o'yinini tasdiqlaydi (confirm) yoki rad etadi (reject).
+    Query params: match_id, action ('confirm'|'reject').
+    """
+    success, reason = wc_admin_resolve_pending(match_id, action)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok"}
 
 
 # ============ POST /wc/admin/fix-schedules ============
@@ -1495,19 +1519,22 @@ async def submit_result(
     if not success:
         raise HTTPException(status_code=400, detail=reason)
 
-    # Raqibga (natija kiritmagan tomonga) tasdiqlash so'rovi yuboramiz
-    match = get_match_by_id(match_id)
-    if match is not None:
-        opponent_id = match["player2_id"] if user["id"] == match["player1_id"] else match["player1_id"]
-        opponent = get_user_by_id(opponent_id)
-        if opponent is not None:
-            await notify_user(
-                opponent["telegram_id"],
-                "notify_result_submitted",
-                opponent.get("language"),
-            )
+    # Katta hisob (admin_pending) — raqib tasdig'i kutilmaydi, admin ko'rib chiqadi.
+    # Shuning uchun raqibga tasdiqlash so'rovi YUBORILMAYDI.
+    if reason != "ok_admin_pending":
+        # Raqibga (natija kiritmagan tomonga) tasdiqlash so'rovi yuboramiz
+        match = get_match_by_id(match_id)
+        if match is not None:
+            opponent_id = match["player2_id"] if user["id"] == match["player1_id"] else match["player1_id"]
+            opponent = get_user_by_id(opponent_id)
+            if opponent is not None:
+                await notify_user(
+                    opponent["telegram_id"],
+                    "notify_result_submitted",
+                    opponent.get("language"),
+                )
 
-    return {"status": "ok", "match_id": match_id}
+    return {"status": "ok", "match_id": match_id, "reason": reason}
 
 
 # ============ POST /match/confirm ============
@@ -1620,6 +1647,28 @@ def admin_match_info(
         "score2": match["score2"],
         "status": match["status"],
     }
+
+
+@app.get("/admin/match/pending")
+def admin_pending_list(admin: dict = Depends(get_authenticated_league_admin)):
+    """Katta hisob (admin_pending) tufayli admin tasdig'ini kutayotgan liga o'yinlari."""
+    return {"matches": get_admin_pending_matches()}
+
+
+@app.post("/admin/match/pending/resolve")
+def admin_pending_resolve(
+    match_id: int,
+    action: str,
+    admin: dict = Depends(get_authenticated_league_admin),
+):
+    """
+    Bosh/liga admin katta hisobli o'yinni tasdiqlaydi (confirm) yoki rad etadi (reject).
+    Query params: match_id, action ('confirm'|'reject').
+    """
+    success, reason = admin_resolve_pending(match_id, action)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok"}
 
 
 @app.post("/admin/match/fix-confirmed")
