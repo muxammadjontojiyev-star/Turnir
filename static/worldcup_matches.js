@@ -333,12 +333,13 @@ async function wcSubmitResult() {
   const s2 = parseInt(document.getElementById("wc-input-score2").value, 10) || 0;
   try {
     const res = await apiFetch(`/wc/match/submit-result?match_id=${matchId}&score1=${s1}&score2=${s2}`, { method: "POST" });
+    wcCloseResultModal();
     if (res && res.reason === "ok_admin_pending") {
-      showToast(t.result_admin_pending || "✅ Natija yuborildi. Katta hisob — adminga skrinshot yuboring.");
+      if (typeof openBigScoreModal === "function") openBigScoreModal();
+      else showToast(t.result_admin_pending || "✅ Natija yuborildi");
     } else {
       showToast(t.result_submitted || "✅ Natija yuborildi");
     }
-    wcCloseResultModal();
     await wcLoadMatches();
   } catch (e) {
     const msg = {

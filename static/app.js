@@ -60,6 +60,7 @@ const APP = {
   chatPoll:         null,   // WebApp chat: polling interval handle
   unread:           { total: 0, by_match: {} },  // O'qilmagan chat xabarlari (rozetka)
   seasons:          { league: 1, wc: 1 },  // Joriy mavsum raqamlari (liga/WC — hero kartalarda)
+  adminContact:     { url: "", username: "" },  // Bosh admin bilan bog'lanish (katta hisob skrinshot)
 };
 
 // ============================================================
@@ -175,6 +176,10 @@ const TEXTS = {
     webchat_day_ago:     "kun oldin",
     result_submitted: "✅ Natija yuborildi",
     result_admin_pending: "✅ Natija yuborildi. Katta hisob (5 dan ortiq) — bosh adminga isbot uchun SKRINSHOT yuboring. Admin tasdiqlagach hisobga o'tadi.",
+    big_score_title:      "Katta hisob kiritildi",
+    big_score_body:       "Natija yuborildi ✅\n\nKatta hisob (5 goldan ortiq) bosh admin tasdig'ini talab qiladi. Isbot uchun adminga o'yin SKRINSHOTINI yuboring — admin tasdiqlagach natija hisobga o'tadi va reytingga sanaladi.",
+    big_score_contact:    "Adminga yozish",
+    close:                "Yopish",
     result_confirmed: "✅ Tasdiqlandi",
     confirm_result_title: "Natijani tasdiqlaysizmi?",
     confirm_claims: "shu natijani da'vo qilyapti:",
@@ -460,6 +465,10 @@ const TEXTS = {
     webchat_day_ago:     "дн. назад",
     result_submitted: "✅ Результат отправлен",
     result_admin_pending: "✅ Результат отправлен. Крупный счёт (более 5) — отправьте главному админу СКРИНШОТ как доказательство. После подтверждения админом результат будет засчитан.",
+    big_score_title:      "Крупный счёт",
+    big_score_body:       "Результат отправлен ✅\n\nКрупный счёт (более 5 голов) требует подтверждения главного админа. Отправьте админу СКРИНШОТ матча как доказательство — после подтверждения результат будет засчитан в рейтинг.",
+    big_score_contact:    "Написать админу",
+    close:                "Закрыть",
     result_confirmed: "✅ Подтверждено",
     confirm_result_title: "Подтвердить результат?",
     confirm_claims: "заявляет этот результат:",
@@ -742,6 +751,10 @@ const TEXTS = {
     webchat_day_ago:     "d ago",
     result_submitted: "✅ Result submitted",
     result_admin_pending: "✅ Result submitted. Big score (over 5) — send a SCREENSHOT to the head admin as proof. It counts once the admin confirms.",
+    big_score_title:      "Big score",
+    big_score_body:       "Result submitted ✅\n\nA big score (over 5 goals) requires head admin approval. Send the admin a SCREENSHOT of the match as proof — once confirmed, the result counts and is added to the rating.",
+    big_score_contact:    "Message admin",
+    close:                "Close",
     result_confirmed: "✅ Confirmed",
     confirm_result_title: "Confirm the result?",
     confirm_claims: "claims this result:",
@@ -1140,6 +1153,7 @@ async function checkChannelMembership() {
   try {
     const data = await apiFetch("/membership/check");
     APP.channelInfo = { url: data.channel_url, username: data.channel_username };
+    APP.adminContact = { url: data.admin_contact_url, username: data.admin_contact_username };
     return !!data.subscribed;
   } catch (e) {
     // Tekshiruv ishlamasa foydalanuvchini bloklamaymiz

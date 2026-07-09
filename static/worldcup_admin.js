@@ -175,13 +175,18 @@ function wcRenderPendingMatches(matches) {
     return;
   }
   list.innerHTML = matches.map(m => {
-    const p1 = m.p1_team || m.p1_nick || (m.p1_user ? "@" + m.p1_user : "?");
-    const p2 = m.p2_team || m.p2_nick || (m.p2_user ? "@" + m.p2_user : "?");
+    const flag1 = (typeof wcTeamFlag === "function" ? wcTeamFlag(m.p1_team) : "") || "";
+    const flag2 = (typeof wcTeamFlag === "function" ? wcTeamFlag(m.p2_team) : "") || "";
+    const name1 = escHtml(m.p1_team || "?");
+    const name2 = escHtml(m.p2_team || "?");
     return `
-    <div class="admin-player-item">
+    <div class="admin-player-item admin-pending-item">
       <div class="admin-player-info">
-        <span class="match-id">#${m.id}</span> ${escHtml(p1)} <b>${m.score1}:${m.score2}</b> ${escHtml(p2)}
-        <div class="admin-player-league">${escHtml(m.group_letter || "")} · ${escHtml(t.matchday || "Tur")} ${m.matchday}</div>
+        <div class="admin-pending-match">
+          <span class="match-id">#${m.id}</span>
+          <span>${flag1} ${name1}</span> <b class="admin-pending-score">${m.score1}:${m.score2}</b> <span>${flag2} ${name2}</span>
+        </div>
+        <div class="admin-player-league">${escHtml(t.wc_group || "Guruh")} ${escHtml(m.group_letter || "")} · ${escHtml(t.matchday || "Tur")} ${m.matchday}</div>
       </div>
       <button class="admin-remove-btn wc-pending-confirm-btn" data-match-id="${m.id}">
         ${escHtml(t.admin_pending_confirm || "Tasdiqlash")}

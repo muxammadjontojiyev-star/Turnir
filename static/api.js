@@ -1661,12 +1661,15 @@ function renderPendingMatches(matches) {
     return;
   }
   list.innerHTML = matches.map(m => {
-    const p1 = m.p1_nick || (m.p1_user ? "@" + m.p1_user : "?");
-    const p2 = m.p2_nick || (m.p2_user ? "@" + m.p2_user : "?");
+    const badge1 = renderClubBadge(m.p1_club);
+    const badge2 = renderClubBadge(m.p2_club);
     return `
-    <div class="admin-player-item">
+    <div class="admin-player-item admin-pending-item">
       <div class="admin-player-info">
-        <span class="match-id">#${m.id}</span> ${escHtml(p1)} <b>${m.score1}:${m.score2}</b> ${escHtml(p2)}
+        <div class="admin-pending-match">
+          <span class="match-id">#${m.id}</span>
+          ${badge1}<b class="admin-pending-score">${m.score1}:${m.score2}</b>${badge2}
+        </div>
         <div class="admin-player-league">${escHtml(m.league_name || "")} · ${t.matchday || "Tur"} ${m.matchday}</div>
       </div>
       <button class="admin-remove-btn admin-pending-confirm-btn" data-match-id="${m.id}">
@@ -2443,6 +2446,31 @@ async function sendWebChatMessage() {
   }
 }
 
+// Katta hisob (admin_pending) modali — to'liq xabar + adminga yozish tugmasi
+function openBigScoreModal() {
+  const modal = document.getElementById("modal-big-score");
+  if (!modal) { showToast(APP.t.result_admin_pending || "✅ Natija yuborildi"); return; }
+  const textEl = document.getElementById("big-score-text");
+  if (textEl && APP.t.big_score_body) textEl.textContent = APP.t.big_score_body;
+  const contactBtn = document.getElementById("btn-big-score-contact");
+  if (contactBtn && !contactBtn._bound) {
+    contactBtn._bound = true;
+    contactBtn.addEventListener("click", () => {
+      const url = (APP.adminContact && APP.adminContact.url) || "";
+      if (url) {
+        if (window.Telegram?.WebApp?.openTelegramLink) window.Telegram.WebApp.openTelegramLink(url);
+        else window.open(url, "_blank");
+      }
+    });
+  }
+  const closeBtn = document.getElementById("btn-big-score-close");
+  if (closeBtn && !closeBtn._bound) {
+    closeBtn._bound = true;
+    closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
+  }
+  modal.classList.remove("hidden");
+}
+
 async function submitMatchResult() {
   const matchId = APP.activeMatchId;
   const score1  = parseInt(document.getElementById("input-score1").value) || 0;
@@ -2455,7 +2483,7 @@ async function submitMatchResult() {
     );
     closeResultModal();
     if (res && res.reason === "ok_admin_pending") {
-      showToast(APP.t.result_admin_pending || "✅ Natija yuborildi. Katta hisob — adminga skrinshot yuboring.");
+      openBigScoreModal();
     } else {
       showToast(APP.t.result_submitted || "✅ Natija yuborildi");
     }

@@ -2553,6 +2553,23 @@ table { border-collapse: collapse; width: 100%; }
   text-align: center;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
+/* Admin panel: katta hisob (admin_pending) o'yin qatori — logolar + score */
+.admin-pending-match {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-pending-match .match-club-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.admin-pending-score {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary, #fff);
+}
 .my-prize-img {
   height: 54px;
   width: auto;
