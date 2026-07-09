@@ -79,7 +79,7 @@ from wc_chat import (
     wc_send_chat_message, wc_get_chat_messages, wc_count_unread_messages,
     wc_set_typing, wc_get_chat_state,
 )
-from config import REQUIRED_CHANNEL_USERNAME, REQUIRED_CHANNEL_URL
+from config import REQUIRED_CHANNEL_USERNAME, REQUIRED_CHANNEL_URL, ADMIN_CONTACT_USERNAME
 
 app = FastAPI(title="eFootball Turnir Bot API")
 
@@ -358,10 +358,13 @@ async def check_membership(user: dict = Depends(get_authenticated_user)):
     Qaytaradi: {subscribed: bool, channel_username, channel_url}
     """
     subscribed = await is_user_subscribed(user["telegram_id"])
+    _admin_uname = ADMIN_CONTACT_USERNAME.lstrip("@")
     return {
         "subscribed": subscribed,
         "channel_username": REQUIRED_CHANNEL_USERNAME,
         "channel_url": REQUIRED_CHANNEL_URL,
+        "admin_contact_username": "@" + _admin_uname,
+        "admin_contact_url": "https://t.me/" + _admin_uname,
     }
 
 

@@ -196,11 +196,14 @@ def get_admin_pending_matches() -> list[dict]:
                m.score1, m.score2, m.submitted_by,
                l.name AS league_name,
                u1.nickname AS p1_nick, u1.username AS p1_user,
-               u2.nickname AS p2_nick, u2.username AS p2_user
+               u2.nickname AS p2_nick, u2.username AS p2_user,
+               r1.club_name AS p1_club, r2.club_name AS p2_club
         FROM matches m
         LEFT JOIN leagues l ON l.id = m.league_id
         LEFT JOIN users u1 ON u1.id = m.player1_id
         LEFT JOIN users u2 ON u2.id = m.player2_id
+        LEFT JOIN registrations r1 ON r1.user_id = m.player1_id AND r1.league_id = m.league_id
+        LEFT JOIN registrations r2 ON r2.user_id = m.player2_id AND r2.league_id = m.league_id
         WHERE m.status = 'admin_pending'
         ORDER BY m.id DESC
         """

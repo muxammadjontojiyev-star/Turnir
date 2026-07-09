@@ -110,6 +110,11 @@ PRIZE_WINNER = "golden_ball"       # Turnir g'olibi — Oltin To'p znachogi
 _admin_ids_raw = os.getenv("ADMIN_TELEGRAM_IDS", "6829293074")
 ADMIN_TELEGRAM_IDS = [int(x) for x in _admin_ids_raw.replace(" ", "").split(",") if x]
 
+# Katta hisob (admin_pending) kiritilganda foydalanuvchi skrinshot yuborishi uchun
+# bosh admin bilan bog'lanadigan Telegram username. Env orqali sozlanadi (qoida #46).
+# @ bilan yoki @'siz bo'lishi mumkin — frontend to'g'ri linkni tuzadi.
+ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "@Tojiyev_M")
+
 # === Majburiy kanal a'zoligi ===
 # Foydalanuvchi botdan/WebApp'dan foydalanish uchun shu kanalga a'zo bo'lishi shart.
 # ⚠️ Bot shu kanalda ADMIN bo'lishi kerak — aks holda getChatMember ishlamaydi.
