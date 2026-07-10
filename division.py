@@ -457,3 +457,62 @@ def div_admin_resolve_pending(match_id: int, accept: bool) -> tuple[bool, str]:
         return True, "ok"
     finally:
         conn.close()
+
+
+def div_my_stats(user_id: int) -> dict:
+    """
+    Foydalanuvchining Divizion shaxsiy statistikasi (profil sahifasi uchun):
+      {wins, draws, losses, played, win_rate, points}
+    win_rate = g'alaba / (g'alaba+durang+mag'lubiyat) * 100, butun foiz.
+    Manba — confirmed div_matches (bye = g'alaba). div_rating bilan izchil (DRY).
+    """
+    for row in div_rating():
+        if row["user_id"] == user_id:
+            w, d, l = row["wins"], row["draws"], row["losses"]
+            total = w + d + l
+            win_rate = round(w / total * 100) if total else 0
+            return {"wins": w, "draws": d, "losses": l, "played": row["played"],
+                    "win_rate": win_rate, "points": row["points"]}
+    return {"wins": 0, "draws": 0, "losses": 0, "played": 0,
+            "win_rate": 0, "points": 0}
+
+
+def div_my_matches(user_id: int, limit: int = 50) -> list[dict]:
+    """
+    Foydalanuvchining barcha Divizion o'yinlari tarixi (profil "O'yinlarim").
+    Har o'yin: {id, day, is_bye, my_score, opp_score, opp_name, status}.
+    Yangi kun birinchi (day DESC, id DESC).
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT m.id, m.day, m.player1_id, m.player2_id, m.score1, m.score2, m.status,
+               u1.nickname AS p1_name, u2.nickname AS p2_name
+        FROM div_matches m
+        JOIN users u1 ON u1.id = m.player1_id
+        LEFT JOIN users u2 ON u2.id = m.player2_id
+        WHERE m.player1_id = ? OR m.player2_id = ?
+        ORDER BY m.day DESC, m.id DESC
+        LIMIT ?
+        """,
+        (user_id, user_id, limit),
+    )
+    out = []
+    for r in cursor.fetchall():
+        d = dict(r)
+        is_bye = d["player2_id"] is None
+        if d["player1_id"] == user_id:
+            my, opp = d["score1"], d["score2"]
+            opp_name = d["p2_name"]
+        else:
+            my, opp = d["score2"], d["score1"]
+            opp_name = d["p1_name"]
+        out.append({
+            "id": d["id"], "day": d["day"], "is_bye": is_bye,
+            "my_score": my, "opp_score": opp,
+            "opp_name": opp_name if not is_bye else None,
+            "status": d["status"],
+        })
+    conn.close()
+    return out

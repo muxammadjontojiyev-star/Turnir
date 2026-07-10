@@ -1350,13 +1350,18 @@ def div_status(user: dict = Depends(get_authenticated_user)):
     win = div_registration_window()
     regs = div_day_registrations(win["day"])
     my_match = div_get_my_match(user["id"], win["day"])
+    from division import div_my_stats, div_my_matches
     return {
         "window": win,
         "registrations": regs,
         "me_registered": any(r["telegram_id"] == user["telegram_id"] for r in regs),
         "my_match": my_match,
         "me_id": user["id"],
+        "me_nickname": user["nickname"],
+        "me_username": user.get("username"),
         "is_admin": is_super_admin(user["telegram_id"]),
+        "stats": div_my_stats(user["id"]),
+        "history": div_my_matches(user["id"]),
     }
 
 

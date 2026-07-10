@@ -116,8 +116,8 @@ def div_get_chat_state(match_id: int, requester_id: int) -> dict | None:
             return None
         opp_id = parts[1] if parts[0] == requester_id else parts[0]
         if opp_id is None:  # bye o'yin — raqib yo'q
-            return {"online": False, "typing": False,
-                    "last_seen_seconds": None, "opponent_username": None}
+            return {"online": False, "typing": False, "last_seen_seconds": None,
+                    "opponent_username": None, "opponent_user_id": None}
         cursor.execute("SELECT last_seen, username FROM users WHERE id = ?", (opp_id,))
         row = cursor.fetchone()
         online = False
@@ -139,6 +139,6 @@ def div_get_chat_state(match_id: int, requester_id: int) -> dict | None:
                   ) <= _TYPING_THRESHOLD_SECONDS
         return {"online": online, "typing": typing,
                 "last_seen_seconds": 0 if online else last_seen_seconds,
-                "opponent_username": username}
+                "opponent_username": username, "opponent_user_id": opp_id}
     finally:
         conn.close()
