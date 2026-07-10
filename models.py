@@ -279,12 +279,26 @@ def init_db():
             match_id INTEGER NOT NULL,
             sender_id INTEGER NOT NULL,
             text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (match_id) REFERENCES div_matches(id)
         )
     """)
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_div_messages_match ON div_messages(match_id)"
+    )
+
+    # === Migratsiyalar (qoida #31 — baza qo'lda o'zgartirilmaydi) ===
+    # M1: eski bazadagi div_messages'ga is_read ustuni qo'shish
+    try:
+        cursor.execute("ALTER TABLE div_messages ADD COLUMN is_read INTEGER NOT NULL DEFAULT 0")
+    except Exception:
+        pass  # ustun allaqachon bor
+    # M2: eski 'cancelled' Divizion o'yinlari endi ishlatilmaydi — pending'ga
+    # qaytariladi (ishtirokchilar natijani qayta kirita olishi uchun)
+    cursor.execute(
+        "UPDATE div_matches SET status='pending', score1=NULL, score2=NULL, "
+        "submitted_by=NULL WHERE status='cancelled'"
     )
 
     # === prizes ===

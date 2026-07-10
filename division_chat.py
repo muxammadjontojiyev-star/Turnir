@@ -57,8 +57,15 @@ def div_get_messages(match_id: int, requester_id: int) -> list[dict] | None:
         parts = _match_participants(cursor, match_id)
         if parts is None or requester_id not in parts:
             return None
+        # Raqib yozgan xabarlarni MEN o'qidim — belgilaymiz (✓✓ raqibda paydo bo'ladi)
         cursor.execute(
-            "SELECT dm.id, dm.sender_id, dm.text, dm.created_at "
+            "UPDATE div_messages SET is_read = 1 "
+            "WHERE match_id = ? AND sender_id != ? AND is_read = 0",
+            (match_id, requester_id),
+        )
+        conn.commit()
+        cursor.execute(
+            "SELECT dm.id, dm.sender_id, dm.text, dm.created_at, dm.is_read "
             "FROM div_messages dm WHERE dm.match_id = ? ORDER BY dm.id",
             (match_id,),
         )
@@ -66,7 +73,7 @@ def div_get_messages(match_id: int, requester_id: int) -> list[dict] | None:
         for r in cursor.fetchall():
             d = dict(r)
             d["mine"] = d["sender_id"] == requester_id
-            d["is_read"] = True   # Divizionda o'qilganlik kuzatilmaydi — ✓✓ ko'rsatiladi
+            d["is_read"] = bool(d["is_read"])  # haqiqiy o'qilganlik (✓ / ✓✓)
             d["club_name"] = None  # Divizionda klub yo'q
             out.append(d)
         return out
