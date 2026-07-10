@@ -379,7 +379,7 @@ def div_admin_set_result(match_id: int, score1: int, score2: int) -> tuple[bool,
     Admin natijani O'RNATADI/TUZATADI: istalgan statusdan to'g'ridan-to'g'ri
     'confirmed' ga o'tkazadi (noto'g'ri kiritilgan natijani ham qayta yozadi).
     Bye o'yinga (player2 NULL) hisob kiritilmaydi. Sabablar: ok, match_not_found,
-    bye_match, cancelled.
+    bye_match.
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -390,8 +390,6 @@ def div_admin_set_result(match_id: int, score1: int, score2: int) -> tuple[bool,
             return False, "match_not_found"
         if m["player2_id"] is None:
             return False, "bye_match"
-        if m["status"] == "cancelled":
-            return False, "cancelled"
         cursor.execute(
             "UPDATE div_matches SET score1=?, score2=?, status='confirmed', "
             "submitted_by=NULL WHERE id=?",
@@ -405,21 +403,56 @@ def div_admin_set_result(match_id: int, score1: int, score2: int) -> tuple[bool,
 
 def div_admin_cancel_match(match_id: int) -> tuple[bool, str]:
     """
-    Admin o'yinni BEKOR qiladi: status='cancelled', hisob tozalanadi.
-    Bekor qilingan o'yin reytingga kirmaydi (div_rating faqat 'confirmed').
-    Sabablar: ok, match_not_found.
+    Admin NATIJANI bekor qiladi: hisob tozalanadi, o'yin 'pending' ga qaytadi —
+    ishtirokchilar natijani QAYTA kirita oladi (liga admin oqimi bilan bir xil).
+    Bye o'yin (player2 NULL) bekor qilinmaydi. Sabablar: ok, match_not_found,
+    bye_match.
+    Eslatma: 23:30 avto-yopish kuniga bir marta ishlaydi (div_state.resolved_at);
+    undan keyin bekor qilingan o'yin natijasini admin o'zi kiritadi.
     """
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT 1 FROM div_matches WHERE id = ?", (match_id,))
-        if cursor.fetchone() is None:
+        cursor.execute("SELECT player2_id FROM div_matches WHERE id = ?", (match_id,))
+        m = cursor.fetchone()
+        if m is None:
             return False, "match_not_found"
+        if m["player2_id"] is None:
+            return False, "bye_match"
         cursor.execute(
-            "UPDATE div_matches SET status='cancelled', score1=NULL, score2=NULL, "
+            "UPDATE div_matches SET status='pending', score1=NULL, score2=NULL, "
             "submitted_by=NULL WHERE id=?",
             (match_id,),
         )
+        conn.commit()
+        return True, "ok"
+    finally:
+        conn.close()
+
+
+def div_admin_resolve_pending(match_id: int, accept: bool) -> tuple[bool, str]:
+    """
+    Katta hisob (admin_pending) bo'yicha admin qarori — liga admin oqimi kabi:
+      accept=True  -> kiritilgan hisob tasdiqlanadi (confirmed)
+      accept=False -> rad: hisob tozalanadi, pending (ishtirokchilar qayta kiritadi)
+    Sabablar: ok, match_not_found, wrong_status.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT status FROM div_matches WHERE id = ?", (match_id,))
+        m = cursor.fetchone()
+        if m is None:
+            return False, "match_not_found"
+        if m["status"] != "admin_pending":
+            return False, "wrong_status"
+        if accept:
+            cursor.execute(
+                "UPDATE div_matches SET status='confirmed' WHERE id=?", (match_id,))
+        else:
+            cursor.execute(
+                "UPDATE div_matches SET status='pending', score1=NULL, score2=NULL, "
+                "submitted_by=NULL WHERE id=?", (match_id,))
         conn.commit()
         return True, "ok"
     finally:

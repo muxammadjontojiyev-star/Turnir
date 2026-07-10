@@ -1465,9 +1465,23 @@ def div_admin_set(match_id: int, score1: int, score2: int,
 @app.post("/div/admin/match/cancel")
 def div_admin_cancel(match_id: int,
                      admin: dict = Depends(get_authenticated_super_admin)):
-    """Admin: o'yinni bekor qilish (reytingga kirmaydi)."""
+    """Admin: natijani bekor qilish — o'yin pending'ga qaytadi, qayta kiritiladi."""
     from division import div_admin_cancel_match
     success, reason = div_admin_cancel_match(match_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@app.post("/div/admin/match/resolve")
+def div_admin_resolve(match_id: int, accept: bool = True,
+                      admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Admin: katta hisob (admin_pending) qarori — liga admin oqimi kabi.
+    accept=True tasdiqlaydi, accept=False rad etadi (pending'ga qaytadi).
+    """
+    from division import div_admin_resolve_pending
+    success, reason = div_admin_resolve_pending(match_id, accept)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
