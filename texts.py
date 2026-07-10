@@ -182,6 +182,38 @@ TEXTS = {
         LANGUAGE_RU: "🎲 Жеребьёвка дивизиона: сегодня нечётное число участников — вам присуждена АВТОМАТИЧЕСКАЯ ПОБЕДА (+15 очков)! 🎉",
         LANGUAGE_EN: "🎲 Division draw: odd number of participants today — you get an AUTOMATIC WIN (+15 points)! 🎉",
     },
+    "div_rules_list": {
+        LANGUAGE_UZ: [
+            "Har kuni **17:00–19:00** (Toshkent) oralig'ida ro'yxatdan o'tiladi.",
+            "Ro'yxat yopilgach bot ishtirokchilarni **qur'a** orqali juftlaydi.",
+            "Raqibingiz **profil** bo'limida va telegram xabarida ko'rinadi.",
+            "O'yin natijasini **23:30** gacha kiritib, raqib tasdiqlashi kerak.",
+            "Belgilangan vaqtgacha o'ynalmagan o'yin **0:0 durang** bo'ladi.",
+            "Ishtirokchilar toq bo'lsa, bittasiga **avtomatik g'alaba** beriladi.",
+            "G'alaba **+15**, durang **+10**, mag'lubiyat **−10** achko.",
+            "Ko'p achko to'plagan ishtirokchi **reyting**da yuqoriga ko'tariladi.",
+        ],
+        LANGUAGE_RU: [
+            "Каждый день регистрация с **17:00 до 19:00** (Ташкент).",
+            "После закрытия регистрации бот проводит **жеребьёвку** пар.",
+            "Соперник виден в разделе **профиль** и в сообщении telegram.",
+            "Результат нужно внести до **23:30**, соперник подтверждает.",
+            "Несыгранный вовремя матч засчитывается как **ничья 0:0**.",
+            "При нечётном числе участников одному даётся **автопобеда**.",
+            "Победа **+15**, ничья **+10**, поражение **−10** очков.",
+            "Набравший больше очков поднимается выше в **рейтинге**.",
+        ],
+        LANGUAGE_EN: [
+            "Registration is open daily from **17:00 to 19:00** (Tashkent).",
+            "After registration closes, the bot **pairs** players by draw.",
+            "Your opponent appears in the **profile** tab and a telegram message.",
+            "Submit the result by **23:30**; the opponent must confirm it.",
+            "A match not played in time is scored as a **0:0 draw**.",
+            "With an odd number of players, one gets an **automatic win**.",
+            "Win **+15**, draw **+10**, loss **−10** points.",
+            "Players with more points rise higher in the **rating**.",
+        ],
+    },
 
     # === Majburiy kanal a'zoligi ===
     "subscribe_required": {
