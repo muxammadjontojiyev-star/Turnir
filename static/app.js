@@ -1142,6 +1142,9 @@ async function init() {
   }
 
   showModeSelect();
+
+  // Mavsum yakuni tabrigi — bir martalik oyna (bloklamaydi, xato bo'lsa jim davom etadi)
+  checkSeasonCelebration();
 }
 
 // ============================================================
@@ -1259,6 +1262,14 @@ function showModeSelect() {
         <div class="mode-card-label">${escHtml(t.mode_worldcup || "Jahon Chempionati")}</div>
         <div class="mode-card-row">${flags}</div>
       </div>
+      <div class="mode-card mode-card--cl" id="mode-card-cl">
+        <div class="mode-card-label">${escHtml(t.mode_cl || "Chempionlar ligasi")}</div>
+        <div class="mode-card-row"><span class="mode-flag">⭐</span><span class="mode-flag">🏆</span><span class="mode-flag">⭐</span></div>
+      </div>
+      <div class="mode-card mode-card--division" id="mode-card-division">
+        <div class="mode-card-label">${escHtml(t.mode_division || "Divizion")}</div>
+        <div class="mode-card-row"><span class="mode-flag">🛡</span><span class="mode-flag">⚔️</span><span class="mode-flag">🛡</span></div>
+      </div>
     </div>
   `;
 
@@ -1266,6 +1277,10 @@ function showModeSelect() {
     .addEventListener("click", enterLeagueMode);
   document.getElementById("mode-card-worldcup")
     .addEventListener("click", enterWorldCupMode);
+  document.getElementById("mode-card-cl")
+    .addEventListener("click", enterChampionsLeagueMode);
+  document.getElementById("mode-card-division")
+    .addEventListener("click", enterDivisionMode);
 }
 
 // Rejim ekranini yashiradi (tanlangach asosiy interfeysga o'tish uchun)
@@ -1288,6 +1303,24 @@ function enterWorldCupMode() {
     showWorldCup();
   } else {
     showToast(APP.t.worldcup_soon || "Jahon Chempionati tez orada ishga tushadi!");
+  }
+}
+
+// Tab 3: Chempionlar ligasi rejimini ochadi (cl.js)
+function enterChampionsLeagueMode() {
+  if (typeof showChampionsLeague === "function") {
+    showChampionsLeague();
+  } else {
+    showToast("Chempionlar ligasi tez orada ishga tushadi!");
+  }
+}
+
+// Tab 4: Divizion rejimini ochadi (division.js)
+function enterDivisionMode() {
+  if (typeof showDivision === "function") {
+    showDivision();
+  } else {
+    showToast("Divizion tez orada ishga tushadi!");
   }
 }
 

@@ -3529,3 +3529,68 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
   line-height: 1;
   display: inline-block;
 }
+
+/* ============================================================
+   CELEBRATION — Mavsum yakuni tabrik oynasi (celebration.js)
+   ============================================================ */
+.cel-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(8, 6, 24, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow: hidden;
+}
+.cel-box {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 360px; max-height: 80vh; overflow-y: auto;
+  background: linear-gradient(160deg, rgba(40,32,80,.95), rgba(18,14,40,.97));
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 20px; padding: 22px 18px; text-align: center;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+.cel-box--winner { border-color: rgba(245,197,66,.55); box-shadow: 0 0 40px rgba(245,197,66,.25), 0 18px 60px rgba(0,0,0,.55); }
+.cel-emoji { font-size: 40px; margin-bottom: 6px; }
+.cel-title { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.cel-sub   { font-size: 14px; color: rgba(255,255,255,.75); margin-bottom: 14px; }
+.cel-list  { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; text-align: left; }
+.cel-winner-row {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px; padding: 10px 12px;
+}
+.cel-prize-img { width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(245,197,66,.4)); }
+.cel-winner-name  { font-size: 15px; font-weight: 700; color: #fff; }
+.cel-winner-prize { font-size: 12.5px; color: rgba(255,255,255,.7); }
+.cel-close { width: 100%; }
+
+/* Salyut/konfetti bo'laklari */
+.cel-fireworks { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.cel-piece {
+  position: absolute; top: -12px; width: 8px; height: 14px; border-radius: 2px;
+  opacity: 0; animation-name: cel-fall; animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+@keyframes cel-fall {
+  0%   { transform: translateY(-10px) rotate(0deg);   opacity: 0; }
+  8%   { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(540deg); opacity: .85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cel-piece { animation: none; opacity: 0; }
+}
+
+/* ============================================================
+   CL — Chempionlar ligasi rejim kartasi va ekran (cl.js)
+   ============================================================ */
+.mode-card--cl {
+  background: linear-gradient(150deg, #101a4d 0%, #1a2a7a 55%, #0a1030 100%);
+  border: 1px solid rgba(120, 150, 255, .35);
+}
+.mode-card--cl .mode-card-label { color: #fff; }
+
+/* Divizion rejim kartasi */
+.mode-card--division {
+  background: linear-gradient(150deg, #123a2a 0%, #1c6b46 55%, #0a2418 100%);
+  border: 1px solid rgba(80, 220, 160, .35);
+}
+.mode-card--division .mode-card-label { color: #fff; }
