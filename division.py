@@ -350,3 +350,77 @@ def div_rating() -> list[dict]:
     table = list(points.values())
     table.sort(key=lambda p: p["points"], reverse=True)
     return table
+
+
+# ============ ADMIN (bosh admin, Divizion tabidagi panel) ============
+
+def div_admin_list_matches(day: str | None = None) -> list[dict]:
+    """Kunlik BARCHA o'yinlar (har qanday status) — admin panel ro'yxati."""
+    day = day or _today()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT m.*, u1.nickname AS player1_name, u2.nickname AS player2_name
+        FROM div_matches m
+        JOIN users u1 ON u1.id = m.player1_id
+        LEFT JOIN users u2 ON u2.id = m.player2_id
+        WHERE m.day = ? ORDER BY m.id
+        """,
+        (day,),
+    )
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
+
+
+def div_admin_set_result(match_id: int, score1: int, score2: int) -> tuple[bool, str]:
+    """
+    Admin natijani O'RNATADI/TUZATADI: istalgan statusdan to'g'ridan-to'g'ri
+    'confirmed' ga o'tkazadi (noto'g'ri kiritilgan natijani ham qayta yozadi).
+    Bye o'yinga (player2 NULL) hisob kiritilmaydi. Sabablar: ok, match_not_found,
+    bye_match, cancelled.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT player2_id, status FROM div_matches WHERE id = ?", (match_id,))
+        m = cursor.fetchone()
+        if m is None:
+            return False, "match_not_found"
+        if m["player2_id"] is None:
+            return False, "bye_match"
+        if m["status"] == "cancelled":
+            return False, "cancelled"
+        cursor.execute(
+            "UPDATE div_matches SET score1=?, score2=?, status='confirmed', "
+            "submitted_by=NULL WHERE id=?",
+            (score1, score2, match_id),
+        )
+        conn.commit()
+        return True, "ok"
+    finally:
+        conn.close()
+
+
+def div_admin_cancel_match(match_id: int) -> tuple[bool, str]:
+    """
+    Admin o'yinni BEKOR qiladi: status='cancelled', hisob tozalanadi.
+    Bekor qilingan o'yin reytingga kirmaydi (div_rating faqat 'confirmed').
+    Sabablar: ok, match_not_found.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT 1 FROM div_matches WHERE id = ?", (match_id,))
+        if cursor.fetchone() is None:
+            return False, "match_not_found"
+        cursor.execute(
+            "UPDATE div_matches SET status='cancelled', score1=NULL, score2=NULL, "
+            "submitted_by=NULL WHERE id=?",
+            (match_id,),
+        )
+        conn.commit()
+        return True, "ok"
+    finally:
+        conn.close()

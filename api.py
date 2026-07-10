@@ -1356,6 +1356,7 @@ def div_status(user: dict = Depends(get_authenticated_user)):
         "me_registered": any(r["telegram_id"] == user["telegram_id"] for r in regs),
         "my_match": my_match,
         "me_id": user["id"],
+        "is_admin": is_super_admin(user["telegram_id"]),
     }
 
 
@@ -1400,25 +1401,76 @@ def div_confirm_endpoint(match_id: int, accept: bool = True,
     return {"status": "ok", "match_id": match_id}
 
 
-@app.get("/div/chat/{match_id}")
+@app.get("/div/matches/{match_id}/messages")
 def div_chat_get(match_id: int, user: dict = Depends(get_authenticated_user)):
-    """Divizion o'yin chati xabarlari (faqat ishtirokchilar)."""
+    """Divizion o'yin chati xabarlari — liga chat formati (webchat modal)."""
     from division_chat import div_get_messages
     msgs = div_get_messages(match_id, user["id"])
     if msgs is None:
-        raise HTTPException(status_code=403, detail="not_participant")
-    return {"messages": msgs, "me_id": user["id"]}
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"messages": msgs}
 
 
-@app.post("/div/chat/{match_id}")
+@app.post("/div/matches/{match_id}/messages")
 def div_chat_send(match_id: int, text: str = Body(..., embed=True),
                   user: dict = Depends(get_authenticated_user)):
-    """Divizion o'yin chatiga xabar yuborish."""
+    """Divizion o'yin chatiga xabar yuborish. Body: {"text": "..."}."""
     from division_chat import div_send_message
     success, reason = div_send_message(match_id, user["id"], text)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok"}
+
+
+@app.post("/div/matches/{match_id}/typing")
+def div_chat_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """'Yozmoqda' signali (liga chat bilan bir xil)."""
+    from division_chat import div_set_typing
+    if not div_set_typing(match_id, user["id"]):
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"status": "ok"}
+
+
+@app.get("/div/matches/{match_id}/state")
+def div_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """Raqib chat holati (online / yozmoqda / oxirgi ko'rinish)."""
+    from division_chat import div_get_chat_state
+    state = div_get_chat_state(match_id, user["id"])
+    if state is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return state
+
+
+# --- Divizion admin (faqat bosh admin, Divizion tabidagi panel) ---
+
+@app.get("/div/admin/matches")
+def div_admin_matches(admin: dict = Depends(get_authenticated_super_admin)):
+    """Bugungi barcha Divizion o'yinlari (har qanday status)."""
+    from division import div_admin_list_matches
+    return {"matches": div_admin_list_matches()}
+
+
+@app.post("/div/admin/match/set-result")
+def div_admin_set(match_id: int, score1: int, score2: int,
+                  admin: dict = Depends(get_authenticated_super_admin)):
+    """Admin: natijani o'rnatish/tuzatish (istalgan statusdan -> confirmed)."""
+    validate_scores(score1, score2)
+    from division import div_admin_set_result
+    success, reason = div_admin_set_result(match_id, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@app.post("/div/admin/match/cancel")
+def div_admin_cancel(match_id: int,
+                     admin: dict = Depends(get_authenticated_super_admin)):
+    """Admin: o'yinni bekor qilish (reytingga kirmaydi)."""
+    from division import div_admin_cancel_match
+    success, reason = div_admin_cancel_match(match_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
 
 
 @app.post("/wc/playoff/submit-result")
