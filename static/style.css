@@ -3617,3 +3617,14 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 }
 .mode-badge .icon { stroke-width: 2; }
 .mode-badge--gold .icon--star, .mode-badge--gold .icon--trophy { filter: drop-shadow(0 1px 1px rgba(255,255,255,.35)); }
+
+/* Divizion VS-oynasidagi raqib telegram rasmi */
+.div-vs-avatar-wrap { display:flex; justify-content:center; margin-bottom:8px; }
+.div-vs-avatar, .div-vs-avatar-fallback {
+  width:56px; height:56px; border-radius:50%; object-fit:cover;
+}
+.div-vs-avatar-fallback {
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; font-weight:800; color:#fff;
+  background:linear-gradient(140deg,#7c5cff,#31d0aa);
+}

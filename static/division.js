@@ -171,55 +171,132 @@ function divRenderRating() {
     </div>`;
 }
 
-// ---- PROFIL: bugungi raqib (liga uslubida) ----
+// ---- PROFIL: liga uslubida (statistika + o'yinlar tarixi + raqib) ----
+function divStatusLabelShort(st) {
+  return ({ pending: "KUTILMOQDA", awaiting_confirmation: "TASDIQ KUTILMOQDA",
+            admin_pending: "ADMIN TASDIG'I", confirmed: "TASDIQLANDI" })[st] || st;
+}
+
 function divRenderProfile() {
   const s = DIV.status;
   if (!s) return `<div class="card">Ma'lumot yuklanmadi.</div>`;
+
+  const st = s.stats || { wins: 0, draws: 0, losses: 0, win_rate: 0 };
+
+  // 1) Bugungi raqib kartasi (raqib — hisob — men)
+  let oppCard = "";
   const m = s.my_match;
-  if (!m) {
-    return `<div class="card">Bugun sizda o'yin yo'q. Qur'a natijasi 19:00 dan keyin shu yerda ko'rinadi (ro'yxatdan o'tgan bo'lsangiz).</div>`;
-  }
-  if (m.is_bye) {
-    return `<div class="card" style="border-color:rgba(245,197,66,.5)">🎉 Bugun ishtirokchilar soni toq bo'lgani uchun sizga <b>avtomatik g'alaba (+15 achko)</b> berildi!</div>`;
-  }
+  if (m && m.is_bye) {
+    oppCard = `<div class="card" style="border-color:rgba(245,197,66,.5)">🎉 Bugun ishtirokchilar soni toq bo'lgani uchun sizga <b>avtomatik g'alaba (+15 achko)</b> berildi!</div>`;
+  } else if (m) {
+    const opp = m.opponent || {};
+    const oppInitial = (opp.nickname || "?").charAt(0).toUpperCase();
+    // Raqib telegram rasmi (bo'lmasa — ism harfi). Liga bilan bir xil endpoint.
+    const oppPhoto = opp.user_id
+      ? `<img src="${API_BASE}/players/${opp.user_id}/photo" alt=""
+             style="width:52px;height:52px;border-radius:50%;object-fit:cover"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+         <div style="display:none;width:52px;height:52px;border-radius:50%;
+             align-items:center;justify-content:center;font-size:22px;font-weight:800;
+             background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(oppInitial)}</div>`
+      : `<div style="width:52px;height:52px;border-radius:50%;display:flex;
+             align-items:center;justify-content:center;font-size:22px;font-weight:800;
+             background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(oppInitial)}</div>`;
 
-  const opp = m.opponent || {};
-  const initial = (opp.nickname || "?").charAt(0).toUpperCase();
-  const score = (m.score1 !== null && m.score1 !== undefined) ? `${m.score1} : ${m.score2}` : "— : —";
+    // Hisob tartibi: RAQIB — hisob — MEN (2-talab)
+    const myName = (m.player1_id === s.me_id) ? m.player1_name : m.player2_name;
+    let oppScore = "—", myScore = "—";
+    if (m.score1 !== null && m.score1 !== undefined) {
+      const p1IsMe = (m.player1_id === s.me_id);
+      myScore = p1IsMe ? m.score1 : m.score2;
+      oppScore = p1IsMe ? m.score2 : m.score1;
+    }
 
-  // Liga "O'yinlarim" kartasi uslubi: raqib + hisob + amallar
-  let actions = "";
-  if (m.status === "pending") {
-    actions = `<button class="btn btn--primary" id="div-btn-open-result" style="width:100%;margin-top:10px">Natija kiritish</button>`;
-  } else if (m.status === "awaiting_confirmation") {
-    actions = (m.submitted_by !== s.me_id)
-      ? `<div style="display:flex;gap:8px;margin-top:10px">
-           <button class="btn btn--primary" id="div-btn-confirm" style="flex:1">✅ Tasdiqlash</button>
-           <button class="btn btn--ghost" id="div-btn-reject" style="flex:1">❌ Rad etish</button>
-         </div>`
-      : `<div style="font-size:12px;opacity:.7;margin-top:8px">Raqib tasdig'i kutilmoqda…</div>`;
-  } else if (m.status === "admin_pending") {
-    actions = `<div style="font-size:12px;opacity:.7;margin-top:8px">Admin tasdig'i kutilmoqda…</div>`;
-  } else if (m.status === "confirmed") {
-    actions = `<div style="font-size:12.5px;margin-top:8px">✅ Natija tasdiqlangan.</div>`;
-  }
+    let actions = "";
+    if (m.status === "pending") {
+      actions = `<button class="btn btn--primary" id="div-btn-open-result" style="width:100%;margin-top:10px">Natija kiritish</button>`;
+    } else if (m.status === "awaiting_confirmation") {
+      actions = (m.submitted_by !== s.me_id)
+        ? `<div style="display:flex;gap:8px;margin-top:10px">
+             <button class="btn btn--primary" id="div-btn-confirm" style="flex:1">✅ Tasdiqlash</button>
+             <button class="btn btn--ghost" id="div-btn-reject" style="flex:1">❌ Rad etish</button>
+           </div>`
+        : `<div style="font-size:12px;opacity:.7;margin-top:8px">Raqib tasdig'i kutilmoqda…</div>`;
+    } else if (m.status === "admin_pending") {
+      actions = `<div style="font-size:12px;opacity:.7;margin-top:8px">Admin tasdig'i kutilmoqda…</div>`;
+    } else if (m.status === "confirmed") {
+      actions = `<div style="font-size:12.5px;margin-top:8px">✅ Natija tasdiqlangan.</div>`;
+    }
 
-  return `
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:52px;height:52px;border-radius:50%;flex:none;
-          display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;
-          background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(initial)}</div>
-        <div style="min-width:0">
-          <div style="font-size:12px;opacity:.65">Bugungi raqibingiz</div>
-          <div style="font-size:17px;font-weight:800">${escHtml(opp.nickname || "Ishtirokchi")}</div>
-          ${opp.username ? `<div style="font-size:12px;opacity:.7">@${escHtml(opp.username)}</div>` : ""}
+    oppCard = `
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12px">
+          ${oppPhoto}
+          <div style="min-width:0;flex:1">
+            <div style="font-size:12px;opacity:.65">Bugungi raqibingiz</div>
+            <div style="font-size:17px;font-weight:800">${escHtml(opp.nickname || "Ishtirokchi")}</div>
+            ${opp.username ? `<div style="font-size:12px;opacity:.7">@${escHtml(opp.username)}</div>` : ""}
+          </div>
         </div>
-        <div style="margin-left:auto;font-size:20px;font-weight:800;white-space:nowrap">${score}</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0;font-weight:800">
+          <span style="opacity:.8;font-size:13px">${escHtml(opp.nickname || "Raqib")}</span>
+          <span style="font-size:22px">${oppScore} : ${myScore}</span>
+          <span style="opacity:.8;font-size:13px">${escHtml(myName || "Siz")}</span>
+        </div>
+        <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%">👤 Raqib bilan bog'lanish</button>
+        ${actions}
+      </div>`;
+  } else {
+    oppCard = `<div class="card">Bugun sizda o'yin yo'q. Qur'a natijasi 19:00 dan keyin shu yerda ko'rinadi (ro'yxatdan o'tgan bo'lsangiz).</div>`;
+  }
+
+  // 2) STATISTIKA — liga uslubi (o'rin o'rniga G'alaba foizi)
+  const statsGrid = `
+    <div class="section-label">STATISTIKA</div>
+    <div class="stats-grid">
+      <div class="stat-card stat-card--primary">
+        <span class="stat-card-value neon-cyan">${st.win_rate}%</span>
+        <span class="stat-card-label">G'alaba foizi</span>
       </div>
-      <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%;margin-top:12px">👤 Raqib bilan bog'lanish</button>
-      ${actions}
+      <div class="stat-card">
+        <span class="stat-card-value neon-cyan">${st.wins}</span>
+        <span class="stat-card-label">G'alaba</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value">${st.draws}</span>
+        <span class="stat-card-label">Durang</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value neon-red">${st.losses}</span>
+        <span class="stat-card-label">Mag'lubiyat</span>
+      </div>
     </div>`;
+
+  // 3) MENING O'YINLARIM — tarix
+  const hist = s.history || [];
+  const histRows = hist.map((h, i) => {
+    if (h.is_bye) {
+      return `<div class="match-item">
+        <span style="opacity:.6">${i + 1}</span>
+        <b style="flex:1;text-align:center">🎉 Avto g'alaba (toq)</b>
+        <span class="status-badge status--confirmed">+15</span>
+      </div>`;
+    }
+    const hasScore = (h.my_score !== null && h.my_score !== undefined);
+    const score = hasScore ? `${h.opp_score} : ${h.my_score}` : "— : —";
+    return `<div class="match-item">
+      <span style="opacity:.6">${i + 1}</span>
+      <b style="flex:1">${escHtml(h.opp_name || "Raqib")}</b>
+      <span style="font-weight:800;margin:0 8px">${score}</span>
+      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>
+    </div>`;
+  }).join("");
+  const historyBlock = `
+    <div class="section-label">MENING O'YINLARIM</div>
+    ${hist.length ? `<div class="card">${histRows}</div>`
+                  : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}`;
+
+  return oppCard + statsGrid + historyBlock;
 }
 
 // Liga uslubidagi raqib VS-oynasi: "Chatni ochish" (webapp chat) + "Raqib chatiga yozish" (t.me)
@@ -245,8 +322,19 @@ function divOpenOpponentModal() {
 
   const myName = (m.player1_id === s.me_id) ? m.player1_name : m.player2_name;
   const myUsername = (m.player1_id === s.me_id) ? m.player1_username : m.player2_username;
-  const side = (name, username) => `
+  const myUserId = s.me_id;
+  // Telegram rasm (bo'lmasa — ism harfi). Liga bilan bir xil /players/{id}/photo.
+  const avatarHtml = (userId, name) => {
+    const initial = (name || "?").charAt(0).toUpperCase();
+    const fallback = `<div class="div-vs-avatar-fallback">${escHtml(initial)}</div>`;
+    if (!userId) return fallback;
+    return `<img class="div-vs-avatar" src="${API_BASE}/players/${userId}/photo" alt=""
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="div-vs-avatar-fallback" style="display:none">${escHtml(initial)}</div>`;
+  };
+  const side = (userId, name, username) => `
     <div class="opp-side">
+      <div class="div-vs-avatar-wrap">${avatarHtml(userId, name)}</div>
       <div class="opp-club">${escHtml(name || "—")}</div>
       <div class="opp-user">${username ? "@" + escHtml(username) : "—"}</div>
     </div>`;
@@ -255,9 +343,9 @@ function divOpenOpponentModal() {
     <div class="modal-box opp-modal-box">
       <button class="modal-close" id="div-opp-close">${ICON.get("close", 18)}</button>
       <div class="opp-vs">
-        ${side(myName, myUsername)}
+        ${side(myUserId, myName, myUsername)}
         <div class="opp-vs-sep">VS</div>
-        ${side(opp.nickname, opp.username)}
+        ${side(opp.user_id, opp.nickname, opp.username)}
       </div>
       ${webChatBtn}
       ${tgBtn}
