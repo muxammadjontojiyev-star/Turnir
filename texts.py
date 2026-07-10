@@ -172,6 +172,16 @@ TEXTS = {
         LANGUAGE_RU: "⏰ Внимание! В лиге {league} до дедлайна 1 час (23:30). Успейте сыграть и внести результат!",
         LANGUAGE_EN: "⏰ Heads up! 1 hour left until the deadline in {league} (23:30). Play your match and submit the result in time!",
     },
+    "notify_div_pair": {
+        LANGUAGE_UZ: "🎲 Divizion qur'asi: bugungi raqibingiz — {opponent}. O'yinni o'ynab, natijani ilovaga 23:30 gacha kiriting!",
+        LANGUAGE_RU: "🎲 Жеребьёвка дивизиона: ваш соперник сегодня — {opponent}. Сыграйте матч и внесите результат до 23:30!",
+        LANGUAGE_EN: "🎲 Division draw: your opponent today is {opponent}. Play the match and submit the result by 23:30!",
+    },
+    "notify_div_bye": {
+        LANGUAGE_UZ: "🎲 Divizion qur'asi: bugun ishtirokchilar soni toq bo'lgani uchun sizga AVTOMATIK G'ALABA (+15 achko) berildi! 🎉",
+        LANGUAGE_RU: "🎲 Жеребьёвка дивизиона: сегодня нечётное число участников — вам присуждена АВТОМАТИЧЕСКАЯ ПОБЕДА (+15 очков)! 🎉",
+        LANGUAGE_EN: "🎲 Division draw: odd number of participants today — you get an AUTOMATIC WIN (+15 points)! 🎉",
+    },
 
     # === Majburiy kanal a'zoligi ===
     "subscribe_required": {

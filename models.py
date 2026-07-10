@@ -132,6 +132,161 @@ def init_db():
     """)
     cursor.execute("INSERT OR IGNORE INTO season_state (id, current_season) VALUES (1, 1)")
 
+    # === season_celebration_seen (mavsum yakuni tabrik oynasi — bir martalik) ===
+    # Mavsum yakunlangach web app'ga birinchi kirishda ko'rsatiladigan tabrik/
+    # sovrindorlar oynasi HAR BIR (telegram_id, mavsum, kind) uchun faqat 1 marta
+    # ko'rsatiladi. UNIQUE — idempotentlik (qoida #38). telegram_id ishlatiladi,
+    # chunki users reset'da user_id o'zgarishi mumkin emas-u, lekin sovrinlar
+    # mantig'i telegram_id ga bog'langan (izchillik uchun shu kalit).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS season_celebration_seen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telegram_id INTEGER NOT NULL,
+            season_number INTEGER NOT NULL,
+            season_kind TEXT NOT NULL DEFAULT 'league',
+            seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (telegram_id, season_number, season_kind)
+        )
+    """)
+
+    # === cl_qualifiers (Chempionlar ligasi kvalifikatsiyasi) ===
+    # Liga mavsumi yakunlanganda: 5 liga × top-6 (30) + eng yaxshi 2 ta 7-o'rin = 32.
+    # telegram_id — ASOSIY kalit-tushuncha: ishtirokchi yangi mavsumda boshqa klub
+    # bilan ro'yxatdan o'tsa ham, ChL'da qatnashish huquqi SHU odamga tegishli.
+    # nickname/league_name — snapshot (reset'da registrations o'chadi, tarix qolsin).
+    # qualified_via: 'top6' yoki 'best7'. from_season: qaysi mavsum natijasidan.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_qualifiers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telegram_id INTEGER NOT NULL,
+            user_id INTEGER,
+            nickname TEXT,
+            league_id INTEGER,
+            league_name TEXT,
+            position INTEGER NOT NULL,
+            points INTEGER NOT NULL DEFAULT 0,
+            goal_difference INTEGER NOT NULL DEFAULT 0,
+            goals_for INTEGER NOT NULL DEFAULT 0,
+            qualified_via TEXT NOT NULL,
+            from_season INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (telegram_id, from_season)
+        )
+    """)
+    # Tez-tez from_season bo'yicha o'qiladi (qoida #30)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_cl_qualifiers_season ON cl_qualifiers(from_season)"
+    )
+
+    # === cl_participants (Chempionlar ligasi ishtirokchilari — joriy mavsum) ===
+    # Kvalifikant (cl_qualifiers) yangi mavsumda liga ro'yxatidan o'tgach shu
+    # jadvalga sinxronlanadi (cl_core.cl_sync_participants) — YANGI tanlagan
+    # klubi bilan. E'tibor klubda emas, ODAMDA (telegram_id).
+    # group_number: qur'adan keyin 1..8; ungacha NULL.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_participants (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            season INTEGER NOT NULL,
+            telegram_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            nickname TEXT,
+            club_name TEXT,
+            group_number INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (telegram_id, season)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_cl_participants_season_group "
+        "ON cl_participants(season, group_number)"
+    )
+
+    # === cl_matches (ChL guruh o'yinlari) ===
+    # WC guruh o'yinlari sxemasi asosida: 4 kishilik guruh, 3 tur (matchday),
+    # status oqimi liga/WC bilan bir xil (pending -> awaiting_confirmation ->
+    # confirmed / admin_pending). player*_id = users.id.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            season INTEGER NOT NULL,
+            group_number INTEGER NOT NULL,
+            matchday INTEGER NOT NULL,
+            player1_id INTEGER NOT NULL,
+            player2_id INTEGER NOT NULL,
+            score1 INTEGER,
+            score2 INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            submitted_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (player1_id) REFERENCES users(id),
+            FOREIGN KEY (player2_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_cl_matches_season_group "
+        "ON cl_matches(season, group_number, matchday)"
+    )
+
+    # === DIVIZION (3-tab) ===
+    # Har kuni 17:00-19:00 (Toshkent) ro'yxat, 19:00 dan keyin qur'a (juftlash),
+    # deadline 23:30. Achko: g'alaba +15, durang +10, mag'lubiyat -10.
+    # div_registrations: kunlik ro'yxat (day = 'YYYY-MM-DD').
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS div_registrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            day TEXT NOT NULL,
+            telegram_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            nickname TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (day, telegram_id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_div_registrations_day ON div_registrations(day)"
+    )
+    # div_matches: kunlik juftliklar. player2_id NULL = toq qolgan (avtomatik
+    # g'alaba, status darhol 'confirmed'). Status oqimi liga/WC/ChL bilan bir xil.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS div_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            day TEXT NOT NULL,
+            player1_id INTEGER NOT NULL,
+            player2_id INTEGER,
+            score1 INTEGER,
+            score2 INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            submitted_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (player1_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_div_matches_day ON div_matches(day)"
+    )
+    # div_state: qur'a/deadline bir marta bajarilishi belgilari (idempotentlik)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS div_state (
+            day TEXT PRIMARY KEY,
+            paired_at TIMESTAMP,
+            resolved_at TIMESTAMP
+        )
+    """)
+    # div_messages: divizion o'yin ichidagi sodda chat (bot chati)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS div_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES div_matches(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_div_messages_match ON div_messages(match_id)"
+    )
+
     # === prizes ===
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS prizes (

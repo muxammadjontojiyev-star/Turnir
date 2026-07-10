@@ -118,6 +118,64 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: WC avtomatik yopishda xato: %s", exc)
 
+    # === DIVIZION: 19:00 dan keyin qur'a + telegram xabar; 23:30 dan keyin yopish ===
+    try:
+        await _division_tick()
+    except Exception as exc:
+        logger.warning("Scheduler: Divizion tsiklida xato: %s", exc)
+
+
+async def _division_tick() -> None:
+    """
+    Divizion kunlik tsikli (idempotent — div_state belgilariga tayanadi):
+      - now >= 19:00 va qur'a qilinmagan bo'lsa: div_pair_day() + har ishtirokchiga
+        qur'a natijasi (raqib nomi yoki avto-g'alaba) telegram orqali yuboriladi.
+      - now >= 23:30 bo'lsa: div_auto_resolve_day() (0:0 durang / avto tasdiq).
+    """
+    from division import div_pair_day, div_auto_resolve_day
+    from config import DIV_REG_END_HOUR, DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE
+    from queries_leagues import _tournament_now
+    from models import get_connection
+    from notify import notify_user
+
+    now = _tournament_now()
+
+    # 1) Qur'a — ro'yxat yopilgach (19:00+)
+    if now.hour >= DIV_REG_END_HOUR:
+        result = div_pair_day()
+        if result:
+            # telegram_id -> {nickname, language} (xabar uchun bitta so'rov)
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT u.telegram_id, u.nickname, u.language FROM div_registrations r "
+                "JOIN users u ON u.id = r.user_id WHERE r.day = ?",
+                (result["day"],),
+            )
+            info = {r["telegram_id"]: dict(r) for r in cursor.fetchall()}
+            conn.close()
+
+            for tg1, tg2 in result["pairs"]:
+                if tg2 is None:
+                    await notify_user(tg1, "notify_div_bye",
+                                      info.get(tg1, {}).get("language"))
+                else:
+                    await notify_user(tg1, "notify_div_pair",
+                                      info.get(tg1, {}).get("language"),
+                                      opponent=info.get(tg2, {}).get("nickname", "?"))
+                    await notify_user(tg2, "notify_div_pair",
+                                      info.get(tg2, {}).get("language"),
+                                      opponent=info.get(tg1, {}).get("nickname", "?"))
+            logger.info("Scheduler: Divizion qur'asi yuborildi (%d o'yin).",
+                        result["matches"])
+
+    # 2) Deadline (23:30) — avtomatik yopish
+    if (now.hour, now.minute) >= (DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE):
+        res = div_auto_resolve_day()
+        if not res.get("already") and (res["pending"] or res["awaiting"]):
+            logger.info("Scheduler: Divizion deadline — 0:0 durang: %d, tasdiq: %d.",
+                        res["pending"], res["awaiting"])
+
 
 async def _scheduler_loop() -> None:
     """Cheksiz tekshiruv tsikli."""

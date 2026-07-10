@@ -258,6 +258,11 @@ def _finalize_league_locked(conn, cursor) -> dict:
         save(cup["user_id"], "league_cup", cup["league_id"])
         counts["league_cups"] += 1
 
+    # ChL kvalifikatsiyasi — reset'dan OLDIN, shu tranzaksiya ichida saqlanadi
+    # (registrations/matches hali o'chmagan). Xato bo'lsa butun finalize bekor.
+    from cl_qualification import save_cl_qualifiers
+    counts["cl_qualifiers"] = save_cl_qualifiers(cursor, season)
+
     cursor.execute(
         "UPDATE season_state SET current_season = current_season + 1, "
         "last_finalized_at = datetime('now') WHERE id = 1"

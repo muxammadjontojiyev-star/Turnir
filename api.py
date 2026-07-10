@@ -1236,6 +1236,191 @@ def user_prizes(user_id: int):
     return {"prizes": get_user_prizes(user_id)}
 
 
+@app.get("/season/celebration")
+def season_celebration(user: dict = Depends(get_authenticated_user)):
+    """
+    Mavsum yakuni tabrik oynasi (bir martalik).
+    show=True bo'lsa frontend modal ko'rsatadi (sovrindorga salyut,
+    boshqalarga sovrindorlar ro'yxati).
+    """
+    from season_celebration import get_celebration
+    return get_celebration(user["telegram_id"])
+
+
+@app.post("/season/celebration/seen")
+def season_celebration_seen(user: dict = Depends(get_authenticated_user)):
+    """Tabrik oynasi ko'rildi — qayta ko'rsatilmaydi (idempotent)."""
+    from season_celebration import mark_celebration_seen
+    return mark_celebration_seen(user["telegram_id"])
+
+
+@app.get("/cl/qualifiers")
+def cl_qualifiers(user: dict = Depends(get_authenticated_user)):
+    """
+    Chempionlar ligasi kvalifikantlari (oxirgi yakunlangan mavsum bo'yicha).
+    me_qualified — so'rovchi ishtirokchi ChL'ga chiqqanmi.
+    """
+    from cl_qualification import get_cl_qualifiers, is_cl_qualifier
+    data = get_cl_qualifiers()
+    data["me_qualified"] = is_cl_qualifier(user["telegram_id"], data["from_season"])
+    return data
+
+
+@app.get("/cl/groups")
+def cl_groups(user: dict = Depends(get_authenticated_user)):
+    """
+    ChL guruhlari va ishtirokchilari. Avval sinxron (kvalifikant yangi mavsumda
+    ro'yxatdan o'tgan bo'lsa — avtomatik qo'shiladi), so'ng ro'yxat qaytadi.
+    me_participant — so'rovchi ChL ishtirokchisimi.
+    """
+    from cl_core import cl_sync_participants, cl_get_groups
+    cl_sync_participants()
+    data = cl_get_groups()
+    data["me_participant"] = any(
+        p["telegram_id"] == user["telegram_id"] for p in data["participants"]
+    )
+    return data
+
+
+@app.get("/cl/rating/{group_number}")
+def cl_rating(group_number: int, user: dict = Depends(get_authenticated_user)):
+    """ChL guruh reyting jadvali (ball > gol farqi > urilgan gol)."""
+    if not 1 <= group_number <= 8:
+        raise HTTPException(status_code=400, detail="invalid_group")
+    from cl_core import cl_group_rating
+    return {"group_number": group_number, "rating": cl_group_rating(group_number)}
+
+
+@app.get("/cl/matches/my")
+def cl_my_matches(user: dict = Depends(get_authenticated_user)):
+    """Foydalanuvchining ChL o'yinlari (joriy mavsum)."""
+    from season_prizes import get_league_season
+    from cl_matches_queries import cl_get_user_matches
+    return {"me_id": user["id"],
+            "matches": cl_get_user_matches(user["id"], get_league_season())}
+
+
+@app.post("/cl/match/submit-result")
+def cl_submit(match_id: int, score1: int, score2: int,
+              user: dict = Depends(get_authenticated_user)):
+    """ChL o'yin natijasini kiritish (WC oqimi bilan bir xil)."""
+    validate_scores(score1, score2)
+    from cl_matches_queries import cl_submit_match_result
+    success, reason = cl_submit_match_result(match_id, score1, score2, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": reason, "match_id": match_id}
+
+
+@app.post("/cl/match/confirm")
+def cl_confirm(match_id: int, accept: bool = True,
+               user: dict = Depends(get_authenticated_user)):
+    """ChL natijani tasdiqlash (accept=True) yoki rad etish (False)."""
+    from cl_matches_queries import cl_confirm_or_reject_match
+    success, reason = cl_confirm_or_reject_match(
+        match_id, "confirm" if accept else "reject", user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@app.post("/cl/draw")
+def cl_draw_endpoint(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    ChL guruh qur'asi (faqat bosh admin): sinxron + 8 guruh × 4 + kalendar.
+    Xato: already_drawn, no_participants → 400
+    """
+    from cl_core import cl_sync_participants, cl_draw
+    cl_sync_participants()
+    success, result = cl_draw()
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
+# ============ DIVIZION (3-tab) ============
+
+@app.get("/div/status")
+def div_status(user: dict = Depends(get_authenticated_user)):
+    """
+    Divizion asosiy holati: ro'yxat oynasi (17:00-19:00), bugungi ro'yxat,
+    mening bugungi o'yinim (qur'adan keyin — raqib useri/username bilan).
+    """
+    from division import div_registration_window, div_day_registrations, div_get_my_match
+    win = div_registration_window()
+    regs = div_day_registrations(win["day"])
+    my_match = div_get_my_match(user["id"], win["day"])
+    return {
+        "window": win,
+        "registrations": regs,
+        "me_registered": any(r["telegram_id"] == user["telegram_id"] for r in regs),
+        "my_match": my_match,
+        "me_id": user["id"],
+    }
+
+
+@app.post("/div/register")
+def div_register_endpoint(user: dict = Depends(get_authenticated_user)):
+    """Bugungi Divizion ro'yxatiga yozilish (faqat 17:00-19:00)."""
+    from division import div_register
+    success, reason = div_register(user["id"], user["telegram_id"], user["nickname"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok"}
+
+
+@app.get("/div/rating")
+def div_rating_endpoint(user: dict = Depends(get_authenticated_user)):
+    """Umumiy Divizion reytingi (+15/+10/-10 achko yig'indisi)."""
+    from division import div_rating
+    return {"rating": div_rating(), "me_id": user["id"]}
+
+
+@app.post("/div/match/submit-result")
+def div_submit_endpoint(match_id: int, score1: int, score2: int,
+                        user: dict = Depends(get_authenticated_user)):
+    """Divizion o'yin natijasini kiritish (deadline 23:30 gacha)."""
+    validate_scores(score1, score2)
+    from division import div_submit_result
+    success, reason = div_submit_result(match_id, score1, score2, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": reason, "match_id": match_id}
+
+
+@app.post("/div/match/confirm")
+def div_confirm_endpoint(match_id: int, accept: bool = True,
+                         user: dict = Depends(get_authenticated_user)):
+    """Divizion natijasini tasdiqlash/rad etish."""
+    from division import div_confirm_or_reject
+    success, reason = div_confirm_or_reject(
+        match_id, "confirm" if accept else "reject", user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@app.get("/div/chat/{match_id}")
+def div_chat_get(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """Divizion o'yin chati xabarlari (faqat ishtirokchilar)."""
+    from division_chat import div_get_messages
+    msgs = div_get_messages(match_id, user["id"])
+    if msgs is None:
+        raise HTTPException(status_code=403, detail="not_participant")
+    return {"messages": msgs, "me_id": user["id"]}
+
+
+@app.post("/div/chat/{match_id}")
+def div_chat_send(match_id: int, text: str = Body(..., embed=True),
+                  user: dict = Depends(get_authenticated_user)):
+    """Divizion o'yin chatiga xabar yuborish."""
+    from division_chat import div_send_message
+    success, reason = div_send_message(match_id, user["id"], text)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok"}
+
+
 @app.post("/wc/playoff/submit-result")
 def wc_playoff_submit(
     match_id: int,
