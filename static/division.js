@@ -202,8 +202,6 @@ function divRenderProfile() {
     actions = `<div style="font-size:12px;opacity:.7;margin-top:8px">Admin tasdig'i kutilmoqda…</div>`;
   } else if (m.status === "confirmed") {
     actions = `<div style="font-size:12.5px;margin-top:8px">✅ Natija tasdiqlangan.</div>`;
-  } else if (m.status === "cancelled") {
-    actions = `<div style="font-size:12.5px;margin-top:8px;opacity:.7">🚫 O'yin admin tomonidan bekor qilingan.</div>`;
   }
 
   return `
@@ -239,10 +237,8 @@ function divOpenOpponentModal() {
     modal.className = "modal hidden";
     document.body.appendChild(modal);
   }
-  const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
-  const webChatBtn = chatActive
-    ? `<button class="opp-chat-btn opp-webchat-btn" id="div-opp-webchat">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
-    : "";
+  // Bot chati doim mavjud (bye bo'lmasa) — foydalanuvchi so'roviga ko'ra
+  const webChatBtn = `<button class="opp-chat-btn opp-webchat-btn" id="div-opp-webchat">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`;
   const tgBtn = (opp.username || opp.telegram_id)
     ? `<button class="opp-chat-btn" id="div-opp-tg">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
@@ -310,17 +306,23 @@ function divOpenResultModal() {
   modal.innerHTML = `
     <div class="modal-box">
       <div class="modal-title">${escHtml(t.submit_result || "Natija kiritish")}</div>
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;opacity:.75;margin-bottom:6px">
-        <span>${escHtml(myName || "Siz")}</span><span>${escHtml(opp.nickname || "Raqib")}</span>
-      </div>
       <div class="score-input-row">
         <div class="score-input-group">
-          <input id="div-input-score1" class="score-input" type="number" min="0" max="99" value="0" />
+          <div class="score-logo-input">
+            <span class="div-avatar-mini" title="${escHtml(myName || "Siz")}">${escHtml((myName || "S").charAt(0).toUpperCase())}</span>
+            <input id="div-input-score1" class="score-input" type="number" min="0" max="99" value="0" />
+          </div>
         </div>
         <span class="score-separator">:</span>
         <div class="score-input-group">
-          <input id="div-input-score2" class="score-input" type="number" min="0" max="99" value="0" />
+          <div class="score-logo-input">
+            <input id="div-input-score2" class="score-input" type="number" min="0" max="99" value="0" />
+            <span class="div-avatar-mini div-avatar-mini--opp" title="${escHtml(opp.nickname || "Raqib")}">${escHtml((opp.nickname || "R").charAt(0).toUpperCase())}</span>
+          </div>
         </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.7;margin-top:6px">
+        <span>${escHtml(myName || "Siz")}</span><span>${escHtml(opp.nickname || "Raqib")}</span>
       </div>
       <div class="modal-actions">
         <button class="btn btn--ghost" id="div-result-cancel">${escHtml(t.cancel || "Bekor")}</button>
@@ -397,13 +399,26 @@ function divBindSectionEvents(root) {
   root.querySelectorAll("[data-div-admin-cancel]").forEach(b =>
     b.addEventListener("click", async () => {
       const id = Number(b.dataset.divAdminCancel);
-      if (!confirm("O'yin bekor qilinsinmi? U reytingga kirmaydi.")) return;
+      if (!confirm("Natija bekor qilinsinmi? O'yin qayta ochiladi va ishtirokchilar natijani yana kiritishi mumkin bo'ladi.")) return;
       try {
         await apiFetch(`/div/admin/match/cancel?match_id=${id}`, { method: "POST" });
-        showToast("Bekor qilindi 🚫");
+        showToast("Natija bekor qilindi — o'yin qayta ochildi 🔄");
         await divLoadAdminMatches();
       } catch (err) { showToast("Xato: " + err.message); }
     }));
+
+  // Katta hisob (admin_pending) qarori — liga admin oqimi kabi
+  const resolveBig = async (id, accept) => {
+    try {
+      await apiFetch(`/div/admin/match/resolve?match_id=${id}&accept=${accept}`, { method: "POST" });
+      showToast(accept ? "Natija tasdiqlandi ✅" : "Rad etildi — o'yin qayta ochildi 🔄");
+      await divLoadAdminMatches();
+    } catch (err) { showToast("Xato: " + err.message); }
+  };
+  root.querySelectorAll("[data-div-admin-approve]").forEach(b =>
+    b.addEventListener("click", () => resolveBig(Number(b.dataset.divAdminApprove), true)));
+  root.querySelectorAll("[data-div-admin-reject]").forEach(b =>
+    b.addEventListener("click", () => resolveBig(Number(b.dataset.divAdminReject), false)));
 }
 
 // ---- ADMIN PANEL (faqat bosh admin) ----
@@ -417,8 +432,7 @@ async function divLoadAdminMatches() {
 
 function divAdminStatusLabel(st) {
   return ({ pending: "⏳ Kutilmoqda", awaiting_confirmation: "🤝 Tasdiq kutilmoqda",
-            confirmed: "✅ Tasdiqlangan", admin_pending: "👑 Admin tasdig'i",
-            cancelled: "🚫 Bekor qilingan" })[st] || st;
+            confirmed: "✅ Tasdiqlangan", admin_pending: "👑 Katta hisob — admin qarori" })[st] || st;
 }
 
 function divRenderAdmin() {
@@ -426,24 +440,36 @@ function divRenderAdmin() {
   if (!ms.length) {
     return `<div class="card">Bugun o'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
   }
-  return `<div class="card" style="font-size:12.5px;opacity:.75">Natijani o'zgartirish istalgan statusda ishlaydi va darhol tasdiqlangan holatga o'tkazadi. Bekor qilingan o'yin reytingga kirmaydi.</div>` +
+  return `<div class="card" style="font-size:12.5px;opacity:.75">Liga admin paneli kabi: ✏️ natijani o'zgartirish (darhol tasdiqlanadi), 🚫 natijani bekor qilish (o'yin qayta ochiladi — ishtirokchilar yana kiritadi), katta hisobda ✅/❌ qaror.</div>` +
     ms.map(m => {
       const p2 = m.player2_id ? escHtml(m.player2_name || "") : "<i>(toq — avto g'alaba)</i>";
-      const score = (m.score1 !== null && m.score1 !== undefined) ? `${m.score1} : ${m.score2}` : "— : —";
-      const canEdit = m.player2_id && m.status !== "cancelled";
-      const canCancel = m.status !== "cancelled";
+      const hasScore = (m.score1 !== null && m.score1 !== undefined);
+      const score = hasScore ? `${m.score1} : ${m.score2}` : "— : —";
+      const isBye = !m.player2_id;
+
+      let buttons = "";
+      if (!isBye) {
+        if (m.status === "admin_pending") {
+          // Liga admin oqimi: katta hisob — tasdiqlash yoki rad etish
+          buttons = `
+            <button class="btn btn--primary" data-div-admin-approve="${m.id}" style="flex:1">✅ Tasdiqlash</button>
+            <button class="btn btn--ghost" data-div-admin-reject="${m.id}" style="flex:1">❌ Rad etish</button>`;
+        } else {
+          buttons = `<button class="btn btn--primary" data-div-admin-edit="${m.id}" style="flex:1">✏️ Natijani o'zgartirish</button>`;
+          if (hasScore || m.status !== "pending") {
+            buttons += `<button class="btn btn--ghost" data-div-admin-cancel="${m.id}" style="flex:1">🚫 Natijani bekor qilish</button>`;
+          }
+        }
+      }
       return `
         <div class="card">
           <div style="font-size:12px;opacity:.65">#${m.id} · ${divAdminStatusLabel(m.status)}</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-            <b>${escHtml(m.player1_name || "")}</b>
-            <span style="font-weight:800">${score}</span>
-            <b>${p2}</b>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:8px">
+            <b style="min-width:0;overflow:hidden;text-overflow:ellipsis">${escHtml(m.player1_name || "")}</b>
+            <span style="font-weight:800;white-space:nowrap">${score}</span>
+            <b style="min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:right">${p2}</b>
           </div>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            ${canEdit ? `<button class="btn btn--primary" data-div-admin-edit="${m.id}" style="flex:1">✏️ Natijani o'zgartirish</button>` : ""}
-            ${canCancel ? `<button class="btn btn--ghost" data-div-admin-cancel="${m.id}" style="flex:1">🚫 Bekor qilish</button>` : ""}
-          </div>
+          ${buttons ? `<div style="display:flex;gap:8px;margin-top:10px">${buttons}</div>` : ""}
         </div>`;
     }).join("");
 }
