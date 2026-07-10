@@ -2185,9 +2185,11 @@ function closeOpponentModal() {
 const CHAT_POLL_INTERVAL_MS = 2000;  // Xabar + holatni har 2 soniyada yangilash
 const TYPING_SEND_THROTTLE_MS = 3000;  // "Yozmoqda" signalini ko'pi bilan 3s da bir yuborish
 
-function openWebChat(matchId, opponentLabel) {
+function openWebChat(matchId, opponentLabel, urlPrefix) {
   const t = APP.t;
   APP.chatMatchId = matchId;
+  // Chat qaysi API bo'limida ishlashi (liga: /matches, Divizion: /div/matches)
+  APP.chatUrlPrefix = urlPrefix || "/matches";
   APP.chatOppLabel = opponentLabel || (t.webchat_opponent || "Raqib");
   APP.lastTypingSent = 0;
 
@@ -2236,7 +2238,7 @@ function openWebChat(matchId, opponentLabel) {
     const now = Date.now();
     if (now - APP.lastTypingSent > TYPING_SEND_THROTTLE_MS) {
       APP.lastTypingSent = now;
-      apiFetch(`/matches/${matchId}/typing`, { method: "POST" }).catch(() => {});
+      apiFetch(`${APP.chatUrlPrefix || "/matches"}/${matchId}/typing`, { method: "POST" }).catch(() => {});
     }
   });
 
@@ -2290,7 +2292,7 @@ async function loadWebChatMessages() {
   const matchId = APP.chatMatchId;
   if (!matchId) return;
   try {
-    const data = await apiFetch(`/matches/${matchId}/messages`);
+    const data = await apiFetch(`${APP.chatUrlPrefix || "/matches"}/${matchId}/messages`);
     renderWebChatMessages(data.messages || []);
   } catch (e) {
     // Access yo'q (match tugagan) — chatni yopamiz
@@ -2304,7 +2306,7 @@ async function loadWebChatState() {
   const matchId = APP.chatMatchId;
   if (!matchId) return;
   try {
-    const state = await apiFetch(`/matches/${matchId}/state`);
+    const state = await apiFetch(`${APP.chatUrlPrefix || "/matches"}/${matchId}/state`);
     renderWebChatStatus(state);
   } catch (_) {
     // Holatni yangilab bo'lmasa — jim qoldiramiz
@@ -2433,7 +2435,7 @@ async function sendWebChatMessage() {
 
   input.value = "";
   try {
-    await apiFetch(`/matches/${matchId}/messages`, {
+    await apiFetch(`${APP.chatUrlPrefix || "/matches"}/${matchId}/messages`, {
       method: "POST",
       body: JSON.stringify({ text }),
     });
