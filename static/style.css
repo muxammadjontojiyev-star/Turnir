@@ -3594,3 +3594,26 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
   border: 1px solid rgba(80, 220, 160, .35);
 }
 .mode-card--division .mode-card-label { color: #fff; }
+
+/* Premium rejim belgilar (ChL / Divizion kartalari) */
+.mode-card-row--badges { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.mode-badge {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; position: relative;
+}
+.mode-badge--big { width: 54px; height: 54px; }
+.mode-badge--gold {
+  background: linear-gradient(145deg, #f7d774, #c9932a 60%, #8a5f12);
+  box-shadow: 0 0 18px rgba(247, 205, 100, .45), inset 0 1px 2px rgba(255,255,255,.55),
+              inset 0 -2px 4px rgba(0,0,0,.35);
+  color: #3c2a05;
+}
+.mode-badge--emerald {
+  background: linear-gradient(145deg, #6fe7b3, #1f9d68 60%, #0d5c3a);
+  box-shadow: 0 0 18px rgba(80, 220, 160, .4), inset 0 1px 2px rgba(255,255,255,.5),
+              inset 0 -2px 4px rgba(0,0,0,.35);
+  color: #05301c;
+}
+.mode-badge .icon { stroke-width: 2; }
+.mode-badge--gold .icon--star, .mode-badge--gold .icon--trophy { filter: drop-shadow(0 1px 1px rgba(255,255,255,.35)); }

@@ -79,27 +79,36 @@ function renderDivision() {
   root.innerHTML = `
     <div class="wc-header">
       <button class="wc-back" id="div-back-btn">←</button>
-      <div class="wc-header-title">🛡 Divizion</div>
+      <div class="wc-header-title">Divizion</div>
     </div>
-    <div style="display:flex;gap:8px;padding:10px 14px;flex-wrap:wrap;">
-      ${divTabBtn("home", "Asosiy")}
-      ${divTabBtn("rating", "Reyting")}
-      ${divTabBtn("profile", "Profil")}
-      ${divTabBtn("prizes", "Sovrinlar")}
-    </div>
-    <div style="padding:0 14px 90px;">${body}</div>
+    <div class="wc-body" style="padding-bottom:90px;">${body}</div>
+    <nav class="wc-nav">
+      <button class="wc-nav-item ${DIV.section === "home" ? "active" : ""}" data-div-tab="home">
+        <span class="nav-icon" data-icon="home"></span>
+        <span class="nav-label">Asosiy</span>
+      </button>
+      <button class="wc-nav-item ${DIV.section === "rating" ? "active" : ""}" data-div-tab="rating">
+        <span class="nav-icon" data-icon="trophy"></span>
+        <span class="nav-label">Reyting</span>
+      </button>
+      <button class="wc-nav-item ${DIV.section === "profile" ? "active" : ""}" data-div-tab="profile">
+        <span class="nav-icon" data-icon="user"></span>
+        <span class="nav-label">Profil</span>
+      </button>
+      <button class="wc-nav-item ${DIV.section === "prizes" ? "active" : ""}" data-div-tab="prizes">
+        <span class="nav-icon" data-icon="gift"></span>
+        <span class="nav-label">Sovrinlar</span>
+      </button>
+    </nav>
   `;
 
+  if (typeof applyIcons === "function") applyIcons(root);
   document.getElementById("div-back-btn").addEventListener("click", exitDivision);
   root.querySelectorAll("[data-div-tab]").forEach(b =>
     b.addEventListener("click", () => divNavigate(b.dataset.divTab)));
   divBindSectionEvents(root);
 }
 
-function divTabBtn(section, label) {
-  const active = DIV.section === section ? " active" : "";
-  return `<button class="tab-btn${active}" data-div-tab="${section}">${label}</button>`;
-}
 
 // ---- ASOSIY: ro'yxat oynasi + bugungi ro'yxat ----
 function divRenderHome() {

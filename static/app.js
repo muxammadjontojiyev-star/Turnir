@@ -29,6 +29,10 @@ const ICON_PATHS = {
   check:   '<path d="M5 12.5 10 17l9-10"/>',
   cross:   '<path d="M6 6l12 12M18 6 6 18"/>',
   play:    '<path d="M7 4v16l13-8L7 4Z"/>',
+  // Rejim kartalari (premium belgilar)
+  star:    '<path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6L12 16.7 6.6 19.6l1.1-6L3.2 9.4l6.1-.8L12 3Z"/>',
+  shield:  '<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z"/><path d="M12 3v18"/>',
+  swords:  '<path d="M4 4l7 7"/><path d="M4 4h3.5"/><path d="M4 4v3.5"/><path d="M20 4l-7 7"/><path d="M20 4h-3.5"/><path d="M20 4v3.5"/><path d="m8.5 14.5-3 3"/><path d="m5 17 2 2"/><path d="m15.5 14.5 3 3"/><path d="m19 17-2 2"/>',
 };
 
 const ICON = {
@@ -1264,11 +1268,19 @@ function showModeSelect() {
       </div>
       <div class="mode-card mode-card--cl" id="mode-card-cl">
         <div class="mode-card-label">${escHtml(t.mode_cl || "Chempionlar ligasi")}</div>
-        <div class="mode-card-row"><span class="mode-flag">⭐</span><span class="mode-flag">🏆</span><span class="mode-flag">⭐</span></div>
+        <div class="mode-card-row mode-card-row--badges">
+          <span class="mode-badge mode-badge--gold">${ICON.get("star", 20)}</span>
+          <span class="mode-badge mode-badge--gold mode-badge--big">${ICON.get("trophy", 26)}</span>
+          <span class="mode-badge mode-badge--gold">${ICON.get("star", 20)}</span>
+        </div>
       </div>
       <div class="mode-card mode-card--division" id="mode-card-division">
         <div class="mode-card-label">${escHtml(t.mode_division || "Divizion")}</div>
-        <div class="mode-card-row"><span class="mode-flag">🛡</span><span class="mode-flag">⚔️</span><span class="mode-flag">🛡</span></div>
+        <div class="mode-card-row mode-card-row--badges">
+          <span class="mode-badge mode-badge--emerald">${ICON.get("shield", 20)}</span>
+          <span class="mode-badge mode-badge--emerald mode-badge--big">${ICON.get("swords", 26)}</span>
+          <span class="mode-badge mode-badge--emerald">${ICON.get("shield", 20)}</span>
+        </div>
       </div>
     </div>
   `;

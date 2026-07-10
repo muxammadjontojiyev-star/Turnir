@@ -90,26 +90,32 @@ function renderChampionsLeague() {
   root.innerHTML = `
     <div class="wc-header">
       <button class="wc-back" id="cl-back-btn">←</button>
-      <div class="wc-header-title">⭐ Chempionlar ligasi</div>
+      <div class="wc-header-title">Chempionlar ligasi</div>
     </div>
-    <div class="wc-tabs" style="display:flex;gap:8px;padding:10px 14px;">
-      ${clTabBtn("home", "Guruhlar")}
-      ${clTabBtn("rating", "Reyting")}
-      ${clTabBtn("matches", "O'yinlarim")}
-    </div>
-    <div class="cl-body" style="padding:0 14px 90px;">${body}</div>
+    <div class="wc-body" style="padding-bottom:90px;">${body}</div>
+    <nav class="wc-nav">
+      <button class="wc-nav-item ${CL.section === "home" ? "active" : ""}" data-cl-tab="home">
+        <span class="nav-icon" data-icon="home"></span>
+        <span class="nav-label">Asosiy</span>
+      </button>
+      <button class="wc-nav-item ${CL.section === "rating" ? "active" : ""}" data-cl-tab="rating">
+        <span class="nav-icon" data-icon="trophy"></span>
+        <span class="nav-label">Reyting</span>
+      </button>
+      <button class="wc-nav-item ${CL.section === "matches" ? "active" : ""}" data-cl-tab="matches">
+        <span class="nav-icon" data-icon="play"></span>
+        <span class="nav-label">O'yinlarim</span>
+      </button>
+    </nav>
   `;
 
+  if (typeof applyIcons === "function") applyIcons(root);
   document.getElementById("cl-back-btn").addEventListener("click", exitChampionsLeague);
   root.querySelectorAll("[data-cl-tab]").forEach(b =>
     b.addEventListener("click", () => clNavigate(b.dataset.clTab)));
   clBindSectionEvents(root);
 }
 
-function clTabBtn(section, label) {
-  const active = CL.section === section ? " active" : "";
-  return `<button class="tab-btn${active}" data-cl-tab="${section}">${label}</button>`;
-}
 
 // ---- HOME: guruhlar yoki kvalifikantlar ----
 function clRenderHome() {
