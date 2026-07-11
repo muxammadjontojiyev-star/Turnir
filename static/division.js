@@ -135,7 +135,58 @@ function divRulesCard() {
     </div>`;
 }
 
-// Asosiy sahifadagi bugungi o'yin bloki (raqib — hisob — men, RAQIB : MEN tartibi)
+// Dumaloq avatar (telegram rasmi, bo'lmasa ism harfi). size — px.
+function divAvatarHtml(userId, name, size = 52, photoUrl = null) {
+  const initial = (name || "?").charAt(0).toUpperCase();
+  const fbStyle = `width:${size}px;height:${size}px;border-radius:50%;align-items:center;` +
+    `justify-content:center;font-size:${Math.round(size * 0.42)}px;font-weight:800;flex:none;` +
+    `background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff`;
+  const src = photoUrl ? escHtml(photoUrl) : (userId ? `${API_BASE}/players/${userId}/photo` : null);
+  if (!src) return `<div style="display:flex;${fbStyle}">${escHtml(initial)}</div>`;
+  return `<img src="${src}" alt=""
+      style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex:none"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+    ><div style="display:none;${fbStyle}">${escHtml(initial)}</div>`;
+}
+
+// Raqib profili oynasi (rasm, ism, username + Telegramda ochish)
+function divOpenPlayerProfile(userId, name, username) {
+  if (!userId) return;
+  let modal = document.getElementById("modal-div-player");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "modal-div-player";
+    modal.className = "modal hidden";
+    document.body.appendChild(modal);
+  }
+  const tgBtn = username
+    ? `<button class="opp-chat-btn" id="div-player-tg">${ICON.get("chat", 18)} Telegramda ochish</button>`
+    : `<div class="opp-no-contact">Bu ishtirokchining telegram username'i yo'q</div>`;
+  modal.innerHTML = `
+    <div class="modal-box opp-modal-box" style="text-align:center">
+      <button class="modal-close" id="div-player-close">${ICON.get("close", 18)}</button>
+      <div style="display:flex;justify-content:center;margin:6px 0 10px">
+        ${divAvatarHtml(userId, name, 84)}
+      </div>
+      <div style="font-size:19px;font-weight:800">${escHtml(name || "Ishtirokchi")}</div>
+      ${username ? `<div style="font-size:13px;color:var(--cyan);margin-top:2px">@${escHtml(username)}</div>` : ""}
+      <div style="margin-top:14px">${tgBtn}</div>
+    </div>`;
+  modal.classList.remove("hidden");
+  if (typeof applyIcons === "function") applyIcons(modal);
+
+  const close = () => modal.classList.add("hidden");
+  document.getElementById("div-player-close").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+  document.getElementById("div-player-tg")?.addEventListener("click", () => {
+    const link = `https://t.me/${String(username).replace(/^@/, "")}`;
+    const tg = window.Telegram?.WebApp;
+    if (tg?.openTelegramLink) { try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); } }
+    else window.open(link, "_blank");
+  });
+}
+
+// Asosiy sahifadagi qur'a/o'yin bloki: RAQIB (bosiladi) — hisob — MEN
 function divTodayMatchCard() {
   const s = DIV.status;
   const m = s && s.my_match;
@@ -144,22 +195,12 @@ function divTodayMatchCard() {
     return `<div class="card" style="border-color:rgba(245,197,66,.5)">🎉 Bugun ishtirokchilar soni toq bo'lgani uchun sizga <b>avtomatik g'alaba (+15 achko)</b> berildi!</div>`;
   }
   const opp = m.opponent || {};
-  const oppInitial = (opp.nickname || "?").charAt(0).toUpperCase();
-  const oppPhoto = opp.user_id
-    ? `<img src="${API_BASE}/players/${opp.user_id}/photo" alt=""
-           style="width:52px;height:52px;border-radius:50%;object-fit:cover"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <div style="display:none;width:52px;height:52px;border-radius:50%;
-           align-items:center;justify-content:center;font-size:22px;font-weight:800;
-           background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(oppInitial)}</div>`
-    : `<div style="width:52px;height:52px;border-radius:50%;display:flex;
-           align-items:center;justify-content:center;font-size:22px;font-weight:800;
-           background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(oppInitial)}</div>`;
+  const p1IsMe = (m.player1_id === s.me_id);
+  const myName = p1IsMe ? m.player1_name : m.player2_name;
+  const myUsername = s.me_username;
 
-  const myName = (m.player1_id === s.me_id) ? m.player1_name : m.player2_name;
   let oppScore = "—", myScore = "—";
   if (m.score1 !== null && m.score1 !== undefined) {
-    const p1IsMe = (m.player1_id === s.me_id);
     myScore = p1IsMe ? m.score1 : m.score2;
     oppScore = p1IsMe ? m.score2 : m.score1;
   }
@@ -182,20 +223,21 @@ function divTodayMatchCard() {
 
   return `
     <div class="card">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${oppPhoto}
-        <div style="min-width:0;flex:1">
-          <div style="font-size:12px;opacity:.65">Bugungi raqibingiz</div>
-          <div style="font-size:17px;font-weight:800">${escHtml(opp.nickname || "Ishtirokchi")}</div>
-          ${opp.username ? `<div style="font-size:12px;opacity:.7">@${escHtml(opp.username)}</div>` : ""}
+      <div style="font-size:12px;opacity:.65;margin-bottom:10px">Bugungi o'yin</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div class="div-vs-player" id="div-opp-profile-open" style="flex:1">
+          ${divAvatarHtml(opp.user_id, opp.nickname, 56)}
+          <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(opp.nickname || "Raqib")}</div>
+          ${opp.username ? `<div style="font-size:11.5px;color:var(--cyan)">@${escHtml(opp.username)}</div>` : ""}
+        </div>
+        <div style="font-size:22px;font-weight:800;white-space:nowrap">${oppScore} : ${myScore}</div>
+        <div class="div-vs-player" style="flex:1">
+          ${divAvatarHtml(s.me_id, myName, 56, APP.currentUser && APP.currentUser.photo_url)}
+          <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(myName || "Siz")}</div>
+          ${myUsername ? `<div style="font-size:11.5px;opacity:.7">@${escHtml(myUsername)}</div>` : ""}
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0;font-weight:800">
-        <span style="opacity:.8;font-size:13px">${escHtml(opp.nickname || "Raqib")}</span>
-        <span style="font-size:22px">${oppScore} : ${myScore}</span>
-        <span style="opacity:.8;font-size:13px">${escHtml(myName || "Siz")}</span>
-      </div>
-      <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%">👤 Raqib bilan bog'lanish</button>
+      <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%;margin-top:12px">👤 Raqib bilan bog'lanish</button>
       ${actions}
     </div>`;
 }
@@ -318,7 +360,7 @@ function divRenderProfile() {
       </div>
     </div>`;
 
-  // 3) O'YIN TARIXI — kim bilan o'ynagani
+  // 3) O'YIN TARIXI — raqib useri bilan, bosilsa raqib profili ochiladi
   const hist = s.history || [];
   const histRows = hist.map((h, i) => {
     if (h.is_bye) {
@@ -330,9 +372,19 @@ function divRenderProfile() {
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.opp_score} : ${h.my_score}` : "— : —";
-    return `<div class="match-item">
+    const canOpen = !!h.opp_user_id;
+    const dataAttrs = canOpen
+      ? `class="match-item div-history-opp" style="cursor:pointer"
+         data-opp-id="${h.opp_user_id}"
+         data-opp-name="${escHtml(h.opp_name || "")}"
+         data-opp-username="${escHtml(h.opp_username || "")}"`
+      : `class="match-item"`;
+    return `<div ${dataAttrs}>
       <span style="opacity:.6">${i + 1}</span>
-      <b style="flex:1">${escHtml(h.opp_name || "Raqib")}</b>
+      <div style="flex:1;min-width:0">
+        <b>${escHtml(h.opp_name || "Raqib")}</b>
+        ${h.opp_username ? `<div style="font-size:11px;color:var(--cyan)">@${escHtml(h.opp_username)}</div>` : ""}
+      </div>
       <span style="font-weight:800;margin:0 8px">${score}</span>
       <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>
     </div>`;
@@ -496,6 +548,70 @@ function divRenderPrizes() {
 }
 
 // ---- Eventlar ----
+// Raqib Divizion profilini modal'da ochadi (rasm + statistika + tarix)
+async function divOpenPlayerProfile(userId) {
+  let data;
+  try {
+    data = await apiFetch(`/div/player/${userId}/profile`);
+  } catch (e) {
+    showToast("Profil ochilmadi: " + e.message);
+    return;
+  }
+  const st = data.stats || { wins: 0, draws: 0, losses: 0, win_rate: 0 };
+  const initial = (data.nickname || "?").charAt(0).toUpperCase();
+  const photo = `<img src="${API_BASE}/players/${data.user_id}/photo" alt=""
+        style="width:56px;height:56px;border-radius:50%;object-fit:cover"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+     <div style="display:none;width:56px;height:56px;border-radius:50%;
+        align-items:center;justify-content:center;font-size:24px;font-weight:800;
+        background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(initial)}</div>`;
+
+  const hist = (data.history || []).slice(0, 10).map((h, i) => {
+    if (h.is_bye) {
+      return `<div class="match-item"><span style="opacity:.6">${i + 1}</span>
+        <b style="flex:1;text-align:center">🎉 Avto g'alaba</b>
+        <span class="status-badge status--confirmed">+15</span></div>`;
+    }
+    const hasScore = (h.my_score !== null && h.my_score !== undefined);
+    const score = hasScore ? `${h.my_score} : ${h.opp_score}` : "— : —";
+    return `<div class="match-item"><span style="opacity:.6">${i + 1}</span>
+      <b style="flex:1">${escHtml(h.opp_name || "Raqib")}</b>
+      <span style="font-weight:800;margin:0 8px">${score}</span>
+      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span></div>`;
+  }).join("");
+
+  let modal = document.getElementById("modal-div-player");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "modal-div-player";
+    modal.className = "modal hidden";
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box" style="max-height:82vh;overflow-y:auto">
+      <button class="modal-close" id="div-player-close">${ICON.get("close", 18)}</button>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        ${photo}
+        <div style="min-width:0">
+          <div style="font-size:18px;font-weight:800">${escHtml(data.nickname || "—")}</div>
+          ${data.username ? `<div style="font-size:12.5px;color:var(--cyan)">@${escHtml(data.username)}</div>` : ""}
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card stat-card--primary"><span class="stat-card-value neon-cyan">${st.win_rate}%</span><span class="stat-card-label">G'alaba foizi</span></div>
+        <div class="stat-card"><span class="stat-card-value neon-cyan">${st.wins}</span><span class="stat-card-label">G'alaba</span></div>
+        <div class="stat-card"><span class="stat-card-value">${st.draws}</span><span class="stat-card-label">Durang</span></div>
+        <div class="stat-card"><span class="stat-card-value neon-red">${st.losses}</span><span class="stat-card-label">Mag'lubiyat</span></div>
+      </div>
+      <div class="section-label" style="margin-top:14px">O'YIN TARIXI</div>
+      ${hist ? `<div class="card">${hist}</div>` : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}
+    </div>`;
+  modal.classList.remove("hidden");
+  const close = () => modal.classList.add("hidden");
+  document.getElementById("div-player-close").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+}
+
 function divBindSectionEvents(root) {
   root.querySelector("#div-btn-register")?.addEventListener("click", async (e) => {
     e.target.disabled = true; // ikki marta bosishdan himoya (qoida #38/#40)
@@ -512,6 +628,24 @@ function divBindSectionEvents(root) {
 
   root.querySelector("#div-btn-opponent")?.addEventListener("click", divOpenOpponentModal);
   root.querySelector("#div-btn-open-result")?.addEventListener("click", divOpenResultModal);
+
+  // Asosiy sahifadagi raqib tomoni bosilsa — raqib profili
+  root.querySelector("#div-opp-profile-open")?.addEventListener("click", () => {
+    const opp = DIV.status?.my_match?.opponent;
+    if (opp) divOpenPlayerProfile(opp.user_id, opp.nickname, opp.username);
+  });
+
+  // O'yin tarixidagi raqib qatori bosilsa — raqib profili
+  root.querySelectorAll(".div-history-opp").forEach(el =>
+    el.addEventListener("click", () => divOpenPlayerProfile(
+      Number(el.dataset.oppId), el.dataset.oppName, el.dataset.oppUsername || null)));
+
+  // Raqib profili (qur'a oynasi rasm/user yoki tarixdagi raqib ustiga bosilganda)
+  root.querySelectorAll("[data-div-opp-profile]").forEach(el => {
+    const uid = Number(el.dataset.divOppProfile);
+    if (!uid) return;
+    el.addEventListener("click", () => divOpenPlayerProfile(uid));
+  });
 
   const act = async (accept) => {
     const m = DIV.status?.my_match;

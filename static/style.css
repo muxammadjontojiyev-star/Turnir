@@ -3628,3 +3628,12 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
   font-size:24px; font-weight:800; color:#fff;
   background:linear-gradient(140deg,#7c5cff,#31d0aa);
 }
+
+/* Divizion: bugungi o'yin kartasidagi o'yinchi ustuni */
+.div-vs-player {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-width: 0;
+}
+#div-opp-profile-open { cursor: pointer; border-radius: 12px; padding: 6px 4px; transition: background .15s ease; }
+#div-opp-profile-open:active { background: rgba(255,255,255,.07); }
+.div-history-opp:active { background: rgba(255,255,255,.07); }
