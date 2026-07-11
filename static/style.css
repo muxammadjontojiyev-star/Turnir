@@ -3678,7 +3678,7 @@ tr.is-me .div-rating-user { color: #fff; }
 .mode-card--photo {
   padding: 0;              /* rasm chetigacha borsin */
   /* Balandlik rasm nisbatidan AVTOMATIK -> rasm hech qachon kesilmaydi */
-  aspect-ratio: 900 / 563;
+  aspect-ratio: 1200 / 506;
   height: auto;
   min-height: 0;
   /* overflow: hidden — .mode-card'dan meros, O'ZGARTIRILMAYDI (RGB hoshiya uchun) */
@@ -3695,7 +3695,7 @@ tr.is-me .div-rating-user { color: #fff; }
   width: calc(100% - 5px);
   height: calc(100% - 5px);
   z-index: 2;              /* karta foni (::after, z=1) ustida */
-  /* Rasm nisbati kartanikiga AYNAN teng (900:563 = aspect-ratio) -> cover
+  /* Rasm nisbati kartanikiga AYNAN teng (1200:506 = aspect-ratio) -> cover
      hech narsani kesmaydi va rasm butun maydonni to'ldiradi (blur chetlar YO'Q). */
   object-fit: cover;
   border-radius: 26px;     /* ::after bilan bir xil */
