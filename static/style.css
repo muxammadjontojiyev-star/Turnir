@@ -3677,12 +3677,11 @@ tr.is-me .div-rating-user { color: #fff; }
 */
 .mode-card--photo {
   padding: 0;              /* rasm ramkagacha borsin */
-  /* Balandlik rasm nisbatidan AVTOMATIK hisoblanadi (ekran kengligi qanday
-     bo'lsa ham) -> object-fit:cover hech narsani kesmaydi, rasm to'liq ko'rinadi */
+  /* Balandlik rasm nisbatidan AVTOMATIK hisoblanadi -> rasm hech qachon kesilmaydi */
   aspect-ratio: 900 / 380;
   height: auto;
   min-height: 0;
-  /* overflow: hidden — .mode-card'dan meros, O'ZGARTIRILMAYDI */
+  /* overflow: hidden — .mode-card'dan meros, O'ZGARTIRILMAYDI (RGB hoshiya uchun) */
 }
 .mode-card--photo .mode-banner {
   position: absolute;
@@ -3690,10 +3689,13 @@ tr.is-me .div-rating-user { color: #fff; }
   z-index: 2;              /* karta foni (::after, z=1) ustida */
   width: auto;
   height: auto;
-  object-fit: cover;       /* kvadratni to'liq to'ldiradi */
+  /* contain: rasm QANDAY o'lchamda bo'lsa ham to'liq ko'rinadi, kesilmaydi.
+     Rasmning o'zida chetlar xira fon bilan to'ldirilgan -> bo'sh joy sezilmaydi. */
+  object-fit: contain;
   border-radius: 26px;     /* ::after bilan bir xil yumaloqlik */
   display: block;
   box-shadow: none;
+  background: #0a0e24;     /* rasm sig'masa chetlar qora — bo'sh oq joy bo'lmaydi */
 }
 /* Rasm ustidagi yozuv (Divizion / ChL) */
 .mode-banner-label {

@@ -1297,11 +1297,11 @@ function showModeSelect() {
         <div class="mode-card-row">${flags}</div>
       </div>
       <div class="mode-card mode-card--cl mode-card--photo" id="mode-card-cl">
-        <img class="mode-banner" src="mode-cl.jpg?v=6" alt="${escHtml(t.mode_cl || "Chempionlar ligasi")}"
+        <img class="mode-banner" src="cl-banner.jpg?v=1" alt="${escHtml(t.mode_cl || "Chempionlar ligasi")}"
              onerror="this.style.display='none'">
       </div>
       <div class="mode-card mode-card--division mode-card--photo" id="mode-card-division">
-        <img class="mode-banner" src="mode-division.jpg?v=6" alt=""
+        <img class="mode-banner" src="division-banner.jpg?v=1" alt=""
              onerror="this.style.display='none'">
         <div class="mode-banner-label">${escHtml(t.mode_division || "Divizion")}</div>
       </div>
