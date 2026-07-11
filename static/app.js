@@ -1293,6 +1293,8 @@ function showModeSelect() {
         <div class="mode-card-row">${leagueLogos}</div>
       </div>
       <div class="mode-card mode-card--worldcup" id="mode-card-worldcup">
+        <img class="mode-bg" src="mode-worldcup.jpg?v=1" alt=""
+             onerror="this.style.display='none'">
         <div class="mode-card-label">${escHtml(t.mode_worldcup || "Jahon Chempionati")}</div>
         <div class="mode-card-row">${flags}</div>
       </div>
