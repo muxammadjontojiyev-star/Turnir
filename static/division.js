@@ -10,10 +10,13 @@
 // ============================================================
 
 const DIV = {
-  section: "home",   // home | rating | profile | prizes | admin
+  section: "home",   // home | rating | profile | prizes | admin | player
   status: null,      // /div/status javobi
   rating: [],
   adminMatches: [],  // admin panel ro'yxati
+  adminDay: null,    // null = bugun, "all" = barcha kunlar
+  player: null,      // ochilgan ishtirokchi profili (/div/player/{id}/profile)
+  playerBackTo: "rating",  // profildan ortga qaysi bo'limga qaytamiz
 };
 
 // ---- Kirish nuqtasi ----
@@ -74,6 +77,7 @@ function renderDivision() {
   else if (DIV.section === "rating") body = divRenderRating();
   else if (DIV.section === "profile") body = divRenderProfile();
   else if (DIV.section === "admin") body = divRenderAdmin();
+  else if (DIV.section === "player") body = divRenderPlayer();
   else body = divRenderPrizes();
 
   const adminNav = DIV.status?.is_admin ? `
@@ -355,7 +359,7 @@ function divRenderProfile() {
   const histRows = hist.map((h, i) => {
     if (h.is_bye) {
       return `<div class="match-item">
-        <span style="opacity:.6">${i + 1}</span>
+        <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
         <b style="flex:1;text-align:center">🎉 Avto g'alaba (toq)</b>
         <span class="status-badge status--confirmed">+15</span>
       </div>`;
@@ -372,7 +376,7 @@ function divRenderProfile() {
          data-opp-username="${escHtml(h.opp_username || "")}"`
       : `class="match-item"`;
     return `<div ${dataAttrs}>
-      <span style="opacity:.6">${i + 1}</span>
+      <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
       <b style="flex:1;min-width:0;color:${h.opp_username ? "var(--cyan)" : "inherit"};overflow:hidden;text-overflow:ellipsis">${escHtml(label)}</b>
       <span style="font-weight:800;margin:0 8px">${score}</span>
       <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>
@@ -536,72 +540,93 @@ function divRenderPrizes() {
   </div>`;
 }
 
-// ---- Eventlar ----
-// Raqib Divizion profilini modal'da ochadi (rasm + statistika + tarix)
+// ---- ISHTIROKCHI PROFILI (to'liq sahifa, liga uslubi) ----
 async function divOpenPlayerProfile(userId) {
-  let data;
-  try {
-    data = await apiFetch(`/div/player/${userId}/profile`);
-  } catch (e) {
-    showToast("Profil ochilmadi: " + e.message);
+  if (!userId) return;
+  // O'zimga bosilsa — o'z profilim bo'limiga o'tamiz
+  if (DIV.status && userId === DIV.status.me_id) {
+    divNavigate("profile");
     return;
   }
+  DIV.playerBackTo = (DIV.section === "player") ? DIV.playerBackTo : DIV.section;
+  DIV.player = null;
+  DIV.section = "player";
+  renderDivision();  // yuklanmoqda holati (qoida #40)
+  try {
+    DIV.player = await apiFetch(`/div/player/${userId}/profile`);
+  } catch (e) {
+    showToast("Profil ochilmadi: " + e.message);
+    DIV.section = DIV.playerBackTo;
+  }
+  renderDivision();
+}
+
+function divRenderPlayer() {
+  const data = DIV.player;
+  const back = `<button class="back-btn" id="div-player-back">
+      <span class="back-btn-arrow" data-icon="back"></span><span>Ortga</span>
+    </button>`;
+  if (!data) {
+    return `${back}<div class="card" style="text-align:center;opacity:.7">Yuklanmoqda…</div>`;
+  }
+
   const st = data.stats || { wins: 0, draws: 0, losses: 0, win_rate: 0 };
   const initial = (data.nickname || "?").charAt(0).toUpperCase();
   const photo = `<img src="${API_BASE}/players/${data.user_id}/photo" alt=""
-        style="width:56px;height:56px;border-radius:50%;object-fit:cover"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-     <div style="display:none;width:56px;height:56px;border-radius:50%;
+        style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+      ><div style="display:none;width:56px;height:56px;border-radius:50%;flex:none;
         align-items:center;justify-content:center;font-size:24px;font-weight:800;
         background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(initial)}</div>`;
 
-  const hist = (data.history || []).slice(0, 10).map((h, i) => {
+  const hist = (data.history || []).map((h, i) => {
     if (h.is_bye) {
-      return `<div class="match-item"><span style="opacity:.6">${i + 1}</span>
+      return `<div class="match-item"><span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
         <b style="flex:1;text-align:center">🎉 Avto g'alaba</b>
         <span class="status-badge status--confirmed">+15</span></div>`;
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.my_score} : ${h.opp_score}` : "— : —";
-    const oppLabel = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
-    return `<div class="match-item"><span style="opacity:.6">${i + 1}</span>
-      <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:${h.opp_username ? "var(--cyan)" : "inherit"}">${escHtml(oppLabel)}</b>
+    const label = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
+    return `<div class="match-item">
+      <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
+      <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:${h.opp_username ? "var(--cyan)" : "inherit"}">${escHtml(label)}</b>
       <span style="font-weight:800;margin:0 8px">${score}</span>
-      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span></div>`;
+      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>
+    </div>`;
   }).join("");
 
-  let modal = document.getElementById("modal-div-player");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "modal-div-player";
-    modal.className = "modal hidden";
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = `
-    <div class="modal-box" style="max-height:82vh;overflow-y:auto">
-      <button class="modal-close" id="div-player-close">${ICON.get("close", 18)}</button>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+  const tgBtn = data.username
+    ? `<button class="btn btn--ghost" id="div-player-tg" style="width:100%;margin-top:12px">✈️ Telegramda ochish</button>`
+    : "";
+
+  return `
+    ${back}
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px">
         ${photo}
         <div style="min-width:0">
-          <div style="font-size:18px;font-weight:800">${escHtml(data.nickname || "—")}</div>
-          ${data.username ? `<div style="font-size:12.5px;color:var(--cyan)">@${escHtml(data.username)}</div>` : ""}
+          <div style="font-size:19px;font-weight:800">${escHtml(data.nickname || "—")}</div>
+          ${data.username ? `<div style="font-size:13px;color:var(--cyan)">@${escHtml(data.username)}</div>` : ""}
         </div>
       </div>
-      <div class="stats-grid">
-        <div class="stat-card stat-card--primary"><span class="stat-card-value neon-cyan">${st.win_rate}%</span><span class="stat-card-label">G'alaba foizi</span></div>
-        <div class="stat-card"><span class="stat-card-value neon-cyan">${st.wins}</span><span class="stat-card-label">G'alaba</span></div>
-        <div class="stat-card"><span class="stat-card-value">${st.draws}</span><span class="stat-card-label">Durang</span></div>
-        <div class="stat-card"><span class="stat-card-value neon-red">${st.losses}</span><span class="stat-card-label">Mag'lubiyat</span></div>
-      </div>
-      <div class="section-label" style="margin-top:14px">O'YIN TARIXI</div>
-      ${hist ? `<div class="card">${hist}</div>` : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}
-    </div>`;
-  modal.classList.remove("hidden");
-  const close = () => modal.classList.add("hidden");
-  document.getElementById("div-player-close").addEventListener("click", close);
-  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+      ${tgBtn}
+    </div>
+
+    <div class="section-label">STATISTIKA</div>
+    <div class="stats-grid">
+      <div class="stat-card stat-card--primary"><span class="stat-card-value neon-cyan">${st.win_rate}%</span><span class="stat-card-label">G'alaba foizi</span></div>
+      <div class="stat-card"><span class="stat-card-value neon-cyan">${st.wins}</span><span class="stat-card-label">G'alaba</span></div>
+      <div class="stat-card"><span class="stat-card-value">${st.draws}</span><span class="stat-card-label">Durang</span></div>
+      <div class="stat-card"><span class="stat-card-value neon-red">${st.losses}</span><span class="stat-card-label">Mag'lubiyat</span></div>
+    </div>
+
+    <div class="section-label">O'YIN TARIXI</div>
+    ${hist ? `<div class="card">${hist}</div>`
+           : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}`;
 }
 
+// ---- Eventlar ----
 function divBindSectionEvents(root) {
   root.querySelector("#div-btn-register")?.addEventListener("click", async (e) => {
     e.target.disabled = true; // ikki marta bosishdan himoya (qoida #38/#40)
@@ -614,6 +639,20 @@ function divBindSectionEvents(root) {
       showToast(err.message === "window_closed"
         ? "Ro'yxat vaqti tugagan (17:00–19:00)" : "Xato: " + err.message);
     }
+  });
+
+  // Ishtirokchi profili sahifasi: ortga va Telegramda ochish
+  root.querySelector("#div-player-back")?.addEventListener("click", () => {
+    DIV.player = null;
+    divNavigate(DIV.playerBackTo || "rating");
+  });
+  root.querySelector("#div-player-tg")?.addEventListener("click", () => {
+    const u = DIV.player?.username;
+    if (!u) return;
+    const link = `https://t.me/${String(u).replace(/^@/, "")}`;
+    const tg = window.Telegram?.WebApp;
+    if (tg?.openTelegramLink) { try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); } }
+    else window.open(link, "_blank");
   });
 
   root.querySelector("#div-btn-opponent")?.addEventListener("click", divOpenOpponentModal);
@@ -664,6 +703,12 @@ function divBindSectionEvents(root) {
   root.querySelector("#div-btn-reject")?.addEventListener("click", () => act(false));
 
   // Admin panel eventlari
+  root.querySelectorAll("[data-div-admin-day]").forEach(b =>
+    b.addEventListener("click", () => {
+      DIV.adminDay = (b.dataset.divAdminDay === "all") ? "all" : null;
+      void divLoadAdminMatches();
+    }));
+
   root.querySelectorAll("[data-div-admin-edit]").forEach(b =>
     b.addEventListener("click", () => divAdminEdit(Number(b.dataset.divAdminEdit))));
   root.querySelectorAll("[data-div-admin-cancel]").forEach(b =>
@@ -693,8 +738,9 @@ function divBindSectionEvents(root) {
 
 // ---- ADMIN PANEL (faqat bosh admin) ----
 async function divLoadAdminMatches() {
+  const q = DIV.adminDay === "all" ? "?day=all" : "";
   try {
-    const d = await apiFetch("/div/admin/matches");
+    const d = await apiFetch(`/div/admin/matches${q}`);
     DIV.adminMatches = d.matches || [];
   } catch (_) { DIV.adminMatches = []; }
   renderDivision();
@@ -708,9 +754,20 @@ function divAdminStatusLabel(st) {
 function divRenderAdmin() {
   const ms = DIV.adminMatches || [];
   if (!ms.length) {
-    return `<div class="card">Bugun o'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
+    const f = `
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
+        <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
+      </div>`;
+    return f + `<div class="card">O'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
   }
-  return `<div class="card" style="font-size:12.5px;opacity:.75">Liga admin paneli kabi: ✏️ natijani o'zgartirish (darhol tasdiqlanadi), 🚫 natijani bekor qilish (o'yin qayta ochiladi — ishtirokchilar yana kiritadi), katta hisobda ✅/❌ qaror.</div>` +
+  const filter = `
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
+      <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
+    </div>`;
+  return filter +
+    `<div class="card" style="font-size:12.5px;opacity:.75">✏️ natijani o'zgartirish (TASDIQLANGAN o'yinlar ham tuzatiladi), 🚫 natijani bekor qilish (o'yin qayta ochiladi), katta hisobda ✅/❌ qaror. O'yin raqami — #ID.</div>` +
     ms.map(m => {
       const p2 = m.player2_id ? escHtml(m.player2_name || "") : "<i>(toq — avto g'alaba)</i>";
       const hasScore = (m.score1 !== null && m.score1 !== undefined);
@@ -733,7 +790,7 @@ function divRenderAdmin() {
       }
       return `
         <div class="card">
-          <div style="font-size:12px;opacity:.65">#${m.id} · ${divAdminStatusLabel(m.status)}</div>
+          <div style="font-size:12px;opacity:.65">#${m.id}${DIV.adminDay === "all" ? " · " + escHtml(m.day) : ""} · ${divAdminStatusLabel(m.status)}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:8px">
             <b style="min-width:0;overflow:hidden;text-overflow:ellipsis">${escHtml(m.player1_name || "")}</b>
             <span style="font-weight:800;white-space:nowrap">${score}</span>
