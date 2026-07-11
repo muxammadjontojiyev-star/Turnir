@@ -385,7 +385,10 @@ bir necha marta xatoga yo'l qo'yilgan, shuning uchun qoidalar aniq yozib qo'yila
 - Rasm tayyorlashda: asl rasm **butun holicha** (contain) markazga joylashtiriladi,
   chetlar **o'sha rasmning xiralashtirilgan (blur) nusxasi** bilan to'ldiriladi.
   Skript: `PIL` — bg = cover+GaussianBlur(20), fg = thumbnail(900,380), paste markazga.
-- Rasm fayllari: `static/cl-banner.jpg`, `static/division-banner.jpg`.
+- Rasm fayllari: `static/leagues-banner.jpg` (Ligalar), `static/worldcup-banner-card.jpg`
+  (Jahon Chempionati), `static/cl-banner.jpg` (ChL), `static/division-banner.jpg` (Divizion).
+  4 karta ham `.mode-card--photo`; yozuv `.mode-banner-label` bilan rasm ustida
+  (ChL'da yozuv yo'q — rasmda bor). Liga logolari va WC bayroq qatorlari olib tashlangan.
   **Eskilari (`mode-cl.jpg`, `mode-cl-1.jpg`, `mode-division.jpg`, `mode-worldcup.jpg`)
   o'chirib tashlangan** — GitHub'da fayl almashtirilmay "-1" nusxa yaratib yuborgani
   uchun nom o'zgartirildi.
