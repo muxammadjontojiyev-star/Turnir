@@ -3685,12 +3685,16 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .mode-card--photo .mode-banner {
   position: absolute;
-  inset: 2.5px;            /* RGB hoshiya ichida (::after kabi) */
+  /* Hoshiya ichidagi maydonni TO'LIQ egallaydi. MUHIM: width/height AUTO
+     BO'LMASLIGI kerak — auto bo'lsa <img> o'z tabiiy o'lchamini (900x380px)
+     oladi va kartadan chiqib kesiladi. */
+  top: 2.5px;
+  left: 2.5px;
+  right: 2.5px;
+  bottom: 2.5px;
+  width: calc(100% - 5px);
+  height: calc(100% - 5px);
   z-index: 2;              /* karta foni (::after, z=1) ustida */
-  width: auto;
-  height: auto;
-  /* Rasm nisbati kartanikiga AYNAN teng (900:380 = aspect-ratio) -> cover hech
-     narsani kesmaydi. Rasmning o'zida chetlar xira fon bilan to'ldirilgan. */
   /* CONTAIN: rasm hech qachon kesilmaydi va cho'zilmaydi. Rasmning o'zida
      chetlar xira (blur) fon bilan to'ldirilgan -> bo'sh joy ko'rinmaydi. */
   object-fit: contain;
