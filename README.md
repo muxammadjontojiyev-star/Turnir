@@ -374,10 +374,14 @@ bir necha marta xatoga yo'l qo'yilgan, shuning uchun qoidalar aniq yozib qo'yila
 
 ### ✅ QILING
 - Karta balandligi rasm nisbatidan avtomatik: `aspect-ratio: 900 / 380`.
-- Rasm o'lchami **aynan 900×380** (CSS aspect-ratio bilan bir xil).
-- **`object-fit: contain`** ishlatiladi — hoshiya (`inset: 2.5px`) rasmni biroz
-  kichraytirgani uchun nisbat ozgina farq qiladi; `cover` bo'lsa rasm KESILADI/CHO'ZILADI.
-  `contain` bilan rasm hech qachon kesilmaydi, chetlardagi ~2px fon sezilmaydi.
+- Rasm o'lchami **aynan 900×563** (CSS `aspect-ratio: 900 / 563` bilan bir xil).
+- **`object-fit: cover`** — rasm nisbati kartanikiga teng bo'lgani uchun hech narsa
+  kesilmaydi va rasm butun maydonni to'ldiradi (blur chetlar KERAK EMAS).
+- ⚠️ **`width`/`height` ni HECH QACHON `auto` qilmang!** `<img>` uchun `auto` = rasmning
+  tabiiy piksel o'lchami (900px) -> rasm kartadan chiqib kesiladi. To'g'risi:
+  `width: calc(100% - 5px); height: calc(100% - 5px);` (hoshiya 2.5px×2).
+- Rasm tayyorlash: asl rasmni 900×563 ga **markazdan kesib** (crop+resize) moslashtiring.
+  Blur fon ISHLATILMAYDI — foydalanuvchi toza rasm xohlaydi.
 - Rasm tayyorlashda: asl rasm **butun holicha** (contain) markazga joylashtiriladi,
   chetlar **o'sha rasmning xiralashtirilgan (blur) nusxasi** bilan to'ldiriladi.
   Skript: `PIL` — bg = cover+GaussianBlur(20), fg = thumbnail(900,380), paste markazga.
