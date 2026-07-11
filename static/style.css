@@ -3662,20 +3662,51 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .div-row-flash { animation: div-row-flash 1.6s ease; }
 
-/* Rejim kartalaridagi banner rasm (ChL / Divizion) — ISHLAGAN VARIANT.
-   Rasm karta KONTENTI sifatida (.mode-card > * qoidasi z-index:2 beradi),
-   shuning uchun RGB hoshiya (::before/::after) buzilmaydi va rasm to'liq ko'rinadi. */
-.mode-card-row--banner {
-  display: flex;
-  justify-content: center;
-  width: 100%;
+/* Rejim kartalari: rasm ramkagacha to'ldiradi, RGB hoshiya saqlanadi (ChL / Divizion)
+
+   MUHIM (buzmang!): .mode-card'da `overflow: hidden` QOLISHI SHART — u ::before
+   (kartadan 200% katta aylanuvchi konus-gradient) ni karta ichida ushlab turadi.
+   Uni `visible` qilsak, gradient butun ekranni qoplaydi.
+
+   Qatlamlar:
+     .mode-card::before  z=0  RGB hoshiya (karta chekkasi)
+     .mode-card::after   z=1  karta foni, inset 2.5px
+     .mode-banner        z=2  RASM, inset 2.5px -> ::after ni qoplaydi,
+                              hoshiya esa 2.5px chekkada ko'rinib turadi
+     .mode-banner-label  z=3  yozuv, rasm ustida
+*/
+.mode-card--photo {
+  padding: 0;              /* rasm ramkagacha borsin */
+  height: 132px;           /* boshqa rejim kartalari bilan bir xil bo'y */
+  min-height: 132px;
+  /* overflow: hidden — .mode-card'dan meros, O'ZGARTIRILMAYDI */
 }
-.mode-banner {
-  width: 100%;
-  max-width: 100%;
-  aspect-ratio: 3 / 1;
-  object-fit: cover;
-  border-radius: 14px;
+.mode-card--photo .mode-banner {
+  position: absolute;
+  inset: 2.5px;            /* aynan ::after kabi — hoshiya ichida */
+  z-index: 2;              /* karta foni (::after, z=1) ustida */
+  width: auto;
+  height: auto;
+  object-fit: cover;       /* kvadratni to'liq to'ldiradi */
+  border-radius: 26px;     /* ::after bilan bir xil yumaloqlik */
   display: block;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+  box-shadow: none;
+}
+/* Rasm ustidagi yozuv (Divizion / ChL) */
+.mode-banner-label {
+  position: absolute;
+  z-index: 3;
+  left: 2.5px;
+  right: 2.5px;
+  bottom: 2.5px;
+  padding: 30px 14px 14px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
+  border-radius: 0 0 26px 26px;
+  pointer-events: none;
 }
