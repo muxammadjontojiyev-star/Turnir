@@ -3677,8 +3677,11 @@ tr.is-me .div-rating-user { color: #fff; }
 */
 .mode-card--photo {
   padding: 0;              /* rasm ramkagacha borsin */
-  height: 150px;           /* rasm nisbatiga mos (324x150 ~ 2.16:1) */
-  min-height: 150px;
+  /* Balandlik rasm nisbatidan AVTOMATIK hisoblanadi (ekran kengligi qanday
+     bo'lsa ham) -> object-fit:cover hech narsani kesmaydi, rasm to'liq ko'rinadi */
+  aspect-ratio: 900 / 380;
+  height: auto;
+  min-height: 0;
   /* overflow: hidden — .mode-card'dan meros, O'ZGARTIRILMAYDI */
 }
 .mode-card--photo .mode-banner {
