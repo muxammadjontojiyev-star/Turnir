@@ -523,3 +523,32 @@ def div_my_matches(user_id: int, limit: int = 50) -> list[dict]:
         })
     conn.close()
     return out
+
+
+def div_admin_match_info(match_id: int) -> dict | None:
+    """
+    O'yin haqida qisqa ma'lumot (admin "Match ID orqali tuzatish" formasi uchun):
+    ikkala o'yinchi, joriy hisob, status, kun. Topilmasa None.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT m.id, m.day, m.score1, m.score2, m.status,
+               m.player1_id, m.player2_id,
+               u1.nickname AS player1_name, u1.username AS player1_username,
+               u2.nickname AS player2_name, u2.username AS player2_username
+        FROM div_matches m
+        JOIN users u1 ON u1.id = m.player1_id
+        LEFT JOIN users u2 ON u2.id = m.player2_id
+        WHERE m.id = ?
+        """,
+        (match_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row is None:
+        return None
+    d = dict(row)
+    d["is_bye"] = d["player2_id"] is None
+    return d

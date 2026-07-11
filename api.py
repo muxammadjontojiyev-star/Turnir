@@ -1513,6 +1513,20 @@ def div_admin_set(match_id: int, score1: int, score2: int,
     return {"status": "ok", "match_id": match_id}
 
 
+@app.get("/div/admin/match/{match_id}/info")
+def div_admin_match_info_endpoint(
+        match_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Match ID bo'yicha o'yin ma'lumoti (admin 'Match ID orqali tuzatish' formasi:
+    ID yozilganda o'yinchilar va joriy hisob ko'rinadi). Topilmasa 404.
+    """
+    from division import div_admin_match_info
+    info = div_admin_match_info(match_id)
+    if info is None:
+        raise HTTPException(status_code=404, detail="match_not_found")
+    return info
+
+
 @app.post("/div/admin/match/cancel")
 def div_admin_cancel(match_id: int,
                      admin: dict = Depends(get_authenticated_super_admin)):
