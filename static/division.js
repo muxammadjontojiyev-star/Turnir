@@ -149,43 +149,6 @@ function divAvatarHtml(userId, name, size = 52, photoUrl = null) {
     ><div style="display:none;${fbStyle}">${escHtml(initial)}</div>`;
 }
 
-// Raqib profili oynasi (rasm, ism, username + Telegramda ochish)
-function divOpenPlayerProfile(userId, name, username) {
-  if (!userId) return;
-  let modal = document.getElementById("modal-div-player");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "modal-div-player";
-    modal.className = "modal hidden";
-    document.body.appendChild(modal);
-  }
-  const tgBtn = username
-    ? `<button class="opp-chat-btn" id="div-player-tg">${ICON.get("chat", 18)} Telegramda ochish</button>`
-    : `<div class="opp-no-contact">Bu ishtirokchining telegram username'i yo'q</div>`;
-  modal.innerHTML = `
-    <div class="modal-box opp-modal-box" style="text-align:center">
-      <button class="modal-close" id="div-player-close">${ICON.get("close", 18)}</button>
-      <div style="display:flex;justify-content:center;margin:6px 0 10px">
-        ${divAvatarHtml(userId, name, 84)}
-      </div>
-      <div style="font-size:19px;font-weight:800">${escHtml(name || "Ishtirokchi")}</div>
-      ${username ? `<div style="font-size:13px;color:var(--cyan);margin-top:2px">@${escHtml(username)}</div>` : ""}
-      <div style="margin-top:14px">${tgBtn}</div>
-    </div>`;
-  modal.classList.remove("hidden");
-  if (typeof applyIcons === "function") applyIcons(modal);
-
-  const close = () => modal.classList.add("hidden");
-  document.getElementById("div-player-close").addEventListener("click", close);
-  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
-  document.getElementById("div-player-tg")?.addEventListener("click", () => {
-    const link = `https://t.me/${String(username).replace(/^@/, "")}`;
-    const tg = window.Telegram?.WebApp;
-    if (tg?.openTelegramLink) { try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); } }
-    else window.open(link, "_blank");
-  });
-}
-
 // Asosiy sahifadagi qur'a/o'yin bloki: RAQIB (bosiladi) — hisob — MEN
 function divTodayMatchCard() {
   const s = DIV.status;
@@ -600,8 +563,9 @@ async function divOpenPlayerProfile(userId) {
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.my_score} : ${h.opp_score}` : "— : —";
+    const oppLabel = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
     return `<div class="match-item"><span style="opacity:.6">${i + 1}</span>
-      <b style="flex:1">${escHtml(h.opp_name || "Raqib")}</b>
+      <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:${h.opp_username ? "var(--cyan)" : "inherit"}">${escHtml(oppLabel)}</b>
       <span style="font-weight:800;margin:0 8px">${score}</span>
       <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span></div>`;
   }).join("");
@@ -658,18 +622,16 @@ function divBindSectionEvents(root) {
   // Asosiy sahifadagi raqib tomoni bosilsa — raqib profili
   root.querySelector("#div-opp-profile-open")?.addEventListener("click", () => {
     const opp = DIV.status?.my_match?.opponent;
-    if (opp) divOpenPlayerProfile(opp.user_id, opp.nickname, opp.username);
+    if (opp) divOpenPlayerProfile(opp.user_id);
   });
 
   // O'yin tarixidagi raqib qatori bosilsa — raqib profili
   root.querySelectorAll(".div-history-opp").forEach(el =>
-    el.addEventListener("click", () => divOpenPlayerProfile(
-      Number(el.dataset.oppId), el.dataset.oppName, el.dataset.oppUsername || null)));
+    el.addEventListener("click", () => divOpenPlayerProfile(Number(el.dataset.oppId))));
 
   // Reyting qatori bosilsa — o'sha ishtirokchi profili
   root.querySelectorAll(".div-rating-row").forEach(el =>
-    el.addEventListener("click", () => divOpenPlayerProfile(
-      Number(el.dataset.uid), el.dataset.uname, el.dataset.uuser || null)));
+    el.addEventListener("click", () => divOpenPlayerProfile(Number(el.dataset.uid))));
 
   // "Sizning o'rningiz" kartasi bosilsa — jadval o'z qatorimga suriladi va yonadi
   root.querySelector("#div-myrank-card")?.addEventListener("click", () => {
