@@ -3662,15 +3662,33 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .div-row-flash { animation: div-row-flash 1.6s ease; }
 
-/* Rejim kartalaridagi banner rasm (ChL / Divizion) */
-.mode-card-row--banner { display: flex; justify-content: center; width: 100%; }
-.mode-banner {
-  width: 100%; max-width: 100%;
-  aspect-ratio: 3 / 1;
-  object-fit: cover;
-  border-radius: 14px;
+/* Rejim kartalari: rasm kartani TO'LIQ to'ldiradi (ChL / Divizion) */
+.mode-card--photo {
+  position: relative;
+  padding: 0;                 /* rasm chetigacha borsin */
+  overflow: hidden;
   display: block;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+  height: 132px;              /* boshqa rejim kartalari bilan bir xil bo'y */
+  min-height: 132px;
 }
-/* Banner ustidagi karta foni sodda bo'lsin (gradient rasmni bosmasin) */
-.mode-card--cl, .mode-card--division { padding-bottom: 14px; }
+.mode-card--photo .mode-banner {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;          /* kvadratni to'liq to'ldiradi, bo'sh joy qolmaydi */
+  border-radius: inherit;
+}
+/* Rasm ustidagi yozuv (Divizion) */
+.mode-banner-label {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 26px 14px 12px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .85);
+  background: linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,0));
+  pointer-events: none;
+}
