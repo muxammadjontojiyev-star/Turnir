@@ -3661,3 +3661,16 @@ tr.is-me .div-rating-user { color: #fff; }
   25%, 75% { background: rgba(124, 92, 255, .35); }
 }
 .div-row-flash { animation: div-row-flash 1.6s ease; }
+
+/* Rejim kartalaridagi banner rasm (ChL / Divizion) */
+.mode-card-row--banner { display: flex; justify-content: center; width: 100%; }
+.mode-banner {
+  width: 100%; max-width: 100%;
+  aspect-ratio: 3 / 1;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+}
+/* Banner ustidagi karta foni sodda bo'lsin (gradient rasmni bosmasin) */
+.mode-card--cl, .mode-card--division { padding-bottom: 14px; }

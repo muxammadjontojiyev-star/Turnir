@@ -15,6 +15,8 @@ const DIV = {
   rating: [],
   adminMatches: [],  // admin panel ro'yxati
   adminDay: null,    // null = bugun, "all" = barcha kunlar
+  adminFixId: "",    // "Match ID orqali tuzatish" formasidagi ID
+  adminFixInfo: null,// o'sha ID bo'yicha o'yin ma'lumoti | "notfound" | null
   player: null,      // ochilgan ishtirokchi profili (/div/player/{id}/profile)
   playerBackTo: "rating",  // profildan ortga qaysi bo'limga qaytamiz
 };
@@ -709,6 +711,29 @@ function divBindSectionEvents(root) {
       void divLoadAdminMatches();
     }));
 
+  // "MATCH ID ORQALI TUZATISH" formasi
+  root.querySelector("#div-fix-match-id")?.addEventListener("input", (e) =>
+    divAdminFixIdChanged(e.target.value));
+
+  root.querySelector("#div-fix-submit")?.addEventListener("click", async (e) => {
+    const info = DIV.adminFixInfo;
+    if (!info || info === "notfound") return;
+    const s1 = Number(document.getElementById("div-fix-score1").value || 0);
+    const s2 = Number(document.getElementById("div-fix-score2").value || 0);
+    e.target.disabled = true;
+    try {
+      await apiFetch(`/div/admin/match/set-result?match_id=${info.id}&score1=${s1}&score2=${s2}`,
+                     { method: "POST" });
+      showToast(`#${info.id} tuzatildi ✅`);
+      DIV.adminFixId = "";
+      DIV.adminFixInfo = null;
+      await divLoadAdminMatches();
+    } catch (err) {
+      e.target.disabled = false;
+      showToast("Xato: " + err.message);
+    }
+  });
+
   root.querySelectorAll("[data-div-admin-edit]").forEach(b =>
     b.addEventListener("click", () => divAdminEdit(Number(b.dataset.divAdminEdit))));
   root.querySelectorAll("[data-div-admin-cancel]").forEach(b =>
@@ -751,6 +776,77 @@ function divAdminStatusLabel(st) {
             confirmed: "✅ Tasdiqlangan", admin_pending: "👑 Katta hisob — admin qarori" })[st] || st;
 }
 
+// Liga uslubidagi "TASDIQLANGAN NATIJANI TUZATISH" formasi (Match ID orqali)
+function divAdminFixForm() {
+  const info = DIV.adminFixInfo;   // ID yozilganda /div/admin/match/{id}/info dan keladi
+  let preview = "";
+  if (info === "notfound") {
+    preview = `<div style="font-size:12px;color:var(--red-neon);margin:6px 0">O'yin topilmadi</div>`;
+  } else if (info) {
+    const p1 = info.player1_username ? "@" + info.player1_username : (info.player1_name || "—");
+    const p2 = info.is_bye ? "(toq — avto g'alaba)"
+      : (info.player2_username ? "@" + info.player2_username : (info.player2_name || "—"));
+    const cur = (info.score1 !== null && info.score1 !== undefined) ? `${info.score1} : ${info.score2}` : "— : —";
+    preview = `
+      <div class="card" style="margin:8px 0;padding:10px 12px;font-size:13px">
+        <div style="opacity:.65;font-size:11.5px">#${info.id} · ${escHtml(info.day)} · ${divAdminStatusLabel(info.status)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px">
+          <b style="min-width:0;overflow:hidden;text-overflow:ellipsis">${escHtml(p1)}</b>
+          <span style="font-weight:800;white-space:nowrap">${cur}</span>
+          <b style="min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:right">${escHtml(p2)}</b>
+        </div>
+      </div>`;
+  }
+  const disabled = !info || info === "notfound" || info.is_bye;
+  return `
+    <div class="section-label">MATCH ID ORQALI TUZATISH</div>
+    <div class="admin-fix-form">
+      <input id="div-fix-match-id" class="modal-input" type="number" min="1"
+             placeholder="Match ID" value="${DIV.adminFixId || ""}" />
+      ${preview}
+      <div class="score-input-row">
+        <div class="score-input-group">
+          <span class="score-input-label">P1</span>
+          <input id="div-fix-score1" class="score-input" type="number" min="0" max="99" value="${info && info !== "notfound" && info.score1 != null ? info.score1 : 0}" />
+        </div>
+        <span class="score-separator">:</span>
+        <div class="score-input-group">
+          <span class="score-input-label">P2</span>
+          <input id="div-fix-score2" class="score-input" type="number" min="0" max="99" value="${info && info !== "notfound" && info.score2 != null ? info.score2 : 0}" />
+        </div>
+      </div>
+      <button class="btn btn--primary btn--glow" id="div-fix-submit" ${disabled ? "disabled" : ""}
+              style="opacity:${disabled ? ".45" : "1"}">Tuzatish</button>
+    </div>`;
+}
+
+// Match ID yozilganda o'yin ma'lumotini yuklaydi (350ms debounce, liga naqshi)
+let _divFixTimer = null;
+function divAdminFixIdChanged(raw) {
+  clearTimeout(_divFixTimer);
+  DIV.adminFixId = raw;
+  const id = parseInt(raw, 10);
+  if (!id || id <= 0) { DIV.adminFixInfo = null; renderDivision(); divFocusFixId(); return; }
+  _divFixTimer = setTimeout(async () => {
+    try {
+      DIV.adminFixInfo = await apiFetch(`/div/admin/match/${id}/info`);
+    } catch (_) {
+      DIV.adminFixInfo = "notfound";
+    }
+    renderDivision();
+    divFocusFixId();
+  }, 350);
+}
+
+// Qayta render'dan keyin fokus ID maydonida qolsin (qoida #40)
+function divFocusFixId() {
+  const el = document.getElementById("div-fix-match-id");
+  if (el && document.activeElement !== el) {
+    el.focus();
+    const v = el.value; el.value = ""; el.value = v;  // kursor oxiriga
+  }
+}
+
 function divRenderAdmin() {
   const ms = DIV.adminMatches || [];
   if (!ms.length) {
@@ -759,14 +855,14 @@ function divRenderAdmin() {
         <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
         <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
       </div>`;
-    return f + `<div class="card">O'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
+    return divAdminFixForm() + f + `<div class="card">O'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
   }
   const filter = `
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
       <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
     </div>`;
-  return filter +
+  return divAdminFixForm() + filter +
     `<div class="card" style="font-size:12.5px;opacity:.75">✏️ natijani o'zgartirish (TASDIQLANGAN o'yinlar ham tuzatiladi), 🚫 natijani bekor qilish (o'yin qayta ochiladi), katta hisobda ✅/❌ qaror. O'yin raqami — #ID.</div>` +
     ms.map(m => {
       const p2 = m.player2_id ? escHtml(m.player2_name || "") : "<i>(toq — avto g'alaba)</i>";

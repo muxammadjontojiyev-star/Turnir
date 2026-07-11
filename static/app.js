@@ -1298,18 +1298,16 @@ function showModeSelect() {
       </div>
       <div class="mode-card mode-card--cl" id="mode-card-cl">
         <div class="mode-card-label">${escHtml(t.mode_cl || "Chempionlar ligasi")}</div>
-        <div class="mode-card-row mode-card-row--badges">
-          <span class="mode-badge mode-badge--gold">${ICON.get("star", 20)}</span>
-          <span class="mode-badge mode-badge--gold mode-badge--big">${ICON.get("trophy", 26)}</span>
-          <span class="mode-badge mode-badge--gold">${ICON.get("star", 20)}</span>
+        <div class="mode-card-row mode-card-row--banner">
+          <img class="mode-banner" src="mode-cl.jpg?v=1" alt=""
+               onerror="this.style.display='none'">
         </div>
       </div>
       <div class="mode-card mode-card--division" id="mode-card-division">
         <div class="mode-card-label">${escHtml(t.mode_division || "Divizion")}</div>
-        <div class="mode-card-row mode-card-row--badges">
-          <span class="mode-badge mode-badge--emerald">${ICON.get("shield", 20)}</span>
-          <span class="mode-badge mode-badge--emerald mode-badge--big">${ICON.get("swords", 26)}</span>
-          <span class="mode-badge mode-badge--emerald">${ICON.get("shield", 20)}</span>
+        <div class="mode-card-row mode-card-row--banner">
+          <img class="mode-banner" src="mode-division.jpg?v=1" alt=""
+               onerror="this.style.display='none'">
         </div>
       </div>
     </div>
