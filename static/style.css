@@ -3689,9 +3689,9 @@ tr.is-me .div-rating-user { color: #fff; }
   z-index: 2;              /* karta foni (::after, z=1) ustida */
   width: auto;
   height: auto;
-  /* contain: rasm QANDAY o'lchamda bo'lsa ham to'liq ko'rinadi, kesilmaydi.
-     Rasmning o'zida chetlar xira fon bilan to'ldirilgan -> bo'sh joy sezilmaydi. */
-  object-fit: contain;
+  /* Rasm nisbati kartanikiga AYNAN teng (900:380 = aspect-ratio) -> cover hech
+     narsani kesmaydi. Rasmning o'zida chetlar xira fon bilan to'ldirilgan. */
+  object-fit: cover;
   border-radius: 26px;     /* ::after bilan bir xil yumaloqlik */
   display: block;
   box-shadow: none;
