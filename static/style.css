@@ -3676,8 +3676,8 @@ tr.is-me .div-rating-user { color: #fff; }
      .mode-banner-label  z=3  yozuv, rasm ustida
 */
 .mode-card--photo {
-  padding: 0;              /* rasm ramkagacha borsin */
-  /* Balandlik rasm nisbatidan AVTOMATIK hisoblanadi -> rasm hech qachon kesilmaydi */
+  padding: 0;              /* rasm chetigacha borsin */
+  /* Balandlik rasm nisbatidan AVTOMATIK -> rasm hech qachon kesilmaydi */
   aspect-ratio: 900 / 380;
   height: auto;
   min-height: 0;
@@ -3685,17 +3685,19 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .mode-card--photo .mode-banner {
   position: absolute;
-  inset: 2.5px;            /* aynan ::after kabi — hoshiya ichida */
+  inset: 2.5px;            /* RGB hoshiya ichida (::after kabi) */
   z-index: 2;              /* karta foni (::after, z=1) ustida */
   width: auto;
   height: auto;
   /* Rasm nisbati kartanikiga AYNAN teng (900:380 = aspect-ratio) -> cover hech
      narsani kesmaydi. Rasmning o'zida chetlar xira fon bilan to'ldirilgan. */
-  object-fit: cover;
-  border-radius: 26px;     /* ::after bilan bir xil yumaloqlik */
+  /* CONTAIN: rasm hech qachon kesilmaydi va cho'zilmaydi. Rasmning o'zida
+     chetlar xira (blur) fon bilan to'ldirilgan -> bo'sh joy ko'rinmaydi. */
+  object-fit: contain;
+  border-radius: 26px;     /* ::after bilan bir xil */
   display: block;
   box-shadow: none;
-  background: #0a0e24;     /* rasm sig'masa chetlar qora — bo'sh oq joy bo'lmaydi */
+  background: #0a0e24;     /* rasm ortidagi fon */
 }
 /* Rasm ustidagi yozuv (Divizion / ChL) */
 .mode-banner-label {
