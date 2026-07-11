@@ -3662,60 +3662,20 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .div-row-flash { animation: div-row-flash 1.6s ease; }
 
-/* Rejim kartalari: rasm kartani TO'LIQ to'ldiradi (ChL / Divizion)
-   MUHIM: .mode-card'da overflow:hidden BO'LISHI SHART — u ::before (kartadan
-   200% katta aylanuvchi RGB gradient) ni karta ichida cheklaydi. Uni visible
-   qilsak, gradient butun ekranni qoplab ketadi.
-   Qatlamlar: ::before RGB hoshiya (z=0) -> ::after karta foni (z=1)
-              -> rasm (z=2) -> matn (z=3). Rasm inset:2.5px bilan hoshiya ichida. */
-.mode-card--photo {
-  padding: 0;                 /* rasm chetigacha borsin */
-  height: 132px;              /* boshqa rejim kartalari bilan bir xil bo'y */
-  min-height: 132px;
+/* Rejim kartalaridagi banner rasm (ChL / Divizion) — ISHLAGAN VARIANT.
+   Rasm karta KONTENTI sifatida (.mode-card > * qoidasi z-index:2 beradi),
+   shuning uchun RGB hoshiya (::before/::after) buzilmaydi va rasm to'liq ko'rinadi. */
+.mode-card-row--banner {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
-.mode-card--photo .mode-banner {
-  position: absolute;
-  inset: 2.5px;               /* RGB hoshiya (2.5px) ichida */
-  z-index: 2;                 /* ::after (z=1) ustida */
-  width: auto; height: auto;
-  object-fit: cover;          /* kartani to'liq to'ldiradi */
-  border-radius: 26px;        /* ::after bilan bir xil */
-  display: block;
-}
-/* Rasm ustidagi yozuv (Divizion) */
-.mode-banner-label {
-  position: absolute;
-  z-index: 3;
-  left: 2.5px; right: 2.5px; bottom: 2.5px;
-  padding: 26px 14px 12px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: .5px;
-  color: #fff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, .85);
-  background: linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,0));
-  border-radius: 0 0 26px 26px;
-  pointer-events: none;
-}
-
-/* Jahon Chempionati: hira fon rasm, bayroq va yozuv ustida */
-.mode-card--worldcup .mode-bg {
-  position: absolute;
-  inset: 2.5px;
-  z-index: 2;                 /* ::after (karta foni) ustida, matndan pastda */
-  width: auto; height: auto;
+.mode-banner {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 3 / 1;
   object-fit: cover;
-  border-radius: 26px;
-  opacity: .38;               /* hiraroq — matn va bayroqlar o'qilsin */
+  border-radius: 14px;
   display: block;
-  pointer-events: none;
-}
-.mode-card--worldcup .mode-card-label,
-.mode-card--worldcup .mode-card-row {
-  position: relative;
-  z-index: 3;                 /* rasm ustida */
-}
-.mode-card--worldcup .mode-card-label {
-  text-shadow: 0 2px 10px rgba(0, 0, 0, .9);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
 }
