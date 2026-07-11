@@ -282,19 +282,46 @@ function divRenderHome() {
 
 // ---- REYTING: umumiy achko jadvali (+15/+10/-10) ----
 function divRenderRating() {
-  const rows = (DIV.rating || []).map((p, i) => {
-    const me = DIV.ratingMeId && p.user_id === DIV.ratingMeId ? ` class="is-me"` : "";
+  const list = DIV.rating || [];
+  const meId = DIV.ratingMeId;
+  const myIndex = list.findIndex(p => p.user_id === meId);
+  const myRank = myIndex >= 0 ? myIndex + 1 : null;
+
+  // 4) "SIZNING O'RNINGIZ" qatori — bosilsa jadval o'sha qatorga suriladi
+  const myRankCard = myRank
+    ? `<div class="card div-myrank" id="div-myrank-card">
+         <div>
+           <div style="font-size:12px;opacity:.65">Sizning o'rningiz</div>
+           <div style="font-size:26px;font-weight:800" class="neon-cyan">${myRank}</div>
+         </div>
+         <div style="text-align:right">
+           <div style="font-size:12px;opacity:.65">Achko</div>
+           <div style="font-size:20px;font-weight:800">${list[myIndex].points}</div>
+         </div>
+         <div class="div-myrank-hint">Ko'rsatish ↓</div>
+       </div>`
+    : `<div class="card" style="font-size:13px;opacity:.75">Siz hali reytingda yo'qsiz — birinchi o'yiningizdan so'ng o'rningiz shu yerda ko'rinadi.</div>`;
+
+  const rows = list.map((p, i) => {
+    const isMe = meId && p.user_id === meId;
+    // 2) Ism o'rniga USERNAME (username yo'q bo'lsa — ism), bosilsa profil ochiladi
+    const label = p.username ? "@" + p.username : (p.nickname || "—");
     return `
-      <tr${me}>
+      <tr class="${isMe ? "is-me" : ""} div-rating-row" id="${isMe ? "div-my-rating-row" : ""}"
+          data-uid="${p.user_id}" data-uname="${escHtml(p.nickname || "")}"
+          data-uuser="${escHtml(p.username || "")}" style="cursor:pointer">
         <td class="rank-${i + 1}">${i + 1}</td>
-        <td>${escHtml(p.nickname || "")}</td>
+        <td class="div-rating-user">${escHtml(label)}</td>
         <td>${p.played}</td><td>${p.wins}/${p.draws}/${p.losses}</td>
         <td><b>${p.points}</b></td>
       </tr>`;
   }).join("");
+
+  // 1) Sarlavha to'liq ko'rinishi uchun alohida kartada (jadval ustida, kesilmaydi)
   return `
+    ${myRankCard}
+    <div class="card div-rating-legend">G'alaba <b>+15</b> · Durang <b>+10</b> · Mag'lubiyat <b>−10</b></div>
     <div class="card card--table">
-      <div style="font-size:12px;opacity:.7;margin-bottom:8px">G'alaba +15 · Durang +10 · Mag'lubiyat −10</div>
       <table class="rating-table">
         <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>G/D/M</th><th>Achko</th></tr></thead>
         <tbody>${rows || `<tr><td colspan="5">Hozircha natijalar yo'q</td></tr>`}</tbody>
@@ -373,6 +400,8 @@ function divRenderProfile() {
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.opp_score} : ${h.my_score}` : "— : —";
     const canOpen = !!h.opp_user_id;
+    // Ism o'rniga USERNAME (yo'q bo'lsa — ism), bosilsa raqib profili ochiladi
+    const label = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
     const dataAttrs = canOpen
       ? `class="match-item div-history-opp" style="cursor:pointer"
          data-opp-id="${h.opp_user_id}"
@@ -381,10 +410,7 @@ function divRenderProfile() {
       : `class="match-item"`;
     return `<div ${dataAttrs}>
       <span style="opacity:.6">${i + 1}</span>
-      <div style="flex:1;min-width:0">
-        <b>${escHtml(h.opp_name || "Raqib")}</b>
-        ${h.opp_username ? `<div style="font-size:11px;color:var(--cyan)">@${escHtml(h.opp_username)}</div>` : ""}
-      </div>
+      <b style="flex:1;min-width:0;color:${h.opp_username ? "var(--cyan)" : "inherit"};overflow:hidden;text-overflow:ellipsis">${escHtml(label)}</b>
       <span style="font-weight:800;margin:0 8px">${score}</span>
       <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>
     </div>`;
@@ -639,6 +665,20 @@ function divBindSectionEvents(root) {
   root.querySelectorAll(".div-history-opp").forEach(el =>
     el.addEventListener("click", () => divOpenPlayerProfile(
       Number(el.dataset.oppId), el.dataset.oppName, el.dataset.oppUsername || null)));
+
+  // Reyting qatori bosilsa — o'sha ishtirokchi profili
+  root.querySelectorAll(".div-rating-row").forEach(el =>
+    el.addEventListener("click", () => divOpenPlayerProfile(
+      Number(el.dataset.uid), el.dataset.uname, el.dataset.uuser || null)));
+
+  // "Sizning o'rningiz" kartasi bosilsa — jadval o'z qatorimga suriladi va yonadi
+  root.querySelector("#div-myrank-card")?.addEventListener("click", () => {
+    const row = document.getElementById("div-my-rating-row");
+    if (!row) return;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("div-row-flash");
+    setTimeout(() => row.classList.remove("div-row-flash"), 1600);
+  });
 
   // Raqib profili (qur'a oynasi rasm/user yoki tarixdagi raqib ustiga bosilganda)
   root.querySelectorAll("[data-div-opp-profile]").forEach(el => {

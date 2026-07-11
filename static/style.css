@@ -3637,3 +3637,27 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 #div-opp-profile-open { cursor: pointer; border-radius: 12px; padding: 6px 4px; transition: background .15s ease; }
 #div-opp-profile-open:active { background: rgba(255,255,255,.07); }
 .div-history-opp:active { background: rgba(255,255,255,.07); }
+
+/* Divizion reyting: legend, "Sizning o'rningiz" kartasi, qator yonishi */
+.div-rating-legend {
+  font-size: 12.5px; opacity: .8; text-align: center;
+  padding: 10px 12px; white-space: normal; line-height: 1.5;
+}
+.div-rating-legend b { color: var(--cyan); }
+.div-myrank {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; cursor: pointer; position: relative;
+  border-color: rgba(124, 92, 255, .5);
+}
+.div-myrank:active { background: rgba(255,255,255,.06); }
+.div-myrank-hint {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 6px; font-size: 10.5px; opacity: .55; letter-spacing: .5px;
+}
+.div-rating-user { color: var(--cyan); font-weight: 700; }
+tr.is-me .div-rating-user { color: #fff; }
+@keyframes div-row-flash {
+  0%, 100% { background: transparent; }
+  25%, 75% { background: rgba(124, 92, 255, .35); }
+}
+.div-row-flash { animation: div-row-flash 1.6s ease; }
