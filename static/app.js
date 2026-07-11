@@ -1278,23 +1278,18 @@ function showModeSelect() {
   }
   screen.classList.remove("hidden");
 
-  const leagueLogos = MODE_LEAGUE_LOGOS
-    .map(src => `<img class="mode-league-logo" src="${src}?v=20260628e" alt="" />`)
-    .join("");
-  const flags = MODE_WORLDCUP_FLAGS
-    .map(f => `<span class="mode-flag">${f}</span>`)
-    .join("");
-
   screen.innerHTML = `
     <div class="mode-select-title">${escHtml(t.mode_select_title || "REJIMNI TANLANG")}</div>
     <div class="mode-cards">
-      <div class="mode-card mode-card--leagues" id="mode-card-leagues">
-        <div class="mode-card-label">${escHtml(t.mode_leagues || "Ligalar")}</div>
-        <div class="mode-card-row">${leagueLogos}</div>
+      <div class="mode-card mode-card--leagues mode-card--photo" id="mode-card-leagues">
+        <img class="mode-banner" src="leagues-banner.jpg?v=1" alt=""
+             onerror="this.style.display='none'">
+        <div class="mode-banner-label">${escHtml(t.mode_leagues || "Ligalar")}</div>
       </div>
-      <div class="mode-card mode-card--worldcup" id="mode-card-worldcup">
-        <div class="mode-card-label">${escHtml(t.mode_worldcup || "Jahon Chempionati")}</div>
-        <div class="mode-card-row">${flags}</div>
+      <div class="mode-card mode-card--worldcup mode-card--photo" id="mode-card-worldcup">
+        <img class="mode-banner" src="worldcup-banner-card.jpg?v=1" alt=""
+             onerror="this.style.display='none'">
+        <div class="mode-banner-label">${escHtml(t.mode_worldcup || "Jahon Chempionati")}</div>
       </div>
       <div class="mode-card mode-card--cl mode-card--photo" id="mode-card-cl">
         <img class="mode-banner" src="cl-banner.jpg?v=6" alt="${escHtml(t.mode_cl || "Chempionlar ligasi")}"
