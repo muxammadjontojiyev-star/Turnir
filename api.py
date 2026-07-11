@@ -1491,10 +1491,14 @@ def div_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_us
 
 
 @app.get("/div/admin/matches")
-def div_admin_matches(admin: dict = Depends(get_authenticated_super_admin)):
-    """Bugungi barcha Divizion o'yinlari (har qanday status)."""
+def div_admin_matches(day: str | None = None,
+                      admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Divizion o'yinlari (admin). day=None -> bugungi; day='all' -> barcha kunlar
+    (oxirgi 100) — o'tgan kunlardagi tasdiqlangan natijalarni tuzatish uchun.
+    """
     from division import div_admin_list_matches
-    return {"matches": div_admin_list_matches()}
+    return {"matches": div_admin_list_matches(day), "day": day or "today"}
 
 
 @app.post("/div/admin/match/set-result")

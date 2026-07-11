@@ -355,20 +355,24 @@ def div_rating() -> list[dict]:
 # ============ ADMIN (bosh admin, Divizion tabidagi panel) ============
 
 def div_admin_list_matches(day: str | None = None) -> list[dict]:
-    """Kunlik BARCHA o'yinlar (har qanday status) — admin panel ro'yxati."""
-    day = day or _today()
+    """
+    Kunlik BARCHA o'yinlar (har qanday status) — admin panel ro'yxati.
+    day=None -> bugun. day='all' -> barcha kunlar (oxirgi 100 o'yin), shunda
+    admin o'tgan kunlardagi (jumladan TASDIQLANGAN) natijalarni ham tuzatadi.
+    """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT m.*, u1.nickname AS player1_name, u2.nickname AS player2_name
+    base = """
+        SELECT m.*, u1.nickname AS player1_name, u1.username AS player1_username,
+               u2.nickname AS player2_name, u2.username AS player2_username
         FROM div_matches m
         JOIN users u1 ON u1.id = m.player1_id
         LEFT JOIN users u2 ON u2.id = m.player2_id
-        WHERE m.day = ? ORDER BY m.id
-        """,
-        (day,),
-    )
+    """
+    if day == "all":
+        cursor.execute(base + " ORDER BY m.day DESC, m.id DESC LIMIT 100")
+    else:
+        cursor.execute(base + " WHERE m.day = ? ORDER BY m.id", (day or _today(),))
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return rows
@@ -488,7 +492,8 @@ def div_my_matches(user_id: int, limit: int = 50) -> list[dict]:
     cursor.execute(
         """
         SELECT m.id, m.day, m.player1_id, m.player2_id, m.score1, m.score2, m.status,
-               u1.nickname AS p1_name, u2.nickname AS p2_name
+               u1.nickname AS p1_name, u1.username AS p1_username,
+               u2.nickname AS p2_name, u2.username AS p2_username
         FROM div_matches m
         JOIN users u1 ON u1.id = m.player1_id
         LEFT JOIN users u2 ON u2.id = m.player2_id
@@ -504,14 +509,16 @@ def div_my_matches(user_id: int, limit: int = 50) -> list[dict]:
         is_bye = d["player2_id"] is None
         if d["player1_id"] == user_id:
             my, opp = d["score1"], d["score2"]
-            opp_name = d["p2_name"]
+            opp_name, opp_username, opp_uid = d["p2_name"], d["p2_username"], d["player2_id"]
         else:
             my, opp = d["score2"], d["score1"]
-            opp_name = d["p1_name"]
+            opp_name, opp_username, opp_uid = d["p1_name"], d["p1_username"], d["player1_id"]
         out.append({
             "id": d["id"], "day": d["day"], "is_bye": is_bye,
             "my_score": my, "opp_score": opp,
             "opp_name": opp_name if not is_bye else None,
+            "opp_username": opp_username if not is_bye else None,
+            "opp_user_id": opp_uid if not is_bye else None,
             "status": d["status"],
         })
     conn.close()
