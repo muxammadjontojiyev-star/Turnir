@@ -3663,28 +3663,29 @@ tr.is-me .div-rating-user { color: #fff; }
 .div-row-flash { animation: div-row-flash 1.6s ease; }
 
 /* Rejim kartalari: rasm kartani TO'LIQ to'ldiradi (ChL / Divizion)
-   MUHIM: RGB hoshiya .mode-card::before/::after orqali chiziladi, shuning uchun
-   rasm ::after (inset 2.5px) ICHIDA turishi va hoshiyani bosmasligi kerak. */
+   MUHIM: .mode-card'da overflow:hidden BO'LISHI SHART — u ::before (kartadan
+   200% katta aylanuvchi RGB gradient) ni karta ichida cheklaydi. Uni visible
+   qilsak, gradient butun ekranni qoplab ketadi.
+   Qatlamlar: ::before RGB hoshiya (z=0) -> ::after karta foni (z=1)
+              -> rasm (z=2) -> matn (z=3). Rasm inset:2.5px bilan hoshiya ichida. */
 .mode-card--photo {
-  position: relative;
   padding: 0;                 /* rasm chetigacha borsin */
   height: 132px;              /* boshqa rejim kartalari bilan bir xil bo'y */
   min-height: 132px;
-  overflow: visible;          /* ::before (RGB hoshiya) kesilmasin! */
 }
 .mode-card--photo .mode-banner {
   position: absolute;
-  inset: 2.5px;               /* hoshiya ichida — ::after bilan bir xil */
-  z-index: 2;                 /* fon (::after, z=1) ustida */
+  inset: 2.5px;               /* RGB hoshiya (2.5px) ichida */
+  z-index: 2;                 /* ::after (z=1) ustida */
   width: auto; height: auto;
   object-fit: cover;          /* kartani to'liq to'ldiradi */
-  border-radius: 26px;        /* ::after bilan bir xil yumaloqlik */
+  border-radius: 26px;        /* ::after bilan bir xil */
   display: block;
 }
 /* Rasm ustidagi yozuv (Divizion) */
 .mode-banner-label {
   position: absolute;
-  z-index: 3;                 /* rasm ustida */
+  z-index: 3;
   left: 2.5px; right: 2.5px; bottom: 2.5px;
   padding: 26px 14px 12px;
   text-align: center;
@@ -3698,15 +3699,11 @@ tr.is-me .div-rating-user { color: #fff; }
   pointer-events: none;
 }
 
-/* Jahon Chempionati kartasi: fon rasm (hiralashtirilgan), bayroq+yozuv ustida */
-.mode-card--worldcup {
-  position: relative;
-  overflow: visible;          /* RGB hoshiya kesilmasin */
-}
+/* Jahon Chempionati: hira fon rasm, bayroq va yozuv ustida */
 .mode-card--worldcup .mode-bg {
   position: absolute;
   inset: 2.5px;
-  z-index: 2;                 /* ::after (z=1, karta foni) USTIDA, matndan pastda */
+  z-index: 2;                 /* ::after (karta foni) ustida, matndan pastda */
   width: auto; height: auto;
   object-fit: cover;
   border-radius: 26px;
@@ -3714,11 +3711,10 @@ tr.is-me .div-rating-user { color: #fff; }
   display: block;
   pointer-events: none;
 }
-/* WC kartasidagi matn va bayroqlar rasm ustida */
 .mode-card--worldcup .mode-card-label,
 .mode-card--worldcup .mode-card-row {
   position: relative;
-  z-index: 3;
+  z-index: 3;                 /* rasm ustida */
 }
 .mode-card--worldcup .mode-card-label {
   text-shadow: 0 2px 10px rgba(0, 0, 0, .9);
