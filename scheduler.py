@@ -47,6 +47,33 @@ async def _check_and_notify_once() -> None:
     Bir martalik tekshiruv: yangi tur ochilgan ligalarga xabar yuboradi.
     Xato bo'lsa jim yutiladi (bitta liga qolganlarini to'xtatmasligi kerak).
     """
+    # === 1) AVTOMATIK TASDIQLASH — BARCHA qur'a o'tkazilgan ligalar uchun ===
+    # MUHIM: bu blok xabar yuborishdan MUSTAQIL. Ilgari auto_resolve faqat
+    # "yangi tur ochilgan" ligalar tsikli ichida chaqirilardi; oxirgi tur (38)
+    # ochilib bo'lgach yangi tur ochilmaydi -> liga ro'yxatga tushmaydi ->
+    # deadline o'tgan o'yinlar hech qachon avtomatik tasdiqlanmasdi.
+    try:
+        from queries_matchdays import get_all_drawn_leagues
+        for lg in get_all_drawn_leagues():
+            league_id = lg["league_id"]
+            try:
+                up_to = get_deadline_passed_matchday(league_id)
+                if up_to >= 1:
+                    resolved = auto_resolve_matches(league_id, up_to)
+                    if resolved["pending_resolved"] or resolved["awaiting_resolved"]:
+                        logger.info(
+                            "Scheduler: '%s' ligasida avtomatik tasdiq — "
+                            "pending(0:0): %d, awaiting: %d (tur %d gacha).",
+                            lg["name"], resolved["pending_resolved"],
+                            resolved["awaiting_resolved"], up_to,
+                        )
+            except Exception as exc:
+                logger.warning("Scheduler: '%s' avtomatik tasdiqda xato: %s",
+                               lg["name"], exc)
+    except Exception as exc:
+        logger.warning("Scheduler: avtomatik tasdiqlash blokida xato: %s", exc)
+
+    # === 2) YANGI TUR OCHILDI XABARI ===
     try:
         leagues = get_leagues_needing_matchday_notice()
     except Exception as exc:
@@ -57,18 +84,6 @@ async def _check_and_notify_once() -> None:
         league_id = lg["league_id"]
         open_md = lg["open_matchday"]
         try:
-            # Yangi turlar ochildi. Faqat DEADLINE (01:00) o'tgan turlarni avtomatik
-            # tasdiqlaymiz — bugun ochilgan turlarning deadline'i hali o'tmagan, tegmaymiz.
-            up_to = get_deadline_passed_matchday(league_id)
-            if up_to >= 1:
-                resolved = auto_resolve_matches(league_id, up_to)
-                if resolved["pending_resolved"] or resolved["awaiting_resolved"]:
-                    logger.info(
-                        "Scheduler: '%s' ligasida avtomatik tasdiq — pending(0:0): %d, awaiting: %d (tur %d gacha).",
-                        lg["name"], resolved["pending_resolved"],
-                        resolved["awaiting_resolved"], up_to,
-                    )
-
             members = get_league_members_for_notify(league_id)
             await notify_members(members, "notify_matchday_open", matchday=open_md)
             # Xabar yuborilgach belgilaymiz — takror yuborilmasligi uchun

@@ -261,3 +261,26 @@ def get_leagues_needing_matchday_notice() -> list[dict]:
                 "open_matchday": open_md,
             })
     return result
+
+
+def get_all_drawn_leagues() -> list[dict]:
+    """
+    Qur'a o'tkazilgan (draw_date bor) BARCHA ligalar.
+
+    get_leagues_needing_matchday_notice()'dan farqi: u faqat YANGI TUR OCHILGAN
+    ligalarni qaytaradi. Oxirgi tur (38) ochilib bo'lgach yangi tur ochilmaydi,
+    shuning uchun u liga ro'yxatdan chiqib ketadi va deadline o'tgan o'yinlar
+    hech qachon avtomatik tasdiqlanmay qoladi (aynan shu xato bo'lgan edi).
+
+    Avtomatik tasdiqlash (auto_resolve_matches) shu ro'yxat bo'yicha, xabar
+    yuborishdan MUSTAQIL ravishda bajariladi.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id AS league_id, name FROM leagues "
+        "WHERE draw_date IS NOT NULL ORDER BY id"
+    )
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows

@@ -44,7 +44,7 @@ repo/
 ├── api.py                      ✅ yaratilgan — FastAPI backend (1- va 2-bosqich: 9 ta endpoint) (+ mustahkamlik: hmac.compare_digest, initData 24h replay himoyasi, global exception handler, CORS faqat WEBAPP_URL origin (fallback: *), validate_scores umumiy tekshiruv (score_negative/score_too_big), user rate-limit 40 so'rov/10s)
 ├── notify.py                   ✅ yaratilgan — bot orqali inline (push) xabar yuborish (httpx → Telegram sendMessage)
 ├── membership.py               ✅ yaratilgan — majburiy kanal a'zoligini tekshirish (getChatMember; bot+API uchun umumiy)
-├── scheduler.py                ✅ yaratilgan — har kuni 01:00 (Toshkent) da yangi tur ochilishi xabarini yuboradi (alohida thread, botdan mustaqil)
+├── scheduler.py                ✅ yaratilgan — har kuni 01:00 (Toshkent) da yangi tur ochilishi xabarini yuboradi (alohida thread, botdan mustaqil) [TUZATILDI 2026-07-11: avtomatik tasdiqlash (auto_resolve_matches) endi YANGI TUR OCHILISHIDAN MUSTAQIL — _check_and_notify_once boshida get_all_drawn_leagues() bo'yicha barcha ligalar uchun ishlaydi. Ilgari u faqat get_leagues_needing_matchday_notice() tsikli ichida edi: oxirgi tur (38) ochilgach yangi tur ochilmagani uchun liga ro'yxatga tushmay qolar va 23:30 deadline'dan keyin o'yinlar 'awaiting_confirmation'da muzlab qolardi]
 ├── wc_data.py                  ✅ yaratilgan — World Cup 48 jamoa/12 guruh statik ma'lumoti (backend; static/worldcup.js bilan mos)
 ├── wc_schedule.py              ✅ yaratilgan — World Cup guruh round-robin (4 jamoa → 3 tur × 2 o'yin = 6); guruh to'lganda avtomatik
 ├── wc_rating.py                ✅ yaratilgan — World Cup guruh reyting hisoblash (liga rating.py mantig'i, wc_matches bo'yicha)
