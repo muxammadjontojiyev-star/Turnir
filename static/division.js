@@ -19,6 +19,8 @@ const DIV = {
   adminFixInfo: null,// o'sha ID bo'yicha o'yin ma'lumoti | "notfound" | null
   player: null,      // ochilgan ishtirokchi profili (/div/player/{id}/profile)
   playerBackTo: "rating",  // profildan ortga qaysi bo'limga qaytamiz
+  calendar: null,    // /div/calendar javobi {month, today, days[]}
+  calMonth: null,    // ko'rilayotgan oy "YYYY-MM" (null = joriy)
 };
 
 // ---- Kirish nuqtasi ----
@@ -50,6 +52,7 @@ function divNavigate(section) {
   renderDivision();
   if (section === "rating") void divLoadRating();
   if (section === "home" || section === "profile") void divLoadStatus();
+  if (section === "profile") void divLoadCalendar(DIV.calMonth);   // ro'yxat kalendari
   if (section === "admin") void divLoadAdminMatches();
 }
 
@@ -304,6 +307,75 @@ function divStatusLabelShort(st) {
             admin_pending: "ADMIN TASDIG'I", confirmed: "TASDIQLANDI" })[st] || st;
 }
 
+// ---- RO'YXAT KALENDARI (profil) ----
+async function divLoadCalendar(month) {
+  const q = month ? `?month=${encodeURIComponent(month)}` : "";
+  try {
+    DIV.calendar = await apiFetch(`/div/calendar${q}`);
+    DIV.calMonth = DIV.calendar.month;
+  } catch (e) {
+    DIV.calendar = null;
+    showToast("Kalendar yuklanmadi: " + e.message);
+  }
+  renderDivision();
+}
+
+// "YYYY-MM" ga n oy qo'shadi (n manfiy bo'lishi mumkin)
+function divShiftMonth(ym, n) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+const DIV_MONTH_NAMES = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+  "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
+
+function divRenderCalendar() {
+  const cal = DIV.calendar;
+  if (!cal) {
+    return `<div class="section-label">RO'YXAT KALENDARI</div>
+      <div class="card" style="opacity:.7;font-size:13px">Yuklanmoqda…</div>`;
+  }
+
+  const [year, month] = cal.month.split("-").map(Number);
+  const marked = new Set(cal.days || []);       // ro'yxatdan o'tilgan kunlar
+  const today = cal.today;
+
+  // Oyning birinchi kuni qaysi hafta kuniga to'g'ri keladi (Dushanba = 0)
+  const first = new Date(year, month - 1, 1);
+  const offset = (first.getDay() + 6) % 7;      // JS: Yak=0 -> Dush=0 ga o'tkazamiz
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const wd = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"]
+    .map(d => `<div class="div-cal-wd">${d}</div>`).join("");
+
+  let cells = "";
+  for (let i = 0; i < offset; i++) cells += `<div class="div-cal-cell div-cal-cell--empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = `${cal.month}-${String(d).padStart(2, "0")}`;
+    const cls = ["div-cal-cell"];
+    if (marked.has(iso)) cls.push("div-cal-cell--on");   // yashil = ro'yxatdan o'tgan
+    if (iso === today) cls.push("div-cal-cell--today");
+    cells += `<div class="${cls.join(" ")}">${d}</div>`;
+  }
+
+  const count = (cal.days || []).length;
+  return `
+    <div class="section-label">RO'YXAT KALENDARI</div>
+    <div class="card div-cal-card">
+      <div class="div-cal-head">
+        <button class="div-cal-nav" data-div-cal="prev">‹</button>
+        <div class="div-cal-title">${DIV_MONTH_NAMES[month - 1]} ${year}</div>
+        <button class="div-cal-nav" data-div-cal="next">›</button>
+      </div>
+      <div class="div-cal-grid">${wd}${cells}</div>
+      <div class="div-cal-legend">
+        <span class="div-cal-dot div-cal-dot--on"></span> Ro'yxatdan o'tilgan kun
+        <b style="margin-left:auto">${count} kun</b>
+      </div>
+    </div>`;
+}
+
 function divRenderProfile() {
   const s = DIV.status;
   if (!s) return `<div class="card">Ma'lumot yuklanmadi.</div>`;
@@ -389,7 +461,7 @@ function divRenderProfile() {
     ${hist.length ? `<div class="card">${histRows}</div>`
                   : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}`;
 
-  return meCard + statsGrid + historyBlock;
+  return meCard + statsGrid + divRenderCalendar() + historyBlock;
 }
 
 // Liga uslubidagi raqib VS-oynasi: "Chatni ochish" (webapp chat) + "Raqib chatiga yozish" (t.me)
@@ -642,6 +714,15 @@ function divBindSectionEvents(root) {
         ? "Ro'yxat vaqti tugagan (17:00–19:00)" : "Xato: " + err.message);
     }
   });
+
+  // Kalendar: oldingi/keyingi oy
+  root.querySelectorAll("[data-div-cal]").forEach(b =>
+    b.addEventListener("click", () => {
+      const cur = DIV.calendar?.month;
+      if (!cur) return;
+      const n = (b.dataset.divCal === "prev") ? -1 : 1;
+      void divLoadCalendar(divShiftMonth(cur, n));
+    }));
 
   // Ishtirokchi profili sahifasi: ortga va Telegramda ochish
   root.querySelector("#div-player-back")?.addEventListener("click", () => {

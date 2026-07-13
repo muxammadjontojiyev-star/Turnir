@@ -3729,3 +3729,57 @@ tr.is-me .div-rating-user { color: #fff; }
   letter-spacing: .5px;
   color: var(--cyan);
 }
+
+/* ===== Divizion: RO'YXAT KALENDARI (profil) ===== */
+.div-cal-card { padding: 12px 14px 14px; }
+.div-cal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.div-cal-title { font-size: 14px; font-weight: 800; letter-spacing: .5px; }
+.div-cal-nav {
+  width: 30px; height: 30px; border-radius: 9px; cursor: pointer;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);
+  color: var(--text-primary); font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.div-cal-nav:active { background: rgba(255,255,255,.12); }
+.div-cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+}
+.div-cal-wd {
+  text-align: center; font-size: 10.5px; opacity: .55;
+  letter-spacing: .5px; padding-bottom: 2px;
+}
+.div-cal-cell {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 9px;
+  font-size: 12.5px; font-weight: 600;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.06);
+  color: var(--text-secondary);
+}
+.div-cal-cell--empty { background: transparent; border: none; }
+/* Ro'yxatdan o'tilgan kun — YASHIL */
+.div-cal-cell--on {
+  background: rgba(49, 208, 170, .22);
+  border-color: rgba(49, 208, 170, .65);
+  color: #7ef7d6;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(49, 208, 170, .18);
+}
+/* Bugungi kun — nuqta bilan belgilanadi */
+.div-cal-cell--today { outline: 1px solid rgba(124, 92, 255, .8); outline-offset: 1px; }
+.div-cal-legend {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 10px; font-size: 11.5px; opacity: .75;
+}
+.div-cal-dot {
+  width: 10px; height: 10px; border-radius: 3px; display: inline-block;
+}
+.div-cal-dot--on {
+  background: rgba(49, 208, 170, .3);
+  border: 1px solid rgba(49, 208, 170, .7);
+}
