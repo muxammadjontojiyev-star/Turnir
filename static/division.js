@@ -21,6 +21,8 @@ const DIV = {
   playerBackTo: "rating",  // profildan ortga qaysi bo'limga qaytamiz
   calendar: null,    // /div/calendar javobi {month, today, days[]}
   calMonth: null,    // ko'rilayotgan oy "YYYY-MM" (null = joriy)
+  ratingTab: "points",  // "points" (achko) | "scorers" (to'p urarlar)
+  scorers: [],
 };
 
 // ---- Kirish nuqtasi ----
@@ -50,7 +52,10 @@ function exitDivision() {
 function divNavigate(section) {
   DIV.section = section;
   renderDivision();
-  if (section === "rating") void divLoadRating();
+  if (section === "rating") {
+    if (DIV.ratingTab === "scorers") void divLoadScorers();
+    else void divLoadRating();
+  }
   if (section === "home" || section === "profile") void divLoadStatus();
   if (section === "profile") void divLoadCalendar(DIV.calMonth);   // ro'yxat kalendari
   if (section === "admin") void divLoadAdminMatches();
@@ -60,6 +65,15 @@ async function divLoadStatus() {
   try {
     DIV.status = await apiFetch("/div/status");
   } catch (_) { DIV.status = null; }
+  renderDivision();
+}
+
+async function divLoadScorers() {
+  try {
+    const d = await apiFetch("/div/scorers");
+    DIV.scorers = d.scorers || [];
+    DIV.ratingMeId = d.me_id;
+  } catch (_) { DIV.scorers = []; }
   renderDivision();
 }
 
@@ -289,14 +303,75 @@ function divRenderRating() {
       </tr>`;
   }).join("");
 
+  // Tab tanlash: Achko reytingi | To'p urarlar
+  const tabs = `
+    <div class="div-rating-tabs">
+      <button class="tab-btn ${DIV.ratingTab !== "scorers" ? "active" : ""}" data-div-rtab="points">🏆 Reyting</button>
+      <button class="tab-btn ${DIV.ratingTab === "scorers" ? "active" : ""}" data-div-rtab="scorers">⚽ To'p urarlar</button>
+    </div>`;
+
+  if (DIV.ratingTab === "scorers") return tabs + divRenderScorers();
+
   // 1) Sarlavha to'liq ko'rinishi uchun alohida kartada (jadval ustida, kesilmaydi)
   return `
+    ${tabs}
     ${myRankCard}
     <div class="card div-rating-legend">G'alaba <b>+15</b> · Durang <b>+10</b> · Mag'lubiyat <b>−10</b></div>
     <div class="card card--table">
       <table class="rating-table">
         <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>G/D/M</th><th>Achko</th></tr></thead>
         <tbody>${rows || `<tr><td colspan="5">Hozircha natijalar yo'q</td></tr>`}</tbody>
+      </table>
+    </div>`;
+}
+
+// To'p urarlar: eng ko'p gol urganlar (o'z hisobidagi gollar yig'indisi)
+function divRenderScorers() {
+  const list = DIV.scorers || [];
+  const meId = DIV.ratingMeId;
+
+  if (!list.length) {
+    return `<div class="card" style="opacity:.75;font-size:13px">Hozircha gol urilmagan.</div>`;
+  }
+
+  const rows = list.map((p, i) => {
+    const isMe = meId && p.user_id === meId;
+    const label = p.username ? "@" + p.username : (p.nickname || "—");
+    const gd = p.goal_diff > 0 ? `+${p.goal_diff}` : `${p.goal_diff}`;
+    return `
+      <tr class="${isMe ? "is-me" : ""} div-rating-row" data-uid="${p.user_id}" style="cursor:pointer">
+        <td class="rank-${i + 1}">${i + 1}</td>
+        <td class="div-rating-user">${escHtml(label)}</td>
+        <td>${p.played}</td>
+        <td><b class="neon-cyan">${p.goals_for}</b></td>
+        <td>${p.goals_against}</td>
+        <td>${gd}</td>
+      </tr>`;
+  }).join("");
+
+  // Mening o'rnim (to'p urarlar bo'yicha)
+  const myIdx = list.findIndex(p => p.user_id === meId);
+  const myCard = myIdx >= 0
+    ? `<div class="card div-myrank" id="div-myscorer-card">
+         <div>
+           <div style="font-size:12px;opacity:.65">Sizning o'rningiz</div>
+           <div style="font-size:26px;font-weight:800" class="neon-cyan">${myIdx + 1}</div>
+         </div>
+         <div style="text-align:right">
+           <div style="font-size:12px;opacity:.65">Gollar</div>
+           <div style="font-size:20px;font-weight:800">${list[myIdx].goals_for}</div>
+         </div>
+         <div class="div-myrank-hint">Ko'rsatish ↓</div>
+       </div>`
+    : "";
+
+  return `
+    ${myCard}
+    <div class="card div-rating-legend">⚽ <b>G</b> — urgan gollar · <b>O'G</b> — o'tkazgan · <b>Farq</b> — gol farqi</div>
+    <div class="card card--table">
+      <table class="rating-table">
+        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>G</th><th>O'G</th><th>Farq</th></tr></thead>
+        <tbody>${rows}</tbody>
       </table>
     </div>`;
 }
@@ -395,13 +470,24 @@ function divRenderProfile() {
            align-items:center;justify-content:center;font-size:24px;font-weight:800;
            background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(myInitial)}</div>`;
 
+  // Umumiy ball: 1500 (boshlang'ich) + o'yin achkolari (+15/+10/-10)
+  const rating = (st.rating !== undefined && st.rating !== null) ? st.rating : 1500;
+  const delta = st.points || 0;
+  const deltaTxt = delta > 0 ? `+${delta}` : `${delta}`;
+  const deltaCls = delta > 0 ? "neon-cyan" : (delta < 0 ? "neon-red" : "");
+
   const meCard = `
     <div class="card">
       <div style="display:flex;align-items:center;gap:12px">
         ${myPhoto}
-        <div style="min-width:0">
-          <div style="font-size:18px;font-weight:800">${escHtml(s.me_nickname || "—")}</div>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:18px;font-weight:800;overflow:hidden;text-overflow:ellipsis">${escHtml(s.me_nickname || "—")}</div>
           ${s.me_username ? `<div style="font-size:12.5px;opacity:.7">@${escHtml(s.me_username)}</div>` : ""}
+        </div>
+        <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
+          <div class="div-ball-value">${rating}</div>
+          <div class="div-ball-label">BALL</div>
+          <div class="div-ball-delta ${deltaCls}">${deltaTxt}</div>
         </div>
       </div>
     </div>`;
@@ -713,6 +799,24 @@ function divBindSectionEvents(root) {
       showToast(err.message === "window_closed"
         ? "Ro'yxat vaqti tugagan (17:00–19:00)" : "Xato: " + err.message);
     }
+  });
+
+  // Reyting tabi: Achko | To'p urarlar
+  root.querySelectorAll("[data-div-rtab]").forEach(b =>
+    b.addEventListener("click", () => {
+      DIV.ratingTab = b.dataset.divRtab;
+      renderDivision();
+      if (DIV.ratingTab === "scorers") void divLoadScorers();
+      else void divLoadRating();
+    }));
+
+  // To'p urarlar: "Sizning o'rningiz" -> qatorga scroll
+  root.querySelector("#div-myscorer-card")?.addEventListener("click", () => {
+    const row = root.querySelector("tr.is-me");
+    if (!row) return;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("div-row-flash");
+    setTimeout(() => row.classList.remove("div-row-flash"), 1600);
   });
 
   // Kalendar: oldingi/keyingi oy

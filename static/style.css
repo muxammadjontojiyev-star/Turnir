@@ -3783,3 +3783,18 @@ tr.is-me .div-rating-user { color: #fff; }
   background: rgba(49, 208, 170, .3);
   border: 1px solid rgba(49, 208, 170, .7);
 }
+
+/* ===== Divizion: profil umumiy balli (1500 + achkolar) ===== */
+.div-ball {
+  flex: none; text-align: center; min-width: 72px;
+  padding: 8px 10px; border-radius: 14px;
+  background: rgba(124, 92, 255, .12);
+  border: 1px solid rgba(124, 92, 255, .35);
+}
+.div-ball-value { font-size: 20px; font-weight: 800; line-height: 1.1; }
+.div-ball-label { font-size: 9.5px; opacity: .6; letter-spacing: 1px; }
+.div-ball-delta { font-size: 11.5px; font-weight: 700; margin-top: 2px; }
+
+/* Divizion reyting tablari (Reyting | To'p urarlar) */
+.div-rating-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.div-rating-tabs .tab-btn { flex: 1; }
