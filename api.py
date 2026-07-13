@@ -964,27 +964,42 @@ def wc_admin_match_info(
     Jamoa nomi WC ro'yxatidan (wc_registrations) olinadi.
     """
     is_playoff = 1 if is_playoff else 0
-    table = "wc_playoff_matches" if is_playoff else "wc_matches"
 
     # Jamoa nomlari bracket bilan BIR XIL usulda — wc_registrations JOIN
     # (guruh ham, play-off ham; registration o'chirilgan chekka holatda NULL).
-    conn = queries.get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            f"""
-            SELECT p.id, p.player1_id, p.player2_id, p.score1, p.score2, p.status,
-                   r1.team_name AS team1, r2.team_name AS team2
-            FROM {table} p
-            LEFT JOIN wc_registrations r1 ON r1.user_id = p.player1_id
-            LEFT JOIN wc_registrations r2 ON r2.user_id = p.player2_id
-            WHERE p.id = ?
-            """,
-            (match_id,),
-        )
-        row = cursor.fetchone()
-    finally:
-        conn.close()
+    #
+    # MUHIM (2026-07-13): admin checkbox'ni noto'g'ri qo'ysa (guruh o'yiniga
+    # "Play-off" belgilansa yoki aksincha) ilgari 404 qaytar edi va formada
+    # bayroq o'rniga "?" chiqardi. Endi tanlangan jadvalda topilmasa IKKINCHI
+    # jadval ham tekshiriladi va javobda haqiqiy is_playoff qaytariladi —
+    # bayroqlar baribir ko'rinadi.
+    def _fetch(table: str):
+        conn = queries.get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                f"""
+                SELECT p.id, p.player1_id, p.player2_id, p.score1, p.score2, p.status,
+                       r1.team_name AS team1, r2.team_name AS team2
+                FROM {table} p
+                LEFT JOIN wc_registrations r1 ON r1.user_id = p.player1_id
+                LEFT JOIN wc_registrations r2 ON r2.user_id = p.player2_id
+                WHERE p.id = ?
+                """,
+                (match_id,),
+            )
+            return cursor.fetchone()
+        finally:
+            conn.close()
+
+    primary = "wc_playoff_matches" if is_playoff else "wc_matches"
+    fallback = "wc_matches" if is_playoff else "wc_playoff_matches"
+
+    row = _fetch(primary)
+    if row is None:
+        row = _fetch(fallback)
+        if row is not None:
+            is_playoff = 0 if is_playoff else 1   # aslida boshqa turdagi o'yin ekan
 
     if row is None:
         raise HTTPException(status_code=404, detail="match_not_found")
