@@ -1403,6 +1403,13 @@ def div_rating_endpoint(user: dict = Depends(get_authenticated_user)):
     return {"rating": div_rating(), "me_id": user["id"]}
 
 
+@app.get("/div/scorers")
+def div_scorers_endpoint(user: dict = Depends(get_authenticated_user)):
+    """Divizion 'To'p urarlar' tabi: eng ko'p gol urgan ishtirokchilar."""
+    from division import div_scorers
+    return {"scorers": div_scorers(), "me_id": user["id"]}
+
+
 @app.get("/div/calendar")
 def div_calendar(month: str | None = None,
                  user: dict = Depends(get_authenticated_user)):

@@ -22,7 +22,7 @@ from models import get_connection
 from config import (
     DIV_REG_START_HOUR, DIV_REG_END_HOUR,
     DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE,
-    DIV_POINTS_WIN, DIV_POINTS_DRAW, DIV_POINTS_LOSS,
+    DIV_POINTS_WIN, DIV_POINTS_DRAW, DIV_POINTS_LOSS, DIV_START_RATING,
 )
 from queries_leagues import _tournament_now
 from queries_matches import _result_status_for
@@ -308,7 +308,9 @@ def div_rating() -> list[dict]:
     def ensure(uid):
         if uid not in points:
             points[uid] = {"user_id": uid, "points": 0, "played": 0,
-                           "wins": 0, "draws": 0, "losses": 0}
+                           "wins": 0, "draws": 0, "losses": 0,
+                           # To'p urarlar tabi uchun: urgan/o'tkazgan gollar
+                           "goals_for": 0, "goals_against": 0}
         return points[uid]
 
     for m in matches:
@@ -322,6 +324,9 @@ def div_rating() -> list[dict]:
         b = ensure(p2)
         s1, s2 = m["score1"] or 0, m["score2"] or 0
         a["played"] += 1; b["played"] += 1
+        # Gol statistikasi (to'p urarlar): har kim o'z hisobidagi gollarni oladi
+        a["goals_for"] += s1; a["goals_against"] += s2
+        b["goals_for"] += s2; b["goals_against"] += s1
         if s1 > s2:
             a["points"] += DIV_POINTS_WIN; a["wins"] += 1
             b["points"] += DIV_POINTS_LOSS; b["losses"] += 1
@@ -348,8 +353,29 @@ def div_rating() -> list[dict]:
     conn.close()
 
     table = list(points.values())
+    for p in table:
+        # Umumiy ball: hamma DIV_START_RATING (1500) dan boshlaydi, o'yin achkolari
+        # (+15/+10/-10) shunga qo'shiladi/ayriladi (profilda ko'rsatiladi).
+        p["rating"] = DIV_START_RATING + p["points"]
+        p["goal_diff"] = p["goals_for"] - p["goals_against"]
     table.sort(key=lambda p: p["points"], reverse=True)
     return table
+
+
+def div_scorers() -> list[dict]:
+    """
+    "To'p urarlar" tabi: eng ko'p gol urgan ishtirokchilar.
+
+    Gol = confirmed o'yinlarda ishtirokchining O'Z hisobidagi gollar yig'indisi
+    (masalan 3:0 va 1:2 o'ynasa -> 3+1 = 4 gol). Manba div_rating() bilan bir xil
+    (DRY, qoida #26) — bir xil o'yinlardan hisoblanadi.
+
+    Saralash: gollar (ko'p) -> gol farqi -> o'yin soni (kam) -> achko.
+    """
+    rows = [p for p in div_rating() if p["goals_for"] > 0 or p["played"] > 0]
+    rows.sort(key=lambda p: (-p["goals_for"], -p["goal_diff"],
+                             p["played"], -p["points"]))
+    return rows
 
 
 # ============ ADMIN (bosh admin, Divizion tabidagi panel) ============
@@ -476,9 +502,15 @@ def div_my_stats(user_id: int) -> dict:
             total = w + d + l
             win_rate = round(w / total * 100) if total else 0
             return {"wins": w, "draws": d, "losses": l, "played": row["played"],
-                    "win_rate": win_rate, "points": row["points"]}
+                    "win_rate": win_rate, "points": row["points"],
+                    # Umumiy ball = 1500 + achkolar (profilda ism yonida)
+                    "rating": row["rating"],
+                    "goals_for": row["goals_for"],
+                    "goals_against": row["goals_against"]}
+    # Hali o'ynamagan: boshlang'ich ball
     return {"wins": 0, "draws": 0, "losses": 0, "played": 0,
-            "win_rate": 0, "points": 0}
+            "win_rate": 0, "points": 0, "rating": DIV_START_RATING,
+            "goals_for": 0, "goals_against": 0}
 
 
 def div_my_matches(user_id: int, limit: int = 50) -> list[dict]:

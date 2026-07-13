@@ -131,3 +131,5 @@ DIV_DEADLINE_MINUTE = 30
 DIV_POINTS_WIN = 15          # G'alaba achkosi
 DIV_POINTS_DRAW = 10         # Durang achkosi
 DIV_POINTS_LOSS = -10        # Mag'lubiyat achkosi
+DIV_START_RATING = 1500      # Har bir ishtirokchining boshlang'ich umumiy balli
+                             # (o'yin achkolari shunga qo'shiladi/ayriladi)
