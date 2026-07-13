@@ -965,6 +965,12 @@ def wc_admin_match_info(
     """
     is_playoff = 1 if is_playoff else 0
 
+    # MUHIM: `queries` moduli api.py da global import qilinmagan (faqat `from
+    # queries import (...)` bilan ayrim funksiyalar olingan). Shuning uchun
+    # bu yerda LOKAL import shart — aks holda `queries.get_connection()`
+    # NameError beradi va endpoint 500 qaytaradi (2026-07-13 xatosi shu edi).
+    import queries
+
     # Jamoa nomlari bracket bilan BIR XIL usulda — wc_registrations JOIN
     # (guruh ham, play-off ham; registration o'chirilgan chekka holatda NULL).
     #
