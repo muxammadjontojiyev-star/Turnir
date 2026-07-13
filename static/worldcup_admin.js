@@ -536,15 +536,27 @@ async function refreshWcFixPreview() {
   try {
     const info = await apiFetch(`/wc/admin/match/${id}/info?is_playoff=${isPlayoff}`);
     if (_wcFixLastKey !== key) return; // eskirgan javob
+
+    // Server o'yin AYNAN qaysi turda ekanini qaytaradi. Admin checkbox'ni
+    // noto'g'ri qo'ygan bo'lsa (guruh o'yiniga "Play-off" belgilangan va h.k.)
+    // uni avtomatik to'g'rilaymiz — aks holda "Tuzatish" noto'g'ri jadvalga yozadi.
+    const cb = document.getElementById("wc-admin-fix-is-playoff");
+    if (cb && typeof info.is_playoff !== "undefined") {
+      const actual = !!info.is_playoff;
+      if (cb.checked !== actual) {
+        cb.checked = actual;
+        showToast(actual ? "Bu play-off o'yini ✅" : "Bu guruh o'yini ✅");
+      }
+    }
+
     slot1.innerHTML = renderWcFlagBadge(info.team1);
     slot2.innerHTML = renderWcFlagBadge(info.team2);
     if (slot1.firstElementChild) slot1.firstElementChild.classList.add("logo-drop-in");
     if (slot2.firstElementChild) slot2.firstElementChild.classList.add("logo-drop-in");
   } catch (err) {
     if (_wcFixLastKey !== key) return;
-    // O'yin topilmadi (404) yoki xato — adminga bilinsin (qoida #40).
-    // Play-off o'yinini guruhdan qidirsa ham shu holat: checkbox eslatmasi.
-    const mark = `<span class="match-club-logo match-club-logo--empty" title="O'yin topilmadi">?</span>`;
+    // Bunday ID umuman yo'q (na guruhda, na play-offda) — adminga bilinsin (qoida #40)
+    const mark = `<span class="match-club-logo match-club-logo--empty" title="Bunday Match ID topilmadi">?</span>`;
     slot1.innerHTML = mark; slot2.innerHTML = mark;
   }
 }
