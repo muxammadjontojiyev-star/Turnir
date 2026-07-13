@@ -1403,6 +1403,25 @@ def div_rating_endpoint(user: dict = Depends(get_authenticated_user)):
     return {"rating": div_rating(), "me_id": user["id"]}
 
 
+@app.get("/div/calendar")
+def div_calendar(month: str | None = None,
+                 user: dict = Depends(get_authenticated_user)):
+    """
+    Profil kalendari: foydalanuvchi qaysi kunlari Divizionga ro'yxatdan o'tgan.
+    month="YYYY-MM" (bo'lmasa — joriy oy). Ro'yxatdan o'tilgan kunlar yashil.
+    """
+    # month validatsiyasi (SQL LIKE'ga tushadi — formatni qat'iy tekshiramiz)
+    if month is not None:
+        parts = month.split("-")
+        ok = (len(parts) == 2 and len(parts[0]) == 4 and len(parts[1]) == 2
+              and parts[0].isdigit() and parts[1].isdigit()
+              and 1 <= int(parts[1]) <= 12)
+        if not ok:
+            raise HTTPException(status_code=400, detail="month formati: YYYY-MM")
+    from division import div_registration_days
+    return div_registration_days(user["id"], month)
+
+
 @app.get("/div/player/{player_id}/profile")
 def div_player_profile(player_id: int, user: dict = Depends(get_authenticated_user)):
     """

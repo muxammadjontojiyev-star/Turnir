@@ -552,3 +552,34 @@ def div_admin_match_info(match_id: int) -> dict | None:
     d = dict(row)
     d["is_bye"] = d["player2_id"] is None
     return d
+
+
+def div_registration_days(user_id: int, month: str | None = None) -> dict:
+    """
+    Foydalanuvchi qaysi kunlari Divizionga ro'yxatdan o'tgan (profil kalendari).
+
+    month: "YYYY-MM" (None -> joriy oy, Toshkent vaqti bo'yicha).
+    Qaytaradi:
+      {
+        "month": "2026-07",           # ko'rsatilayotgan oy
+        "today": "2026-07-13",        # bugungi kun (turnir vaqti bo'yicha)
+        "days": ["2026-07-11", ...],  # SHU OYDA ro'yxatdan o'tgan kunlar
+      }
+    Kalendarda: days ichidagi kunlar yashil, qolganlari rangsiz.
+    """
+    now = _tournament_now()
+    if not month:
+        month = now.strftime("%Y-%m")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    # day formati "YYYY-MM-DD" -> oy bo'yicha prefiks qidiruvi (parametrlashtirilgan)
+    cursor.execute(
+        "SELECT day FROM div_registrations "
+        "WHERE user_id = ? AND day LIKE ? ORDER BY day",
+        (user_id, f"{month}-%"),
+    )
+    days = [r["day"] for r in cursor.fetchall()]
+    conn.close()
+
+    return {"month": month, "today": now.strftime("%Y-%m-%d"), "days": days}
