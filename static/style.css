@@ -3721,3 +3721,11 @@ tr.is-me .div-rating-user { color: #fff; }
   border-radius: 0 0 26px 26px;
   pointer-events: none;
 }
+
+/* WC admin Match ID formasi: bayroq topilmasa jamoa nomi qisqartmasi ko'rinadi */
+.wc-fix-flag--text {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  color: var(--cyan);
+}

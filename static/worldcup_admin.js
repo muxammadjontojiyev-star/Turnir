@@ -490,24 +490,32 @@ async function wcAdminRemoveRole(telegramId) {
 let _wcFixDebounce = null;
 let _wcFixLastKey = "";
 
-// Jamoa nomi -> bayroq emoji (WC_GROUPS'dan bir marta yig'iladi)
-const WC_TEAM_FLAGS = (() => {
+// Jamoa nomi -> bayroq emoji. LAZY: WC_GROUPS (worldcup.js) yuklangach birinchi
+// chaqiruvda yig'iladi. Ilgari `const ... = (() => ...)()` edi — agar bu fayl
+// worldcup.js dan OLDIN baholansa xarita bo'sh qolib, bayroqlar chiqmasdi.
+let _wcTeamFlags = null;
+function wcTeamFlags() {
+  if (_wcTeamFlags) return _wcTeamFlags;
   const map = {};
   if (typeof WC_GROUPS !== "undefined") {
     for (const letter of Object.keys(WC_GROUPS)) {
       for (const [name, flag] of WC_GROUPS[letter]) map[name] = flag;
     }
+    _wcTeamFlags = map;   // faqat to'lgach keshlaymiz
   }
   return map;
-})();
+}
 
 function renderWcFlagBadge(teamName) {
-  const flag = teamName ? WC_TEAM_FLAGS[teamName] : null;
   const safe = escHtml(teamName || "");
-  if (flag) {
-    return `<span class="wc-fix-flag" title="${safe}">${flag}</span>`;
+  if (!teamName) {
+    return `<span class="match-club-logo match-club-logo--empty"></span>`;
   }
-  return `<span class="match-club-logo match-club-logo--empty" title="${safe}"></span>`;
+  const flag = wcTeamFlags()[teamName];
+  // Bayroq topilmasa ham jamoa nomi ko'rinsin (bo'sh katak qolmasin)
+  return flag
+    ? `<span class="wc-fix-flag" title="${safe}">${flag}</span>`
+    : `<span class="wc-fix-flag wc-fix-flag--text" title="${safe}">${safe.slice(0, 3).toUpperCase()}</span>`;
 }
 
 function scheduleWcFixPreview() {
@@ -534,6 +542,9 @@ async function refreshWcFixPreview() {
     if (slot2.firstElementChild) slot2.firstElementChild.classList.add("logo-drop-in");
   } catch (err) {
     if (_wcFixLastKey !== key) return;
-    slot1.innerHTML = ""; slot2.innerHTML = "";
+    // O'yin topilmadi (404) yoki xato — adminga bilinsin (qoida #40).
+    // Play-off o'yinini guruhdan qidirsa ham shu holat: checkbox eslatmasi.
+    const mark = `<span class="match-club-logo match-club-logo--empty" title="O'yin topilmadi">?</span>`;
+    slot1.innerHTML = mark; slot2.innerHTML = mark;
   }
 }
