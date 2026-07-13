@@ -533,13 +533,39 @@ async function refreshWcFixPreview() {
   if (!id || id <= 0) { slot1.innerHTML = ""; slot2.innerHTML = ""; return; }
   const key = `${id}:${isPlayoff}`;
   _wcFixLastKey = key;
+
+  // Yuklanmoqda holati (qoida #40)
+  const spin = `<span class="match-club-logo match-club-logo--empty">…</span>`;
+  slot1.innerHTML = spin; slot2.innerHTML = spin;
+
   try {
-    const info = await apiFetch(`/wc/admin/match/${id}/info?is_playoff=${isPlayoff}`);
-    if (_wcFixLastKey !== key) return; // eskirgan javob
+    // apiFetch xato matnini yutib yuborishi mumkin — status kodini ham bilamiz
+    const initData = window.Telegram?.WebApp?.initData || "";
+    const res = await fetch(
+      `${API_BASE}/wc/admin/match/${id}/info?is_playoff=${isPlayoff}`,
+      { headers: { "Content-Type": "application/json", "X-Telegram-Init-Data": initData } }
+    );
+    if (_wcFixLastKey !== key) return;   // eskirgan javob
+
+    if (!res.ok) {
+      // 404 = bunday ID yo'q; 405/404(HTML) = ENDPOINT YO'Q (eski api.py, serverni
+      // qayta ishga tushirish kerak); 403 = ruxsat yo'q.
+      let detail = `HTTP ${res.status}`;
+      try {
+        const j = await res.json();
+        if (j && j.detail) detail = `${res.status}: ${j.detail}`;
+      } catch (_) {
+        detail = `HTTP ${res.status} (endpoint topilmadi — API'ni qayta ishga tushiring)`;
+      }
+      throw new Error(detail);
+    }
+
+    const info = await res.json();
+    if (_wcFixLastKey !== key) return;
 
     // Server o'yin AYNAN qaysi turda ekanini qaytaradi. Admin checkbox'ni
-    // noto'g'ri qo'ygan bo'lsa (guruh o'yiniga "Play-off" belgilangan va h.k.)
-    // uni avtomatik to'g'rilaymiz — aks holda "Tuzatish" noto'g'ri jadvalga yozadi.
+    // noto'g'ri qo'ygan bo'lsa uni avtomatik to'g'rilaymiz — aks holda
+    // "Tuzatish" noto'g'ri jadvalga yozadi.
     const cb = document.getElementById("wc-admin-fix-is-playoff");
     if (cb && typeof info.is_playoff !== "undefined") {
       const actual = !!info.is_playoff;
@@ -555,8 +581,11 @@ async function refreshWcFixPreview() {
     if (slot2.firstElementChild) slot2.firstElementChild.classList.add("logo-drop-in");
   } catch (err) {
     if (_wcFixLastKey !== key) return;
-    // Bunday ID umuman yo'q (na guruhda, na play-offda) — adminga bilinsin (qoida #40)
-    const mark = `<span class="match-club-logo match-club-logo--empty" title="Bunday Match ID topilmadi">?</span>`;
+    // Xatoni YASHIRMAYMIZ (qoida #40): adminga aniq sabab ko'rinsin.
+    const reason = (err && err.message) ? String(err.message) : "Noma'lum xato";
+    const mark = `<span class="match-club-logo match-club-logo--empty" title="${escHtml(reason)}">?</span>`;
     slot1.innerHTML = mark; slot2.innerHTML = mark;
+    console.error("WC fix preview xatosi:", reason);
+    showToast("Bayroq yuklanmadi — " + reason);
   }
 }
