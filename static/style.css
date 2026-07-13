@@ -3798,3 +3798,8 @@ tr.is-me .div-rating-user { color: #fff; }
 /* Divizion reyting tablari (Reyting | To'p urarlar) */
 .div-rating-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
 .div-rating-tabs .tab-btn { flex: 1; }
+
+/* Divizion reyting jadvalidagi ball ostidagi o'zgarish (+30 / -20) */
+.div-rating-delta {
+  font-size: 10px; opacity: .6; font-weight: 600; margin-top: 1px;
+}

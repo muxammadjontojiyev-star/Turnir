@@ -21,7 +21,8 @@ const DIV = {
   playerBackTo: "rating",  // profildan ortga qaysi bo'limga qaytamiz
   calendar: null,    // /div/calendar javobi {month, today, days[]}
   calMonth: null,    // ko'rilayotgan oy "YYYY-MM" (null = joriy)
-  ratingTab: "points",  // "points" (achko) | "scorers" (to'p urarlar)
+  ratingTab: "points",  // "points" (ball) | "scorers" (to'p urarlar)
+  playerCalMonth: null, // boshqa ishtirokchi profilidagi kalendar oyi
   scorers: [],
 };
 
@@ -281,8 +282,8 @@ function divRenderRating() {
            <div style="font-size:26px;font-weight:800" class="neon-cyan">${myRank}</div>
          </div>
          <div style="text-align:right">
-           <div style="font-size:12px;opacity:.65">Achko</div>
-           <div style="font-size:20px;font-weight:800">${list[myIndex].points}</div>
+           <div style="font-size:12px;opacity:.65">Ball</div>
+           <div style="font-size:20px;font-weight:800">${list[myIndex].rating ?? 1500}</div>
          </div>
          <div class="div-myrank-hint">Ko'rsatish ↓</div>
        </div>`
@@ -290,16 +291,19 @@ function divRenderRating() {
 
   const rows = list.map((p, i) => {
     const isMe = meId && p.user_id === meId;
-    // 2) Ism o'rniga USERNAME (username yo'q bo'lsa — ism), bosilsa profil ochiladi
+    // Ism o'rniga USERNAME (username yo'q bo'lsa — ism), bosilsa profil ochiladi
     const label = p.username ? "@" + p.username : (p.nickname || "—");
+    // Umumiy ball (1500 + achkolar) — profildagi ball bilan bir xil
+    const ball = (p.rating !== undefined && p.rating !== null) ? p.rating : 1500;
+    const d = p.points || 0;
+    const dTxt = d > 0 ? `+${d}` : `${d}`;
     return `
       <tr class="${isMe ? "is-me" : ""} div-rating-row" id="${isMe ? "div-my-rating-row" : ""}"
-          data-uid="${p.user_id}" data-uname="${escHtml(p.nickname || "")}"
-          data-uuser="${escHtml(p.username || "")}" style="cursor:pointer">
+          data-uid="${p.user_id}" style="cursor:pointer">
         <td class="rank-${i + 1}">${i + 1}</td>
         <td class="div-rating-user">${escHtml(label)}</td>
-        <td>${p.played}</td><td>${p.wins}/${p.draws}/${p.losses}</td>
-        <td><b>${p.points}</b></td>
+        <td>${p.played}</td>
+        <td><b class="neon-cyan">${ball}</b><div class="div-rating-delta">${dTxt}</div></td>
       </tr>`;
   }).join("");
 
@@ -319,8 +323,8 @@ function divRenderRating() {
     <div class="card div-rating-legend">G'alaba <b>+15</b> · Durang <b>+10</b> · Mag'lubiyat <b>−10</b></div>
     <div class="card card--table">
       <table class="rating-table">
-        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>G/D/M</th><th>Achko</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="5">Hozircha natijalar yo'q</td></tr>`}</tbody>
+        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>Ball</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="4">Hozircha natijalar yo'q</td></tr>`}</tbody>
       </table>
     </div>`;
 }
@@ -337,15 +341,12 @@ function divRenderScorers() {
   const rows = list.map((p, i) => {
     const isMe = meId && p.user_id === meId;
     const label = p.username ? "@" + p.username : (p.nickname || "—");
-    const gd = p.goal_diff > 0 ? `+${p.goal_diff}` : `${p.goal_diff}`;
     return `
       <tr class="${isMe ? "is-me" : ""} div-rating-row" data-uid="${p.user_id}" style="cursor:pointer">
         <td class="rank-${i + 1}">${i + 1}</td>
         <td class="div-rating-user">${escHtml(label)}</td>
         <td>${p.played}</td>
         <td><b class="neon-cyan">${p.goals_for}</b></td>
-        <td>${p.goals_against}</td>
-        <td>${gd}</td>
       </tr>`;
   }).join("");
 
@@ -367,10 +368,10 @@ function divRenderScorers() {
 
   return `
     ${myCard}
-    <div class="card div-rating-legend">⚽ <b>G</b> — urgan gollar · <b>O'G</b> — o'tkazgan · <b>Farq</b> — gol farqi</div>
+    <div class="card div-rating-legend">⚽ Eng ko'p <b>gol</b> urgan ishtirokchilar</div>
     <div class="card card--table">
       <table class="rating-table">
-        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>G</th><th>O'G</th><th>Farq</th></tr></thead>
+        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>Gollar</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
@@ -405,8 +406,9 @@ function divShiftMonth(ym, n) {
 const DIV_MONTH_NAMES = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
   "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
 
-function divRenderCalendar() {
-  const cal = DIV.calendar;
+// Kalendar HTML — o'z profilim va boshqa ishtirokchi profili uchun BIR XIL (DRY).
+// mode: "me" (o'z profilim, /div/calendar) | "player" (boshqa ishtirokchi)
+function divCalendarHtml(cal, mode = "me") {
   if (!cal) {
     return `<div class="section-label">RO'YXAT KALENDARI</div>
       <div class="card" style="opacity:.7;font-size:13px">Yuklanmoqda…</div>`;
@@ -416,9 +418,8 @@ function divRenderCalendar() {
   const marked = new Set(cal.days || []);       // ro'yxatdan o'tilgan kunlar
   const today = cal.today;
 
-  // Oyning birinchi kuni qaysi hafta kuniga to'g'ri keladi (Dushanba = 0)
   const first = new Date(year, month - 1, 1);
-  const offset = (first.getDay() + 6) % 7;      // JS: Yak=0 -> Dush=0 ga o'tkazamiz
+  const offset = (first.getDay() + 6) % 7;      // Dushanba = 0
   const daysInMonth = new Date(year, month, 0).getDate();
 
   const wd = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"]
@@ -435,13 +436,14 @@ function divRenderCalendar() {
   }
 
   const count = (cal.days || []).length;
+  const navAttr = (mode === "player") ? "data-div-pcal" : "data-div-cal";
   return `
     <div class="section-label">RO'YXAT KALENDARI</div>
     <div class="card div-cal-card">
       <div class="div-cal-head">
-        <button class="div-cal-nav" data-div-cal="prev">‹</button>
+        <button class="div-cal-nav" ${navAttr}="prev">‹</button>
         <div class="div-cal-title">${DIV_MONTH_NAMES[month - 1]} ${year}</div>
-        <button class="div-cal-nav" data-div-cal="next">›</button>
+        <button class="div-cal-nav" ${navAttr}="next">›</button>
       </div>
       <div class="div-cal-grid">${wd}${cells}</div>
       <div class="div-cal-legend">
@@ -547,7 +549,7 @@ function divRenderProfile() {
     ${hist.length ? `<div class="card">${histRows}</div>`
                   : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}`;
 
-  return meCard + statsGrid + divRenderCalendar() + historyBlock;
+  return meCard + statsGrid + divCalendarHtml(DIV.calendar, "me") + historyBlock;
 }
 
 // Liga uslubidagi raqib VS-oynasi: "Chatni ochish" (webapp chat) + "Raqib chatiga yozish" (t.me)
@@ -710,13 +712,20 @@ async function divOpenPlayerProfile(userId) {
   }
   DIV.playerBackTo = (DIV.section === "player") ? DIV.playerBackTo : DIV.section;
   DIV.player = null;
+  DIV.playerCalMonth = null;   // yangi profil -> joriy oydan boshlaymiz
   DIV.section = "player";
   renderDivision();  // yuklanmoqda holati (qoida #40)
+  await divLoadPlayer(userId);
+}
+
+async function divLoadPlayer(userId, month) {
+  const q = month ? `?month=${encodeURIComponent(month)}` : "";
   try {
-    DIV.player = await apiFetch(`/div/player/${userId}/profile`);
+    DIV.player = await apiFetch(`/div/player/${userId}/profile${q}`);
+    DIV.playerCalMonth = DIV.player?.calendar?.month || null;
   } catch (e) {
     showToast("Profil ochilmadi: " + e.message);
-    DIV.section = DIV.playerBackTo;
+    if (!DIV.player) DIV.section = DIV.playerBackTo;
   }
   renderDivision();
 }
@@ -739,16 +748,61 @@ function divRenderPlayer() {
         align-items:center;justify-content:center;font-size:24px;font-weight:800;
         background:linear-gradient(140deg,#7c5cff,#31d0aa);color:#fff">${escHtml(initial)}</div>`;
 
+  // Umumiy ball (1500 + achkolar) — o'z profilim bilan bir xil ko'rinish
+  const rating = (st.rating !== undefined && st.rating !== null) ? st.rating : 1500;
+  const delta = st.points || 0;
+  const deltaTxt = delta > 0 ? `+${delta}` : `${delta}`;
+  const deltaCls = delta > 0 ? "neon-cyan" : (delta < 0 ? "neon-red" : "");
+
+  const tgBtn = data.username
+    ? `<button class="btn btn--ghost" id="div-player-tg" style="width:100%;margin-top:12px">✈️ Telegramda ochish</button>`
+    : "";
+
+  const headCard = `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px">
+        ${photo}
+        <div style="min-width:0;flex:1">
+          <div style="font-size:19px;font-weight:800;overflow:hidden;text-overflow:ellipsis">${escHtml(data.nickname || "—")}</div>
+          ${data.username ? `<div style="font-size:13px;color:var(--cyan)">@${escHtml(data.username)}</div>` : ""}
+        </div>
+        <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
+          <div class="div-ball-value">${rating}</div>
+          <div class="div-ball-label">BALL</div>
+          <div class="div-ball-delta ${deltaCls}">${deltaTxt}</div>
+        </div>
+      </div>
+      ${tgBtn}
+    </div>`;
+
+  const statsGrid = `
+    <div class="section-label">STATISTIKA</div>
+    <div class="stats-grid">
+      <div class="stat-card stat-card--primary"><span class="stat-card-value neon-cyan">${st.win_rate}%</span><span class="stat-card-label">G'alaba foizi</span></div>
+      <div class="stat-card"><span class="stat-card-value neon-cyan">${st.wins}</span><span class="stat-card-label">G'alaba</span></div>
+      <div class="stat-card"><span class="stat-card-value">${st.draws}</span><span class="stat-card-label">Durang</span></div>
+      <div class="stat-card"><span class="stat-card-value neon-red">${st.losses}</span><span class="stat-card-label">Mag'lubiyat</span></div>
+    </div>`;
+
+  // Ro'yxat kalendari (o'z profilim bilan bir xil — DRY: divCalendarHtml)
+  const calBlock = divCalendarHtml(data.calendar, "player");
+
+  // O'yin tarixi — raqib @useriga bosilsa O'SHA raqib profili ochiladi
   const hist = (data.history || []).map((h, i) => {
     if (h.is_bye) {
-      return `<div class="match-item"><span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
+      return `<div class="match-item">
+        <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
         <b style="flex:1;text-align:center">🎉 Avto g'alaba</b>
         <span class="status-badge status--confirmed">+15</span></div>`;
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.my_score} : ${h.opp_score}` : "— : —";
     const label = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
-    return `<div class="match-item">
+    const canOpen = !!h.opp_user_id;
+    const attrs = canOpen
+      ? `class="match-item div-history-opp" style="cursor:pointer" data-opp-id="${h.opp_user_id}"`
+      : `class="match-item"`;
+    return `<div ${attrs}>
       <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
       <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:${h.opp_username ? "var(--cyan)" : "inherit"}">${escHtml(label)}</b>
       <span style="font-weight:800;margin:0 8px">${score}</span>
@@ -756,34 +810,12 @@ function divRenderPlayer() {
     </div>`;
   }).join("");
 
-  const tgBtn = data.username
-    ? `<button class="btn btn--ghost" id="div-player-tg" style="width:100%;margin-top:12px">✈️ Telegramda ochish</button>`
-    : "";
-
-  return `
-    ${back}
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${photo}
-        <div style="min-width:0">
-          <div style="font-size:19px;font-weight:800">${escHtml(data.nickname || "—")}</div>
-          ${data.username ? `<div style="font-size:13px;color:var(--cyan)">@${escHtml(data.username)}</div>` : ""}
-        </div>
-      </div>
-      ${tgBtn}
-    </div>
-
-    <div class="section-label">STATISTIKA</div>
-    <div class="stats-grid">
-      <div class="stat-card stat-card--primary"><span class="stat-card-value neon-cyan">${st.win_rate}%</span><span class="stat-card-label">G'alaba foizi</span></div>
-      <div class="stat-card"><span class="stat-card-value neon-cyan">${st.wins}</span><span class="stat-card-label">G'alaba</span></div>
-      <div class="stat-card"><span class="stat-card-value">${st.draws}</span><span class="stat-card-label">Durang</span></div>
-      <div class="stat-card"><span class="stat-card-value neon-red">${st.losses}</span><span class="stat-card-label">Mag'lubiyat</span></div>
-    </div>
-
+  const historyBlock = `
     <div class="section-label">O'YIN TARIXI</div>
     ${hist ? `<div class="card">${hist}</div>`
            : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}`;
+
+  return back + headCard + statsGrid + calBlock + historyBlock;
 }
 
 // ---- Eventlar ----
@@ -819,7 +851,17 @@ function divBindSectionEvents(root) {
     setTimeout(() => row.classList.remove("div-row-flash"), 1600);
   });
 
-  // Kalendar: oldingi/keyingi oy
+  // Boshqa ishtirokchi profilidagi kalendar: oldingi/keyingi oy
+  root.querySelectorAll("[data-div-pcal]").forEach(b =>
+    b.addEventListener("click", () => {
+      const cur = DIV.player?.calendar?.month;
+      const uid = DIV.player?.user_id;
+      if (!cur || !uid) return;
+      const n = (b.dataset.divPcal === "prev") ? -1 : 1;
+      void divLoadPlayer(uid, divShiftMonth(cur, n));
+    }));
+
+  // O'z profilim kalendari: oldingi/keyingi oy
   root.querySelectorAll("[data-div-cal]").forEach(b =>
     b.addEventListener("click", () => {
       const cur = DIV.calendar?.month;
