@@ -1430,14 +1430,15 @@ def div_calendar(month: str | None = None,
 
 
 @app.get("/div/player/{player_id}/profile")
-def div_player_profile(player_id: int, user: dict = Depends(get_authenticated_user)):
+def div_player_profile(player_id: int, month: str | None = None,
+                      user: dict = Depends(get_authenticated_user)):
     """
     Boshqa ishtirokchining Divizion profili (reyting/tarix qatoriga bosilganda):
     ism, username, statistika (g'alaba foizi) va o'yin tarixi.
     Faqat ommaviy turnir ma'lumotlari — reytingda ko'rinadigan narsalar.
     """
     from queries_users import get_user_by_id
-    from division import div_my_stats, div_my_matches
+    from division import div_my_stats, div_my_matches, div_registration_days
     target = get_user_by_id(player_id)
     if target is None:
         raise HTTPException(status_code=404, detail="user_not_found")
@@ -1445,8 +1446,9 @@ def div_player_profile(player_id: int, user: dict = Depends(get_authenticated_us
         "user_id": target["id"],
         "nickname": target["nickname"],
         "username": target["username"],
-        "stats": div_my_stats(player_id),
+        "stats": div_my_stats(player_id),          # ichida umumiy ball (rating) ham bor
         "history": div_my_matches(player_id, limit=20),
+        "calendar": div_registration_days(player_id, month),   # ro'yxat kalendari
     }
 
 
@@ -1515,27 +1517,6 @@ def div_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
 
 
 # --- Divizion admin (faqat bosh admin, Divizion tabidagi panel) ---
-
-@app.get("/div/player/{user_id}/profile")
-def div_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_user)):
-    """
-    Boshqa ishtirokchining Divizion profili (tarixdan yoki qur'a oynasidan
-    bosilganda). Har qanday avtorizatsiyalangan foydalanuvchi ko'ra oladi.
-    Xato: user_not_found → 404
-    """
-    from queries_users import get_user_by_id
-    from division import div_my_stats, div_my_matches
-    target = get_user_by_id(user_id)
-    if target is None:
-        raise HTTPException(status_code=404, detail="user_not_found")
-    return {
-        "user_id": target["id"],
-        "nickname": target["nickname"],
-        "username": target["username"],
-        "stats": div_my_stats(user_id),
-        "history": div_my_matches(user_id),
-    }
-
 
 @app.get("/div/admin/matches")
 def div_admin_matches(day: str | None = None,
