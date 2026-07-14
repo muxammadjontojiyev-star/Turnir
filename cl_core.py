@@ -244,12 +244,14 @@ def cl_group_rating(group_number: int, season: int | None = None) -> list[dict]:
         if season is None:
             season = _current_league_season(cursor)
         cursor.execute(
-            "SELECT user_id, nickname, club_name FROM cl_participants "
-            "WHERE season = ? AND group_number = ?",
+            "SELECT p.user_id, p.nickname, p.club_name, u.username "
+            "FROM cl_participants p JOIN users u ON u.id = p.user_id "
+            "WHERE p.season = ? AND p.group_number = ?",
             (season, group_number),
         )
         players = {r["user_id"]: {
             "user_id": r["user_id"], "nickname": r["nickname"],
+            "username": r["username"],
             "club_name": r["club_name"], "played": 0, "wins": 0, "draws": 0,
             "losses": 0, "goals_for": 0, "goals_against": 0, "points": 0,
         } for r in cursor.fetchall()}
