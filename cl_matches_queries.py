@@ -28,6 +28,7 @@ def cl_get_user_matches(user_id: int, season: int) -> list[dict]:
     cursor.execute(
         """
         SELECT m.*, u1.nickname AS player1_name, u2.nickname AS player2_name,
+               u1.username AS player1_username, u2.username AS player2_username,
                c1.club_name AS player1_club, c2.club_name AS player2_club
         FROM cl_matches m
         JOIN users u1 ON u1.id = m.player1_id
