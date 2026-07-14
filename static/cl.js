@@ -10,13 +10,14 @@
 // ============================================================
 
 const CL = {
-  section: "home",     // home | rating | matches
+  section: "home",     // home | rating | profile | prizes
   groups: null,        // /cl/groups javobi
   qualifiers: null,    // /cl/qualifiers javobi (qur'agacha ko'rsatish uchun)
   ratingGroup: 1,      // Reytingda tanlangan guruh (1..8)
   rating: [],
   myMatches: [],
   meParticipant: false,
+  profile: null,       // /cl/profile javobi
 };
 
 // ---- Kirish nuqtasi ----
@@ -46,7 +47,18 @@ function clNavigate(section) {
   CL.section = section;
   renderChampionsLeague();
   if (section === "rating") void clLoadRating();
-  if (section === "matches") void clLoadMatches();
+  if (section === "profile") void clLoadProfile();
+  if (section === "prizes") void clLoadProfileForPrizes();
+}
+
+// Sovrinlar uchun user_id kerak — profil bir marta yuklanadi
+async function clLoadProfileForPrizes() {
+  if (!CL.profile) {
+    try { CL.profile = await apiFetch("/cl/profile"); } catch (_) { CL.profile = null; }
+    renderChampionsLeague();
+  } else {
+    void clBindPrizes();
+  }
 }
 
 async function clLoadThenRender() {
@@ -85,7 +97,8 @@ function renderChampionsLeague() {
   let body = "";
   if (CL.section === "home") body = clRenderHome();
   else if (CL.section === "rating") body = clRenderRating();
-  else body = clRenderMatches();
+  else if (CL.section === "prizes") body = clRenderPrizes();
+  else body = clRenderProfile();
 
   root.innerHTML = `
     <div class="wc-header">
@@ -102,9 +115,13 @@ function renderChampionsLeague() {
         <span class="nav-icon" data-icon="trophy"></span>
         <span class="nav-label">Reyting</span>
       </button>
-      <button class="wc-nav-item ${CL.section === "matches" ? "active" : ""}" data-cl-tab="matches">
-        <span class="nav-icon" data-icon="play"></span>
-        <span class="nav-label">O'yinlarim</span>
+      <button class="wc-nav-item ${CL.section === "profile" ? "active" : ""}" data-cl-tab="profile">
+        <span class="nav-icon" data-icon="user"></span>
+        <span class="nav-label">Profil</span>
+      </button>
+      <button class="wc-nav-item ${CL.section === "prizes" ? "active" : ""}" data-cl-tab="prizes">
+        <span class="nav-icon" data-icon="trophy"></span>
+        <span class="nav-label">Sovrinlar</span>
       </button>
     </nav>
   `;
@@ -114,6 +131,8 @@ function renderChampionsLeague() {
   root.querySelectorAll("[data-cl-tab]").forEach(b =>
     b.addEventListener("click", () => clNavigate(b.dataset.clTab)));
   clBindSectionEvents(root);
+  if (CL.section === "profile") clBindProfile(root);
+  if (CL.section === "prizes") void clBindPrizes();
 }
 
 

@@ -3843,3 +3843,20 @@ tr.is-me .div-rating-user { color: #fff; }
 .div-rating-delta {
   font-size: 10px; opacity: .6; font-weight: 600; margin-top: 1px;
 }
+
+/* ==== ChL profil kartochkasi (cl_profile.js) ==== */
+.cl-avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 20px; flex: 0 0 56px;
+  background: linear-gradient(135deg, #6d5efc, #3ec6f0); color: #fff;
+  overflow: hidden;
+}
+.cl-stats {
+  display: flex; justify-content: space-between; gap: 4px;
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.cl-stats > div { display: flex; flex-direction: column; align-items: center; }
+.cl-stats b { font-size: 15px; }
+.cl-stats span { font-size: 10.5px; opacity: .6; margin-top: 2px; }
