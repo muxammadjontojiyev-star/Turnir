@@ -3892,3 +3892,6 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .cl-group-chip.active { border-color: #3ec6f0; color: #56d9f5; background: rgba(62,198,240,.12); }
 .cl-qual-meta { font-size: 11.5px; opacity: .65; margin-left: auto; }
+
+/* ChL VS-oynasi logolari (cl_chat.js) */
+.cl-vs-logo { display: flex; align-items: center; justify-content: center; height: 80px; }

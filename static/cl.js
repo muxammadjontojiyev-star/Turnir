@@ -214,10 +214,6 @@ function clRenderMatchItem(m) {
   if (m.status === "admin_pending")         { statusCls = "status--awaiting"; statusText = "ADMIN TASDIG'I"; }
   if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = "TASDIQLANDI"; }
 
-  const chatBtn = (m.status === "pending" || m.status === "awaiting_confirmation")
-    ? `<button class="match-action-btn match-chat-btn" data-cl-chat="${m.id}" title="Raqib bilan chat">💬</button>`
-    : "";
-
   let action = "";
   if (m.status === "pending") {
     action = `<button class="match-action-btn" data-cl-open="${m.id}">Natija</button>`;
@@ -243,9 +239,9 @@ function clRenderMatchItem(m) {
     <div class="cl-match-wrap">
       <div class="match-item">
         <span class="match-names">#${m.id}</span>
-        <div class="match-center">${center}</div>
+        <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
         <span class="match-status ${statusCls}">${statusText}</span>
-        ${chatBtn}${action}
+        ${action}
       </div>
       ${inputs}${reject}
     </div>`;
@@ -269,13 +265,9 @@ function clBindSectionEvents(root) {
       renderChampionsLeague();
     }));
 
-  root.querySelectorAll("[data-cl-chat]").forEach(b =>
-    b.addEventListener("click", () => {
-      const id = Number(b.dataset.clChat);
-      const m = (CL.myMatches || []).find(x => x.id === id);
-      const opp = m ? (clIsMe(m.player1_id) ? m.player2_name : m.player1_name) : "Raqib";
-      openWebChat(id, opp || "Raqib", "/cl/matches");   // api.js webchat modali
-    }));
+  // Logolar juftligiga bosilsa — raqib VS-oynasi (cl_chat.js: 2 xil chat)
+  root.querySelectorAll("[data-cl-open-match]").forEach(el =>
+    el.addEventListener("click", () => clOpenOpponentModal(Number(el.dataset.clOpenMatch))));
 
   root.querySelectorAll("[data-cl-open]").forEach(b =>
     b.addEventListener("click", () => {
