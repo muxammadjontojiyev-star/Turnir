@@ -133,6 +133,20 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: WC avtomatik yopishda xato: %s", exc)
 
+    # === CHEMPIONLAR LIGASI: 23:30 da joriy tur yopiladi, keyingisi ochiladi ===
+    # awaiting -> confirmed, pending -> 0:0 durang (variant A). Idempotent (kuniga 1 marta).
+    try:
+        from cl_rounds import cl_tick
+        cl_res = cl_tick()
+        if cl_res:
+            logger.info(
+                "Scheduler: ChL %d-tur yopildi (awaiting: %d, 0:0: %d) → %d-tur ochildi.",
+                cl_res["closed_matchday"], cl_res["awaiting_resolved"],
+                cl_res["pending_resolved"], cl_res["opened_matchday"],
+            )
+    except Exception as exc:
+        logger.warning("Scheduler: ChL tur siljitishda xato: %s", exc)
+
     # === DIVIZION: 19:00 dan keyin qur'a + telegram xabar; 23:30 dan keyin yopish ===
     try:
         await _division_tick()

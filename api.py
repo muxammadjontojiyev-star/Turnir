@@ -1330,6 +1330,27 @@ def cl_schedule_rebuild(admin: dict = Depends(get_authenticated_super_admin)):
     return {"status": "ok", **result}
 
 
+@app.post("/cl/rounds/start")
+def cl_rounds_start(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    ChL turlarini boshlash (faqat bosh admin): 1-tur ochiladi.
+    Keyingi turlar har kuni 23:30 (Toshkent) da avtomatik ochiladi (cl_rounds.cl_tick).
+    Xato: not_drawn, already_started → 400
+    """
+    from cl_rounds import cl_start_rounds
+    success, result = cl_start_rounds()
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
+@app.get("/cl/state")
+def cl_state(user: dict = Depends(get_authenticated_user)):
+    """ChL tur holati: started, current_matchday, total_matchdays."""
+    from cl_rounds import cl_get_state
+    return cl_get_state()
+
+
 @app.get("/cl/profile")
 def cl_profile(user: dict = Depends(get_authenticated_user)):
     """
@@ -1347,8 +1368,11 @@ def cl_my_matches(user: dict = Depends(get_authenticated_user)):
     """Foydalanuvchining ChL o'yinlari (joriy mavsum)."""
     from season_prizes import get_league_season
     from cl_matches_queries import cl_get_user_matches
+    from cl_rounds import cl_get_state
+    season = get_league_season()
     return {"me_id": user["id"],
-            "matches": cl_get_user_matches(user["id"], get_league_season())}
+            "state": cl_get_state(season),
+            "matches": cl_get_user_matches(user["id"], season)}
 
 
 @app.post("/cl/match/submit-result")
@@ -1356,7 +1380,13 @@ def cl_submit(match_id: int, score1: int, score2: int,
               user: dict = Depends(get_authenticated_user)):
     """ChL o'yin natijasini kiritish (WC oqimi bilan bir xil)."""
     validate_scores(score1, score2)
-    from cl_matches_queries import cl_submit_match_result
+    from cl_matches_queries import cl_get_match_by_id, cl_submit_match_result
+    from cl_rounds import cl_matchday_open
+    match = cl_get_match_by_id(match_id)
+    if not match:
+        raise HTTPException(status_code=400, detail="match_not_found")
+    if not cl_matchday_open(match["matchday"], match["season"]):
+        raise HTTPException(status_code=400, detail="matchday_locked")
     success, reason = cl_submit_match_result(match_id, score1, score2, user["id"])
     if not success:
         raise HTTPException(status_code=400, detail=reason)

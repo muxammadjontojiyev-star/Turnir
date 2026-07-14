@@ -304,6 +304,19 @@ def init_db():
         "CREATE INDEX IF NOT EXISTS idx_cl_messages_match ON cl_messages(match_id)"
     )
 
+    # === cl_state (ChL tur boshqaruvi: boshlangan/joriy tur) ===
+    # started=0 → hamma turlar yopiq. Admin boshlaganda started=1, current_matchday=1.
+    # Har kuni 23:30 (Toshkent) da joriy tur yopiladi va keyingisi ochiladi (cl_rounds).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_state (
+            season INTEGER PRIMARY KEY,
+            started INTEGER NOT NULL DEFAULT 0,
+            current_matchday INTEGER NOT NULL DEFAULT 0,
+            last_advance_date TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # === Migratsiyalar (qoida #31 — baza qo'lda o'zgartirilmaydi) ===
     # M1: eski bazadagi div_messages'ga is_read ustuni qo'shish
     try:
