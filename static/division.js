@@ -295,15 +295,13 @@ function divRenderRating() {
     const label = p.username ? "@" + p.username : (p.nickname || "—");
     // Umumiy ball (1500 + achkolar) — profildagi ball bilan bir xil
     const ball = (p.rating !== undefined && p.rating !== null) ? p.rating : 1500;
-    const d = p.points || 0;
-    const dTxt = d > 0 ? `+${d}` : `${d}`;
     return `
       <tr class="${isMe ? "is-me" : ""} div-rating-row" id="${isMe ? "div-my-rating-row" : ""}"
           data-uid="${p.user_id}" style="cursor:pointer">
         <td class="rank-${i + 1}">${i + 1}</td>
         <td class="div-rating-user">${escHtml(label)}</td>
         <td>${p.played}</td>
-        <td><b class="neon-cyan">${ball}</b><div class="div-rating-delta">${dTxt}</div></td>
+        <td><b class="neon-cyan">${ball}</b></td>
       </tr>`;
   }).join("");
 
@@ -474,9 +472,6 @@ function divRenderProfile() {
 
   // Umumiy ball: 1500 (boshlang'ich) + o'yin achkolari (+15/+10/-10)
   const rating = (st.rating !== undefined && st.rating !== null) ? st.rating : 1500;
-  const delta = st.points || 0;
-  const deltaTxt = delta > 0 ? `+${delta}` : `${delta}`;
-  const deltaCls = delta > 0 ? "neon-cyan" : (delta < 0 ? "neon-red" : "");
 
   const meCard = `
     <div class="card">
@@ -489,7 +484,6 @@ function divRenderProfile() {
         <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
           <div class="div-ball-value">${rating}</div>
           <div class="div-ball-label">BALL</div>
-          <div class="div-ball-delta ${deltaCls}">${deltaTxt}</div>
         </div>
       </div>
     </div>`;
@@ -750,9 +744,6 @@ function divRenderPlayer() {
 
   // Umumiy ball (1500 + achkolar) — o'z profilim bilan bir xil ko'rinish
   const rating = (st.rating !== undefined && st.rating !== null) ? st.rating : 1500;
-  const delta = st.points || 0;
-  const deltaTxt = delta > 0 ? `+${delta}` : `${delta}`;
-  const deltaCls = delta > 0 ? "neon-cyan" : (delta < 0 ? "neon-red" : "");
 
   const tgBtn = data.username
     ? `<button class="btn btn--ghost" id="div-player-tg" style="width:100%;margin-top:12px">✈️ Telegramda ochish</button>`
@@ -769,7 +760,6 @@ function divRenderPlayer() {
         <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
           <div class="div-ball-value">${rating}</div>
           <div class="div-ball-label">BALL</div>
-          <div class="div-ball-delta ${deltaCls}">${deltaTxt}</div>
         </div>
       </div>
       ${tgBtn}
