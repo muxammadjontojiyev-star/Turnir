@@ -3955,3 +3955,8 @@ tr.is-me .div-rating-user { color: #fff; }
 .cl-player-club { font-size: 12px; opacity: .7; }
 .cl-rating-player[data-cl-player] { cursor: pointer; }
 .cl-rating-player[data-cl-player]:active { opacity: .7; }
+
+/* ChL: reyting tablari + to'purarlar + orqaga tugmasi */
+.cl-rating-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.cl-back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 13px; }
+.cl-locked svg, .cl-club-fallback svg { opacity: .55; }

@@ -16,6 +16,9 @@ const CL = {
   section: "home",     // home | rating | profile | prizes
   groups: null,        // /cl/groups javobi
   qualifiers: null,    // /cl/qualifiers javobi (qur'agacha ko'rsatish uchun)
+  ratingTab: "groups",  // Reyting tabi: "groups" | "scorers"
+  scorers: null,
+  viewPlayer: null,     // Reytingdan ochilgan ishtirokchi (cl_player.js)
   ratingGroup: 1,      // Reytingda tanlangan guruh (1..8)
   homeGroup: 1,        // Asosiy sahifada tanlangan guruh (1..8)
   rating: [],
@@ -38,10 +41,10 @@ function clClubLogo(clubName) {
 // Klub logosi <img> (topilmasa — ⚽ fallback, qoida 40)
 function clClubBadge(clubName, size = 24) {
   const logo = clClubLogo(clubName);
-  if (!logo) return `<span class="cl-club-fallback" style="width:${size}px;height:${size}px">⚽</span>`;
+  if (!logo) return `<span class="cl-club-fallback" style="width:${size}px;height:${size}px">${ICON.get("shield", Math.round(size * 0.8))}</span>`;
   return `<img class="cl-club-logo" src="${escHtml(logo)}" alt="${escHtml(clubName)}" `
        + `title="${escHtml(clubName)}" style="width:${size}px;height:${size}px" `
-       + `onerror="this.outerHTML='<span class=\'cl-club-fallback\' style=\'width:${size}px;height:${size}px\'>⚽</span>'" />`;
+       + `onerror="this.style.visibility='hidden'" />`;
 }
 
 // ---- Kirish nuqtasi ----
@@ -70,7 +73,7 @@ function exitChampionsLeague() {
 function clNavigate(section) {
   CL.section = section;
   renderChampionsLeague();
-  if (section === "rating") void clLoadRating();
+  if (section === "rating") void (CL.ratingTab === "scorers" ? clLoadScorers() : clLoadRating());
   if (section === "profile") void clLoadProfile();
   if (section === "prizes") void clLoadProfileForPrizes();
 }
@@ -123,6 +126,7 @@ function renderChampionsLeague() {
   if (CL.section === "home") body = clRenderHome();
   else if (CL.section === "rating") body = clRenderRating();
   else if (CL.section === "prizes") body = clRenderPrizes();
+  else if (CL.section === "player") body = clRenderPlayer();
   else body = clRenderProfile();
 
   root.innerHTML = `
@@ -156,6 +160,7 @@ function renderChampionsLeague() {
   root.querySelectorAll("[data-cl-tab]").forEach(b =>
     b.addEventListener("click", () => clNavigate(b.dataset.clTab)));
   clBindSectionEvents(root);
+  if (CL.section === "player") clBindPlayer(root);
   if (CL.section === "profile") clBindProfile(root);
   if (CL.section === "prizes") void clBindPrizes();
 }
@@ -163,8 +168,48 @@ function renderChampionsLeague() {
 
 // ---- HOME ----  → cl_home.js (qoida 21: fayl 300 qatordan oshmasin)
 
+// ---- SCORERS (to'purarlar) ----
+async function clLoadScorers() {
+  try {
+    const d = await apiFetch("/cl/scorers");
+    CL.scorers = d.scorers || [];
+  } catch (_) { CL.scorers = []; }
+  renderChampionsLeague();
+}
+
+function clRenderScorers() {
+  const rows = CL.scorers;
+  if (rows === null) return `<div class="wc-loading-row">Yuklanmoqda…</div>`;
+  if (!rows.length) return `<div class="wc-loading-row">Hozircha gol urilmagan.</div>`;
+
+  const body = rows.map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><div class="cl-rating-player" data-cl-player="${p.user_id}">
+        ${clClubBadge(p.club_name, 22)}
+        <span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}</span>
+      </div></td>
+      <td>G${p.group_number}</td>
+      <td>${p.played}</td>
+      <td><b>${p.goals}</b></td>
+    </tr>`).join("");
+
+  return `
+    <table class="rating-table">
+      <thead><tr><th>#</th><th>O'yinchi</th><th>Guruh</th><th>O</th><th>Gol</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
 // ---- RATING ----
 function clRenderRating() {
+  const tabs = `
+    <div class="cl-rating-tabs">
+      <button class="tab-btn${CL.ratingTab === "groups" ? " active" : ""}" data-cl-rtab="groups">Guruhlar</button>
+      <button class="tab-btn${CL.ratingTab === "scorers" ? " active" : ""}" data-cl-rtab="scorers">To'purarlar</button>
+    </div>`;
+  if (CL.ratingTab === "scorers") return `${tabs}<div class="card card--table">${clRenderScorers()}</div>`;
+
   let selector = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">`;
   for (let n = 1; n <= CL_GROUP_COUNT; n++) {
     const active = CL.ratingGroup === n ? " active" : "";
@@ -180,7 +225,7 @@ function clRenderRating() {
       <td><b>${p.points}</b></td>
     </tr>`).join("");
 
-  return `${selector}
+  return `${tabs}${selector}
     <div class="card card--table">
       <table class="rating-table">
         <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>GF</th><th>Ochko</th></tr></thead>
@@ -226,10 +271,10 @@ function clRenderMatchItem(m) {
   if (m.status === "pending") {
     action = isOpenRound
       ? `<button class="match-action-btn" data-cl-open="${m.id}">Natija</button>`
-      : `<span class="cl-locked" title="Bu tur hali ochilmagan">🔒</span>`;
+      : `<span class="cl-locked" title="Bu tur hali ochilmagan">${ICON.get("lock", 16)}</span>`;
   } else if (m.status === "awaiting_confirmation") {
     action = (m.submitted_by && !clIsMe(m.submitted_by))
-      ? `<button class="match-action-btn" data-cl-confirm="${m.id}">✔</button>`
+      ? `<button class="match-action-btn" data-cl-confirm="${m.id}">${ICON.get("check", 16)}</button>`
       : `<span class="match-waiting">Kutilmoqda</span>`;
   }
 
@@ -243,7 +288,7 @@ function clRenderMatchItem(m) {
     </div>` : "";
 
   const reject = (m.status === "awaiting_confirmation" && m.submitted_by && !clIsMe(m.submitted_by))
-    ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">❌ Rad etish</button></div>` : "";
+    ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">${ICON.get("cross", 15)} Rad etish</button></div>` : "";
 
   // Uy/mehmon: player1 — uy egasi (cl_matches yozilish tartibi)
   const isHome = clIsMe(m.player1_id);
@@ -279,6 +324,13 @@ function clStatusLabel(s) {
 // ---- Eventlar ----
 function clBindSectionEvents(root) {
   // Reytingdagi o'yinchiga bosilsa — uning ChL profili (cl_player.js)
+  root.querySelectorAll("[data-cl-rtab]").forEach(b =>
+    b.addEventListener("click", () => {
+      CL.ratingTab = b.dataset.clRtab;
+      renderChampionsLeague();
+      if (CL.ratingTab === "scorers") void clLoadScorers(); else void clLoadRating();
+    }));
+
   root.querySelectorAll("[data-cl-player]").forEach(el =>
     el.addEventListener("click", () => clOpenPlayerModal(Number(el.dataset.clPlayer))));
 

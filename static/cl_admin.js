@@ -35,21 +35,21 @@ async function clLoadAdminPanel() {
   panel.classList.remove("hidden");
   panel.innerHTML = `
     <div class="card" style="border-color:rgba(245,197,66,.45)">
-      <b>⚙️ ChL admin paneli</b>
+      <b>${ICON.get("shield", 16)} ChL admin paneli</b>
       <div style="font-size:12.5px;opacity:.75;margin:4px 0 10px">
         ${drawn
           ? "Qur'a o'tkazilgan. Guruhlar va kalendar tayyor."
           : "Qur'a: 32 kvalifikant tasodifiy 8 guruhga (4 tadan) bo'linadi va kalendar tuziladi. Bu amalni ortga qaytarib bo'lmaydi."}
       </div>
       <button class="btn btn--primary" id="cl-admin-draw" ${drawn ? "disabled" : ""}>
-        🎲 Qur'a o'tkazish
+        ${ICON.get("dice", 16)} Qur'a o'tkazish
       </button>
       ${drawn ? `
       <div style="font-size:12.5px;opacity:.75;margin:12px 0 8px">
         Kalendarni qayta qurish: guruh tarkibi saqlanadi, o'yinlar ikki doira
         (uy + mehmon, 6 tur) qilib qaytadan yoziladi. Natija kiritilgan bo'lsa ishlamaydi.
       </div>
-      <button class="btn" id="cl-admin-rebuild">🔁 Kalendarni qayta qurish (uy+mehmon)</button>
+      <button class="btn" id="cl-admin-rebuild">${ICON.get("recycle", 16)} Kalendarni qayta qurish (uy+mehmon)</button>
 
       <div style="font-size:12.5px;opacity:.75;margin:12px 0 8px">
         ${started
@@ -57,9 +57,11 @@ async function clLoadAdminPanel() {
           : "O'yinlarni boshlash: 1-tur ochiladi. Keyingi turlar har kuni 23:30 da avtomatik ochiladi."}
       </div>
       <button class="btn btn--primary" id="cl-admin-start" ${started ? "disabled" : ""}>
-        ▶️ O'yinlarni boshlash
+        ${ICON.get("play", 16)} O'yinlarni boshlash
       </button>` : ""}
     </div>`;
+
+  if (typeof applyIcons === "function") applyIcons(panel);
 
   const btn = document.getElementById("cl-admin-draw");
   if (btn && !drawn) btn.addEventListener("click", () => void clAdminDraw(btn));
@@ -78,12 +80,12 @@ async function clAdminRebuild(btn) {
   btn.textContent = "Qayta qurilmoqda…";
   try {
     const r = await apiFetch("/cl/schedule/rebuild", { method: "POST" });
-    showToast(`Kalendar tayyor ✅ ${r.matches} o'yin (${r.groups} guruh)`);
+    showToast(`Kalendar tayyor: ${r.matches} o'yin (${r.groups} guruh)`);
     CL.section = "home";
     await clLoadThenRender();
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = "🔁 Kalendarni qayta qurish (uy+mehmon)";
+    btn.innerHTML = `${ICON.get("recycle", 16)} Kalendarni qayta qurish (uy+mehmon)`;
     showToast("Xato: " + clDrawErrorText(e.message));
   }
 }
@@ -94,12 +96,12 @@ async function clAdminDraw(btn) {
   btn.textContent = "Qur'a o'tkazilmoqda…";  // vizual javob (qoida 40)
   try {
     const r = await apiFetch("/cl/draw", { method: "POST" });
-    showToast(`Qur'a o'tkazildi ✅ ${r.groups} guruh, ${r.matches} o'yin`);
+    showToast(`Qur'a o'tkazildi: ${r.groups} guruh, ${r.matches} o'yin`);
     CL.section = "home";
     await clLoadThenRender();
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = "🎲 Qur'a o'tkazish";
+    btn.innerHTML = `${ICON.get("dice", 16)} Qur'a o'tkazish`;
     showToast("Xato: " + clDrawErrorText(e.message));
   }
 }
@@ -111,12 +113,12 @@ async function clAdminStart(btn) {
   btn.textContent = "Boshlanmoqda…";
   try {
     const r = await apiFetch("/cl/rounds/start", { method: "POST" });
-    showToast(`Boshlandi ✅ ${r.current_matchday}-tur ochildi`);
+    showToast(`Boshlandi: ${r.current_matchday}-tur ochildi`);
     CL.section = "profile";
     await clLoadProfile();
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = "▶️ O'yinlarni boshlash";
+    btn.innerHTML = `${ICON.get("play", 16)} O'yinlarni boshlash`;
     showToast("Xato: " + clDrawErrorText(e.message));
   }
 }

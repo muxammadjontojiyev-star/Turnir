@@ -23,7 +23,7 @@ function clRenderHome() {
     { v: members.length, l: "ISHTIROKCHI" },
     { v: CL_GROUP_COUNT, l: "GURUHLAR" },
     { v: g.season ?? "—", l: "MAVSUM" },
-  ], CL.meParticipant ? "🎟 Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
+  ], CL.meParticipant ? "Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
 
   let chips = `<div class="section-label">GURUH TANLASH</div><div class="cl-group-grid">`;
   for (let n = 1; n <= CL_GROUP_COUNT; n++) {
@@ -70,7 +70,7 @@ function clRenderHomeBeforeDraw() {
     { v: qs.length, l: "KVALIFIKANT" },
     { v: CL_GROUP_COUNT, l: "GURUHLAR" },
     { v: CL_GROUP_SIZE, l: "HAR GURUHDA" },
-  ], CL.meParticipant ? "🎟 Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
+  ], CL.meParticipant ? "Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
 
   if (!qs.length) {
     return `${hero}<div class="card">Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 5 liga bo'yicha top-6 va eng yaxshi 2 ta 7-o'rin (jami 32) shu yerda ko'rinadi.</div>${clRenderRules()}`;
@@ -101,7 +101,7 @@ function clRenderRules() {
         <li>Bir tomon kiritgan, ikkinchisi tasdiqlamagan natija deadline'da <b>avtomatik tasdiqlanadi</b>.</li>
         <li>Ochko: g'alaba — <b>3</b>, durang — <b>1</b>, mag'lubiyat — <b>0</b>.</li>
         <li>Saralash: ochko → gol farqi → urilgan gollar.</li>
-        <li>Natijani faqat <b>ochiq turda</b> kiritish mumkin; yopiq turlar 🔒 belgisi bilan ko'rinadi.</li>
+        <li>Natijani faqat <b>ochiq turda</b> kiritish mumkin; yopiq turlar qulf belgisi bilan ko'rinadi.</li>
       </ul>
     </div>`;
 }
