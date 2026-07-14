@@ -3896,6 +3896,19 @@ tr.is-me .div-rating-user { color: #fff; }
 /* ChL VS-oynasi logolari (cl_chat.js) */
 .cl-vs-logo { display: flex; align-items: center; justify-content: center; height: 80px; }
 
+/* ChL: o'yin kartasi — 2 qatorli tartib (yozuvlar logo ustiga chiqmaydi) */
+.cl-match-wrap {
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px; padding: 10px 12px; margin-bottom: 10px;
+}
+.cl-match-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.cl-match-round { font-size: 12px; font-weight: 700; opacity: .85; }
+.cl-match-head .match-status { margin-left: auto; }
+.cl-match-body { display: flex; align-items: center; gap: 10px; }
+.cl-match-body .match-center {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 14px;
+}
+
 /* ChL: uy/mehmon belgisi (cl.js) */
 .cl-venue {
   display: inline-block; margin-left: 6px; padding: 1px 6px;

@@ -44,32 +44,32 @@ async function clLoadAdminPanel() {
       </button>
       ${drawn ? `
       <div style="font-size:12.5px;opacity:.75;margin:12px 0 8px">
-        Qaytish (mehmon) o'yinlari: eski qur'a bir doira bo'lsa, yetishmayotgan
-        javob o'yinlarini qo'shadi. Takror bosilsa hech narsa o'zgarmaydi.
+        Kalendarni qayta qurish: guruh tarkibi saqlanadi, o'yinlar ikki doira
+        (uy + mehmon, 6 tur) qilib qaytadan yoziladi. Natija kiritilgan bo'lsa ishlamaydi.
       </div>
-      <button class="btn" id="cl-admin-return">🔁 Qaytish o'yinlarini qo'shish</button>` : ""}
+      <button class="btn" id="cl-admin-rebuild">🔁 Kalendarni qayta qurish (uy+mehmon)</button>` : ""}
     </div>`;
 
   const btn = document.getElementById("cl-admin-draw");
   if (btn && !drawn) btn.addEventListener("click", () => void clAdminDraw(btn));
 
-  const rbtn = document.getElementById("cl-admin-return");
-  if (rbtn) rbtn.addEventListener("click", () => void clAdminReturnLeg(rbtn));
+  const rbtn = document.getElementById("cl-admin-rebuild");
+  if (rbtn) rbtn.addEventListener("click", () => void clAdminRebuild(rbtn));
 }
 
-// Qaytish doirasi (uy/mehmon) — mavjud qur'aga qo'shiladi
-async function clAdminReturnLeg(btn) {
-  if (!confirm("Qaytish (mehmon) o'yinlari qo'shilsinmi?")) return;
+// Kalendarni qayta qurish (ikki doira, to'g'ri tur raqamlari)
+async function clAdminRebuild(btn) {
+  if (!confirm("Kalendar qayta qurilsinmi? Barcha (o'ynalmagan) o'yinlar qaytadan yoziladi.")) return;
   btn.disabled = true;
-  btn.textContent = "Qo'shilmoqda…";
+  btn.textContent = "Qayta qurilmoqda…";
   try {
-    const r = await apiFetch("/cl/draw/return-leg", { method: "POST" });
-    showToast(`Qo'shildi ✅ ${r.added} o'yin (${r.groups} guruh)`);
+    const r = await apiFetch("/cl/schedule/rebuild", { method: "POST" });
+    showToast(`Kalendar tayyor ✅ ${r.matches} o'yin (${r.groups} guruh)`);
     CL.section = "home";
     await clLoadThenRender();
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = "🔁 Qaytish o'yinlarini qo'shish";
+    btn.textContent = "🔁 Kalendarni qayta qurish (uy+mehmon)";
     showToast("Xato: " + clDrawErrorText(e.message));
   }
 }
@@ -95,6 +95,6 @@ function clDrawErrorText(reason) {
     already_drawn: "qur'a allaqachon o'tkazilgan",
     no_participants: "kvalifikantlar topilmadi",
     not_drawn: "avval qur'a o'tkazing",
-    nothing_to_add: "barcha qaytish o'yinlari allaqachon mavjud",
+    results_exist: "natija kiritilgan o'yinlar bor — kalendar qayta qurilmaydi",
   })[reason] || reason;
 }

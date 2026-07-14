@@ -236,16 +236,20 @@ function clRenderMatchItem(m) {
     ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">❌ Rad etish</button></div>` : "";
 
   // Uy/mehmon: player1 — uy egasi (cl_matches yozilish tartibi)
-  const venue = clIsMe(m.player1_id)
+  const isHome = clIsMe(m.player1_id);
+  const venue = isHome
     ? `<span class="cl-venue cl-venue--home">UY</span>`
     : `<span class="cl-venue cl-venue--away">MEHMON</span>`;
 
   return `
     <div class="cl-match-wrap">
-      <div class="match-item">
-        <span class="match-names">#${m.matchday}-tur ${venue}</span>
-        <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
+      <div class="cl-match-head">
+        <span class="cl-match-round">${m.matchday}-tur</span>
+        ${venue}
         <span class="match-status ${statusCls}">${statusText}</span>
+      </div>
+      <div class="cl-match-body">
+        <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
         ${action}
       </div>
       ${inputs}${reject}
