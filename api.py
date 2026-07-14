@@ -1344,6 +1344,14 @@ def cl_rounds_start(admin: dict = Depends(get_authenticated_super_admin)):
     return {"status": "ok", **result}
 
 
+@app.get("/cl/scorers")
+def cl_scorers(user: dict = Depends(get_authenticated_user)):
+    """ChL to'purarlari: barcha guruhlar bo'yicha urilgan gollar (confirmed o'yinlar)."""
+    from season_prizes import get_league_season
+    from cl_scorers import cl_top_scorers
+    return {"scorers": cl_top_scorers(get_league_season())}
+
+
 @app.get("/cl/state")
 def cl_state(user: dict = Depends(get_authenticated_user)):
     """ChL tur holati: started, current_matchday, total_matchdays."""
