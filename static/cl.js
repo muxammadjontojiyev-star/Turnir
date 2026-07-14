@@ -235,10 +235,15 @@ function clRenderMatchItem(m) {
   const reject = (m.status === "awaiting_confirmation" && m.submitted_by && !clIsMe(m.submitted_by))
     ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">❌ Rad etish</button></div>` : "";
 
+  // Uy/mehmon: player1 — uy egasi (cl_matches yozilish tartibi)
+  const venue = clIsMe(m.player1_id)
+    ? `<span class="cl-venue cl-venue--home">UY</span>`
+    : `<span class="cl-venue cl-venue--away">MEHMON</span>`;
+
   return `
     <div class="cl-match-wrap">
       <div class="match-item">
-        <span class="match-names">#${m.id}</span>
+        <span class="match-names">#${m.matchday}-tur ${venue}</span>
         <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
         <span class="match-status ${statusCls}">${statusText}</span>
         ${action}

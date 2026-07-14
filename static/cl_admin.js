@@ -42,10 +42,36 @@ async function clLoadAdminPanel() {
       <button class="btn btn--primary" id="cl-admin-draw" ${drawn ? "disabled" : ""}>
         🎲 Qur'a o'tkazish
       </button>
+      ${drawn ? `
+      <div style="font-size:12.5px;opacity:.75;margin:12px 0 8px">
+        Qaytish (mehmon) o'yinlari: eski qur'a bir doira bo'lsa, yetishmayotgan
+        javob o'yinlarini qo'shadi. Takror bosilsa hech narsa o'zgarmaydi.
+      </div>
+      <button class="btn" id="cl-admin-return">🔁 Qaytish o'yinlarini qo'shish</button>` : ""}
     </div>`;
 
   const btn = document.getElementById("cl-admin-draw");
   if (btn && !drawn) btn.addEventListener("click", () => void clAdminDraw(btn));
+
+  const rbtn = document.getElementById("cl-admin-return");
+  if (rbtn) rbtn.addEventListener("click", () => void clAdminReturnLeg(rbtn));
+}
+
+// Qaytish doirasi (uy/mehmon) — mavjud qur'aga qo'shiladi
+async function clAdminReturnLeg(btn) {
+  if (!confirm("Qaytish (mehmon) o'yinlari qo'shilsinmi?")) return;
+  btn.disabled = true;
+  btn.textContent = "Qo'shilmoqda…";
+  try {
+    const r = await apiFetch("/cl/draw/return-leg", { method: "POST" });
+    showToast(`Qo'shildi ✅ ${r.added} o'yin (${r.groups} guruh)`);
+    CL.section = "home";
+    await clLoadThenRender();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "🔁 Qaytish o'yinlarini qo'shish";
+    showToast("Xato: " + clDrawErrorText(e.message));
+  }
 }
 
 async function clAdminDraw(btn) {
@@ -68,5 +94,7 @@ function clDrawErrorText(reason) {
   return ({
     already_drawn: "qur'a allaqachon o'tkazilgan",
     no_participants: "kvalifikantlar topilmadi",
+    not_drawn: "avval qur'a o'tkazing",
+    nothing_to_add: "barcha qaytish o'yinlari allaqachon mavjud",
   })[reason] || reason;
 }

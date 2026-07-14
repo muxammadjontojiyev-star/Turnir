@@ -3895,3 +3895,11 @@ tr.is-me .div-rating-user { color: #fff; }
 
 /* ChL VS-oynasi logolari (cl_chat.js) */
 .cl-vs-logo { display: flex; align-items: center; justify-content: center; height: 80px; }
+
+/* ChL: uy/mehmon belgisi (cl.js) */
+.cl-venue {
+  display: inline-block; margin-left: 6px; padding: 1px 6px;
+  border-radius: 6px; font-size: 9.5px; letter-spacing: .5px; font-weight: 700;
+}
+.cl-venue--home { background: rgba(62,198,240,.15); color: #56d9f5; }
+.cl-venue--away { background: rgba(255,255,255,.08); opacity: .8; }
