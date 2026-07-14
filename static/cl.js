@@ -20,6 +20,25 @@ const CL = {
   profile: null,       // /cl/profile javobi
 };
 
+// ---- Klub logosi (api.js: LEAGUE_CLUBS — qoida 26, DRY) ----
+function clClubLogo(clubName) {
+  if (!clubName || typeof LEAGUE_CLUBS === "undefined") return null;
+  for (const clubs of Object.values(LEAGUE_CLUBS)) {
+    const found = clubs.find(c => c.name === clubName);
+    if (found) return found.logo;
+  }
+  return null;
+}
+
+// Klub logosi <img> (topilmasa — ⚽ fallback, qoida 40)
+function clClubBadge(clubName, size = 24) {
+  const logo = clClubLogo(clubName);
+  if (!logo) return `<span class="cl-club-fallback" style="width:${size}px;height:${size}px">⚽</span>`;
+  return `<img class="cl-club-logo" src="${escHtml(logo)}" alt="${escHtml(clubName)}" `
+       + `title="${escHtml(clubName)}" style="width:${size}px;height:${size}px" `
+       + `onerror="this.outerHTML='<span class=\'cl-club-fallback\' style=\'width:${size}px;height:${size}px\'>⚽</span>'" />`;
+}
+
 // ---- Kirish nuqtasi ----
 function showChampionsLeague() {
   if (typeof hideModeSelect === "function") hideModeSelect();
@@ -173,9 +192,9 @@ function clRenderHome() {
   }
   const cards = Object.keys(byGroup).sort((a, b) => a - b).map(n => {
     const items = byGroup[n].map(p => `
-      <div class="match-item">
+      <div class="match-item cl-group-row">
+        ${clClubBadge(p.club_name, 26)}
         <b>${escHtml(p.nickname || "")}</b>
-        <span style="font-size:12px;opacity:.75">${escHtml(p.club_name || "")}</span>
       </div>`).join("");
     return `<div class="card"><b>Guruh ${n}</b>${items}</div>`;
   }).join("");
@@ -194,7 +213,7 @@ function clRenderRating() {
   const rows = (CL.rating || []).map((p, i) => `
     <tr>
       <td class="rank-${i + 1}">${i + 1}</td>
-      <td>${escHtml(p.nickname || "")}<div style="font-size:11px;opacity:.65">${escHtml(p.club_name || "")}</div></td>
+      <td><div class="cl-rating-player">${clClubBadge(p.club_name, 22)}<span>${escHtml(p.nickname || "")}</span></div></td>
       <td>${p.played}</td><td>${p.goal_difference > 0 ? "+" : ""}${p.goal_difference}</td>
       <td><b>${p.points}</b></td>
     </tr>`).join("");
@@ -215,41 +234,57 @@ function clRenderMatches() {
   }
   const ms = CL.myMatches || [];
   if (!ms.length) {
-    return `<div class="card">Hozircha o'yinlar yo'q (qur'a kutilmoqda).</div>`;
+    return `<div class="wc-loading-row">Hozircha o'yinlar yo'q (qur'a kutilmoqda).</div>`;
   }
-  return ms.map(m => {
-    const score = (m.score1 !== null && m.score1 !== undefined)
-      ? `${m.score1} : ${m.score2}` : "— : —";
-    let actions = "";
-    if (m.status === "pending") {
-      actions = `
-        <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
-          <input class="score-input" id="cl-s1-${m.id}" type="number" min="0" value="0">
-          <span>:</span>
-          <input class="score-input" id="cl-s2-${m.id}" type="number" min="0" value="0">
-          <button class="btn btn--primary" data-cl-submit="${m.id}">Kiritish</button>
-        </div>`;
-    } else if (m.status === "awaiting_confirmation") {
-      actions = m.submitted_by && !clIsMe(m.submitted_by)
-        ? `<div style="display:flex;gap:6px;margin-top:8px">
-             <button class="btn btn--primary" data-cl-confirm="${m.id}">✅ Tasdiqlash</button>
-             <button class="btn" data-cl-reject="${m.id}">❌ Rad etish</button>
-           </div>`
-        : `<div style="font-size:12px;opacity:.7;margin-top:6px">Raqib tasdig'i kutilmoqda…</div>`;
-    } else if (m.status === "admin_pending") {
-      actions = `<div style="font-size:12px;opacity:.7;margin-top:6px">Admin tasdig'i kutilmoqda…</div>`;
-    }
-    return `
-      <div class="card">
-        <div style="font-size:12px;opacity:.65">Guruh ${m.group_number} · ${m.matchday}-tur · ${clStatusLabel(m.status)}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-          <b>${escHtml(m.player1_name)}</b>
-          <span style="font-weight:800">${score}</span>
-          <b>${escHtml(m.player2_name)}</b>
-        </div>
-        ${actions}
-      </div>`;
-  }).join("");
+  return `<div class="matches-list">${ms.map(clRenderMatchItem).join("")}</div>`;
+}
+
+// Bitta o'yin kartasi (worldcup_matches.js — wcRenderMatchItem naqshi, qoida 10)
+function clRenderMatchItem(m) {
+  const hasScore = (m.score1 !== null && m.score1 !== undefined);
+  const score = hasScore ? `${m.score1} : ${m.score2}` : "— : —";
+  const center = `
+    <span class="cl-mc-logo">${clClubBadge(m.player1_club, 26)}</span>
+    <span class="match-score">${score}</span>
+    <span class="cl-mc-logo">${clClubBadge(m.player2_club, 26)}</span>`;
+
+  let statusCls = "status--pending";
+  let statusText = "KUTILMOQDA";
+  if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting"; statusText = "TASDIQ"; }
+  if (m.status === "admin_pending")         { statusCls = "status--awaiting"; statusText = "ADMIN TASDIG'I"; }
+  if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = "TASDIQLANDI"; }
+
+  let action = "";
+  if (m.status === "pending") {
+    action = `<button class="match-action-btn" data-cl-open="${m.id}">Natija</button>`;
+  } else if (m.status === "awaiting_confirmation") {
+    action = (m.submitted_by && !clIsMe(m.submitted_by))
+      ? `<button class="match-action-btn" data-cl-confirm="${m.id}">✔</button>`
+      : `<span class="match-waiting">Kutilmoqda</span>`;
+  }
+
+  // Natija kiritish qatori — faqat "Natija" bosilganda ochiladi (hidden)
+  const inputs = (m.status === "pending") ? `
+    <div class="cl-score-row hidden" id="cl-score-${m.id}">
+      <input class="score-input" id="cl-s1-${m.id}" type="number" min="0" max="99" value="0">
+      <span class="score-separator">:</span>
+      <input class="score-input" id="cl-s2-${m.id}" type="number" min="0" max="99" value="0">
+      <button class="btn btn--primary" data-cl-submit="${m.id}">Kiritish</button>
+    </div>` : "";
+
+  const reject = (m.status === "awaiting_confirmation" && m.submitted_by && !clIsMe(m.submitted_by))
+    ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">❌ Rad etish</button></div>` : "";
+
+  return `
+    <div class="cl-match-wrap">
+      <div class="match-item">
+        <span class="match-names">#${m.id}</span>
+        <div class="match-center">${center}</div>
+        <span class="match-status ${statusCls}">${statusText}</span>
+        ${action}
+      </div>
+      ${inputs}${reject}
+    </div>`;
 }
 
 function clIsMe(userId) {
@@ -264,6 +299,12 @@ function clStatusLabel(s) {
 
 // ---- Eventlar ----
 function clBindSectionEvents(root) {
+  root.querySelectorAll("[data-cl-open]").forEach(b =>
+    b.addEventListener("click", () => {
+      const row = document.getElementById(`cl-score-${b.dataset.clOpen}`);
+      if (row) { row.classList.toggle("hidden"); }
+    }));
+
   root.querySelectorAll("[data-cl-group]").forEach(b =>
     b.addEventListener("click", () => {
       CL.ratingGroup = Number(b.dataset.clGroup);

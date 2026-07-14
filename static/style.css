@@ -3844,19 +3844,17 @@ tr.is-me .div-rating-user { color: #fff; }
   font-size: 10px; opacity: .6; font-weight: 600; margin-top: 1px;
 }
 
-/* ==== ChL profil kartochkasi (cl_profile.js) ==== */
-.cl-avatar {
-  width: 56px; height: 56px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 20px; flex: 0 0 56px;
-  background: linear-gradient(135deg, #6d5efc, #3ec6f0); color: #fff;
-  overflow: hidden;
+/* ==== ChL: klub logolari va o'yin kartalari (cl.js / cl_profile.js) ==== */
+.cl-club-logo { object-fit: contain; flex-shrink: 0; border-radius: 4px; }
+.cl-club-fallback {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; opacity: .6; font-size: 15px;
 }
-.cl-stats {
-  display: flex; justify-content: space-between; gap: 4px;
-  margin-top: 12px; padding-top: 10px;
-  border-top: 1px solid rgba(255,255,255,.08);
+.cl-group-row { display: flex; align-items: center; gap: 10px; }
+.cl-rating-player { display: flex; align-items: center; gap: 8px; }
+.cl-mc-logo { display: inline-flex; align-items: center; }
+.cl-match-wrap { margin-bottom: 8px; }
+.cl-score-row {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 10px 10px;
 }
-.cl-stats > div { display: flex; flex-direction: column; align-items: center; }
-.cl-stats b { font-size: 15px; }
-.cl-stats span { font-size: 10.5px; opacity: .6; margin-top: 2px; }

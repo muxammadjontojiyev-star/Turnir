@@ -14,48 +14,51 @@ async function clLoadProfile() {
   await clLoadMatches();   // Profil ostida o'yinlar ko'rinadi (renderni o'zi chaqiradi)
 }
 
-// ---- PROFIL: kartochka + pastda o'yinlarim ----
+// ---- PROFIL: WC naqshi (card--profile + stats-grid + matches-list) ----
 function clRenderProfile() {
   const adminBox = `<div id="cl-admin-panel" class="hidden"></div>`;  // faqat bosh admin (cl_admin.js)
   const p = CL.profile;
   if (!p) return `${adminBox}<div class="card">Profil yuklanmadi. Qayta urinib ko'ring.</div>`;
-
   if (!p.registered) {
     return `${adminBox}<div class="card">Siz Chempionlar ligasi ishtirokchisi emassiz.</div>`;
   }
 
   const letter = (p.nickname || "?")[0].toUpperCase();
-  const avatar = `
-    <div class="cl-avatar" id="cl-avatar">${escHtml(letter)}</div>`;
-
-  const groupLine = p.group_number
-    ? `Guruh ${p.group_number}${p.position ? ` · ${p.position}-o'rin` : ""}`
-    : `Qur'a kutilmoqda`;
-
-  const stats = p.group_number ? `
-    <div class="cl-stats">
-      <div><b>${p.played}</b><span>O</span></div>
-      <div><b>${p.wins}</b><span>G'</span></div>
-      <div><b>${p.draws}</b><span>D</span></div>
-      <div><b>${p.losses}</b><span>M</span></div>
-      <div><b>${p.goal_difference > 0 ? "+" : ""}${p.goal_difference}</b><span>GF</span></div>
-      <div><b>${p.points}</b><span>Ochko</span></div>
-    </div>` : "";
+  const groupLabel = p.group_number ? `Guruh ${p.group_number}` : "Qur'a kutilmoqda";
+  const pos = p.position ? `#${p.position}` : "—";
 
   return `
     ${adminBox}
-    <div class="card cl-profile-card">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${avatar}
-        <div>
-          <b style="font-size:16px">${escHtml(p.nickname || "Ishtirokchi")}</b>
-          <div style="font-size:12.5px;opacity:.75">${escHtml(p.club_name || "Klub tanlanmagan")}</div>
-          <div style="font-size:12px;opacity:.65">${escHtml(groupLine)}</div>
-        </div>
+    <div class="card card--profile">
+      <div class="profile-avatar" id="cl-avatar">${escHtml(letter)}</div>
+      <div class="profile-info">
+        <h2 class="profile-nickname">${escHtml(p.nickname || "Ishtirokchi")}</h2>
+        <span class="profile-league">${escHtml(groupLabel)}</span>
       </div>
-      ${stats}
+      <div class="profile-club-badge">${clClubBadge(p.club_name, 44)}</div>
     </div>
-    <div style="font-size:13px;opacity:.75;margin:12px 2px 6px"><b>O'yinlarim</b></div>
+
+    <div class="section-label">STATISTIKA</div>
+    <div class="stats-grid">
+      <div class="stat-card stat-card--primary">
+        <span class="stat-card-value neon-cyan">${pos}</span>
+        <span class="stat-card-label">O'rin</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value neon-cyan">${p.wins}</span>
+        <span class="stat-card-label">G'alaba</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value">${p.draws}</span>
+        <span class="stat-card-label">Durang</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-value neon-red">${p.losses}</span>
+        <span class="stat-card-label">Mag'lubiyat</span>
+      </div>
+    </div>
+
+    <div class="section-label">MENING O'YINLARIM</div>
     ${clRenderMatches()}`;
 }
 
