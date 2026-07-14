@@ -69,6 +69,7 @@ from queries import (
 from schedule import generate_league_schedule, get_league_player_ids
 from rating import calculate_league_rating, get_player_position
 from notify import notify_members, notify_user
+from texts import t
 from membership import is_user_subscribed
 from admin_roles import (
     is_super_admin, is_scope_admin, add_admin, remove_admin, list_admins,
@@ -885,10 +886,13 @@ async def wc_post_match_message(
     if notify is not None:
         try:
             recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            lang = recipient.get("language") if recipient else None
             await notify_user(
                 notify["recipient_telegram_id"],
                 "notify_chat_message",
-                recipient.get("language") if recipient else None,
+                lang,
+                open_button_key="btn_open_app",
+                mode=t("mode_name_worldcup", lang),
                 preview=notify["text_preview"],
             )
         except Exception as exc:
@@ -1487,13 +1491,35 @@ def div_chat_get(match_id: int, user: dict = Depends(get_authenticated_user)):
 
 
 @app.post("/div/matches/{match_id}/messages")
-def div_chat_send(match_id: int, text: str = Body(..., embed=True),
-                  user: dict = Depends(get_authenticated_user)):
-    """Divizion o'yin chatiga xabar yuborish. Body: {"text": "..."}."""
+async def div_chat_send(match_id: int, text: str = Body(..., embed=True),
+                        user: dict = Depends(get_authenticated_user)):
+    """
+    Divizion o'yin chatiga xabar yuborish. Body: {"text": "..."}.
+
+    Xabar yozilgach raqibga bot orqali bildirishnoma boradi (liga/WC bilan bir xil):
+    qaysi rejimdan kelgani ("Divizion") va ilovani ochish tugmasi bilan.
+    """
     from division_chat import div_send_message
-    success, reason = div_send_message(match_id, user["id"], text)
+    success, reason, notify = div_send_message(match_id, user["id"], text)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
+
+    # Bot bildirishnomasi (raqibga). Xato bo'lsa ham xabar yozilgan — javobni buzmaymiz.
+    if notify is not None:
+        try:
+            recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            lang = recipient.get("language") if recipient else None
+            await notify_user(
+                notify["recipient_telegram_id"],
+                "notify_chat_message",
+                lang,
+                open_button_key="btn_open_app",
+                mode=t("mode_name_division", lang),
+                preview=notify["text_preview"],
+            )
+        except Exception as exc:
+            logger.warning("Divizion chat bildirishnomasi yuborilmadi: %s", exc)
+
     return {"status": "ok"}
 
 
@@ -1775,10 +1801,13 @@ async def post_match_message(
     if notify is not None:
         try:
             recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            lang = recipient.get("language") if recipient else None
             await notify_user(
                 notify["recipient_telegram_id"],
                 "notify_chat_message",
-                recipient.get("language") if recipient else None,
+                lang,
+                open_button_key="btn_open_app",      # ilovani tez ochish tugmasi
+                mode=t("mode_name_league", lang),    # qaysi rejimdan — aniq ko'rsatiladi
                 preview=notify["text_preview"],
             )
         except Exception as exc:

@@ -20,27 +20,48 @@ def _match_participants(cursor, match_id: int) -> tuple[int, int | None] | None:
     return row["player1_id"], row["player2_id"]
 
 
-def div_send_message(match_id: int, sender_id: int, text: str) -> tuple[bool, str]:
-    """Sabablar: ok, match_not_found, not_participant, empty, too_long."""
+def div_send_message(match_id: int, sender_id: int,
+                     text: str) -> tuple[bool, str, dict | None]:
+    """
+    Divizion chatiga xabar yozadi.
+
+    Qaytaradi: (ok, sabab, notify)
+      notify — raqibga bot bildirishnomasi uchun (liga bilan bir xil shakl):
+        {"recipient_telegram_id": ..., "text_preview": "..."}
+      Bye o'yinda (raqib yo'q) yoki xatoda None.
+
+    Sabablar: ok, match_not_found, not_participant, empty, too_long.
+    """
     text = (text or "").strip()
     if not text:
-        return False, "empty"
+        return False, "empty", None
     if len(text) > MAX_MESSAGE_LEN:
-        return False, "too_long"
+        return False, "too_long", None
     conn = get_connection()
     cursor = conn.cursor()
     try:
         parts = _match_participants(cursor, match_id)
         if parts is None:
-            return False, "match_not_found"
+            return False, "match_not_found", None
         if sender_id not in parts:
-            return False, "not_participant"
+            return False, "not_participant", None
         cursor.execute(
             "INSERT INTO div_messages (match_id, sender_id, text) VALUES (?, ?, ?)",
             (match_id, sender_id, text),
         )
         conn.commit()
-        return True, "ok"
+
+        # Raqibning telegram_id'si (bot bildirishnomasi uchun)
+        opp_id = parts[1] if parts[0] == sender_id else parts[0]
+        notify = None
+        if opp_id is not None:      # bye o'yinda raqib yo'q
+            cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (opp_id,))
+            row = cursor.fetchone()
+            if row and row["telegram_id"]:
+                preview = text if len(text) <= 80 else text[:77] + "…"
+                notify = {"recipient_telegram_id": row["telegram_id"],
+                          "text_preview": preview}
+        return True, "ok", notify
     finally:
         conn.close()
 

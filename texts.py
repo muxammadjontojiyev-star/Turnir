@@ -158,9 +158,36 @@ TEXTS = {
         LANGUAGE_EN: "📝 A result was submitted, do you confirm? Open the app to confirm or reject the match result.",
     },
     "notify_chat_message": {
-        LANGUAGE_UZ: "💬 Raqib sizga ilovadan xabar yubordi:\n«{preview}»\nJavob berish uchun ilovani oching.",
-        LANGUAGE_RU: "💬 Соперник отправил вам сообщение из приложения:\n«{preview}»\nОткройте приложение, чтобы ответить.",
-        LANGUAGE_EN: "💬 Your opponent sent you a message from the app:\n«{preview}»\nOpen the app to reply.",
+        LANGUAGE_UZ: "💬 {mode} raqibingiz sizga xabar yubordi:\n«{preview}»\nJavob berish uchun ilovani oching.",
+        LANGUAGE_RU: "💬 Ваш соперник ({mode}) отправил вам сообщение:\n«{preview}»\nОткройте приложение, чтобы ответить.",
+        LANGUAGE_EN: "💬 Your {mode} opponent sent you a message:\n«{preview}»\nOpen the app to reply.",
+    },
+    # Xabar ostidagi "ilovani ochish" tugmasi (chat bildirishnomalari uchun)
+    "btn_open_app": {
+        LANGUAGE_UZ: "📲 Ilovani ochish",
+        LANGUAGE_RU: "📲 Открыть приложение",
+        LANGUAGE_EN: "📲 Open the app",
+    },
+    # Rejim nomlari — bildirishnomada qaysi turnirdan xabar kelgani ko'rinsin
+    "mode_name_league": {
+        LANGUAGE_UZ: "Liga",
+        LANGUAGE_RU: "Лига",
+        LANGUAGE_EN: "League",
+    },
+    "mode_name_worldcup": {
+        LANGUAGE_UZ: "Jahon Chempionati",
+        LANGUAGE_RU: "Чемпионат мира",
+        LANGUAGE_EN: "World Cup",
+    },
+    "mode_name_cl": {
+        LANGUAGE_UZ: "Chempionlar ligasi",
+        LANGUAGE_RU: "Лига чемпионов",
+        LANGUAGE_EN: "Champions League",
+    },
+    "mode_name_division": {
+        LANGUAGE_UZ: "Divizion",
+        LANGUAGE_RU: "Дивизион",
+        LANGUAGE_EN: "Division",
     },
     "notify_matchday_open": {
         LANGUAGE_UZ: "⚽️ {matchday}-tur ochildi! Bugungi o'yiningizni o'ynab, natijani ilovaga kiriting. Keyingi tur ertaga soat 23:30 da ochiladi.",
