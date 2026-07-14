@@ -41,7 +41,8 @@ function clRenderHome() {
 
   return `${hero}${chips}
     <div class="section-label">GURUHDAGI ISHTIROKCHILAR</div>
-    <div class="matches-list">${list}</div>`;
+    <div class="matches-list">${list}</div>
+    ${clRenderRules()}`;
 }
 
 // Hero karta (WC bosh kartasi naqshi: sarlavha + 3 ta stat + holat tugmasi)
@@ -72,7 +73,7 @@ function clRenderHomeBeforeDraw() {
   ], CL.meParticipant ? "🎟 Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
 
   if (!qs.length) {
-    return `${hero}<div class="card">Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 5 liga bo'yicha top-6 va eng yaxshi 2 ta 7-o'rin (jami 32) shu yerda ko'rinadi.</div>`;
+    return `${hero}<div class="card">Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 5 liga bo'yicha top-6 va eng yaxshi 2 ta 7-o'rin (jami 32) shu yerda ko'rinadi.</div>${clRenderRules()}`;
   }
   const rows = qs.map(q => `
     <div class="match-item cl-group-row">
@@ -81,5 +82,26 @@ function clRenderHomeBeforeDraw() {
     </div>`).join("");
   return `${hero}
     <div class="section-label">KVALIFIKANTLAR (${qs.length}/32)</div>
-    <div class="matches-list">${rows}</div>`;
+    <div class="matches-list">${rows}</div>
+    ${clRenderRules()}`;
+}
+
+// ---- QOIDALAR ----
+function clRenderRules() {
+  return `
+    <div class="section-label">QOIDALAR</div>
+    <div class="card cl-rules">
+      <ul>
+        <li>Chempionlar ligasida liga mavsumi bo'yicha eng ko'p ochko to'plagan <b>32 ta</b> ishtirokchi qatnashadi.</li>
+        <li>Qur'a orqali ular <b>${CL_GROUP_COUNT} ta guruhga</b>, har biriga <b>${CL_GROUP_SIZE} tadan</b> tasodifiy taqsimlanadi.</li>
+        <li>Guruhda har raqib bilan <b>2 marta</b> o'ynaladi: bir marta <b>uy</b>, bir marta <b>mehmon</b> (jami 6 o'yin).</li>
+        <li>Kuniga <b>bitta tur</b> o'ynaladi. Turlar admin ruxsatidan keyin ochiladi.</li>
+        <li>Deadline — <b>23:30</b> (Toshkent). Shu vaqtda joriy tur yopiladi va keyingisi ochiladi.</li>
+        <li>Deadlinegacha natija kiritilmagan o'yin <b>0:0 durang</b> bilan yopiladi.</li>
+        <li>Bir tomon kiritgan, ikkinchisi tasdiqlamagan natija deadline'da <b>avtomatik tasdiqlanadi</b>.</li>
+        <li>Ochko: g'alaba — <b>3</b>, durang — <b>1</b>, mag'lubiyat — <b>0</b>.</li>
+        <li>Saralash: ochko → gol farqi → urilgan gollar.</li>
+        <li>Natijani faqat <b>ochiq turda</b> kiritish mumkin; yopiq turlar 🔒 belgisi bilan ko'rinadi.</li>
+      </ul>
+    </div>`;
 }

@@ -175,7 +175,7 @@ function clRenderRating() {
   const rows = (CL.rating || []).map((p, i) => `
     <tr>
       <td class="rank-${i + 1}">${i + 1}</td>
-      <td><div class="cl-rating-player">${clClubBadge(p.club_name, 22)}<span>${escHtml(p.nickname || "")}</span></div></td>
+      <td><div class="cl-rating-player" data-cl-player="${p.user_id}">${clClubBadge(p.club_name, 22)}<span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}</span></div></td>
       <td>${p.played}</td><td>${p.goal_difference > 0 ? "+" : ""}${p.goal_difference}</td>
       <td><b>${p.points}</b></td>
     </tr>`).join("");
@@ -278,6 +278,10 @@ function clStatusLabel(s) {
 
 // ---- Eventlar ----
 function clBindSectionEvents(root) {
+  // Reytingdagi o'yinchiga bosilsa — uning ChL profili (cl_player.js)
+  root.querySelectorAll("[data-cl-player]").forEach(el =>
+    el.addEventListener("click", () => clOpenPlayerModal(Number(el.dataset.clPlayer))));
+
   root.querySelectorAll("[data-cl-home-group]").forEach(b =>
     b.addEventListener("click", () => {
       CL.homeGroup = Number(b.dataset.clHomeGroup);

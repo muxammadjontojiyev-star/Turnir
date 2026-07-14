@@ -3863,7 +3863,7 @@ tr.is-me .div-rating-user { color: #fff; }
 .cl-hero {
   position: relative; border-radius: 18px; overflow: hidden;
   margin-bottom: 14px; min-height: 200px;
-  background: url("cl-banner.jpg") center/cover no-repeat;
+  background: url("cl-hero.jpg") center/cover no-repeat;
   border: 1px solid rgba(140,120,255,.35);
 }
 .cl-hero-overlay {
@@ -3919,3 +3919,39 @@ tr.is-me .div-rating-user { color: #fff; }
 
 /* ChL: yopiq tur belgisi */
 .cl-locked { opacity: .5; font-size: 16px; padding: 0 8px; }
+
+/* ChL: reyting — bosiluvchi o'yinchi qatori */
+.cl-rating-player { cursor: pointer; }
+.cl-rating-user { color: #56d9f5; }
+/* ChL: qoidalar kartasi */
+.cl-rules { margin-top: 14px; }
+.cl-rules ul { margin: 6px 0 0; padding-left: 18px; }
+.cl-rules li { font-size: 13px; line-height: 1.65; opacity: .85; }
+/* ChL: o'yinchi profil modali */
+.cl-pm-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.cl-pm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.cl-pm-stat {
+  display: flex; flex-direction: column; align-items: center; padding: 10px 4px;
+  border-radius: 12px; background: rgba(255,255,255,.05);
+}
+.cl-pm-stat b { font-size: 16px; }
+.cl-pm-stat span { font-size: 10px; opacity: .6; margin-top: 2px; }
+
+/* ChL: Reyting — o'yinchi qatori bosiluvchi (profil oynasi) */
+.cl-rating-player { cursor: pointer; }
+.cl-rating-user { font-size: 13px; }
+.cl-rating-user b { display: block; font-size: 13.5px; }
+.cl-rating-user span { font-size: 11px; opacity: .6; }
+
+/* ChL: Qoidalar kartasi (cl_home.js) */
+.cl-rules { margin-top: 14px; }
+.cl-rules ul { margin: 6px 0 0; padding-left: 18px; }
+.cl-rules li { font-size: 12.8px; line-height: 1.65; opacity: .85; }
+
+/* ChL: ishtirokchi profil oynasi (cl_player.js) */
+.cl-player-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.cl-player-name { font-size: 17px; font-weight: 700; }
+.cl-player-user { font-size: 12.5px; color: #56d9f5; }
+.cl-player-club { font-size: 12px; opacity: .7; }
+.cl-rating-player[data-cl-player] { cursor: pointer; }
+.cl-rating-player[data-cl-player]:active { opacity: .7; }
