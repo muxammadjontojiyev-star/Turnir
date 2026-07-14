@@ -21,6 +21,7 @@ const CL = {
   rating: [],
   myMatches: [],
   meParticipant: false,
+  state: null,         // /cl/matches/my → tur holati (started, current_matchday)
   profile: null,       // /cl/profile javobi
 };
 
@@ -108,7 +109,8 @@ async function clLoadMatches() {
     const d = await apiFetch("/cl/matches/my");
     CL.myMatches = d.matches || [];
     CL._myId = d.me_id ?? null;
-  } catch (_) { CL.myMatches = []; CL._myId = null; }
+    CL.state = d.state || null;
+  } catch (_) { CL.myMatches = []; CL._myId = null; CL.state = null; }
   renderChampionsLeague();
 }
 
@@ -210,13 +212,21 @@ function clRenderMatchItem(m) {
 
   let statusCls = "status--pending";
   let statusText = "KUTILMOQDA";
+  if (m.status === "pending" && !(CL.state?.started && m.matchday === CL.state.current_matchday)) {
+    statusText = "YOPIQ";
+  }
   if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting"; statusText = "TASDIQ"; }
   if (m.status === "admin_pending")         { statusCls = "status--awaiting"; statusText = "ADMIN TASDIG'I"; }
   if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = "TASDIQLANDI"; }
 
+  const st = CL.state || {};
+  const isOpenRound = !!st.started && m.matchday === st.current_matchday;
+
   let action = "";
   if (m.status === "pending") {
-    action = `<button class="match-action-btn" data-cl-open="${m.id}">Natija</button>`;
+    action = isOpenRound
+      ? `<button class="match-action-btn" data-cl-open="${m.id}">Natija</button>`
+      : `<span class="cl-locked" title="Bu tur hali ochilmagan">🔒</span>`;
   } else if (m.status === "awaiting_confirmation") {
     action = (m.submitted_by && !clIsMe(m.submitted_by))
       ? `<button class="match-action-btn" data-cl-confirm="${m.id}">✔</button>`
@@ -224,7 +234,7 @@ function clRenderMatchItem(m) {
   }
 
   // Natija kiritish qatori — faqat "Natija" bosilganda ochiladi (hidden)
-  const inputs = (m.status === "pending") ? `
+  const inputs = (m.status === "pending" && isOpenRound) ? `
     <div class="cl-score-row hidden" id="cl-score-${m.id}">
       <input class="score-input" id="cl-s1-${m.id}" type="number" min="0" max="99" value="0">
       <span class="score-separator">:</span>

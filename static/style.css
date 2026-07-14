@@ -3916,3 +3916,6 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .cl-venue--home { background: rgba(62,198,240,.15); color: #56d9f5; }
 .cl-venue--away { background: rgba(255,255,255,.08); opacity: .8; }
+
+/* ChL: yopiq tur belgisi */
+.cl-locked { opacity: .5; font-size: 16px; padding: 0 8px; }

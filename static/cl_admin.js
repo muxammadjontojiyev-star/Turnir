@@ -30,6 +30,8 @@ async function clLoadAdminPanel() {
   }
 
   const drawn = !!(CL.groups && CL.groups.drawn);
+  const st = CL.state || {};
+  const started = !!st.started;
   panel.classList.remove("hidden");
   panel.innerHTML = `
     <div class="card" style="border-color:rgba(245,197,66,.45)">
@@ -47,7 +49,16 @@ async function clLoadAdminPanel() {
         Kalendarni qayta qurish: guruh tarkibi saqlanadi, o'yinlar ikki doira
         (uy + mehmon, 6 tur) qilib qaytadan yoziladi. Natija kiritilgan bo'lsa ishlamaydi.
       </div>
-      <button class="btn" id="cl-admin-rebuild">🔁 Kalendarni qayta qurish (uy+mehmon)</button>` : ""}
+      <button class="btn" id="cl-admin-rebuild">🔁 Kalendarni qayta qurish (uy+mehmon)</button>
+
+      <div style="font-size:12.5px;opacity:.75;margin:12px 0 8px">
+        ${started
+          ? `O'yinlar boshlangan. Joriy tur: <b>${st.current_matchday}</b> / ${st.total_matchdays}. Har kuni 23:30 (Toshkent) da joriy tur yopiladi (kiritilmagan o'yinlar 0:0) va keyingisi ochiladi.`
+          : "O'yinlarni boshlash: 1-tur ochiladi. Keyingi turlar har kuni 23:30 da avtomatik ochiladi."}
+      </div>
+      <button class="btn btn--primary" id="cl-admin-start" ${started ? "disabled" : ""}>
+        ▶️ O'yinlarni boshlash
+      </button>` : ""}
     </div>`;
 
   const btn = document.getElementById("cl-admin-draw");
@@ -55,6 +66,9 @@ async function clLoadAdminPanel() {
 
   const rbtn = document.getElementById("cl-admin-rebuild");
   if (rbtn) rbtn.addEventListener("click", () => void clAdminRebuild(rbtn));
+
+  const sbtn = document.getElementById("cl-admin-start");
+  if (sbtn && !started) sbtn.addEventListener("click", () => void clAdminStart(sbtn));
 }
 
 // Kalendarni qayta qurish (ikki doira, to'g'ri tur raqamlari)
@@ -90,11 +104,30 @@ async function clAdminDraw(btn) {
   }
 }
 
+// Turlarni boshlash (1-tur ochiladi)
+async function clAdminStart(btn) {
+  if (!confirm("O'yinlar boshlansinmi? 1-tur ochiladi.")) return;
+  btn.disabled = true;
+  btn.textContent = "Boshlanmoqda…";
+  try {
+    const r = await apiFetch("/cl/rounds/start", { method: "POST" });
+    showToast(`Boshlandi ✅ ${r.current_matchday}-tur ochildi`);
+    CL.section = "profile";
+    await clLoadProfile();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "▶️ O'yinlarni boshlash";
+    showToast("Xato: " + clDrawErrorText(e.message));
+  }
+}
+
 function clDrawErrorText(reason) {
   return ({
     already_drawn: "qur'a allaqachon o'tkazilgan",
     no_participants: "kvalifikantlar topilmadi",
     not_drawn: "avval qur'a o'tkazing",
     results_exist: "natija kiritilgan o'yinlar bor — kalendar qayta qurilmaydi",
+    already_started: "o'yinlar allaqachon boshlangan",
+    matchday_locked: "bu tur hali ochilmagan",
   })[reason] || reason;
 }
