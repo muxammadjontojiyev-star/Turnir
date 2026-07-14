@@ -288,6 +288,22 @@ def init_db():
         "CREATE INDEX IF NOT EXISTS idx_div_messages_match ON div_messages(match_id)"
     )
 
+    # === cl_messages (ChL o'yin ichidagi chat — div_messages naqshi) ===
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES cl_matches(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_cl_messages_match ON cl_messages(match_id)"
+    )
+
     # === Migratsiyalar (qoida #31 — baza qo'lda o'zgartirilmaydi) ===
     # M1: eski bazadagi div_messages'ga is_read ustuni qo'shish
     try:

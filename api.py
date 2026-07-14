@@ -1361,6 +1361,62 @@ def cl_confirm(match_id: int, accept: bool = True,
     return {"status": "ok", "match_id": match_id}
 
 
+@app.get("/cl/matches/{match_id}/messages")
+def cl_chat_get(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """ChL o'yin chati xabarlari — liga/divizion chat formati (webchat modal)."""
+    from cl_chat import cl_get_messages
+    msgs = cl_get_messages(match_id, user["id"])
+    if msgs is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"messages": msgs}
+
+
+@app.post("/cl/matches/{match_id}/messages")
+async def cl_chat_send(match_id: int, text: str = Body(..., embed=True),
+                       user: dict = Depends(get_authenticated_user)):
+    """ChL o'yin chatiga xabar yuborish. Body: {"text": "..."} (divizion oqimi bilan bir xil)."""
+    from cl_chat import cl_send_message
+    success, reason, notify = cl_send_message(match_id, user["id"], text)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+
+    if notify is not None:
+        try:
+            recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            lang = recipient.get("language") if recipient else None
+            await notify_user(
+                notify["recipient_telegram_id"],
+                "notify_chat_message",
+                lang,
+                open_button_key="btn_open_app",
+                mode=t("mode_name_cl", lang),
+                preview=notify["text_preview"],
+            )
+        except Exception as exc:
+            logger.warning("ChL chat bildirishnomasi yuborilmadi: %s", exc)
+
+    return {"status": "ok"}
+
+
+@app.post("/cl/matches/{match_id}/typing")
+def cl_chat_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """'Yozmoqda' signali (liga chat bilan bir xil)."""
+    from cl_chat import cl_set_typing
+    if not cl_set_typing(match_id, user["id"]):
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"status": "ok"}
+
+
+@app.get("/cl/matches/{match_id}/state")
+def cl_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """ChL raqibning chat holati (online / yozmoqda / oxirgi ko'rinish)."""
+    from cl_chat import cl_get_chat_state
+    state = cl_get_chat_state(match_id, user["id"])
+    if state is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return state
+
+
 @app.post("/cl/draw")
 def cl_draw_endpoint(admin: dict = Depends(get_authenticated_super_admin)):
     """
