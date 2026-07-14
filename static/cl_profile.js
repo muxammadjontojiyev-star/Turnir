@@ -16,11 +16,12 @@ async function clLoadProfile() {
 
 // ---- PROFIL: kartochka + pastda o'yinlarim ----
 function clRenderProfile() {
+  const adminBox = `<div id="cl-admin-panel" class="hidden"></div>`;  // faqat bosh admin (cl_admin.js)
   const p = CL.profile;
-  if (!p) return `<div class="card">Profil yuklanmadi. Qayta urinib ko'ring.</div>`;
+  if (!p) return `${adminBox}<div class="card">Profil yuklanmadi. Qayta urinib ko'ring.</div>`;
 
   if (!p.registered) {
-    return `<div class="card">Siz Chempionlar ligasi ishtirokchisi emassiz.</div>`;
+    return `${adminBox}<div class="card">Siz Chempionlar ligasi ishtirokchisi emassiz.</div>`;
   }
 
   const letter = (p.nickname || "?")[0].toUpperCase();
@@ -42,6 +43,7 @@ function clRenderProfile() {
     </div>` : "";
 
   return `
+    ${adminBox}
     <div class="card cl-profile-card">
       <div style="display:flex;align-items:center;gap:12px">
         ${avatar}
@@ -59,6 +61,7 @@ function clRenderProfile() {
 
 // Avatar rasmini yuklash (bo'lmasa — harf qoladi, qoida 40)
 function clBindProfile(root) {
+  void clLoadAdminPanel();          // cl_admin.js — rol serverdan tekshiriladi
   const box = root.querySelector("#cl-avatar");
   const uid = CL.profile && CL.profile.user_id;
   if (!box || !uid) return;
