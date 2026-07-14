@@ -3583,7 +3583,23 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
   width: 100%;
   flex: none;                 /* siqilmaydi — doim to'liq ko'rinadi */
   margin-top: 4px;
+  /* MUHIM: celebration.js da "btn-primary" (bitta chiziqcha) yozilgan, loyihada
+     esa "btn--primary" — shuning uchun uslub qo'llanmay tugma xira ko'rinardi.
+     Rangni shu yerda o'zimiz beramiz (ko'k gradient, oq matn). */
+  padding: 13px 18px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  color: #fff;
+  background: linear-gradient(135deg, #7c5cff, #2fb8ff);
+  box-shadow: 0 6px 20px rgba(47, 184, 255, .35);
+  transition: transform .12s ease, box-shadow .2s ease;
 }
+.cel-close:hover { box-shadow: 0 8px 26px rgba(47, 184, 255, .5); }
+.cel-close:active { transform: translateY(1px); }
 /* Sarlavha qismi ham siqilmasin */
 .cel-emoji, .cel-title, .cel-sub { flex: none; }
 
