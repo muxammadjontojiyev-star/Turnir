@@ -1316,6 +1316,18 @@ def cl_rating(group_number: int, user: dict = Depends(get_authenticated_user)):
     return {"group_number": group_number, "rating": cl_group_rating(group_number)}
 
 
+@app.get("/cl/profile")
+def cl_profile(user: dict = Depends(get_authenticated_user)):
+    """
+    ChL profil kartochkasi (faqat SO'ROVCHINING o'zi — qoida #34):
+    nickname, klub, guruh, guruhdagi o'rni va statistikasi.
+    Avatar: GET /players/{user_id}/photo (alohida, mavjud endpoint).
+    """
+    from season_prizes import get_league_season
+    from cl_profile import cl_get_profile
+    return cl_get_profile(user["id"], get_league_season())
+
+
 @app.get("/cl/matches/my")
 def cl_my_matches(user: dict = Depends(get_authenticated_user)):
     """Foydalanuvchining ChL o'yinlari (joriy mavsum)."""

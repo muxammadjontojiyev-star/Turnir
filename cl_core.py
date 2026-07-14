@@ -89,6 +89,48 @@ def cl_sync_participants(season: int | None = None) -> dict:
         conn.close()
 
 
+def _seed_participants_from_qualifiers(cursor, season: int) -> int:
+    """
+    Qur'a uchun ishtirokchilarni TO'G'RIDAN-TO'G'RI cl_qualifiers'dan oladi
+    (yangi mavsum liga ro'yxatini kutmasdan) va cl_participants'ga yozadi.
+
+    Sabab (qoida #19): kvalifikatsiya huquqi ODAMGA (telegram_id) tegishli;
+    32 kvalifikant qur'ada qatnashishi kerak, ular yangi mavsum ligasiga
+    yozilgan-yozilmaganidan qat'i nazar.
+
+    club_name — agar joriy mavsumda ro'yxatdan o'tgan bo'lsa yangi klubi,
+    aks holda kvalifikatsiya paytidagi snapshot (NULL bo'lishi mumkin).
+    INSERT OR IGNORE — idempotent (qoida #38). Qaytaradi: qo'shilganlar soni.
+    """
+    cursor.execute("SELECT MAX(from_season) AS s FROM cl_qualifiers")
+    row = cursor.fetchone()
+    from_season = row["s"] if row else None
+    if not from_season:
+        return 0
+
+    cursor.execute(
+        """
+        SELECT q.telegram_id, u.id AS user_id, q.nickname, r.club_name
+        FROM cl_qualifiers q
+        JOIN users u ON u.telegram_id = q.telegram_id
+        LEFT JOIN registrations r ON r.user_id = u.id
+        WHERE q.from_season = ?
+        """,
+        (from_season,),
+    )
+    added = 0
+    for r in cursor.fetchall():
+        cursor.execute(
+            "INSERT OR IGNORE INTO cl_participants "
+            "(season, telegram_id, user_id, nickname, club_name) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (season, r["telegram_id"], r["user_id"], r["nickname"], r["club_name"]),
+        )
+        if cursor.rowcount > 0:
+            added += 1
+    return added
+
+
 def cl_draw(season: int | None = None) -> tuple[bool, str | dict]:
     """
     ChL guruh qur'asi: ishtirokchilarni tasodifiy aralashtirib 8 guruhga
@@ -112,8 +154,9 @@ def cl_draw(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, "already_drawn"
 
-        # Qur'adan oldin sinxron shu tranzaksiyadan tashqarida bo'lgan — bu yerda
-        # faqat mavjud ishtirokchilar olinadi
+        # Kvalifikantlarni (32 ta) shu tranzaksiya ichida ishtirokchiga aylantiramiz
+        _seed_participants_from_qualifiers(cursor, season)
+
         cursor.execute(
             "SELECT id, user_id FROM cl_participants WHERE season = ?", (season,)
         )
