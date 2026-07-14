@@ -9,11 +9,15 @@
 //           POST /cl/match/submit-result, /cl/match/confirm
 // ============================================================
 
+const CL_GROUP_COUNT = 8;   // Guruhlar soni (backend: cl_core.CL_GROUPS)
+const CL_GROUP_SIZE  = 4;   // Har guruhdagi ishtirokchi (backend: cl_core.CL_GROUP_SIZE)
+
 const CL = {
   section: "home",     // home | rating | profile | prizes
   groups: null,        // /cl/groups javobi
   qualifiers: null,    // /cl/qualifiers javobi (qur'agacha ko'rsatish uchun)
   ratingGroup: 1,      // Reytingda tanlangan guruh (1..8)
+  homeGroup: 1,        // Asosiy sahifada tanlangan guruh (1..8)
   rating: [],
   myMatches: [],
   meParticipant: false,
@@ -155,56 +159,12 @@ function renderChampionsLeague() {
 }
 
 
-// ---- HOME: guruhlar yoki kvalifikantlar ----
-function clRenderHome() {
-  const g = CL.groups;
-  if (!g) return `<div class="card">Ma'lumot yuklanmadi. Qayta urinib ko'ring.</div>`;
-
-  const meBadge = CL.meParticipant
-    ? `<div class="card" style="border-color:rgba(245,197,66,.5)">🎟 Siz Chempionlar ligasi ishtirokchisisiz!</div>`
-    : "";
-
-  if (!g.drawn) {
-    // Qur'agacha: kvalifikantlar ro'yxati (1-mavsum natijasi bo'yicha)
-    const qs = (CL.qualifiers && CL.qualifiers.qualifiers) || [];
-    if (!qs.length) {
-      return `${meBadge}<div class="card">Chempionlar ligasi kvalifikatsiyasi hali aniqlanmagan. Liga mavsumi yakunlangach, 5 liga bo'yicha top-6 va eng yaxshi 2 ta 7-o'rin (jami 32) shu yerda ko'rinadi.</div>`;
-    }
-    const rows = qs.map(q => `
-      <div class="match-item">
-        <div>
-          <b>${escHtml(q.nickname || "Ishtirokchi")}</b>
-          <div style="font-size:12px;opacity:.7">${escHtml(q.league_name || "")} — ${q.position}-o'rin${q.qualified_via === "best7" ? " (eng yaxshi 7-o'rin)" : ""}</div>
-        </div>
-        <div style="font-size:12px;opacity:.8">${q.points} ochko</div>
-      </div>`).join("");
-    return `${meBadge}
-      <div class="card"><b>Kvalifikantlar (${qs.length}/32)</b>
-      <div style="font-size:12.5px;opacity:.75;margin:4px 0 10px">Qur'a hali o'tkazilmagan. Guruhlar qur'adan keyin ko'rinadi.</div>
-      ${rows}</div>`;
-  }
-
-  // Qur'adan keyin: 8 guruh
-  const byGroup = {};
-  for (const p of g.participants) {
-    if (!p.group_number) continue;
-    (byGroup[p.group_number] ||= []).push(p);
-  }
-  const cards = Object.keys(byGroup).sort((a, b) => a - b).map(n => {
-    const items = byGroup[n].map(p => `
-      <div class="match-item cl-group-row">
-        ${clClubBadge(p.club_name, 26)}
-        <b>${escHtml(p.nickname || "")}</b>
-      </div>`).join("");
-    return `<div class="card"><b>Guruh ${n}</b>${items}</div>`;
-  }).join("");
-  return meBadge + cards;
-}
+// ---- HOME ----  → cl_home.js (qoida 21: fayl 300 qatordan oshmasin)
 
 // ---- RATING ----
 function clRenderRating() {
   let selector = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">`;
-  for (let n = 1; n <= 8; n++) {
+  for (let n = 1; n <= CL_GROUP_COUNT; n++) {
     const active = CL.ratingGroup === n ? " active" : "";
     selector += `<button class="tab-btn${active}" data-cl-group="${n}">G${n}</button>`;
   }
@@ -254,6 +214,10 @@ function clRenderMatchItem(m) {
   if (m.status === "admin_pending")         { statusCls = "status--awaiting"; statusText = "ADMIN TASDIG'I"; }
   if (m.status === "confirmed")             { statusCls = "status--confirmed"; statusText = "TASDIQLANDI"; }
 
+  const chatBtn = (m.status === "pending" || m.status === "awaiting_confirmation")
+    ? `<button class="match-action-btn match-chat-btn" data-cl-chat="${m.id}" title="Raqib bilan chat">💬</button>`
+    : "";
+
   let action = "";
   if (m.status === "pending") {
     action = `<button class="match-action-btn" data-cl-open="${m.id}">Natija</button>`;
@@ -281,7 +245,7 @@ function clRenderMatchItem(m) {
         <span class="match-names">#${m.id}</span>
         <div class="match-center">${center}</div>
         <span class="match-status ${statusCls}">${statusText}</span>
-        ${action}
+        ${chatBtn}${action}
       </div>
       ${inputs}${reject}
     </div>`;
@@ -299,6 +263,20 @@ function clStatusLabel(s) {
 
 // ---- Eventlar ----
 function clBindSectionEvents(root) {
+  root.querySelectorAll("[data-cl-home-group]").forEach(b =>
+    b.addEventListener("click", () => {
+      CL.homeGroup = Number(b.dataset.clHomeGroup);
+      renderChampionsLeague();
+    }));
+
+  root.querySelectorAll("[data-cl-chat]").forEach(b =>
+    b.addEventListener("click", () => {
+      const id = Number(b.dataset.clChat);
+      const m = (CL.myMatches || []).find(x => x.id === id);
+      const opp = m ? (clIsMe(m.player1_id) ? m.player2_name : m.player1_name) : "Raqib";
+      openWebChat(id, opp || "Raqib", "/cl/matches");   // api.js webchat modali
+    }));
+
   root.querySelectorAll("[data-cl-open]").forEach(b =>
     b.addEventListener("click", () => {
       const row = document.getElementById(`cl-score-${b.dataset.clOpen}`);
