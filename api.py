@@ -1316,15 +1316,15 @@ def cl_rating(group_number: int, user: dict = Depends(get_authenticated_user)):
     return {"group_number": group_number, "rating": cl_group_rating(group_number)}
 
 
-@app.post("/cl/draw/return-leg")
-def cl_return_leg_endpoint(admin: dict = Depends(get_authenticated_super_admin)):
+@app.post("/cl/schedule/rebuild")
+def cl_schedule_rebuild(admin: dict = Depends(get_authenticated_super_admin)):
     """
-    Mavjud ChL qur'asiga qaytish (mehmon) o'yinlarini qo'shadi — faqat bosh admin.
-    Yangi qur'a darhol ikki doira yaratadi; bu endpoint eski (bir doira) qur'a uchun.
-    Xato: not_drawn, nothing_to_add → 400
+    ChL kalendarini qayta quradi (ikki doira: uy + mehmon, to'g'ri tur raqamlari)
+    — faqat bosh admin. Guruh tarkibi o'zgarmaydi.
+    Xato: not_drawn, results_exist → 400
     """
-    from cl_return_leg import cl_add_return_leg
-    success, result = cl_add_return_leg()
+    from cl_schedule_fix import cl_rebuild_schedule
+    success, result = cl_rebuild_schedule()
     if not success:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}
