@@ -184,7 +184,10 @@ def cl_draw(season: int | None = None) -> tuple[bool, str | dict]:
             player_ids = [p["user_id"] for p in chunk]
             if len(player_ids) < 2:
                 continue
-            rounds = _generate_round_robin_pairs(player_ids)
+            # Ikki doira: birinchi doira (uy) + qaytish doirasi (juftlik teskari)
+            first_leg = _generate_round_robin_pairs(player_ids)
+            second_leg = [[(away, home) for (home, away) in rnd] for rnd in first_leg]
+            rounds = first_leg + second_leg   # 4 o'yinchi → 6 tur, guruhda 12 o'yin
             for matchday, pairs in enumerate(rounds, start=1):
                 for (p1, p2) in pairs:
                     cursor.execute(

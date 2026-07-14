@@ -1316,6 +1316,20 @@ def cl_rating(group_number: int, user: dict = Depends(get_authenticated_user)):
     return {"group_number": group_number, "rating": cl_group_rating(group_number)}
 
 
+@app.post("/cl/draw/return-leg")
+def cl_return_leg_endpoint(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Mavjud ChL qur'asiga qaytish (mehmon) o'yinlarini qo'shadi — faqat bosh admin.
+    Yangi qur'a darhol ikki doira yaratadi; bu endpoint eski (bir doira) qur'a uchun.
+    Xato: not_drawn, nothing_to_add → 400
+    """
+    from cl_return_leg import cl_add_return_leg
+    success, result = cl_add_return_leg()
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
 @app.get("/cl/profile")
 def cl_profile(user: dict = Depends(get_authenticated_user)):
     """
