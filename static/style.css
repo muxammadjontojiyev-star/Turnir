@@ -3542,7 +3542,11 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 }
 .cel-box {
   position: relative; z-index: 2;
-  width: 100%; max-width: 360px; max-height: 80vh; overflow-y: auto;
+  /* MUHIM: butun quti scroll BO'LMAYDI — aks holda sovrindorlar ro'yxati uzun
+     bo'lganda pastdagi "Yopish" tugmasi ko'rinmay qoladi. Faqat .cel-list
+     scroll bo'ladi, tugma esa doim pastda ko'rinib turadi. */
+  display: flex; flex-direction: column;
+  width: 100%; max-width: 360px; max-height: 85vh; overflow: hidden;
   background: linear-gradient(160deg, rgba(40,32,80,.95), rgba(18,14,40,.97));
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 20px; padding: 22px 18px; text-align: center;
@@ -3552,7 +3556,21 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 .cel-emoji { font-size: 40px; margin-bottom: 6px; }
 .cel-title { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 4px; }
 .cel-sub   { font-size: 14px; color: rgba(255,255,255,.75); margin-bottom: 14px; }
-.cel-list  { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; text-align: left; }
+.cel-list  {
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
+  text-align: left;
+  /* Uzun ro'yxat shu yerda scroll bo'ladi (tugma pastda qoladi) */
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;              /* flex ichida scroll ishlashi uchun shart */
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+/* Ro'yxat scroll bo'lishi mumkinligini bildiruvchi yumshoq soya */
+.cel-list::-webkit-scrollbar { width: 4px; }
+.cel-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.18); border-radius: 4px;
+}
 .cel-winner-row {
   display: flex; align-items: center; gap: 12px;
   background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
@@ -3561,7 +3579,13 @@ button, .nav-item, .wc-nav-item, .tab-btn, .league-item, .mode-card,
 .cel-prize-img { width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(245,197,66,.4)); }
 .cel-winner-name  { font-size: 15px; font-weight: 700; color: #fff; }
 .cel-winner-prize { font-size: 12.5px; color: rgba(255,255,255,.7); }
-.cel-close { width: 100%; }
+.cel-close {
+  width: 100%;
+  flex: none;                 /* siqilmaydi — doim to'liq ko'rinadi */
+  margin-top: 4px;
+}
+/* Sarlavha qismi ham siqilmasin */
+.cel-emoji, .cel-title, .cel-sub { flex: none; }
 
 /* Salyut/konfetti bo'laklari */
 .cel-fireworks { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
