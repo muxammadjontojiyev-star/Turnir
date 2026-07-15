@@ -52,9 +52,10 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
             return False, "results_exist"
 
         cursor.execute(
-            "SELECT group_number, user_id FROM cl_participants "
-            "WHERE season = ? AND group_number IS NOT NULL "
-            "ORDER BY group_number, id",
+            "SELECT p.group_number, p.user_id FROM cl_participants p "
+            "JOIN users u ON u.id = p.user_id "
+            "WHERE p.season = ? AND p.group_number IS NOT NULL "
+            "ORDER BY p.group_number, p.id",
             (season,),
         )
         groups: dict[int, list[int]] = {}
@@ -101,7 +102,9 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
         cursor.execute("COMMIT")
         logger.info("ChL kalendar qayta qurildi: %s o'yin, %s guruh (mavsum %s)",
                     created, len(groups), season)
-        return True, {"season": season, "matches": created, "groups": len(groups)}
+        total_players = sum(len(v) for v in groups.values())
+        return True, {"season": season, "matches": created,
+                      "groups": len(groups), "players": total_players}
     except Exception:
         try:
             cursor.execute("ROLLBACK")

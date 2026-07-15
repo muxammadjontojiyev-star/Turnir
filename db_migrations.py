@@ -261,8 +261,10 @@ def _fix_cl_schedule_matchdays(conn) -> None:
 
         # Qayta qurish (guruh tarkibi cl_participants'dan)
         cursor.execute(
-            "SELECT group_number, user_id FROM cl_participants "
-            "WHERE season = ? AND group_number IS NOT NULL ORDER BY group_number, id",
+            "SELECT p.group_number, p.user_id FROM cl_participants p "
+            "JOIN users u ON u.id = p.user_id "
+            "WHERE p.season = ? AND p.group_number IS NOT NULL "
+            "ORDER BY p.group_number, p.id",
             (season,),
         )
         groups: dict = {}
