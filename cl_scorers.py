@@ -27,8 +27,10 @@ def cl_top_scorers(season: int | None = None, limit: int = 32) -> list[dict]:
             season = row["current_season"] if row else 1
 
         cursor.execute(
-            "SELECT p.user_id, p.nickname, p.club_name, p.group_number, u.username "
+            "SELECT p.user_id, p.nickname, p.group_number, u.username, "
+            "COALESCE(r.club_name, p.club_name) AS club_name "
             "FROM cl_participants p JOIN users u ON u.id = p.user_id "
+            "LEFT JOIN registrations r ON r.user_id = p.user_id "
             "WHERE p.season = ? AND p.group_number IS NOT NULL",
             (season,),
         )

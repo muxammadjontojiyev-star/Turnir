@@ -29,7 +29,8 @@ def cl_get_user_matches(user_id: int, season: int) -> list[dict]:
         """
         SELECT m.*, u1.nickname AS player1_name, u2.nickname AS player2_name,
                u1.username AS player1_username, u2.username AS player2_username,
-               c1.club_name AS player1_club, c2.club_name AS player2_club
+               COALESCE(rg1.club_name, c1.club_name) AS player1_club,
+               COALESCE(rg2.club_name, c2.club_name) AS player2_club
         FROM cl_matches m
         JOIN users u1 ON u1.id = m.player1_id
         JOIN users u2 ON u2.id = m.player2_id
@@ -37,6 +38,8 @@ def cl_get_user_matches(user_id: int, season: int) -> list[dict]:
                ON c1.user_id = m.player1_id AND c1.season = m.season
         LEFT JOIN cl_participants c2
                ON c2.user_id = m.player2_id AND c2.season = m.season
+        LEFT JOIN registrations rg1 ON rg1.user_id = m.player1_id
+        LEFT JOIN registrations rg2 ON rg2.user_id = m.player2_id
         WHERE m.season = ? AND (m.player1_id = ? OR m.player2_id = ?)
         ORDER BY m.matchday, m.id
         """,

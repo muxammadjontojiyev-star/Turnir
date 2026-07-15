@@ -24,8 +24,11 @@ def cl_get_profile(user_id: int, season: int) -> dict:
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT user_id, nickname, club_name, group_number "
-            "FROM cl_participants WHERE season = ? AND user_id = ?",
+            "SELECT p.user_id, p.nickname, p.group_number, "
+            "COALESCE(r.club_name, p.club_name) AS club_name "
+            "FROM cl_participants p "
+            "LEFT JOIN registrations r ON r.user_id = p.user_id "
+            "WHERE p.season = ? AND p.user_id = ?",
             (season, user_id),
         )
         row = cursor.fetchone()

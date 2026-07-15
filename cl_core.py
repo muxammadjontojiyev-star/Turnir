@@ -221,14 +221,25 @@ def cl_get_groups(season: int | None = None) -> dict:
         if season is None:
             season = _current_league_season(cursor)
         cursor.execute(
-            "SELECT telegram_id, user_id, nickname, club_name, group_number "
-            "FROM cl_participants WHERE season = ? "
-            "ORDER BY group_number, nickname",
+            "SELECT p.telegram_id, p.user_id, p.nickname, "
+            "COALESCE(r.club_name, p.club_name) AS club_name, p.group_number "
+            "FROM cl_participants p "
+            "LEFT JOIN registrations r ON r.user_id = p.user_id "
+            "WHERE p.season = ? ORDER BY p.group_number, p.nickname",
             (season,),
         )
         rows = [dict(r) for r in cursor.fetchall()]
         drawn = any(r["group_number"] for r in rows)
-        return {"season": season, "drawn": drawn, "participants": rows}
+        # ChL mavsum raqami = shu ChL nechanchi marta o'tkazilayotgani (liga
+        # current_season'dan farqli). cl_participants'dagi tartibi bilan aniqlanadi.
+        cursor.execute(
+            "SELECT COUNT(DISTINCT season) AS n FROM cl_participants WHERE season <= ?",
+            (season,),
+        )
+        cl_row = cursor.fetchone()
+        cl_season = (cl_row["n"] if cl_row and cl_row["n"] else 1)
+        return {"season": season, "cl_season": cl_season,
+                "drawn": drawn, "participants": rows}
     finally:
         conn.close()
 
@@ -244,8 +255,10 @@ def cl_group_rating(group_number: int, season: int | None = None) -> list[dict]:
         if season is None:
             season = _current_league_season(cursor)
         cursor.execute(
-            "SELECT p.user_id, p.nickname, p.club_name, u.username "
+            "SELECT p.user_id, p.nickname, u.username, "
+            "COALESCE(r.club_name, p.club_name) AS club_name "
             "FROM cl_participants p JOIN users u ON u.id = p.user_id "
+            "LEFT JOIN registrations r ON r.user_id = p.user_id "
             "WHERE p.season = ? AND p.group_number = ?",
             (season, group_number),
         )
