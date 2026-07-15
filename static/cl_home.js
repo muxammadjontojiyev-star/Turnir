@@ -22,7 +22,7 @@ function clRenderHome() {
   const hero = clRenderHero(`GURUH ${sel}`, [
     { v: members.length, l: "ISHTIROKCHI" },
     { v: CL_GROUP_COUNT, l: "GURUHLAR" },
-    { v: g.season ?? "—", l: "MAVSUM" },
+    { v: g.cl_season ?? 1, l: "MAVSUM" },
   ], CL.meParticipant ? "Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
 
   let chips = `<div class="section-label">GURUH TANLASH</div><div class="cl-group-grid">`;

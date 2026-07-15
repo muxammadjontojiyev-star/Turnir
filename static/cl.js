@@ -314,29 +314,11 @@ function clStatusLabel(s) {
 
 // ---- Eventlar ----
 function clBindSectionEvents(root) {
-  // Reytingdagi o'yinchiga bosilsa — uning ChL profili (cl_player.js)
-  root.querySelectorAll("[data-cl-rtab]").forEach(b =>
-    b.addEventListener("click", () => {
-      CL.ratingTab = b.dataset.clRtab;
-      renderChampionsLeague();
-      if (CL.ratingTab === "scorers") void clLoadScorers(); else void clLoadRating();
-    }));
-
-  root.querySelectorAll("[data-cl-player]").forEach(el =>
-    el.addEventListener("click", () => clOpenPlayerModal(Number(el.dataset.clPlayer))));
-
-  root.querySelectorAll("[data-cl-home-group]").forEach(b =>
-    b.addEventListener("click", () => {
-      CL.homeGroup = Number(b.dataset.clHomeGroup);
-      renderChampionsLeague();
-    }));
-
-  // Logolar juftligiga bosilsa — raqib VS-oynasi (cl_chat.js: 2 xil chat)
-  root.querySelectorAll("[data-cl-open-match]").forEach(el =>
-    el.addEventListener("click", () => clOpenOpponentModal(Number(el.dataset.clOpenMatch))));
-
-  root.querySelectorAll("[data-cl-result]").forEach(b =>
-    b.addEventListener("click", () => clOpenResultModal(Number(b.dataset.clResult))));
+  // Event delegation: bitta listener butun cl-root uchun (qayta render'da yo'qolmaydi).
+  if (!root._clDelegated) {
+    root._clDelegated = true;
+    root.addEventListener("click", (e) => clHandleClick(e, root));
+  }
 
   root.querySelectorAll("[data-cl-group]").forEach(b =>
     b.addEventListener("click", () => {
@@ -344,20 +326,47 @@ function clBindSectionEvents(root) {
       void clLoadRating();
     }));
 
-  const act = async (id, accept) => {
-    try {
-      await apiFetch(`/cl/match/confirm?match_id=${id}&accept=${accept}`, { method: "POST" });
-      showToast(accept ? "Tasdiqlandi ✅" : "Rad etildi");
-      CL._myId = undefined;
-      await clLoadMatches();
-    } catch (e) {
-      showToast("Xato: " + e.message);
-    }
-  };
-  root.querySelectorAll("[data-cl-confirm]").forEach(b =>
-    b.addEventListener("click", () => act(b.dataset.clConfirm, true)));
-  root.querySelectorAll("[data-cl-reject]").forEach(b =>
-    b.addEventListener("click", () => act(b.dataset.clReject, false)));
+}
+
+// Barcha ChL bosishlarini bitta joyda ushlaydi (delegation — qayta render'ga chidamli)
+function clHandleClick(e, root) {
+  const hit = (sel) => e.target.closest(sel);
+  let el;
+
+  if ((el = hit("[data-cl-result]"))) {
+    clOpenResultModal(Number(el.dataset.clResult)); return;
+  }
+  if ((el = hit("[data-cl-open-match]"))) {
+    clOpenOpponentModal(Number(el.dataset.clOpenMatch)); return;
+  }
+  if ((el = hit("[data-cl-confirm]"))) {
+    clConfirmMatch(el.dataset.clConfirm, true); return;
+  }
+  if ((el = hit("[data-cl-reject]"))) {
+    clConfirmMatch(el.dataset.clReject, false); return;
+  }
+  if ((el = hit("[data-cl-player]"))) {
+    clOpenPlayerModal(Number(el.dataset.clPlayer)); return;
+  }
+  if ((el = hit("[data-cl-home-group]"))) {
+    CL.homeGroup = Number(el.dataset.clHomeGroup); renderChampionsLeague(); return;
+  }
+  if ((el = hit("[data-cl-rtab]"))) {
+    CL.ratingTab = el.dataset.clRtab;
+    renderChampionsLeague();
+    if (CL.ratingTab === "scorers") void clLoadScorers(); else void clLoadRating();
+    return;
+  }
+}
+
+async function clConfirmMatch(id, accept) {
+  try {
+    await apiFetch(`/cl/match/confirm?match_id=${id}&accept=${accept}`, { method: "POST" });
+    showToast(accept ? "Tasdiqlandi" : "Rad etildi");
+    await clLoadMatches();
+  } catch (e) {
+    showToast("Xato: " + e.message);
+  }
 }
 
 // ============================================================
