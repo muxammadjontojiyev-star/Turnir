@@ -269,9 +269,15 @@ function clRenderMatchItem(m) {
 
   let action = "";
   if (m.status === "pending") {
-    action = isOpenRound
-      ? `<button class="match-action-btn" data-cl-result="${m.id}">Natija</button>`
-      : `<span class="cl-locked" title="Bu tur hali ochilmagan">${ICON.get("lock", 16)}</span>`;
+    if (!isOpenRound) {
+      action = `<span class="cl-locked" title="Bu tur hali ochilmagan">${ICON.get("lock", 16)}</span>`;
+    } else if (CL.chatOpened && CL.chatOpened.has(m.id)) {
+      // Chat ochilgan — endi "Natija" tugmasi
+      action = `<button class="match-action-btn" data-cl-result="${m.id}">Natija</button>`;
+    } else {
+      // Avval raqib bilan chat: 💬 tugmasi (bosilgach Natija ochiladi)
+      action = `<button class="match-action-btn match-chat-btn" data-cl-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
+    }
   } else if (m.status === "awaiting_confirmation") {
     action = (m.submitted_by && !clIsMe(m.submitted_by))
       ? `<button class="match-action-btn" data-cl-confirm="${m.id}">${ICON.get("check", 16)}</button>`
@@ -295,7 +301,7 @@ function clRenderMatchItem(m) {
         <span class="match-status ${statusCls}">${statusText}</span>
       </div>
       <div class="cl-match-body">
-        <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
+        <div class="match-center">${center}</div>
         ${action}
       </div>
       ${reject}
@@ -336,6 +342,9 @@ function clHandleClick(e, root) {
   if ((el = hit("[data-cl-result]"))) {
     clOpenResultModal(Number(el.dataset.clResult)); return;
   }
+  if ((el = hit("[data-cl-chat]"))) {
+    clOpenChatThenResult(Number(el.dataset.clChat)); return;
+  }
   if ((el = hit("[data-cl-open-match]"))) {
     clOpenOpponentModal(Number(el.dataset.clOpenMatch)); return;
   }
@@ -373,6 +382,15 @@ async function clConfirmMatch(id, accept) {
 //  NATIJA KIRITISH — liga #modal-result modalidan foydalanadi (qoida #26 DRY).
 //  Submit esa ChL endpointiga yo'naltiriladi (CL._resultMatchId flag orqali).
 // ============================================================
+// 💬 bosilganda: raqib VS-oynasi ochiladi VA shu o'yin uchun "Natija" tugmasi
+// ochiladi (liga oqimi bilan bir xil: avval kelishuv, keyin natija).
+function clOpenChatThenResult(matchId) {
+  if (!CL.chatOpened) CL.chatOpened = new Set();
+  CL.chatOpened.add(matchId);
+  clOpenOpponentModal(matchId);   // VS-oyna: "Chatni ochish" / "Raqib chatiga yozish"
+  renderChampionsLeague();        // 💬 → Natija tugmasiga almashadi
+}
+
 function clOpenResultModal(matchId) {
   const m = (CL.myMatches || []).find(x => String(x.id) === String(matchId));
   if (!m) { showToast("O'yin topilmadi"); return; }
@@ -380,6 +398,10 @@ function clOpenResultModal(matchId) {
   if (!modal) { showToast("Modal topilmadi"); return; }
 
   CL._resultMatchId = matchId;         // submitMatchResult() shu flagni tekshiradi
+
+  // #modal-result #section-profile ichida — ChL rejimida u sektsiya .active emas
+  // (display:none). Modalni body'ga ko'chiramiz, aks holda ko'rinmaydi.
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
 
   // Logolar: chap = player1_club, o'ng = player2_club
   const setLogo = (id, club) => {
