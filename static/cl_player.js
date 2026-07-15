@@ -42,7 +42,8 @@ function clRenderPlayer() {
       <div class="profile-avatar" id="cl-player-avatar" data-uid="${p.user_id}">${escHtml(letter)}</div>
       <div class="profile-info">
         <h2 class="profile-nickname">${escHtml(p.nickname || "Ishtirokchi")}</h2>
-        <div class="cl-rating-user">${p.username ? "@" + escHtml(p.username) : "—"}</div>
+        <div class="cl-rating-user${p.username ? " cl-user-link" : ""}"
+             ${p.username ? `data-cl-tg="${escHtml(p.username)}"` : ""}>${p.username ? "@" + escHtml(p.username) : "—"}</div>
         <span class="profile-league">Guruh ${p.group_number} · ${p.position}-o'rin</span>
       </div>
       <div class="profile-club-badge">${clClubBadge(p.club_name, 44)}</div>
@@ -111,6 +112,16 @@ function clBindPlayer(root) {
   if (back) back.addEventListener("click", () => {
     CL.section = "rating";
     renderChampionsLeague();
+  });
+
+  // Username'ga bosilsa — raqib Telegram chati
+  const tg = root.querySelector("[data-cl-tg]");
+  if (tg) tg.addEventListener("click", () => {
+    const uname = tg.dataset.clTg.replace(/^@/, "");
+    const link = `https://t.me/${uname}`;
+    const w = window.Telegram?.WebApp;
+    if (w?.openTelegramLink) { try { w.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); } }
+    else window.open(link, "_blank");
   });
 
   const box = root.querySelector("#cl-player-avatar");

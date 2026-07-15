@@ -142,19 +142,33 @@ async function clAdminReassign(btn) {
   }
 }
 
-async function clAdminRebuild(btn) {
-  if (!confirm("Kalendar qayta qurilsinmi? Barcha (o'ynalmagan) o'yinlar qaytadan yoziladi.")) return;
+async function clAdminRebuild(btn, force = false) {
+  const msg = force
+    ? "MAJBURIY qayta qurish? Kiritilgan natijalar saqlanadi, buzuq turlar tuzatiladi."
+    : "Kalendar qayta qurilsinmi? Barcha (o'ynalmagan) o'yinlar qaytadan yoziladi.";
+  if (!confirm(msg)) return;
   btn.disabled = true;
   btn.textContent = "Qayta qurilmoqda…";
   try {
-    const r = await apiFetch("/cl/schedule/rebuild", { method: "POST" });
+    const r = await apiFetch("/cl/schedule/rebuild", {
+      method: "POST",
+      body: JSON.stringify({ force }),
+    });
     showToast(`Kalendar tayyor: ${r.matches} o'yin (${r.groups} guruh)`);
     CL.section = "home";
     await clLoadThenRender();
   } catch (e) {
     btn.disabled = false;
     btn.innerHTML = `${ICON.get("recycle", 16)} Kalendarni qayta qurish (uy+mehmon)`;
-    showToast("Xato: " + clDrawErrorText(e.message));
+    if (e.message === "results_exist") {
+      // Natija bor — majburiy (natijalarni saqlab) qurishni taklif qilamiz
+      if (confirm("Natija kiritilgan o'yinlar bor. Ularni SAQLAB, buzuq kalendarni "
+                  + "tuzataymi? (natijalar yangi turlarga ko'chiriladi)")) {
+        return clAdminRebuild(btn, true);
+      }
+    } else {
+      showToast("Xato: " + clDrawErrorText(e.message));
+    }
   }
 }
 

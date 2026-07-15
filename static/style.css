@@ -4136,3 +4136,16 @@ tr.is-me .div-rating-user { color: #fff; }
   padding: 10px 12px; font-size: 14px;
 }
 #cl-root .cl-orphan-select option { background: #0d1745; color: #eaf2ff; }
+
+/* ChL Sovrinlar — kubok (shaffof fon) */
+#cl-root .cl-trophy-hero { text-align: center; padding: 10px 0 18px; }
+#cl-root .cl-trophy-img {
+  width: 160px; height: auto; object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(120,150,255,.45));
+}
+#cl-root .cl-trophy-caption {
+  font-size: 16px; font-weight: 800; color: #eaf2ff; margin-top: 8px;
+  text-shadow: 0 0 14px rgba(120,150,255,.6);
+}
+#cl-root .cl-trophy-sub { font-size: 12.5px; opacity: .7; margin-top: 3px; }
+#cl-root .cl-user-link { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }

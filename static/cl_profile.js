@@ -79,12 +79,12 @@ function clBindProfile(root) {
 // ---- SOVRINLAR ----
 function clRenderPrizes() {
   return `
-    <div class="card">
-      <b>Sovrinlarim</b>
-      <div style="font-size:12.5px;opacity:.7;margin-top:4px">
-        Liga va Jahon chempionati bo'yicha qo'lga kiritilgan sovrinlar.
-      </div>
+    <div class="cl-trophy-hero">
+      <img src="cl-trophy.png" alt="Chempionlar ligasi kubogi" class="cl-trophy-img">
+      <div class="cl-trophy-caption">Chempionlar ligasi kubogi</div>
+      <div class="cl-trophy-sub">Final g'olibi sovrin egasi bo'ladi</div>
     </div>
+    <div class="section-label">MENING SOVRINLARIM</div>
     <div id="cl-prizes-section">
       <div class="card" style="opacity:.7">Yuklanmoqda…</div>
     </div>`;
