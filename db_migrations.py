@@ -278,6 +278,12 @@ def _fix_cl_schedule_matchdays(conn) -> None:
             cursor.execute("ROLLBACK"); return
 
         from schedule import _generate_round_robin_pairs
+        try:
+            cursor.execute(
+                "DELETE FROM cl_messages WHERE match_id IN "
+                "(SELECT id FROM cl_matches WHERE season = ?)", (season,))
+        except Exception:
+            pass
         cursor.execute("DELETE FROM cl_matches WHERE season = ?", (season,))
         for gnum, players in sorted(groups.items()):
             if len(players) < 2:

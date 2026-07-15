@@ -1328,6 +1328,25 @@ def cl_rating_all(user: dict = Depends(get_authenticated_user)):
     return {"groups": groups}
 
 
+@app.post("/cl/participant/reassign")
+def cl_participant_reassign(
+    old_telegram_id: int = Body(..., embed=True),
+    new_telegram_id: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    ChL ishtirokchisining eski (o'chirilgan) akkountini yangi akkountga bog'laydi.
+    old_telegram_id — qur'ada yozilgan eski Telegram ID; new_telegram_id — yangi akkount.
+    cl_participants va cl_matches'dagi user_id/player_id yangilanadi.
+    Xato: new_user_not_found, old_not_participant, new_already_participant → 400
+    """
+    from cl_participant_admin import cl_reassign_participant
+    success, result = cl_reassign_participant(old_telegram_id, new_telegram_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
 @app.post("/cl/schedule/rebuild")
 def cl_schedule_rebuild(admin: dict = Depends(get_authenticated_super_admin)):
     """

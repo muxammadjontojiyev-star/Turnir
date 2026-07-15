@@ -69,6 +69,14 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, "not_drawn"
 
+        # cl_messages cl_matches'ga FK bilan bog'langan — avval ularni tozalaymiz
+        # (o'ynalmagan o'yinlar chati baribir bo'sh). Aks holda DELETE FK'ni buzadi.
+        try:
+            cursor.execute(
+                "DELETE FROM cl_messages WHERE match_id IN "
+                "(SELECT id FROM cl_matches WHERE season = ?)", (season,))
+        except Exception as exc:
+            logger.warning("cl_messages tozalash o'tkazilmadi: %s", exc)
         cursor.execute("DELETE FROM cl_matches WHERE season = ?", (season,))
 
         created = 0
