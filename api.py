@@ -1364,15 +1364,18 @@ def cl_participant_reassign(
 
 
 @app.post("/cl/schedule/rebuild")
-def cl_schedule_rebuild(admin: dict = Depends(get_authenticated_super_admin)):
+def cl_schedule_rebuild(
+    force: bool = Body(False, embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
     """
-    ChL kalendarini qayta quradi (ikki doira: uy + mehmon, to'g'ri tur raqamlari)
-    — faqat bosh admin. Guruh tarkibi o'zgarmaydi.
-    Xato: not_drawn, results_exist → 400
+    ChL kalendarini qayta quradi (ikki doira: uy + mehmon, to'g'ri tur raqamlari).
+    force=True — natijalarni saqlab qayta quradi (buzuq kalendarni tuzatish uchun).
+    Xato: not_drawn, results_exist, rebuild_failed → 400/500
     """
     from cl_schedule_fix import cl_rebuild_schedule
     try:
-        success, result = cl_rebuild_schedule()
+        success, result = cl_rebuild_schedule(force=force)
     except Exception as exc:
         logger.exception("ChL kalendar qayta qurishda xato")
         raise HTTPException(status_code=500, detail=f"rebuild_failed: {exc}")

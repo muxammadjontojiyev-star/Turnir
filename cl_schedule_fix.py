@@ -18,10 +18,15 @@ from schedule import _generate_round_robin_pairs
 logger = logging.getLogger(__name__)
 
 
-def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
+def cl_rebuild_schedule(season: int | None = None, force: bool = False
+                        ) -> tuple[bool, str | dict]:
     """
-    Guruhlardagi barcha o'yinlarni o'chirib, ikki doirali (uy + mehmon)
-    kalendarni qaytadan yozadi. Guruh tarkibi (qur'a) O'ZGARMAYDI.
+    Guruhlardagi o'yinlarni ikki doirali (uy + mehmon) kalendar qilib qaytadan yozadi.
+    Guruh tarkibi (qur'a) O'ZGARMAYDI.
+
+    force=False: natija kiritilgan bo'lsa ishlamaydi (results_exist).
+    force=True : mavjud natijalar (juftlik + yo'nalish bo'yicha) YANGI kalendarga
+                 KO'CHIRILADI, qolganlari pending. Buzuq kalendarni tuzatish uchun.
 
     Sabablar: not_drawn, results_exist.
     """
@@ -41,15 +46,29 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, "not_drawn"
 
-        # Natija kiritilgan o'yin bormi? (pending'dan boshqa yoki score yozilgan)
+        # Natija kiritilgan o'yin bormi?
         cursor.execute(
             "SELECT COUNT(*) AS c FROM cl_matches "
             "WHERE season = ? AND (status != ? OR score1 IS NOT NULL)",
             (season, MATCH_STATUS_PENDING),
         )
-        if cursor.fetchone()["c"] > 0:
+        has_results = cursor.fetchone()["c"] > 0
+        if has_results and not force:
             cursor.execute("ROLLBACK")
             return False, "results_exist"
+
+        # force rejimida: mavjud natijalarni juftlik+yo'nalish bo'yicha eslab qolamiz
+        saved = {}   # (group, home_id, away_id) -> (score1, score2, status, submitted_by)
+        if has_results:
+            cursor.execute(
+                "SELECT group_number, player1_id, player2_id, score1, score2, "
+                "status, submitted_by FROM cl_matches "
+                "WHERE season = ? AND (status != ? OR score1 IS NOT NULL)",
+                (season, MATCH_STATUS_PENDING),
+            )
+            for r in cursor.fetchall():
+                key = (r["group_number"], r["player1_id"], r["player2_id"])
+                saved[key] = (r["score1"], r["score2"], r["status"], r["submitted_by"])
 
         cursor.execute(
             "SELECT p.group_number, p.user_id FROM cl_participants p "
@@ -89,12 +108,24 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
                 for (p1, p2) in pairs:
                     if p1 is None or p2 is None:  # toq son "bye" — yozmaymiz
                         continue
-                    cursor.execute(
-                        "INSERT INTO cl_matches "
-                        "(season, group_number, matchday, player1_id, player2_id, status) "
-                        "VALUES (?, ?, ?, ?, ?, ?)",
-                        (season, group_number, matchday, p1, p2, MATCH_STATUS_PENDING),
-                    )
+                    # force: shu juftlik+yo'nalish uchun saqlangan natija bo'lsa — tiklaymiz
+                    rec = saved.get((group_number, p1, p2)) if has_results else None
+                    if rec:
+                        cursor.execute(
+                            "INSERT INTO cl_matches "
+                            "(season, group_number, matchday, player1_id, player2_id, "
+                            " score1, score2, status, submitted_by) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (season, group_number, matchday, p1, p2,
+                             rec[0], rec[1], rec[2], rec[3]),
+                        )
+                    else:
+                        cursor.execute(
+                            "INSERT INTO cl_matches "
+                            "(season, group_number, matchday, player1_id, player2_id, status) "
+                            "VALUES (?, ?, ?, ?, ?, ?)",
+                            (season, group_number, matchday, p1, p2, MATCH_STATUS_PENDING),
+                        )
                     created += 1
 
         # Kalendar o'zgardi — tur hisoblagichini ham reset qilamiz (started bo'lsa
