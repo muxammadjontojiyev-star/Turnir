@@ -365,10 +365,10 @@ function clBindSectionEvents(root) {
 //  Submit esa ChL endpointiga yo'naltiriladi (CL._resultMatchId flag orqali).
 // ============================================================
 function clOpenResultModal(matchId) {
-  const m = (CL.myMatches || []).find(x => x.id === matchId);
-  if (!m) return;
+  const m = (CL.myMatches || []).find(x => String(x.id) === String(matchId));
+  if (!m) { showToast("O'yin topilmadi"); return; }
   const modal = document.getElementById("modal-result");
-  if (!modal) return;
+  if (!modal) { showToast("Modal topilmadi"); return; }
 
   CL._resultMatchId = matchId;         // submitMatchResult() shu flagni tekshiradi
 

@@ -3906,8 +3906,12 @@ tr.is-me .div-rating-user { color: #fff; }
 .cl-match-head .match-status { margin-left: auto; }
 .cl-match-body { display: flex; align-items: center; gap: 10px; }
 .cl-match-body .match-center {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 14px;
+  flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 14px;
 }
+/* Natija/qulf/tasdiq — bosish ustuvorligi tugmada, siqilib ketmasin */
+.cl-match-body .match-action-btn,
+.cl-match-body .cl-locked,
+.cl-match-body .match-waiting { flex-shrink: 0; position: relative; z-index: 2; }
 
 /* ChL: uy/mehmon belgisi (cl.js) */
 .cl-venue {
