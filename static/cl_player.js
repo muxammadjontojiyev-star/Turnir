@@ -1,10 +1,9 @@
 // ============================================================
 //  cl_player.js — Reytingdagi ishtirokchiga bosilganda ochiladigan PROFIL SAHIFASI.
-//
-//  Modal emas: CL.section = "player" bo'ladi va Profil tabi bilan bir xil
-//  ko'rinish (card--profile + STATISTIKA) to'liq ekranda chiziladi (qoida #42).
-//  Ma'lumot manbai: CL.rating (yangi so'rov yo'q — qoida #49). Avatar: /players/{id}/photo.
-//  Global: CL, escHtml, clClubBadge (cl.js), API_BASE, ICON, renderChampionsLeague.
+//  Modal emas: CL.section = "player". Profil bilan bir xil ko'rinish, lekin:
+//    - GOLLAR/ochko bloki YO'Q (reytingda ko'rinadi — 1-punkt)
+//    - o'yinlar faqat KO'RISH uchun (💬/Natija tugmalarisiz)
+//  Ma'lumot: CL.viewPlayer (reyting qatoridan) + /cl/matches/user/{id} (o'yinlar).
 // ============================================================
 
 function clOpenPlayerModal(userId) {
@@ -12,8 +11,20 @@ function clOpenPlayerModal(userId) {
   const idx = rows.findIndex(r => r.user_id === userId);
   if (idx < 0) return;
   CL.viewPlayer = { ...rows[idx], position: idx + 1, group_number: CL.ratingGroup };
+  CL.viewPlayerMatches = null;        // yuklanmoqda
   CL.section = "player";
   renderChampionsLeague();
+  void clLoadPlayerMatches(userId);   // o'yinlarni alohida yuklaymiz
+}
+
+async function clLoadPlayerMatches(userId) {
+  try {
+    const d = await apiFetch(`/cl/matches/user/${userId}`);
+    CL.viewPlayerMatches = d.matches || [];
+  } catch (_) {
+    CL.viewPlayerMatches = [];
+  }
+  if (CL.section === "player") renderChampionsLeague();
 }
 
 function clRenderPlayer() {
@@ -21,7 +32,6 @@ function clRenderPlayer() {
   if (!p) return `<div class="card">Ishtirokchi topilmadi.</div>`;
 
   const letter = (p.nickname || "?")[0].toUpperCase();
-  const gd = p.goal_difference > 0 ? `+${p.goal_difference}` : p.goal_difference;
 
   return `
     <button class="btn cl-back-link" id="cl-player-back">
@@ -58,23 +68,40 @@ function clRenderPlayer() {
       </div>
     </div>
 
-    <div class="section-label">GOLLAR</div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-card-value">${p.played}</span>
-        <span class="stat-card-label">O'yin</span>
+    <div class="section-label">O'YINLAR</div>
+    ${clRenderPlayerMatches()}`;
+}
+
+// Boshqa o'yinchining o'yinlari — faqat ko'rish (tugmasiz)
+function clRenderPlayerMatches() {
+  const ms = CL.viewPlayerMatches;
+  if (ms === null) return `<div class="wc-loading-row">Yuklanmoqda…</div>`;
+  if (!ms.length) return `<div class="wc-loading-row">O'yinlar yo'q.</div>`;
+
+  return `<div class="matches-list">${ms.map(clRenderPlayerMatchItem).join("")}</div>`;
+}
+
+function clRenderPlayerMatchItem(m) {
+  const hasScore = (m.score1 !== null && m.score1 !== undefined);
+  const score = hasScore ? `${m.score1} : ${m.score2}` : "— : —";
+  const center = `
+    <span class="cl-mc-logo">${clClubBadge(m.player1_club, 26)}</span>
+    <span class="match-score">${score}</span>
+    <span class="cl-mc-logo">${clClubBadge(m.player2_club, 26)}</span>`;
+
+  let statusCls = "status--pending";
+  let statusText = "KUTILMOQDA";
+  if (m.status === "confirmed") { statusCls = "status--confirmed"; statusText = "TASDIQLANDI"; }
+  else if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting"; statusText = "TASDIQ"; }
+
+  return `
+    <div class="cl-match-wrap">
+      <div class="cl-match-head">
+        <span class="cl-match-round">${m.matchday}-tur</span>
+        <span class="match-status ${statusCls}">${statusText}</span>
       </div>
-      <div class="stat-card">
-        <span class="stat-card-value neon-cyan">${p.goals_for}</span>
-        <span class="stat-card-label">Urilgan</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card-value">${p.goals_against}</span>
-        <span class="stat-card-label">O'tkazgan</span>
-      </div>
-      <div class="stat-card stat-card--primary">
-        <span class="stat-card-value neon-cyan">${p.points}</span>
-        <span class="stat-card-label">Ochko (${gd})</span>
+      <div class="cl-match-body">
+        <div class="match-center">${center}</div>
       </div>
     </div>`;
 }
