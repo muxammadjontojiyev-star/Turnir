@@ -1340,17 +1340,17 @@ def cl_participants_orphans(admin: dict = Depends(get_authenticated_super_admin)
 
 @app.post("/cl/participant/reassign")
 def cl_participant_reassign(
-    participant_id: int = Body(..., embed=True),
+    old_user_id: int = Body(..., embed=True),
     new_telegram_id: int = Body(..., embed=True),
     admin: dict = Depends(get_authenticated_super_admin),
 ):
     """
-    ChL ishtirokchi qatorini (participant_id — orphans ro'yxatidan) yangi akkountga
-    bog'laydi. Eski Telegram ID kerak emas (o'chirilgan akkountga kirib bo'lmaydi).
-    Xato: new_user_not_found, participant_not_found, new_already_participant → 400
+    O'chirilgan akkount (old_user_id — orphans ro'yxatidan) o'rniga yangi akkountni
+    bog'laydi. Eski Telegram ID kerak emas.
+    Xato: new_user_not_found, nothing_to_reassign, new_already_participant → 400
     """
     from cl_participant_admin import cl_reassign_participant
-    success, result = cl_reassign_participant(participant_id, new_telegram_id)
+    success, result = cl_reassign_participant(old_user_id, new_telegram_id)
     if not success:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}

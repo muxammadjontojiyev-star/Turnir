@@ -20,33 +20,65 @@ logger = logging.getLogger(__name__)
 
 def cl_list_orphan_participants() -> list[dict]:
     """
-    cl_participants'dan user_id users jadvalida yo'q bo'lganlar (o'chirilgan akkount).
-    [{participant_id, season, user_id, nickname, club_name, group_number}, ...]
+    O'chirilgan akkountlar: cl_participants YOKI cl_matches'da ishlatilgan user_id
+    users jadvalida yo'q bo'lsa. Har biri uchun participant ma'lumoti (bo'lsa) yoki
+    faqat user_id qaytadi.
+    [{participant_id|null, season, user_id, nickname, club_name, group_number}, ...]
     """
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        # 1) cl_participants'dagi orphan'lar
         cursor.execute(
             "SELECT p.id AS participant_id, p.season, p.user_id, p.nickname, "
             "p.club_name, p.group_number "
             "FROM cl_participants p "
             "LEFT JOIN users u ON u.id = p.user_id "
-            "WHERE u.id IS NULL "
-            "ORDER BY p.group_number, p.id"
+            "WHERE u.id IS NULL"
         )
-        return [dict(r) for r in cursor.fetchall()]
+        found = {r["user_id"]: dict(r) for r in cursor.fetchall()}
+
+        # 2) cl_matches'da ishlatilgan, lekin users'da yo'q player_id'lar
+        cursor.execute(
+            "SELECT DISTINCT pid AS user_id, m.season, m.group_number FROM ("
+            "  SELECT player1_id AS pid, season, group_number FROM cl_matches "
+            "  UNION SELECT player2_id AS pid, season, group_number FROM cl_matches"
+            ") AS m "
+            "LEFT JOIN users u ON u.id = m.pid "
+            "WHERE u.id IS NULL"
+        )
+        for r in cursor.fetchall():
+            uid = r["user_id"]
+            if uid is None or uid in found:
+                continue
+            # Shu user_id uchun participant qatorini topishga urinamiz (nickname uchun)
+            cursor.execute(
+                "SELECT id, nickname, club_name, group_number FROM cl_participants "
+                "WHERE user_id = ? LIMIT 1", (uid,))
+            p = cursor.fetchone()
+            found[uid] = {
+                "participant_id": p["id"] if p else None,
+                "season": r["season"],
+                "user_id": uid,
+                "nickname": (p["nickname"] if p else None) or f"(id {uid})",
+                "club_name": p["club_name"] if p else None,
+                "group_number": (p["group_number"] if p else None) or r["group_number"],
+            }
+
+        return sorted(found.values(),
+                      key=lambda x: (x["group_number"] or 99, x["user_id"]))
     finally:
         conn.close()
 
 
-def cl_reassign_participant(participant_id: int, new_telegram_id: int
+def cl_reassign_participant(old_user_id: int, new_telegram_id: int
                             ) -> tuple[bool, str | dict]:
     """
-    ChL ishtirokchi qatorini (participant_id) yangi akkountga bog'laydi.
-    Eski Telegram ID kerak emas — participant_id yetarli (o'chirilgan akkountга kirib
-    bo'lmaydi, shuning uchun ID'ni ro'yxatdan tanlaydi).
+    O'chirilgan akkount (old_user_id) o'rniga yangi akkountni bog'laydi.
+    old_user_id — orphan ro'yxatidagi eski user_id (participant bo'lmasa ham ishlaydi,
+    chunki cl_matches'da player_id bo'lishi mumkin). Eski Telegram ID kerak emas.
 
-    Sabablar: new_user_not_found, participant_not_found, new_already_participant
+    Sabablar: new_user_not_found, nothing_to_reassign, new_already_participant
     """
     conn = get_connection()
     conn.isolation_level = None
@@ -62,51 +94,52 @@ def cl_reassign_participant(participant_id: int, new_telegram_id: int
             return False, "new_user_not_found"
         new_user_id = new_user["id"]
 
+        # Eski user_id qaysi mavsum(lar)da uchraydi? (participants yoki matches)
         cursor.execute(
-            "SELECT id, season, user_id FROM cl_participants WHERE id = ?",
-            (participant_id,))
-        part = cursor.fetchone()
-        if not part:
+            "SELECT DISTINCT season FROM cl_participants WHERE user_id = ? "
+            "UNION SELECT DISTINCT season FROM cl_matches "
+            "WHERE player1_id = ? OR player2_id = ?",
+            (old_user_id, old_user_id, old_user_id),
+        )
+        seasons = [r["season"] for r in cursor.fetchall()]
+        if not seasons:
             cursor.execute("ROLLBACK")
-            return False, "participant_not_found"
-        old_user_id = part["user_id"]
-        season = part["season"]
+            return False, "nothing_to_reassign"
 
-        # Yangi akkount shu mavsumda allaqachon ishtirokchi emasligini tekshiramiz
+        # Yangi akkount shu mavsumlarda allaqachon ishtirokchi bo'lmasin
+        ph = ",".join("?" * len(seasons))
         cursor.execute(
-            "SELECT COUNT(*) AS c FROM cl_participants "
-            "WHERE season = ? AND user_id = ? AND id != ?",
-            (season, new_user_id, participant_id),
+            f"SELECT COUNT(*) AS c FROM cl_participants "
+            f"WHERE user_id = ? AND season IN ({ph})",
+            (new_user_id, *seasons),
         )
         if cursor.fetchone()["c"] > 0:
             cursor.execute("ROLLBACK")
             return False, "new_already_participant"
 
-        # 1) cl_participants — shu qatorni yangi akkountga ko'chiramiz
+        # 1) cl_participants (bo'lsa)
         cursor.execute(
             "UPDATE cl_participants SET user_id = ?, telegram_id = ?, nickname = ? "
-            "WHERE id = ?",
-            (new_user_id, new_telegram_id, new_user["nickname"], participant_id),
+            "WHERE user_id = ?",
+            (new_user_id, new_telegram_id, new_user["nickname"], old_user_id),
         )
+        parts = cursor.rowcount or 0
 
-        # 2) cl_matches — shu mavsumdagi eski user_id -> yangi user_id
-        cursor.execute(
-            "UPDATE cl_matches SET player1_id = ? WHERE season = ? AND player1_id = ?",
-            (new_user_id, season, old_user_id))
+        # 2) cl_matches player_id / submitted_by
+        cursor.execute("UPDATE cl_matches SET player1_id = ? WHERE player1_id = ?",
+                       (new_user_id, old_user_id))
         m1 = cursor.rowcount or 0
-        cursor.execute(
-            "UPDATE cl_matches SET player2_id = ? WHERE season = ? AND player2_id = ?",
-            (new_user_id, season, old_user_id))
+        cursor.execute("UPDATE cl_matches SET player2_id = ? WHERE player2_id = ?",
+                       (new_user_id, old_user_id))
         m2 = cursor.rowcount or 0
-        cursor.execute(
-            "UPDATE cl_matches SET submitted_by = ? WHERE season = ? AND submitted_by = ?",
-            (new_user_id, season, old_user_id))
+        cursor.execute("UPDATE cl_matches SET submitted_by = ? WHERE submitted_by = ?",
+                       (new_user_id, old_user_id))
 
         cursor.execute("COMMIT")
-        logger.info("ChL ishtirokchi ko'chirildi: participant %s (user %s -> %s tg %s), "
-                    "%s+%s o'yin",
-                    participant_id, old_user_id, new_user_id, new_telegram_id, m1, m2)
-        return True, {"matches_updated": m1 + m2, "new_user_id": new_user_id}
+        logger.info("ChL akkount ko'chirildi: user %s -> %s (tg %s), %s participant, %s o'yin",
+                    old_user_id, new_user_id, new_telegram_id, parts, m1 + m2)
+        return True, {"participants_updated": parts, "matches_updated": m1 + m2,
+                      "new_user_id": new_user_id}
     except Exception:
         try:
             cursor.execute("ROLLBACK")
