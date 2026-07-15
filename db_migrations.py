@@ -198,5 +198,92 @@ def run_migrations() -> None:
         _fix_wc_chat_tables(conn)
         _ensure_unique_indexes(conn)
         _ensure_perf_indexes(conn)
+        _fix_cl_schedule_matchdays(conn)
     finally:
         conn.close()
+
+
+def _fix_cl_schedule_matchdays(conn) -> None:
+    """
+    Bir martalik tuzatish: eski qur'a mantiqi ChL guruh o'yinlariga noto'g'ri
+    matchday bergan (masalan 1,2,3,4,5,7 — 6-tur yo'q). Agar guruhda tur raqamlari
+    ketma-ket bo'lmasa (MAX(matchday) != kutilgan tur soni) VA hech qanday natija
+    kiritilmagan bo'lsa — kalendar ikki doira (uy+mehmon) qilib qayta quriladi.
+
+    Natija kiritilgan bo'lsa TEGILMAYDI (o'ynalgan o'yin o'chmaydi).
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
+        row = cursor.fetchone()
+        season = row["current_season"] if row else 1
+
+        cursor.execute(
+            "SELECT COUNT(*) AS c FROM cl_matches WHERE season = ?", (season,))
+        if cursor.fetchone()["c"] == 0:
+            cursor.execute("ROLLBACK"); return
+
+        # Natija bormi? (pending emas yoki score yozilgan) → tegmaymiz
+        cursor.execute(
+            "SELECT COUNT(*) AS c FROM cl_matches "
+            "WHERE season = ? AND (status != 'pending' OR score1 IS NOT NULL)",
+            (season,),
+        )
+        if cursor.fetchone()["c"] > 0:
+            cursor.execute("ROLLBACK"); return
+
+        # Har guruhda kutilgan tur soni = 2*(a'zolar-1). MAX(matchday) shundan katta
+        # yoki tur raqamlari uzluksiz emas bo'lsa — buzuq deb hisoblaymiz.
+        cursor.execute(
+            "SELECT group_number, COUNT(DISTINCT player1_id || '-' || player2_id) AS pairs, "
+            "MAX(matchday) AS mx, COUNT(DISTINCT matchday) AS distinct_md "
+            "FROM cl_matches WHERE season = ? AND group_number IS NOT NULL "
+            "GROUP BY group_number",
+            (season,),
+        )
+        broken = False
+        for r in cursor.fetchall():
+            # distinct turlar soni bilan MAX(matchday) mos kelmasa — bo'shliq bor
+            if r["mx"] != r["distinct_md"]:
+                broken = True
+                break
+        if not broken:
+            cursor.execute("ROLLBACK"); return
+
+        # Qayta qurish (guruh tarkibi cl_participants'dan)
+        cursor.execute(
+            "SELECT group_number, user_id FROM cl_participants "
+            "WHERE season = ? AND group_number IS NOT NULL ORDER BY group_number, id",
+            (season,),
+        )
+        groups: dict = {}
+        for r in cursor.fetchall():
+            groups.setdefault(r["group_number"], []).append(r["user_id"])
+        if not groups:
+            cursor.execute("ROLLBACK"); return
+
+        from schedule import _generate_round_robin_pairs
+        cursor.execute("DELETE FROM cl_matches WHERE season = ?", (season,))
+        for gnum, players in sorted(groups.items()):
+            if len(players) < 2:
+                continue
+            first = _generate_round_robin_pairs(players)
+            second = [[(a, h) for (h, a) in rnd] for rnd in first]
+            for md, pairs in enumerate(first + second, start=1):
+                for (p1, p2) in pairs:
+                    cursor.execute(
+                        "INSERT INTO cl_matches "
+                        "(season, group_number, matchday, player1_id, player2_id, status) "
+                        "VALUES (?, ?, ?, ?, ?, 'pending')",
+                        (season, gnum, md, p1, p2),
+                    )
+        cursor.execute("COMMIT")
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        # Migratsiya xatosi ilovani to'xtatmasin
+        import logging
+        logging.getLogger(__name__).warning("ChL kalendar tuzatish migratsiyasi o'tmadi", exc_info=True)

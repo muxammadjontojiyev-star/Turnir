@@ -27,7 +27,7 @@ repo/
 ├── config.py                  ✅ yaratilgan — constant qiymatlar (+ WEBAPP_URL, MAX_SCORE=30 — gol yuqori chegarasi)
 ├── texts.py                    ✅ yaratilgan — 3 tilli matnlar (24 ta, UZ/RU/EN)
 ├── models.py                   ✅ yaratilgan — SQLite jadval sxemalari (+ mustahkamlik: WAL, busy_timeout=15s, synchronous=NORMAL — bot/API/scheduler parallel ishlashi uchun)
-├── db_migrations.py            ✅ yaratilgan (2026-07-03) — sxemani TUZATUVCHI migratsiyalar: eski DB'da WC chat jadvallarini qayta qurish (audit A1), UNIQUE + samaradorlik indekslari (A2/B3); init_db() oxirida avtomatik chaqiriladi, idempotent
+├── db_migrations.py  (2026-07-15: _fix_cl_schedule_matchdays — buzuq ChL kalendarni avtomatik tuzatadi: MAX(matchday)!=distinct_matchday va natija yo'q bo'lsa, ikki doira uy+mehmon qilib qayta yoziladi. 7-tur bug'i)            ✅ yaratilgan (2026-07-03) — sxemani TUZATUVCHI migratsiyalar: eski DB'da WC chat jadvallarini qayta qurish (audit A1), UNIQUE + samaradorlik indekslari (A2/B3); init_db() oxirida avtomatik chaqiriladi, idempotent
 ├── queries.py                  ✅ FACADE (2026-07-03, C1) — kod 10 modulga bo'lindi (qoida #21), barcha eski importlar o'zgarishsiz ishlaydi
 ├── queries_users.py            ✅ users CRUD + liga ro'yxatdan o'tish (registrations, race-himoyali)
 ├── queries_leagues.py          ✅ ligalar CRUD, qur'a sanasi, natija saqlash/tiklash, matchday reset/reopen
