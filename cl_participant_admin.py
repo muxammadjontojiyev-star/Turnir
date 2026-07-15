@@ -18,6 +18,34 @@ from models import get_connection
 logger = logging.getLogger(__name__)
 
 
+def cl_list_all_participants() -> list[dict]:
+    """
+    Joriy mavsumdagi BARCHA ChL ishtirokchilari (o'chirilgan/tirik farqi yo'q).
+    Admin ularni yangi akkountga almashtirish uchun ro'yxatdan tanlaydi.
+    orphan=True — user_id users'da yo'q (o'chirilgan akkount).
+    [{user_id, nickname, club_name, group_number, orphan}, ...]
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
+        row = cursor.fetchone()
+        season = row["current_season"] if row else 1
+
+        cursor.execute(
+            "SELECT p.user_id, p.nickname, p.club_name, p.group_number, "
+            "CASE WHEN u.id IS NULL THEN 1 ELSE 0 END AS orphan "
+            "FROM cl_participants p "
+            "LEFT JOIN users u ON u.id = p.user_id "
+            "WHERE p.season = ? "
+            "ORDER BY p.group_number, p.nickname",
+            (season,),
+        )
+        return [dict(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
 def cl_list_orphan_participants() -> list[dict]:
     """
     O'chirilgan akkountlar: cl_participants YOKI cl_matches'da ishlatilgan user_id

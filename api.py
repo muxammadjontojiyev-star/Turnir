@@ -1328,6 +1328,13 @@ def cl_rating_all(user: dict = Depends(get_authenticated_user)):
     return {"groups": groups}
 
 
+@app.get("/cl/participants/all")
+def cl_participants_all(admin: dict = Depends(get_authenticated_super_admin)):
+    """Joriy mavsumdagi barcha ChL ishtirokchilari (admin almashtirish uchun)."""
+    from cl_participant_admin import cl_list_all_participants
+    return {"participants": cl_list_all_participants()}
+
+
 @app.get("/cl/participants/orphans")
 def cl_participants_orphans(admin: dict = Depends(get_authenticated_super_admin)):
     """
