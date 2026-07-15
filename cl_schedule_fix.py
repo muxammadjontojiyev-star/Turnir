@@ -82,6 +82,13 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
                     )
                     created += 1
 
+        # Kalendar o'zgardi — tur hisoblagichini ham reset qilamiz (started bo'lsa
+        # 1-turdan boshlanadi; bo'lmasa 0). Aks holda current_matchday eski qiymatda qoladi.
+        cursor.execute(
+            "UPDATE cl_state SET current_matchday = CASE WHEN started = 1 THEN 1 ELSE 0 END, "
+            "last_advance_date = NULL WHERE season = ?",
+            (season,),
+        )
         cursor.execute("COMMIT")
         logger.info("ChL kalendar qayta qurildi: %s o'yin, %s guruh (mavsum %s)",
                     created, len(groups), season)

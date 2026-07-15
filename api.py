@@ -1316,6 +1316,18 @@ def cl_rating(group_number: int, user: dict = Depends(get_authenticated_user)):
     return {"group_number": group_number, "rating": cl_group_rating(group_number)}
 
 
+@app.get("/cl/rating-all")
+def cl_rating_all(user: dict = Depends(get_authenticated_user)):
+    """Barcha 8 guruh reytingi birdaniga (Reyting 'Guruhlar' tabi — hammasi ketma-ket)."""
+    from cl_core import cl_group_rating
+    groups = []
+    for n in range(1, 9):
+        rows = cl_group_rating(n)
+        if rows:
+            groups.append({"group_number": n, "rating": rows})
+    return {"groups": groups}
+
+
 @app.post("/cl/schedule/rebuild")
 def cl_schedule_rebuild(admin: dict = Depends(get_authenticated_super_admin)):
     """
