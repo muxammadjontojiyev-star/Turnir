@@ -52,8 +52,8 @@ async function clLoadAdminPanel() {
       <button class="btn" id="cl-admin-rebuild">${ICON.get("recycle", 16)} Kalendarni qayta qurish (uy+mehmon)</button>
 
       <div style="font-size:12.5px;opacity:.75;margin:14px 0 6px">
-        Akkount almashtirish: o'chirilgan akkount o'rniga yangi Telegram ID'ni bog'laydi.
-        So'ng kalendarni qayta quring.
+        Ishtirokchini almashtirish: guruhdagi istalgan ishtirokchini (⚠️ = o'chirilgan
+        akkount) yangi Telegram ID'ga bog'laydi. So'ng kalendarni qayta quring.
       </div>
       <div id="cl-orphans-box" style="margin-bottom:6px"></div>
       <input class="modal-input" id="cl-new-tg" type="number" inputmode="numeric"
@@ -88,22 +88,24 @@ async function clLoadAdminPanel() {
 }
 
 // Kalendarni qayta qurish (ikki doira, to'g'ri tur raqamlari)
-// O'chirilgan (users'da yo'q) ishtirokchilar ro'yxatini yuklaydi
+// Barcha ishtirokchilar ro'yxatini yuklaydi (admin almashtirish uchun)
 async function clLoadOrphans() {
   const box = document.getElementById("cl-orphans-box");
   if (!box) return;
   try {
-    const d = await apiFetch("/cl/participants/orphans");
-    const list = d.orphans || [];
+    const d = await apiFetch("/cl/participants/all");
+    const list = d.participants || [];
     if (!list.length) {
-      box.innerHTML = `<div style="font-size:12px;opacity:.6">O'chirilgan akkount topilmadi.</div>`;
+      box.innerHTML = `<div style="font-size:12px;opacity:.6">Ishtirokchilar topilmadi.</div>`;
       return;
     }
-    const opts = list.map(o =>
-      `<option value="${o.user_id}">Guruh ${o.group_number || "?"} · ${(o.nickname || "—").replace(/"/g, "")} (eski id ${o.user_id})</option>`
-    ).join("");
+    const opts = list.map(o => {
+      const mark = o.orphan ? "⚠️ " : "";
+      const label = `${mark}G${o.group_number || "?"} · ${(o.nickname || "—").replace(/"/g, "")}`;
+      return `<option value="${o.user_id}">${label}</option>`;
+    }).join("");
     box.innerHTML = `<select class="modal-input cl-orphan-select" id="cl-orphan-select">
-      <option value="">— o'chirilgan ishtirokchini tanlang —</option>${opts}
+      <option value="">— almashtiriladigan ishtirokchini tanlang —</option>${opts}
     </select>`;
   } catch (_) {
     box.innerHTML = `<div style="font-size:12px;opacity:.6">Ro'yxat yuklanmadi.</div>`;
@@ -115,7 +117,7 @@ async function clAdminReassign(btn) {
   const sel = document.getElementById("cl-orphan-select");
   const oldUid = sel ? Number(sel.value || 0) : 0;
   const newTg = Number(document.getElementById("cl-new-tg").value || 0);
-  if (!oldUid) { showToast("O'chirilgan ishtirokchini tanlang"); return; }
+  if (!oldUid) { showToast("Almashtiriladigan ishtirokchini tanlang"); return; }
   if (!newTg) { showToast("Yangi Telegram ID kiriting"); return; }
   if (!confirm(`Tanlangan ishtirokchi yangi akkountga (${newTg}) bog'lansinmi?`)) return;
   btn.disabled = true;
