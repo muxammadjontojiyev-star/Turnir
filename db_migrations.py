@@ -233,19 +233,27 @@ def _fix_cl_schedule_matchdays(conn) -> None:
         if cursor.fetchone()["c"] > 0:
             cursor.execute("ROLLBACK"); return
 
-        # Har guruhda kutilgan tur soni = 2*(a'zolar-1). MAX(matchday) shundan katta
-        # yoki tur raqamlari uzluksiz emas bo'lsa — buzuq deb hisoblaymiz.
+        # Har guruhda kutilgan tur soni = 2*(a'zolar-1). MAX(matchday) yoki distinct
+        # turlar shundan farq qilsa — kalendar buzuq (masalan 9-tur, yoki bo'shliq).
         cursor.execute(
-            "SELECT group_number, COUNT(DISTINCT player1_id || '-' || player2_id) AS pairs, "
-            "MAX(matchday) AS mx, COUNT(DISTINCT matchday) AS distinct_md "
+            "SELECT group_number, COUNT(*) AS n FROM cl_participants "
+            "WHERE season = ? AND group_number IS NOT NULL GROUP BY group_number",
+            (season,),
+        )
+        expected_md = {r["group_number"]: 2 * (r["n"] - 1) for r in cursor.fetchall() if r["n"] >= 2}
+
+        cursor.execute(
+            "SELECT group_number, MAX(matchday) AS mx, COUNT(DISTINCT matchday) AS distinct_md "
             "FROM cl_matches WHERE season = ? AND group_number IS NOT NULL "
             "GROUP BY group_number",
             (season,),
         )
         broken = False
         for r in cursor.fetchall():
-            # distinct turlar soni bilan MAX(matchday) mos kelmasa — bo'shliq bor
-            if r["mx"] != r["distinct_md"]:
+            g = r["group_number"]
+            exp = expected_md.get(g)
+            # MAX != distinct (bo'shliq) YOKI kutilgandan farqli (masalan 9 != 6)
+            if r["mx"] != r["distinct_md"] or (exp is not None and r["mx"] != exp):
                 broken = True
                 break
         if not broken:
@@ -259,7 +267,11 @@ def _fix_cl_schedule_matchdays(conn) -> None:
         )
         groups: dict = {}
         for r in cursor.fetchall():
-            groups.setdefault(r["group_number"], []).append(r["user_id"])
+            if r["user_id"] is None:
+                continue
+            lst = groups.setdefault(r["group_number"], [])
+            if r["user_id"] not in lst:
+                lst.append(r["user_id"])
         if not groups:
             cursor.execute("ROLLBACK"); return
 
@@ -272,6 +284,8 @@ def _fix_cl_schedule_matchdays(conn) -> None:
             second = [[(a, h) for (h, a) in rnd] for rnd in first]
             for md, pairs in enumerate(first + second, start=1):
                 for (p1, p2) in pairs:
+                    if p1 is None or p2 is None:
+                        continue
                     cursor.execute(
                         "INSERT INTO cl_matches "
                         "(season, group_number, matchday, player1_id, player2_id, status) "

@@ -59,7 +59,11 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
         )
         groups: dict[int, list[int]] = {}
         for r in cursor.fetchall():
-            groups.setdefault(r["group_number"], []).append(r["user_id"])
+            if r["user_id"] is None:
+                continue
+            lst = groups.setdefault(r["group_number"], [])
+            if r["user_id"] not in lst:          # dublikatlarni oldini olamiz
+                lst.append(r["user_id"])
         if not groups:
             cursor.execute("ROLLBACK")
             return False, "not_drawn"
@@ -74,6 +78,8 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
             second_leg = [[(a, h) for (h, a) in rnd] for rnd in first_leg]
             for matchday, pairs in enumerate(first_leg + second_leg, start=1):
                 for (p1, p2) in pairs:
+                    if p1 is None or p2 is None:  # toq son "bye" — yozmaymiz
+                        continue
                     cursor.execute(
                         "INSERT INTO cl_matches "
                         "(season, group_number, matchday, player1_id, player2_id, status) "
@@ -83,12 +89,15 @@ def cl_rebuild_schedule(season: int | None = None) -> tuple[bool, str | dict]:
                     created += 1
 
         # Kalendar o'zgardi — tur hisoblagichini ham reset qilamiz (started bo'lsa
-        # 1-turdan boshlanadi; bo'lmasa 0). Aks holda current_matchday eski qiymatda qoladi.
-        cursor.execute(
-            "UPDATE cl_state SET current_matchday = CASE WHEN started = 1 THEN 1 ELSE 0 END, "
-            "last_advance_date = NULL WHERE season = ?",
-            (season,),
-        )
+        # 1-turdan boshlanadi; bo'lmasa 0). cl_state jadvali bo'lmasligi mumkin — xavfsiz.
+        try:
+            cursor.execute(
+                "UPDATE cl_state SET current_matchday = CASE WHEN started = 1 THEN 1 ELSE 0 END, "
+                "last_advance_date = NULL WHERE season = ?",
+                (season,),
+            )
+        except Exception as exc:
+            logger.warning("cl_state reset o'tkazilmadi (jadval yo'q?): %s", exc)
         cursor.execute("COMMIT")
         logger.info("ChL kalendar qayta qurildi: %s o'yin, %s guruh (mavsum %s)",
                     created, len(groups), season)

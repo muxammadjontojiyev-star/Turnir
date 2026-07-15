@@ -1336,7 +1336,11 @@ def cl_schedule_rebuild(admin: dict = Depends(get_authenticated_super_admin)):
     Xato: not_drawn, results_exist → 400
     """
     from cl_schedule_fix import cl_rebuild_schedule
-    success, result = cl_rebuild_schedule()
+    try:
+        success, result = cl_rebuild_schedule()
+    except Exception as exc:
+        logger.exception("ChL kalendar qayta qurishda xato")
+        raise HTTPException(status_code=500, detail=f"rebuild_failed: {exc}")
     if not success:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}
