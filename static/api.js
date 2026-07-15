@@ -2020,6 +2020,7 @@ function openResultModal(matchId) {
 }
 
 function closeResultModal() {
+  if (typeof CL !== "undefined") CL._resultMatchId = null;
   APP.activeMatchId = null;
   document.getElementById("modal-result").classList.add("hidden");
   document.getElementById("input-score1").value = "0";
@@ -2474,6 +2475,10 @@ function openBigScoreModal() {
 }
 
 async function submitMatchResult() {
+  // ChL modaldan ochilgan bo'lsa — ChL endpointiga yo'naltiramiz (qoida #26)
+  if (typeof CL !== "undefined" && CL._resultMatchId != null) {
+    return clSubmitResultFromModal();
+  }
   const matchId = APP.activeMatchId;
   const score1  = parseInt(document.getElementById("input-score1").value) || 0;
   const score2  = parseInt(document.getElementById("input-score2").value) || 0;

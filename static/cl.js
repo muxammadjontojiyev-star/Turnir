@@ -270,22 +270,13 @@ function clRenderMatchItem(m) {
   let action = "";
   if (m.status === "pending") {
     action = isOpenRound
-      ? `<button class="match-action-btn" data-cl-open="${m.id}">Natija</button>`
+      ? `<button class="match-action-btn" data-cl-result="${m.id}">Natija</button>`
       : `<span class="cl-locked" title="Bu tur hali ochilmagan">${ICON.get("lock", 16)}</span>`;
   } else if (m.status === "awaiting_confirmation") {
     action = (m.submitted_by && !clIsMe(m.submitted_by))
       ? `<button class="match-action-btn" data-cl-confirm="${m.id}">${ICON.get("check", 16)}</button>`
       : `<span class="match-waiting">Kutilmoqda</span>`;
   }
-
-  // Natija kiritish qatori — faqat "Natija" bosilganda ochiladi (hidden)
-  const inputs = (m.status === "pending" && isOpenRound) ? `
-    <div class="cl-score-row hidden" id="cl-score-${m.id}">
-      <input class="score-input" id="cl-s1-${m.id}" type="number" min="0" max="99" value="0">
-      <span class="score-separator">:</span>
-      <input class="score-input" id="cl-s2-${m.id}" type="number" min="0" max="99" value="0">
-      <button class="btn btn--primary" data-cl-submit="${m.id}">Kiritish</button>
-    </div>` : "";
 
   const reject = (m.status === "awaiting_confirmation" && m.submitted_by && !clIsMe(m.submitted_by))
     ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">${ICON.get("cross", 15)} Rad etish</button></div>` : "";
@@ -307,7 +298,7 @@ function clRenderMatchItem(m) {
         <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
         ${action}
       </div>
-      ${inputs}${reject}
+      ${reject}
     </div>`;
 }
 
@@ -344,33 +335,13 @@ function clBindSectionEvents(root) {
   root.querySelectorAll("[data-cl-open-match]").forEach(el =>
     el.addEventListener("click", () => clOpenOpponentModal(Number(el.dataset.clOpenMatch))));
 
-  root.querySelectorAll("[data-cl-open]").forEach(b =>
-    b.addEventListener("click", () => {
-      const row = document.getElementById(`cl-score-${b.dataset.clOpen}`);
-      if (row) { row.classList.toggle("hidden"); }
-    }));
+  root.querySelectorAll("[data-cl-result]").forEach(b =>
+    b.addEventListener("click", () => clOpenResultModal(Number(b.dataset.clResult))));
 
   root.querySelectorAll("[data-cl-group]").forEach(b =>
     b.addEventListener("click", () => {
       CL.ratingGroup = Number(b.dataset.clGroup);
       void clLoadRating();
-    }));
-
-  root.querySelectorAll("[data-cl-submit]").forEach(b =>
-    b.addEventListener("click", async () => {
-      const id = b.dataset.clSubmit;
-      const s1 = Number(document.getElementById(`cl-s1-${id}`).value || 0);
-      const s2 = Number(document.getElementById(`cl-s2-${id}`).value || 0);
-      b.disabled = true; // ikki marta bosishdan himoya (qoida #38/#40)
-      try {
-        await apiFetch(`/cl/match/submit-result?match_id=${id}&score1=${s1}&score2=${s2}`, { method: "POST" });
-        showToast("Natija kiritildi ✅");
-        CL._myId = undefined;
-        await clLoadMatches();
-      } catch (e) {
-        b.disabled = false;
-        showToast("Xato: " + e.message);
-      }
     }));
 
   const act = async (id, accept) => {
@@ -387,4 +358,54 @@ function clBindSectionEvents(root) {
     b.addEventListener("click", () => act(b.dataset.clConfirm, true)));
   root.querySelectorAll("[data-cl-reject]").forEach(b =>
     b.addEventListener("click", () => act(b.dataset.clReject, false)));
+}
+
+// ============================================================
+//  NATIJA KIRITISH — liga #modal-result modalidan foydalanadi (qoida #26 DRY).
+//  Submit esa ChL endpointiga yo'naltiriladi (CL._resultMatchId flag orqali).
+// ============================================================
+function clOpenResultModal(matchId) {
+  const m = (CL.myMatches || []).find(x => x.id === matchId);
+  if (!m) return;
+  const modal = document.getElementById("modal-result");
+  if (!modal) return;
+
+  CL._resultMatchId = matchId;         // submitMatchResult() shu flagni tekshiradi
+
+  // Logolar: chap = player1_club, o'ng = player2_club
+  const setLogo = (id, club) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const logo = clClubLogo(club);
+    if (logo) { el.src = logo; el.alt = club || ""; el.style.display = ""; }
+    else { el.removeAttribute("src"); el.style.display = "none"; }
+  };
+  setLogo("result-logo1", m.player1_club);
+  setLogo("result-logo2", m.player2_club);
+
+  const s1 = document.getElementById("input-score1");
+  const s2 = document.getElementById("input-score2");
+  if (s1) s1.value = "0";
+  if (s2) s2.value = "0";
+
+  modal.classList.remove("hidden");
+}
+
+// Modaldagi "Yuborish" bosilganda ChL o'yiniga natija yuboradi
+async function clSubmitResultFromModal() {
+  const id = CL._resultMatchId;
+  const s1 = Number(document.getElementById("input-score1").value || 0);
+  const s2 = Number(document.getElementById("input-score2").value || 0);
+  try {
+    await apiFetch(`/cl/match/submit-result?match_id=${id}&score1=${s1}&score2=${s2}`,
+                   { method: "POST" });
+    document.getElementById("modal-result").classList.add("hidden");
+    CL._resultMatchId = null;
+    showToast("Natija yuborildi");
+    await clLoadMatches();
+  } catch (e) {
+    const msg = { matchday_locked: "Bu tur hali ochilmagan",
+                  match_not_found: "O'yin topilmadi" }[e.message] || e.message;
+    showToast("Xato: " + msg);
+  }
 }

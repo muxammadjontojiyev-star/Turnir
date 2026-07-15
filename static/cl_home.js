@@ -91,7 +91,7 @@ function clRenderHomeBeforeDraw() {
 // "cl-rule--important" kartada (qoida #52: foydalanuvchi jarima olmasligi uchun
 // deadline, 0:0 va yopiq tur qoidalari ko'zga tashlanib turishi shart).
 function clRenderRules() {
-  const key = (v) => `<span class="cl-key">${v}</span>`;
+  const key = (v) => `<strong class="rule-hl">${v}</strong>`;
 
   const important = [
     `Deadline — ${key("23:30")} (Toshkent). Shu vaqtda joriy tur yopiladi va keyingisi ochiladi.`,
@@ -111,11 +111,11 @@ function clRenderRules() {
 
   return `
     <div class="section-label">QOIDALAR</div>
-    <div class="card cl-rules cl-rules--important">
+    <div class="card cl-rules rules-block cl-rules--important">
       <div class="cl-rules-head">${ICON.get("megaphone", 15)} <span>MUHIM — ESDA TUTING</span></div>
       <ul>${important}</ul>
     </div>
-    <div class="card cl-rules">
+    <div class="card cl-rules rules-block">
       <div class="cl-rules-head">${ICON.get("clipboard", 15)} <span>UMUMIY QOIDALAR</span></div>
       <ul>${general}</ul>
     </div>`;

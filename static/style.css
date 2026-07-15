@@ -3970,11 +3970,11 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 .cl-rules--important {
   border: 1px solid rgba(245,197,66,.45);
+  border-left: 3px solid #f5c542;
   background: rgba(245,197,66,.06);
 }
 .cl-rules--important .cl-rules-head { color: #f5c542; opacity: 1; }
-.cl-key {
-  display: inline-block; padding: 0 5px; border-radius: 5px; font-weight: 700;
-  background: rgba(62,198,240,.14); color: #56d9f5;
-}
-.cl-rules--important .cl-key { background: rgba(245,197,66,.16); color: #f5c542; }
+.cl-rules--important .rule-hl { color: #f5c542; }  /* muhim blokda urg'u sariq */
+.cl-rules ul { margin: 0; padding-left: 2px; list-style: none; }
+.cl-rules li { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 7px; padding-left: 14px; position: relative; }
+.cl-rules li::before { content: "›"; position: absolute; left: 0; opacity: .5; }
