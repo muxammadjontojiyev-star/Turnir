@@ -3960,3 +3960,21 @@ tr.is-me .div-rating-user { color: #fff; }
 .cl-rating-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
 .cl-back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 13px; }
 .cl-locked svg, .cl-club-fallback svg { opacity: .55; }
+
+/* ChL: sarlavha ikonasi + qoidalar bloki */
+.cl-title { display: flex; align-items: center; gap: 8px; }
+.cl-hero-kicker svg { vertical-align: -3px; margin-right: 2px; }
+.cl-rules-head {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+  font-size: 11px; letter-spacing: 1.2px; font-weight: 700; opacity: .7;
+}
+.cl-rules--important {
+  border: 1px solid rgba(245,197,66,.45);
+  background: rgba(245,197,66,.06);
+}
+.cl-rules--important .cl-rules-head { color: #f5c542; opacity: 1; }
+.cl-key {
+  display: inline-block; padding: 0 5px; border-radius: 5px; font-weight: 700;
+  background: rgba(62,198,240,.14); color: #56d9f5;
+}
+.cl-rules--important .cl-key { background: rgba(245,197,66,.16); color: #f5c542; }

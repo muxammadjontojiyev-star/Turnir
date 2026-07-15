@@ -55,7 +55,7 @@ function clRenderHero(title, stats, statusText) {
   return `
     <div class="cl-hero">
       <div class="cl-hero-overlay">
-        <div class="cl-hero-kicker">CHEMPIONLAR LIGASI</div>
+        <div class="cl-hero-kicker">${ICON.get("ucl", 15)} CHEMPIONLAR LIGASI</div>
         <div class="cl-hero-title">${escHtml(title)}</div>
         <div class="cl-hero-stats">${cells}</div>
         <div class="cl-hero-status">${escHtml(statusText)}</div>
@@ -87,21 +87,36 @@ function clRenderHomeBeforeDraw() {
 }
 
 // ---- QOIDALAR ----
+// Muhim qiymatlar <mark> (cl-key) bilan ajratiladi; eng kritik 3 band alohida
+// "cl-rule--important" kartada (qoida #52: foydalanuvchi jarima olmasligi uchun
+// deadline, 0:0 va yopiq tur qoidalari ko'zga tashlanib turishi shart).
 function clRenderRules() {
+  const key = (v) => `<span class="cl-key">${v}</span>`;
+
+  const important = [
+    `Deadline — ${key("23:30")} (Toshkent). Shu vaqtda joriy tur yopiladi va keyingisi ochiladi.`,
+    `Deadlinegacha natija kiritilmagan o'yin ${key("0:0 durang")} bilan yopiladi.`,
+    `Natijani faqat ${key("ochiq turda")} kiritish mumkin — yopiq turlar qulf belgisi bilan turadi.`,
+  ].map(x => `<li>${x}</li>`).join("");
+
+  const general = [
+    `Liga mavsumi bo'yicha eng ko'p ochko to'plagan ${key("32 ta")} ishtirokchi qatnashadi.`,
+    `Qur'a orqali ${key(CL_GROUP_COUNT + " ta guruh")}, har biriga ${key(CL_GROUP_SIZE + " tadan")} tasodifiy taqsimlanadi.`,
+    `Har raqib bilan ${key("2 marta")}: bir marta uy, bir marta mehmon — jami ${key("6 o'yin")}.`,
+    `Kuniga ${key("bitta tur")} o'ynaladi. Turlar admin ruxsatidan keyin ochiladi.`,
+    `Bir tomon kiritgan, ikkinchisi tasdiqlamagan natija deadline'da ${key("avtomatik tasdiqlanadi")}.`,
+    `Ochko: g'alaba ${key("3")} · durang ${key("1")} · mag'lubiyat ${key("0")}.`,
+    `Saralash: ochko → gol farqi → urilgan gollar.`,
+  ].map(x => `<li>${x}</li>`).join("");
+
   return `
     <div class="section-label">QOIDALAR</div>
+    <div class="card cl-rules cl-rules--important">
+      <div class="cl-rules-head">${ICON.get("megaphone", 15)} <span>MUHIM — ESDA TUTING</span></div>
+      <ul>${important}</ul>
+    </div>
     <div class="card cl-rules">
-      <ul>
-        <li>Chempionlar ligasida liga mavsumi bo'yicha eng ko'p ochko to'plagan <b>32 ta</b> ishtirokchi qatnashadi.</li>
-        <li>Qur'a orqali ular <b>${CL_GROUP_COUNT} ta guruhga</b>, har biriga <b>${CL_GROUP_SIZE} tadan</b> tasodifiy taqsimlanadi.</li>
-        <li>Guruhda har raqib bilan <b>2 marta</b> o'ynaladi: bir marta <b>uy</b>, bir marta <b>mehmon</b> (jami 6 o'yin).</li>
-        <li>Kuniga <b>bitta tur</b> o'ynaladi. Turlar admin ruxsatidan keyin ochiladi.</li>
-        <li>Deadline — <b>23:30</b> (Toshkent). Shu vaqtda joriy tur yopiladi va keyingisi ochiladi.</li>
-        <li>Deadlinegacha natija kiritilmagan o'yin <b>0:0 durang</b> bilan yopiladi.</li>
-        <li>Bir tomon kiritgan, ikkinchisi tasdiqlamagan natija deadline'da <b>avtomatik tasdiqlanadi</b>.</li>
-        <li>Ochko: g'alaba — <b>3</b>, durang — <b>1</b>, mag'lubiyat — <b>0</b>.</li>
-        <li>Saralash: ochko → gol farqi → urilgan gollar.</li>
-        <li>Natijani faqat <b>ochiq turda</b> kiritish mumkin; yopiq turlar qulf belgisi bilan ko'rinadi.</li>
-      </ul>
+      <div class="cl-rules-head">${ICON.get("clipboard", 15)} <span>UMUMIY QOIDALAR</span></div>
+      <ul>${general}</ul>
     </div>`;
 }

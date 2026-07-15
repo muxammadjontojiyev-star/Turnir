@@ -132,7 +132,7 @@ function renderChampionsLeague() {
   root.innerHTML = `
     <div class="wc-header">
       <button class="wc-back" id="cl-back-btn">←</button>
-      <div class="wc-header-title">Chempionlar ligasi</div>
+      <div class="wc-header-title cl-title">${ICON.get("ucl", 20)} <span>Chempionlar ligasi</span></div>
     </div>
     <div class="wc-body" style="padding-bottom:90px;">${body}</div>
     <nav class="wc-nav">

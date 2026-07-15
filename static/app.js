@@ -29,6 +29,8 @@ const ICON_PATHS = {
   check:   '<path d="M5 12.5 10 17l9-10"/>',
   cross:   '<path d="M6 6l12 12M18 6 6 18"/>',
   play:    '<path d="M7 4v16l13-8L7 4Z"/>',
+  // Chempionlar ligasi — yulduzli to'p (starball)
+  ucl:     '<circle cx="12" cy="12" r="9"/><path d="m12 5.6 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3L8.7 8l2.3-.3 1-2.1Z"/><path d="m5.6 13.4 1.9 1.4-.7 2.2"/><path d="m18.4 13.4-1.9 1.4.7 2.2"/><path d="M9.4 20.6 12 19l2.6 1.6"/>',
   // Rejim kartalari (premium belgilar)
   star:    '<path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6L12 16.7 6.6 19.6l1.1-6L3.2 9.4l6.1-.8L12 3Z"/>',
   shield:  '<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z"/><path d="M12 3v18"/>',
