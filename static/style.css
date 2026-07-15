@@ -4127,3 +4127,12 @@ tr.is-me .div-rating-user { color: #fff; }
   margin: 6px 2px 8px; letter-spacing: .5px;
 }
 #cl-root .cl-rating-group-title svg { filter: drop-shadow(0 0 5px rgba(75,123,255,.9)); }
+
+/* ChL admin — o'chirilgan ishtirokchi dropdown ko'rinsin */
+#cl-root .cl-orphan-select {
+  width: 100%; appearance: auto; -webkit-appearance: menulist;
+  background: #0d1745; color: #eaf2ff;
+  border: 1px solid rgba(90,130,255,.35); border-radius: 10px;
+  padding: 10px 12px; font-size: 14px;
+}
+#cl-root .cl-orphan-select option { background: #0d1745; color: #eaf2ff; }

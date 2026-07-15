@@ -100,9 +100,9 @@ async function clLoadOrphans() {
       return;
     }
     const opts = list.map(o =>
-      `<option value="${o.participant_id}">Guruh ${o.group_number || "?"} · ${(o.nickname || "—").replace(/"/g, "")} (eski id ${o.user_id})</option>`
+      `<option value="${o.user_id}">Guruh ${o.group_number || "?"} · ${(o.nickname || "—").replace(/"/g, "")} (eski id ${o.user_id})</option>`
     ).join("");
-    box.innerHTML = `<select class="modal-input" id="cl-orphan-select">
+    box.innerHTML = `<select class="modal-input cl-orphan-select" id="cl-orphan-select">
       <option value="">— o'chirilgan ishtirokchini tanlang —</option>${opts}
     </select>`;
   } catch (_) {
@@ -113,9 +113,9 @@ async function clLoadOrphans() {
 // Akkount almashtirish (tanlangan participant → yangi Telegram ID)
 async function clAdminReassign(btn) {
   const sel = document.getElementById("cl-orphan-select");
-  const pid = sel ? Number(sel.value || 0) : 0;
+  const oldUid = sel ? Number(sel.value || 0) : 0;
   const newTg = Number(document.getElementById("cl-new-tg").value || 0);
-  if (!pid) { showToast("O'chirilgan ishtirokchini tanlang"); return; }
+  if (!oldUid) { showToast("O'chirilgan ishtirokchini tanlang"); return; }
   if (!newTg) { showToast("Yangi Telegram ID kiriting"); return; }
   if (!confirm(`Tanlangan ishtirokchi yangi akkountga (${newTg}) bog'lansinmi?`)) return;
   btn.disabled = true;
@@ -124,7 +124,7 @@ async function clAdminReassign(btn) {
   try {
     const r = await apiFetch("/cl/participant/reassign", {
       method: "POST",
-      body: JSON.stringify({ participant_id: pid, new_telegram_id: newTg }),
+      body: JSON.stringify({ old_user_id: oldUid, new_telegram_id: newTg }),
     });
     showToast(`Bog'landi: ${r.matches_updated} o'yin yangilandi. Endi kalendarni qayta quring.`);
     await clLoadThenRender();
@@ -133,7 +133,7 @@ async function clAdminReassign(btn) {
     btn.innerHTML = prev;
     const msg = {
       new_user_not_found: "yangi akkount botda topilmadi (avval /start bossin)",
-      participant_not_found: "ishtirokchi topilmadi",
+      nothing_to_reassign: "bu id topilmadi",
       new_already_participant: "yangi akkount allaqachon ishtirokchi",
     }[e.message] || e.message;
     showToast("Xato: " + msg);
