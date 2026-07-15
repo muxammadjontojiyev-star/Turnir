@@ -301,7 +301,7 @@ function clRenderMatchItem(m) {
         <span class="match-status ${statusCls}">${statusText}</span>
       </div>
       <div class="cl-match-body">
-        <div class="match-center">${center}</div>
+        <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
         ${action}
       </div>
       ${reject}
@@ -346,7 +346,7 @@ function clHandleClick(e, root) {
     clOpenChatThenResult(Number(el.dataset.clChat)); return;
   }
   if ((el = hit("[data-cl-open-match]"))) {
-    clOpenOpponentModal(Number(el.dataset.clOpenMatch)); return;
+    clOpenChatThenResult(Number(el.dataset.clOpenMatch)); return;
   }
   if ((el = hit("[data-cl-confirm]"))) {
     clConfirmMatch(el.dataset.clConfirm, true); return;

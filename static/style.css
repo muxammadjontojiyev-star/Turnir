@@ -4003,3 +4003,115 @@ tr.is-me .div-rating-user { color: #fff; }
 .cl-rules ul { margin: 0; padding-left: 2px; list-style: none; }
 .cl-rules li { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 7px; padding-left: 14px; position: relative; }
 .cl-rules li::before { content: "›"; position: absolute; left: 0; opacity: .5; }
+
+/* ============================================================
+   CHEMPIONLAR LIGASI — PREMIUM UCL TEMA (barcha sahifalar)
+   Ranglar: to'q ko'k fon + yorqin ko'k + kamalak urg'u (yuborilgan rasmlardan)
+   ============================================================ */
+#cl-root {
+  --ucl-navy: #0a1033;
+  --ucl-navy-2: #0d1745;
+  --ucl-blue: #2b5cff;
+  --ucl-blue-bright: #4b7bff;
+  --ucl-cyan: #38d6ff;
+  position: relative;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, rgba(43,92,255,.22), transparent 60%),
+    linear-gradient(180deg, #060b26 0%, #0a1033 55%, #070c22 100%);
+  min-height: 100vh;
+}
+/* Yuqorida yengil "yulduzli to'p" naqsh (UCL vibe) */
+#cl-root::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(circle at 50% 8%, rgba(75,123,255,.10), transparent 45%);
+}
+#cl-root > * { position: relative; z-index: 1; }
+
+/* Header */
+#cl-root .wc-header {
+  background: linear-gradient(180deg, rgba(13,23,69,.95), rgba(10,16,51,.7));
+  border-bottom: 1px solid rgba(75,123,255,.28);
+}
+#cl-root .cl-title { color: #eaf0ff; text-shadow: 0 0 16px rgba(75,123,255,.6); }
+#cl-root .cl-title svg { filter: drop-shadow(0 0 6px rgba(75,123,255,.9)); }
+#cl-root .wc-back { color: var(--ucl-cyan); }
+
+/* Pastki navigatsiya */
+#cl-root .wc-nav {
+  background: linear-gradient(180deg, rgba(10,16,51,.6), rgba(6,11,38,.96));
+  border-top: 1px solid rgba(75,123,255,.28);
+  backdrop-filter: blur(12px);
+}
+#cl-root .wc-nav-item.active {
+  color: #fff;
+}
+#cl-root .wc-nav-item.active .nav-icon .icon {
+  filter: drop-shadow(0 0 8px rgba(75,123,255,1));
+  color: var(--ucl-cyan);
+}
+
+/* Kartalar — shishasimon, ko'k chegara */
+#cl-root .card,
+#cl-root .cl-match-wrap,
+#cl-root .stat-card,
+#cl-root .rating-table,
+#cl-root .card--table {
+  background: linear-gradient(165deg, rgba(20,32,80,.72), rgba(12,20,54,.72)) !important;
+  border: 1px solid rgba(90,130,255,.2) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Bo'lim sarlavhalari — kamalak chiziq */
+#cl-root .section-label {
+  color: #aab8ff; letter-spacing: 2px;
+}
+#cl-root .section-label::after {
+  background: linear-gradient(90deg, #38d6ff, #2b5cff 40%, #a94bff 70%, transparent) !important;
+  opacity: .8;
+}
+
+/* Profil kartasi */
+#cl-root .card--profile {
+  border: 1px solid rgba(90,130,255,.35) !important;
+  box-shadow: 0 8px 30px rgba(30,40,120,.4);
+}
+#cl-root .profile-avatar {
+  box-shadow: 0 0 0 2px rgba(75,123,255,.6), 0 0 18px rgba(75,123,255,.5);
+}
+
+/* Statistika kartalari */
+#cl-root .stat-card--primary {
+  border-color: rgba(56,214,255,.5) !important;
+  box-shadow: 0 0 20px rgba(56,214,255,.25);
+}
+#cl-root .stat-card-value { color: #eaf2ff; }
+#cl-root .neon-cyan { color: var(--ucl-cyan) !important; text-shadow: 0 0 12px rgba(56,214,255,.6); }
+
+/* O'yin kartalari — hisob va status */
+#cl-root .match-score { color: #fff; font-weight: 800; text-shadow: 0 0 10px rgba(75,123,255,.5); }
+#cl-root .cl-match-round { color: #cdd8ff; }
+#cl-root .match-action-btn {
+  border-color: rgba(56,214,255,.5); color: var(--ucl-cyan);
+}
+#cl-root .match-action-btn.match-chat-btn {
+  background: rgba(56,214,255,.12);
+}
+
+/* Reyting jadvali */
+#cl-root .rating-table th { color: #9fb0ff; }
+#cl-root .rating-table tr { border-color: rgba(90,130,255,.12); }
+#cl-root .cl-rating-user { color: var(--ucl-cyan); }
+
+/* Reyting tablari (Guruhlar / To'purarlar) */
+#cl-root .cl-rating-tabs .tab-btn {
+  background: rgba(20,32,80,.6); border: 1px solid rgba(90,130,255,.2);
+}
+#cl-root .cl-rating-tabs .tab-btn.active {
+  background: linear-gradient(160deg, #2b3f9c, #2456c8);
+  border-color: #4b7bff; color: #fff;
+}
+
+/* Orqaga tugmasi */
+#cl-root .cl-back-link {
+  background: rgba(20,32,80,.5); border: 1px solid rgba(90,130,255,.2); color: #cdd8ff;
+}
