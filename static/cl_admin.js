@@ -55,8 +55,7 @@ async function clLoadAdminPanel() {
         Akkount almashtirish: o'chirilgan akkount o'rniga yangi Telegram ID'ni bog'laydi.
         So'ng kalendarni qayta quring.
       </div>
-      <input class="modal-input" id="cl-old-tg" type="number" inputmode="numeric"
-             placeholder="Eski Telegram ID" style="margin-bottom:6px">
+      <div id="cl-orphans-box" style="margin-bottom:6px"></div>
       <input class="modal-input" id="cl-new-tg" type="number" inputmode="numeric"
              placeholder="Yangi Telegram ID" style="margin-bottom:8px">
       <button class="btn" id="cl-admin-reassign">👤 Akkountni almashtirish</button>
@@ -82,24 +81,50 @@ async function clLoadAdminPanel() {
   const rasgn = document.getElementById("cl-admin-reassign");
   if (rasgn) rasgn.addEventListener("click", () => void clAdminReassign(rasgn));
 
+  if (document.getElementById("cl-orphans-box")) void clLoadOrphans();
+
   const sbtn = document.getElementById("cl-admin-start");
   if (sbtn && !started) sbtn.addEventListener("click", () => void clAdminStart(sbtn));
 }
 
 // Kalendarni qayta qurish (ikki doira, to'g'ri tur raqamlari)
-// Akkount almashtirish (o'chirilgan → yangi Telegram ID)
+// O'chirilgan (users'da yo'q) ishtirokchilar ro'yxatini yuklaydi
+async function clLoadOrphans() {
+  const box = document.getElementById("cl-orphans-box");
+  if (!box) return;
+  try {
+    const d = await apiFetch("/cl/participants/orphans");
+    const list = d.orphans || [];
+    if (!list.length) {
+      box.innerHTML = `<div style="font-size:12px;opacity:.6">O'chirilgan akkount topilmadi.</div>`;
+      return;
+    }
+    const opts = list.map(o =>
+      `<option value="${o.participant_id}">Guruh ${o.group_number || "?"} · ${(o.nickname || "—").replace(/"/g, "")} (eski id ${o.user_id})</option>`
+    ).join("");
+    box.innerHTML = `<select class="modal-input" id="cl-orphan-select">
+      <option value="">— o'chirilgan ishtirokchini tanlang —</option>${opts}
+    </select>`;
+  } catch (_) {
+    box.innerHTML = `<div style="font-size:12px;opacity:.6">Ro'yxat yuklanmadi.</div>`;
+  }
+}
+
+// Akkount almashtirish (tanlangan participant → yangi Telegram ID)
 async function clAdminReassign(btn) {
-  const oldTg = Number(document.getElementById("cl-old-tg").value || 0);
+  const sel = document.getElementById("cl-orphan-select");
+  const pid = sel ? Number(sel.value || 0) : 0;
   const newTg = Number(document.getElementById("cl-new-tg").value || 0);
-  if (!oldTg || !newTg) { showToast("Eski va yangi Telegram ID kiriting"); return; }
-  if (!confirm(`Eski akkount (${oldTg}) yangi akkountga (${newTg}) bog'lansinmi?`)) return;
+  if (!pid) { showToast("O'chirilgan ishtirokchini tanlang"); return; }
+  if (!newTg) { showToast("Yangi Telegram ID kiriting"); return; }
+  if (!confirm(`Tanlangan ishtirokchi yangi akkountga (${newTg}) bog'lansinmi?`)) return;
   btn.disabled = true;
   const prev = btn.innerHTML;
   btn.textContent = "Bog'lanmoqda…";
   try {
     const r = await apiFetch("/cl/participant/reassign", {
       method: "POST",
-      body: JSON.stringify({ old_telegram_id: oldTg, new_telegram_id: newTg }),
+      body: JSON.stringify({ participant_id: pid, new_telegram_id: newTg }),
     });
     showToast(`Bog'landi: ${r.matches_updated} o'yin yangilandi. Endi kalendarni qayta quring.`);
     await clLoadThenRender();
@@ -107,8 +132,8 @@ async function clAdminReassign(btn) {
     btn.disabled = false;
     btn.innerHTML = prev;
     const msg = {
-      new_user_not_found: "yangi akkount botda topilmadi (avval /start bosсин)",
-      old_not_participant: "eski akkount ChL ishtirokchisi emas",
+      new_user_not_found: "yangi akkount botda topilmadi (avval /start bossin)",
+      participant_not_found: "ishtirokchi topilmadi",
       new_already_participant: "yangi akkount allaqachon ishtirokchi",
     }[e.message] || e.message;
     showToast("Xato: " + msg);
