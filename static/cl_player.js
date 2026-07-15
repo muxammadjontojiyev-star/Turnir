@@ -8,13 +8,13 @@
 
 function clOpenPlayerModal(userId) {
   const rows = CL.rating || [];
-  const idx = rows.findIndex(r => r.user_id === userId);
-  if (idx < 0) return;
-  CL.viewPlayer = { ...rows[idx], position: idx + 1, group_number: CL.ratingGroup };
-  CL.viewPlayerMatches = null;        // yuklanmoqda
+  const row = rows.find(r => r.user_id === userId);
+  if (!row) return;
+  CL.viewPlayer = { ...row, position: row._pos, group_number: row._group };
+  CL.viewPlayerMatches = null;
   CL.section = "player";
   renderChampionsLeague();
-  void clLoadPlayerMatches(userId);   // o'yinlarni alohida yuklaymiz
+  void clLoadPlayerMatches(userId);
 }
 
 async function clLoadPlayerMatches(userId) {

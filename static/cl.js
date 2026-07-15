@@ -18,6 +18,7 @@ const CL = {
   qualifiers: null,    // /cl/qualifiers javobi (qur'agacha ko'rsatish uchun)
   ratingTab: "groups",  // Reyting tabi: "groups" | "scorers"
   scorers: null,
+  ratingAll: null,
   viewPlayer: null,     // Reytingdan ochilgan ishtirokchi (cl_player.js)
   ratingGroup: 1,      // Reytingda tanlangan guruh (1..8)
   homeGroup: 1,        // Asosiy sahifada tanlangan guruh (1..8)
@@ -101,9 +102,13 @@ async function clLoadThenRender() {
 
 async function clLoadRating() {
   try {
-    const d = await apiFetch(`/cl/rating/${CL.ratingGroup}`);
-    CL.rating = d.rating || [];
-  } catch (_) { CL.rating = []; }
+    const d = await apiFetch("/cl/rating-all");
+    CL.ratingAll = d.groups || [];
+    CL.rating = [];
+    for (const g of CL.ratingAll) {
+      g.rating.forEach((p, i) => CL.rating.push({ ...p, _group: g.group_number, _pos: i + 1 }));
+    }
+  } catch (_) { CL.ratingAll = []; CL.rating = []; }
   renderChampionsLeague();
 }
 
@@ -210,28 +215,30 @@ function clRenderRating() {
     </div>`;
   if (CL.ratingTab === "scorers") return `${tabs}<div class="card card--table">${clRenderScorers()}</div>`;
 
-  let selector = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">`;
-  for (let n = 1; n <= CL_GROUP_COUNT; n++) {
-    const active = CL.ratingGroup === n ? " active" : "";
-    selector += `<button class="tab-btn${active}" data-cl-group="${n}">G${n}</button>`;
-  }
-  selector += `</div>`;
+  // Barcha guruhlar ketma-ket (Guruh 1 → jadval, Guruh 2 → jadval ...)
+  const groups = CL.ratingAll;
+  if (groups === null || groups === undefined) return `${tabs}<div class="wc-loading-row">Yuklanmoqda…</div>`;
+  if (!groups.length) return `${tabs}<div class="card">Hozircha guruhlar yo'q (qur'a kutilmoqda).</div>`;
 
-  const rows = (CL.rating || []).map((p, i) => `
-    <tr>
-      <td class="rank-${i + 1}">${i + 1}</td>
-      <td><div class="cl-rating-player" data-cl-player="${p.user_id}">${clClubBadge(p.club_name, 22)}<span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}</span></div></td>
-      <td>${p.played}</td><td>${p.goal_difference > 0 ? "+" : ""}${p.goal_difference}</td>
-      <td><b>${p.points}</b></td>
-    </tr>`).join("");
+  const blocks = groups.map(g => {
+    const rows = g.rating.map((p, i) => `
+      <tr>
+        <td class="rank-${i + 1}">${i + 1}</td>
+        <td><div class="cl-rating-player" data-cl-player="${p.user_id}">${clClubBadge(p.club_name, 22)}<span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}</span></div></td>
+        <td>${p.played}</td><td>${p.goal_difference > 0 ? "+" : ""}${p.goal_difference}</td>
+        <td><b>${p.points}</b></td>
+      </tr>`).join("");
+    return `
+      <div class="cl-rating-group-title">${ICON.get("ucl", 15)} Guruh ${g.group_number}</div>
+      <div class="card card--table" style="margin-bottom:14px">
+        <table class="rating-table">
+          <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>GF</th><th>Ochko</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join("");
 
-  return `${tabs}${selector}
-    <div class="card card--table">
-      <table class="rating-table">
-        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>GF</th><th>Ochko</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="5">Hozircha natijalar yo'q</td></tr>`}</tbody>
-      </table>
-    </div>`;
+  return `${tabs}${blocks}`;
 }
 
 // ---- MATCHES ----

@@ -4014,15 +4014,19 @@ tr.is-me .div-rating-user { color: #fff; }
   --ucl-blue: #2b5cff;
   --ucl-blue-bright: #4b7bff;
   --ucl-cyan: #38d6ff;
-  position: relative;
   background:
     radial-gradient(1200px 500px at 50% -10%, rgba(43,92,255,.22), transparent 60%),
     linear-gradient(180deg, #060b26 0%, #0a1033 55%, #070c22 100%);
-  min-height: 100vh;
+}
+/* Header va nav — fixed; faqat wc-body scroll bo'ladi (nav qimirlamaydi) */
+#cl-root .wc-header { position: sticky; top: 0; z-index: 40; }
+#cl-root .wc-nav { position: fixed !important; z-index: 60; }
+#cl-root .wc-body {
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 /* Yuqorida yengil "yulduzli to'p" naqsh (UCL vibe) */
 #cl-root::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image: radial-gradient(circle at 50% 8%, rgba(75,123,255,.10), transparent 45%);
 }
 #cl-root > * { position: relative; z-index: 1; }
@@ -4115,3 +4119,11 @@ tr.is-me .div-rating-user { color: #fff; }
 #cl-root .cl-back-link {
   background: rgba(20,32,80,.5); border: 1px solid rgba(90,130,255,.2); color: #cdd8ff;
 }
+
+/* ChL Reyting — guruh sarlavhasi (barcha guruhlar ketma-ket) */
+#cl-root .cl-rating-group-title {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 15px; font-weight: 800; color: #eaf2ff;
+  margin: 6px 2px 8px; letter-spacing: .5px;
+}
+#cl-root .cl-rating-group-title svg { filter: drop-shadow(0 0 5px rgba(75,123,255,.9)); }
