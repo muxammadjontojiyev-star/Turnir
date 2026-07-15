@@ -1383,6 +1383,18 @@ def cl_my_matches(user: dict = Depends(get_authenticated_user)):
             "matches": cl_get_user_matches(user["id"], season)}
 
 
+@app.get("/cl/matches/user/{target_id}")
+def cl_user_matches(target_id: int, user: dict = Depends(get_authenticated_user)):
+    """
+    Boshqa ishtirokchining ChL o'yinlari (faqat o'qish — reyting profilida ko'rish uchun).
+    me_id yuborilmaydi (bu boshqa odam); natija kiritish tugmalari ko'rinmaydi.
+    """
+    from season_prizes import get_league_season
+    from cl_matches_queries import cl_get_user_matches
+    season = get_league_season()
+    return {"matches": cl_get_user_matches(target_id, season)}
+
+
 @app.post("/cl/match/submit-result")
 def cl_submit(match_id: int, score1: int, score2: int,
               user: dict = Depends(get_authenticated_user)):
