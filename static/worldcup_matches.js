@@ -36,9 +36,10 @@ function wcRenderProfile() {
 
   // Username linki (liga kabi)
   const username = APP.currentUser?.username || null;
+  const myWcStars = prizeStarsHtml({ telegram_id: APP.currentUser?.id, username });
   const subline = username
-    ? `${escHtml(nick)}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>`
-    : escHtml(groupLabel);
+    ? `${escHtml(nick)}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>${myWcStars}`
+    : `${escHtml(groupLabel)}${myWcStars}`;
 
   // Statistika (backend /wc/profile rating)
   const r = reg.rating;
@@ -413,9 +414,10 @@ function wcRenderViewProfile() {
     : `<span class="wc-profile-flag">${flag}</span>`;
 
   // Username linki yoki "Username yo'q"
+  const wcPlayerStars = prizeStarsHtml({ user_id: data.user_id, username: data.username });
   const subline = data.username
-    ? `<a class="profile-username" href="https://t.me/${escHtml(data.username)}" target="_blank">@${escHtml(data.username)}</a>`
-    : `<span class="profile-no-username">${escHtml(t.no_username || "Username yo'q")}</span>`;
+    ? `<a class="profile-username" href="https://t.me/${escHtml(data.username)}" target="_blank">@${escHtml(data.username)}</a>${wcPlayerStars}`
+    : `<span class="profile-no-username">${escHtml(t.no_username || "Username yo'q")}</span>${wcPlayerStars}`;
 
   // Statistika
   const r = data.rating;

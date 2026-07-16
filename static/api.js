@@ -520,8 +520,8 @@ function renderRatingTable(rating) {
       ? `<img src="${escHtml(clubLogo)}" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'" />`
       : "";
     const usernameRow = player.username
-      ? `<span class="player-username">@${escHtml(player.username)}</span>`
-      : "";
+      ? `<span class="player-username">@${escHtml(player.username)}${prizeStarsHtml(player)}</span>`
+      : prizeStarsHtml(player);
 
     const playerCell = `
       <div class="player-cell">
@@ -612,8 +612,8 @@ function renderTopScorersTable(players) {
       ? `<img src="${escHtml(clubLogo)}" alt="" style="width:24px;height:24px;object-fit:contain;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'" />`
       : "";
     const usernameRow = player.username
-      ? `<span class="player-username">@${escHtml(player.username)}</span>`
-      : "";
+      ? `<span class="player-username">@${escHtml(player.username)}${prizeStarsHtml(player)}</span>`
+      : prizeStarsHtml(player);
 
     const playerCell = `
       <div class="player-cell">
@@ -704,9 +704,9 @@ function renderPlayerModal(data) {
   // Faqat Telegram username (link) yoki "Username yo'q" yozuvi — nickname ko'rsatilmaydi
   if (data.username) {
     const u = escHtml(data.username);
-    leagueEl.innerHTML = `<a class="profile-username" href="https://t.me/${u}" target="_blank">@${u}</a>`;
+    leagueEl.innerHTML = `<a class="profile-username" href="https://t.me/${u}" target="_blank">@${u}</a>${prizeStarsHtml({ user_id: data.user_id, username: data.username })}`;
   } else {
-    leagueEl.innerHTML = `<span class="profile-no-username">${t.no_username || "Username yo'q"}</span>`;
+    leagueEl.innerHTML = `<span class="profile-no-username">${t.no_username || "Username yo'q"}</span>${prizeStarsHtml({ user_id: data.user_id })}`;
   }
 
   // Statistika
@@ -771,6 +771,38 @@ async function loadProfile() {
 // Sovrinlarim — foydalanuvchi qo'lga kiritgan sovrinlar (liga + WC)
 async function loadMyPrizes(userId) {
   await loadPrizesInto(userId, "my-prizes-section");
+}
+
+// ============================================================
+//  KUBOK YULDUZCHALARI (2026-07-16)
+//  Sovrin (faqat kubok) yutganlar useri yonidagi ★ — barcha rejim
+//  tablarida, hammaga ko'rinadi. Backend: GET /prizes/stars.
+// ============================================================
+
+// Bir marta yuklanadi (init'da); xato bo'lsa yulduzchalar shunchaki chiqmaydi
+async function loadPrizeStars() {
+  try {
+    APP.prizeStars = await apiFetch("/prizes/stars");
+  } catch (_) {
+    APP.prizeStars = null;
+  }
+}
+
+// ref: {user_id, telegram_id, username} yoki to'g'ridan-to'g'ri user_id (raqam).
+// Kubok soni topilsa shuncha ★ qaytaradi (o'lchami atrofdagi matnga mos —
+// font-size: inherit, .prize-stars style.css'da).
+function prizeStarsHtml(ref) {
+  const ps = APP.prizeStars;
+  if (!ps) return "";
+  const o = (ref && typeof ref === "object") ? ref : { user_id: ref };
+  let n = 0;
+  if (o.user_id != null && ps.by_user) n = ps.by_user[String(o.user_id)] || 0;
+  if (!n && o.telegram_id != null && ps.by_tg) n = ps.by_tg[String(o.telegram_id)] || 0;
+  if (!n && o.username && ps.by_username) {
+    n = ps.by_username[String(o.username).replace(/^@/, "").toLowerCase()] || 0;
+  }
+  if (!n) return "";
+  return `<span class="prize-stars" title="${n}">${"★".repeat(n)}</span>`;
 }
 
 // Sovrinlarni berilgan konteynerga yuklaydi (o'z profil + boshqa o'yinchi profili — DRY)
@@ -889,10 +921,11 @@ function renderProfile(data) {
     // profile-league — foydalanuvchi nicki + username linki
     const username = APP.currentUser?.username || null;
     const displayName = escHtml(data.nickname || "");
+    const myStars = prizeStarsHtml({ user_id: data.user_id, telegram_id: APP.currentUser?.id, username });
     if (username) {
-      leagueEl.innerHTML = `${displayName}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>`;
+      leagueEl.innerHTML = `${displayName}<br><a class="profile-username" href="https://t.me/${escHtml(username)}" target="_blank">@${escHtml(username)}</a>${myStars}`;
     } else {
-      leagueEl.textContent = data.nickname || leagueName;
+      leagueEl.innerHTML = `${escHtml(data.nickname || leagueName)}${myStars}`;
     }
   } else {
     // Ro'yxatdan o'tmagan
@@ -1077,6 +1110,67 @@ function renderMatchItem(m) {
 }
 
 // ============================================================
+//  ISHTIROKCHINI ALMASHTIRISH (2026-07-16) — umumiy yordamchilar
+//  ChL naqshi (cl_admin.js) liga/WC/Divizion uchun umumlashtirildi.
+//  Faqat bosh admin (backend get_authenticated_super_admin bilan himoyalangan).
+//  Qur'a natijasiga ta'sir qilmaydi — faqat player_id yangi akkountga o'tadi.
+// ============================================================
+
+// Ro'yxatni yuklab, boxId ichiga <select id="{boxId}-select"> chizadi.
+// labelFn(o) — har bir ishtirokchi uchun ko'rinadigan yozuv.
+async function reassignLoadList(url, boxId, labelFn) {
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  try {
+    const d = await apiFetch(url);
+    const list = d.participants || [];
+    if (!list.length) {
+      box.innerHTML = `<div style="font-size:12px;opacity:.6">Ishtirokchilar topilmadi.</div>`;
+      return;
+    }
+    const opts = list.map(o => {
+      const mark = o.orphan ? "⚠️ " : "";
+      return `<option value="${o.user_id}">${mark}${escHtml(labelFn(o))}</option>`;
+    }).join("");
+    box.innerHTML = `<select class="modal-input" id="${boxId}-select" style="margin-bottom:8px">
+      <option value="">— almashtiriladigan ishtirokchini tanlang —</option>${opts}
+    </select>`;
+  } catch (_) {
+    box.innerHTML = `<div style="font-size:12px;opacity:.6">Ro'yxat yuklanmadi.</div>`;
+  }
+}
+
+// Tanlangan ishtirokchini yangi Telegram ID'ga bog'laydi (POST url).
+async function reassignSubmit(url, boxId, tgInputId, btn, onDone) {
+  const sel = document.getElementById(`${boxId}-select`);
+  const oldUid = sel ? Number(sel.value || 0) : 0;
+  const newTg = Number(document.getElementById(tgInputId)?.value || 0);
+  if (!oldUid) { showToast("Almashtiriladigan ishtirokchini tanlang"); return; }
+  if (!newTg) { showToast("Yangi Telegram ID kiriting"); return; }
+  if (!confirm(`Tanlangan ishtirokchi yangi akkountga (${newTg}) bog'lansinmi? Qur'a natijasi o'zgarmaydi.`)) return;
+  btn.disabled = true;
+  try {
+    const r = await apiFetch(url, {
+      method: "POST",
+      body: JSON.stringify({ old_user_id: oldUid, new_telegram_id: newTg }),
+    });
+    showToast(`✅ Bog'landi: ${r.matches_updated || 0} o'yin yangilandi`);
+    const tgInput = document.getElementById(tgInputId);
+    if (tgInput) tgInput.value = "";
+    if (onDone) await onDone();
+  } catch (e) {
+    const msg = {
+      new_user_not_found: "yangi akkount botda topilmadi (avval /start bossin)",
+      nothing_to_reassign: "bu ishtirokchi topilmadi",
+      new_already_participant: "yangi akkount allaqachon ishtirokchi",
+    }[e.message] || e.message;
+    showToast("Xato: " + msg);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
 //  ADMIN PANEL
 // ============================================================
 
@@ -1116,6 +1210,19 @@ async function loadAdminPanel() {
     } catch (_) { /* xato — bu qism bo'sh qoladi */ }
     await loadLeagueAdminRoles();
     await loadSeasonInfo();
+
+    // Ishtirokchini almashtirish (2026-07-16) — ro'yxat + tugma
+    void reassignLoadList("/league/participants/all", "league-reassign-box",
+      (o) => `${o.league_name || "?"} · ${o.club_name || o.nickname || "—"}${o.username ? " · @" + o.username : ""}`);
+    const reassignBtn = document.getElementById("btn-league-reassign");
+    if (reassignBtn && !reassignBtn._bound) {
+      reassignBtn._bound = true;
+      reassignBtn.addEventListener("click", () =>
+        void reassignSubmit("/league/participant/reassign", "league-reassign-box",
+          "league-reassign-new-tg", reassignBtn,
+          () => reassignLoadList("/league/participants/all", "league-reassign-box",
+            (o) => `${o.league_name || "?"} · ${o.club_name || o.nickname || "—"}${o.username ? " · @" + o.username : ""}`)));
+    }
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
     superOnly?.classList.add("hidden");
@@ -1810,6 +1917,28 @@ async function submitAdminFixConfirmed() {
       method: "POST",
     });
     showToast(t.admin_fix_success || "✅ Natija tuzatildi");
+    matchIdInput.value = "";
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+// 2026-07-16: Admin natijani BEKOR QILADI — o'yin natija kiritilmagan
+// holatga (pending, — : —) qaytadi. WC/Divizion'dagi bekor qilish bilan bir xil.
+async function submitAdminCancelResult() {
+  const t = APP.t;
+  const matchIdInput = document.getElementById("admin-fix-match-id");
+  const matchId = parseInt(matchIdInput.value);
+
+  if (!matchId) {
+    showToast("❌ " + (t.admin_fix_match_id_required || "Match ID kiritilmadi"));
+    return;
+  }
+  if (!window.confirm(t.admin_reset_confirm || "Bu o'yin natijasini bekor qilasizmi? O'yin qayta — : — bo'ladi.")) return;
+
+  try {
+    await apiFetch(`/admin/match/cancel?match_id=${matchId}`, { method: "POST" });
+    showToast(t.admin_reset_done || "✅ Natija bekor qilindi");
     matchIdInput.value = "";
   } catch (e) {
     showToast("❌ " + e.message);

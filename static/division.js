@@ -299,7 +299,7 @@ function divRenderRating() {
       <tr class="${isMe ? "is-me" : ""} div-rating-row" id="${isMe ? "div-my-rating-row" : ""}"
           data-uid="${p.user_id}" style="cursor:pointer">
         <td class="rank-${i + 1}">${i + 1}</td>
-        <td class="div-rating-user">${escHtml(label)}</td>
+        <td class="div-rating-user">${escHtml(label)}${prizeStarsHtml(p)}</td>
         <td>${p.played}</td>
         <td><b class="neon-cyan">${ball}</b></td>
       </tr>`;
@@ -342,7 +342,7 @@ function divRenderScorers() {
     return `
       <tr class="${isMe ? "is-me" : ""} div-rating-row" data-uid="${p.user_id}" style="cursor:pointer">
         <td class="rank-${i + 1}">${i + 1}</td>
-        <td class="div-rating-user">${escHtml(label)}</td>
+        <td class="div-rating-user">${escHtml(label)}${prizeStarsHtml(p)}</td>
         <td>${p.played}</td>
         <td><b class="neon-cyan">${p.goals_for}</b></td>
       </tr>`;
@@ -479,7 +479,7 @@ function divRenderProfile() {
         ${myPhoto}
         <div style="min-width:0;flex:1">
           <div style="font-size:18px;font-weight:800;overflow:hidden;text-overflow:ellipsis">${escHtml(s.me_nickname || "—")}</div>
-          ${s.me_username ? `<div style="font-size:12.5px;opacity:.7">@${escHtml(s.me_username)}</div>` : ""}
+          ${s.me_username ? `<div style="font-size:12.5px;opacity:.7">@${escHtml(s.me_username)}${prizeStarsHtml({ user_id: s.me_user_id, telegram_id: APP.currentUser?.id, username: s.me_username })}</div>` : ""}
         </div>
         <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
           <div class="div-ball-value">${rating}</div>
@@ -755,7 +755,7 @@ function divRenderPlayer() {
         ${photo}
         <div style="min-width:0;flex:1">
           <div style="font-size:19px;font-weight:800;overflow:hidden;text-overflow:ellipsis">${escHtml(data.nickname || "—")}</div>
-          ${data.username ? `<div style="font-size:13px;color:var(--cyan)">@${escHtml(data.username)}</div>` : ""}
+          ${data.username ? `<div style="font-size:13px;color:var(--cyan)">@${escHtml(data.username)}${prizeStarsHtml({ user_id: data.user_id, username: data.username })}</div>` : ""}
         </div>
         <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
           <div class="div-ball-value">${rating}</div>
@@ -976,6 +976,19 @@ function divBindSectionEvents(root) {
     b.addEventListener("click", () => resolveBig(Number(b.dataset.divAdminApprove), true)));
   root.querySelectorAll("[data-div-admin-reject]").forEach(b =>
     b.addEventListener("click", () => resolveBig(Number(b.dataset.divAdminReject), false)));
+
+  // Ishtirokchini almashtirish (2026-07-16) — api.js umumiy yordamchilari (DRY)
+  if (document.getElementById("div-reassign-box")) {
+    const divReassignLabel = (o) =>
+      `${o.username ? "@" + o.username : (o.nickname || "—")}${o.last_day ? " · " + o.last_day : ""}`;
+    void reassignLoadList("/div/participants/all", "div-reassign-box", divReassignLabel);
+    const divReassignBtn = document.getElementById("div-btn-reassign");
+    if (divReassignBtn) {
+      divReassignBtn.addEventListener("click", () =>
+        void reassignSubmit("/div/participant/reassign", "div-reassign-box",
+          "div-reassign-new-tg", divReassignBtn, () => divLoadAdminMatches()));
+    }
+  }
 }
 
 // ---- ADMIN PANEL (faqat bosh admin) ----
@@ -1064,6 +1077,19 @@ function divFocusFixId() {
   }
 }
 
+// 2026-07-16: Ishtirokchini almashtirish formasi (faqat bosh admin; backend
+// super-admin bilan himoyalangan). Qur'a/juftlashga ta'sir qilmaydi.
+function divAdminReassignForm() {
+  return `
+    <div class="section-label">ISHTIROKCHINI ALMASHTIRISH</div>
+    <div class="admin-fix-form" style="margin-bottom:12px">
+      <div id="div-reassign-box" style="margin-bottom:6px"></div>
+      <input id="div-reassign-new-tg" class="modal-input" type="number" inputmode="numeric"
+             placeholder="Yangi Telegram ID" style="margin-bottom:8px" />
+      <button class="btn" id="div-btn-reassign">👤 Akkountni almashtirish</button>
+    </div>`;
+}
+
 function divRenderAdmin() {
   const ms = DIV.adminMatches || [];
   if (!ms.length) {
@@ -1072,14 +1098,14 @@ function divRenderAdmin() {
         <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
         <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
       </div>`;
-    return divAdminFixForm() + f + `<div class="card">O'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
+    return divAdminFixForm() + divAdminReassignForm() + f + `<div class="card">O'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
   }
   const filter = `
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
       <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
     </div>`;
-  return divAdminFixForm() + filter +
+  return divAdminFixForm() + divAdminReassignForm() + filter +
     `<div class="card" style="font-size:12.5px;opacity:.75">✏️ natijani o'zgartirish (TASDIQLANGAN o'yinlar ham tuzatiladi), 🚫 natijani bekor qilish (o'yin qayta ochiladi), katta hisobda ✅/❌ qaror. O'yin raqami — #ID.</div>` +
     ms.map(m => {
       const p2 = m.player2_id ? escHtml(m.player2_name || "") : "<i>(toq — avto g'alaba)</i>";

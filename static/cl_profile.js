@@ -30,7 +30,7 @@ function clRenderProfile() {
     <div class="card card--profile">
       <div class="profile-avatar" id="cl-avatar">${escHtml(letter)}</div>
       <div class="profile-info">
-        <h2 class="profile-nickname">${escHtml(p.nickname || "Ishtirokchi")}</h2>
+        <h2 class="profile-nickname">${escHtml(p.nickname || "Ishtirokchi")}${prizeStarsHtml({ user_id: p.user_id })}</h2>
         <span class="profile-league">${escHtml(groupLabel)}</span>
       </div>
       <div class="profile-club-badge">${clClubBadge(p.club_name, 44)}</div>

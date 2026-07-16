@@ -107,6 +107,16 @@ function wcRenderAdminPanel() {
         <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
       </div>
 
+      <!-- 2026-07-16: ishtirokchini yangi akkountga almashtirish (faqat bosh admin).
+           Qur'a natijasiga ta'sir qilmaydi — guruhlar/jadval/setka joyida qoladi. -->
+      <div class="section-label">ISHTIROKCHINI ALMASHTIRISH</div>
+      <div class="admin-fix-form">
+        <div id="wc-reassign-box" style="margin-bottom:6px"></div>
+        <input id="wc-reassign-new-tg" class="modal-input" type="number" inputmode="numeric"
+               placeholder="Yangi Telegram ID" style="margin-bottom:8px" />
+        <button class="btn" id="wc-btn-reassign">👤 Akkountni almashtirish</button>
+      </div>
+
       <div class="section-label">${escHtml(t.admin_manage_title || "ADMIN TAYINLASH")}</div>
       <div class="admin-fix-form">
         <input id="wc-admin-new-id" class="modal-input" type="number" min="1"
@@ -149,6 +159,18 @@ function wcBindAdminPanel() {
     document.getElementById("wc-btn-finalize-season")?.addEventListener("click", wcFinalizeSeason);
     void wcLoadPlayoffStatus();
     void wcLoadSeasonInfo();
+
+    // Ishtirokchini almashtirish (2026-07-16) — api.js umumiy yordamchilari (DRY)
+    const wcReassignLabel = (o) =>
+      `${o.group_letter || "?"} · ${o.team_name || "—"}${o.username ? " · @" + o.username : (o.nickname ? " · " + o.nickname : "")}`;
+    void reassignLoadList("/wc/participants/all", "wc-reassign-box", wcReassignLabel);
+    const wcReassignBtn = document.getElementById("wc-btn-reassign");
+    if (wcReassignBtn) {
+      wcReassignBtn.addEventListener("click", () =>
+        void reassignSubmit("/wc/participant/reassign", "wc-reassign-box",
+          "wc-reassign-new-tg", wcReassignBtn,
+          () => reassignLoadList("/wc/participants/all", "wc-reassign-box", wcReassignLabel)));
+    }
   }
   // Katta hisob ro'yxati — barcha WC adminlariga (bosh + oddiy)
   void wcLoadPendingMatches();

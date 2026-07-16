@@ -1179,6 +1179,10 @@ async function init() {
 
   showModeSelect();
 
+  // Kubok yulduzchalari (2026-07-16) — bir marta yuklanadi, barcha rejimlar
+  // reyting/profil renderlari APP.prizeStars'dan o'qiydi (bloklamaydi)
+  void loadPrizeStars();
+
   // Mavsum yakuni tabrigi — bir martalik oyna (bloklamaydi, xato bo'lsa jim davom etadi)
   checkSeasonCelebration();
 }
@@ -1271,6 +1275,8 @@ function showModeSelect() {
   // Barcha bo'limlarni yashiramiz va pastki navigatsiyani ham (tanlovgacha kerak emas)
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
   document.querySelector(".bottom-nav")?.classList.add("hidden");
+  // Ligalar rejimidagi "Ortga" tugmasi rejim tanlash ekranida ko'rinmasin
+  document.getElementById("league-back-btn")?.classList.add("hidden");
 
   let screen = document.getElementById("mode-select");
   if (!screen) {
@@ -1325,7 +1331,21 @@ function hideModeSelect() {
 function enterLeagueMode() {
   hideModeSelect();
   document.querySelector(".bottom-nav")?.classList.remove("hidden");
+  // "Ortga" tugmasi (rejim tanlashga qaytish) — faqat Ligalar rejimida ko'rinadi
+  const backBtn = document.getElementById("league-back-btn");
+  if (backBtn) {
+    backBtn.classList.remove("hidden");
+    if (!backBtn._bound) {           // bir marta bog'lanadi (takror listener yo'q)
+      backBtn._bound = true;
+      backBtn.addEventListener("click", exitLeagueMode);
+    }
+  }
   navigateTo("home");
+}
+
+// Ligalar rejimini yopib, rejim tanlashga qaytaradi (exitWorldCup naqshi)
+function exitLeagueMode() {
+  showModeSelect();   // bo'limlar, bottom-nav va "Ortga" tugmasi ichida yashiriladi
 }
 
 // Tab 2: World Cup — hozircha placeholder (2-bosqichda to'ldiriladi)
@@ -1454,6 +1474,10 @@ function bindEvents() {
   // Admin: tasdiqlangan natijani tuzatish formasi
   document.getElementById("btn-admin-fix-submit")
     .addEventListener("click", submitAdminFixConfirmed);
+
+  // Admin: natijani bekor qilish (2026-07-16) — o'yin pending holatiga qaytadi
+  document.getElementById("btn-admin-cancel-result")
+    ?.addEventListener("click", submitAdminCancelResult);
 
   // Modal tashqarisiga bosish — yopish
   document.getElementById("modal-nickname").addEventListener("click", e => {

@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260715p" />
+  <link rel="stylesheet" href="style.css?v=20260716a" />
 </head>
 <body>
 
@@ -45,6 +45,12 @@
 
     <!-- SECTIONS -->
     <main class="main">
+
+      <!-- Ligalar rejimi: rejim tanlash oynasiga qaytish (WC/ChL/Divizion'dagi wc-back naqshi) -->
+      <button class="wc-back league-back hidden" id="league-back-btn">
+        <span class="back-btn-arrow" data-icon="back"></span>
+        <span data-i18n="back">Ortga</span>
+      </button>
 
       <!-- ===== ASOSIY ===== -->
       <section id="section-home" class="section active">
@@ -226,6 +232,16 @@
               <!-- JS tomonidan to'ldiriladi -->
             </div>
 
+            <!-- 2026-07-16: ishtirokchini yangi akkountga almashtirish (faqat bosh admin).
+                 Qur'a natijasiga ta'sir qilmaydi — jadval joyida qoladi. -->
+            <div class="section-label">ISHTIROKCHINI ALMASHTIRISH</div>
+            <div class="admin-fix-form">
+              <div id="league-reassign-box" style="margin-bottom:6px"></div>
+              <input id="league-reassign-new-tg" class="modal-input" type="number" inputmode="numeric"
+                     placeholder="Yangi Telegram ID" style="margin-bottom:8px" />
+              <button class="btn" id="btn-league-reassign">👤 Akkountni almashtirish</button>
+            </div>
+
             <div class="section-label" data-i18n="season_title">LIGA MAVSUMI</div>
             <div class="admin-player-league" id="season-current-hint" style="margin:0 2px 8px">—</div>
             <button class="btn btn--danger" id="btn-finalize-season" style="width:100%" data-i18n="season_finalize_btn">Liga mavsumini yakunlash</button>
@@ -256,6 +272,10 @@
               <span class="admin-fix-logo-slot" id="admin-fix-logo2"></span>
             </div>
             <button class="btn btn--primary btn--glow" id="btn-admin-fix-submit" data-i18n="admin_fix_submit">Tuzatish</button>
+            <!-- 2026-07-16: natijani bekor qilish — o'yin natija kiritilmagan holatga qaytadi -->
+            <button class="btn btn--ghost" id="btn-admin-cancel-result"
+                    style="color:var(--red-neon);border-color:rgba(255,69,96,.3)"
+                    data-i18n="admin_reset_btn">Natijani bekor qilish</button>
           </div>
 
           <!-- Admin tayinlash (faqat bosh adminga ko'rinadi, JS boshqaradi) -->
@@ -502,22 +522,22 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260715c"></script>
-  <script src="api.js?v=20260715c"></script>
+  <script src="app.js?v=20260716a"></script>
+  <script src="api.js?v=20260716a"></script>
   <!-- Mavsum yakuni tabrik oynasi (bir martalik) -->
   <script src="celebration.js?v=20260710a"></script>
   <!-- Chempionlar ligasi rejimi -->
-  <script src="cl.js?v=20260715p"></script>
+  <script src="cl.js?v=20260716a"></script>
   <script src="cl_home.js?v=20260715g"></script>
   <script src="cl_chat.js?v=20260715a"></script>
-  <script src="cl_player.js?v=20260715p"></script>
-  <script src="cl_profile.js?v=20260715p"></script>
-  <script src="cl_admin.js?v=20260715p"></script>
+  <script src="cl_player.js?v=20260716a"></script>
+  <script src="cl_profile.js?v=20260716a"></script>
+  <script src="cl_admin.js?v=20260716a"></script>
   <!-- Divizion rejimi -->
-  <script src="division.js?v=20260713f"></script>
-  <script src="worldcup.js?v=20260712b"></script>
-  <script src="worldcup_matches.js?v=20260628c20"></script>
-  <script src="worldcup_admin.js?v=20260713b"></script>
+  <script src="division.js?v=20260716a"></script>
+  <script src="worldcup.js?v=20260716a"></script>
+  <script src="worldcup_matches.js?v=20260716a"></script>
+  <script src="worldcup_admin.js?v=20260716a"></script>
   <script src="worldcup_chat.js?v=20260628c20"></script>
   <script src="worldcup_playoff.js?v=20260628c20"></script>
 </body>

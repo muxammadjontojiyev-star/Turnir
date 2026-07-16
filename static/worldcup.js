@@ -522,8 +522,8 @@ async function wcLoadTopScorers() {
     tbody.innerHTML = scorers.map((p, i) => {
       const flag = wcTeamFlag(p.team_name);
       const userLine = p.username
-        ? `<span class="wc-row-user">@${escHtml(p.username)}</span>`
-        : (p.nickname ? `<span class="wc-row-user">${escHtml(p.nickname)}</span>` : "");
+        ? `<span class="wc-row-user">@${escHtml(p.username)}${prizeStarsHtml(p)}</span>`
+        : (p.nickname ? `<span class="wc-row-user">${escHtml(p.nickname)}${prizeStarsHtml(p)}</span>` : prizeStarsHtml(p));
       const rankCls = (i + 1) <= 3 ? `rank-${i + 1}` : "";
       return `
         <tr>
@@ -558,8 +558,8 @@ async function wcLoadRating() {
       const flag = wcTeamFlag(p.team_name);
       const gd = p.goal_difference > 0 ? `+${p.goal_difference}` : `${p.goal_difference}`;
       const userLine = p.username
-        ? `<span class="wc-row-user">@${escHtml(p.username)}</span>`
-        : (p.nickname ? `<span class="wc-row-user">${escHtml(p.nickname)}</span>` : "");
+        ? `<span class="wc-row-user">@${escHtml(p.username)}${prizeStarsHtml(p)}</span>`
+        : (p.nickname ? `<span class="wc-row-user">${escHtml(p.nickname)}${prizeStarsHtml(p)}</span>` : prizeStarsHtml(p));
       return `
         <tr class="rating-row" data-user-id="${p.user_id}">
           <td>${idx + 1}</td>

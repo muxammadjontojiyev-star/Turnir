@@ -209,7 +209,7 @@ function clRenderScorers() {
       <td>${i + 1}</td>
       <td><div class="cl-rating-player" data-cl-player="${p.user_id}">
         ${clClubBadge(p.club_name, 22)}
-        <span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}</span>
+        <span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}${prizeStarsHtml(p)}</span>
       </div></td>
       <td>G${p.group_number}</td>
       <td>${p.played}</td>
@@ -241,7 +241,7 @@ function clRenderRating() {
     const rows = g.rating.map((p, i) => `
       <tr>
         <td class="rank-${i + 1}">${i + 1}</td>
-        <td><div class="cl-rating-player" data-cl-player="${p.user_id}">${clClubBadge(p.club_name, 22)}<span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}</span></div></td>
+        <td><div class="cl-rating-player" data-cl-player="${p.user_id}">${clClubBadge(p.club_name, 22)}<span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}${prizeStarsHtml(p)}</span></div></td>
         <td>${p.played}</td><td>${p.goal_difference > 0 ? "+" : ""}${p.goal_difference}</td>
         <td><b>${p.points}</b></td>
       </tr>`).join("");

@@ -112,6 +112,31 @@ async function clLoadAdminPanel() {
   if (fixId) fixId.addEventListener("input", (e) => clFixIdChanged(e.target.value));
   const fixSubmit = document.getElementById("cl-fix-submit");
   if (fixSubmit) fixSubmit.addEventListener("click", () => void clAdminFixSubmit(fixSubmit));
+
+  // Natijani bekor qilish (2026-07-16) — o'yin natija kiritilmagan holatga qaytadi
+  const fixCancel = document.getElementById("cl-fix-cancel-result");
+  if (fixCancel) fixCancel.addEventListener("click", () => void clAdminCancelResult(fixCancel));
+}
+
+// 2026-07-16: Admin ChL natijasini BEKOR QILADI (pending, — : —).
+// Liga/WC/Divizion'dagi bekor qilish bilan bir xil oqim.
+async function clAdminCancelResult(btn) {
+  const t = APP.t || {};
+  const id = parseInt(CL_ADMIN.fixId, 10);
+  if (!id) { showToast("Match ID kiriting"); return; }
+  if (!confirm(t.admin_reset_confirm || "Bu o'yin natijasini bekor qilasizmi? O'yin qayta — : — bo'ladi.")) return;
+  btn.disabled = true;
+  try {
+    await apiFetch(`/cl/admin/match/cancel?match_id=${id}`, { method: "POST" });
+    showToast(t.admin_reset_done || "✅ Natija bekor qilindi");
+    CL_ADMIN.fixId = "";
+    CL_ADMIN.fixInfo = null;
+    await clLoadThenRender();
+  } catch (e) {
+    btn.disabled = false;
+    const msg = { match_not_found: "o'yin topilmadi" }[e.message] || e.message;
+    showToast("Xato: " + msg);
+  }
 }
 
 // --- ChL "Match ID orqali tuzatish" (liga divAdminFixForm naqshi, ranglar ChL) ---
@@ -152,7 +177,11 @@ function clAdminFixForm() {
              value="${info && info !== "notfound" && info.score2 != null ? info.score2 : 0}" />
     </div>
     <button class="btn btn--primary" id="cl-fix-submit" ${disabled ? "disabled" : ""}
-            style="opacity:${disabled ? ".45" : "1"}">Tuzatish</button>`;
+            style="opacity:${disabled ? ".45" : "1"}">Tuzatish</button>
+    <button class="btn btn--ghost" id="cl-fix-cancel-result" ${disabled ? "disabled" : ""}
+            style="margin-top:8px;color:var(--red-neon);border-color:rgba(255,69,96,.3);opacity:${disabled ? ".45" : "1"}">
+      ${escHtml((APP.t && APP.t.admin_reset_btn) || "Natijani bekor qilish")}
+    </button>`;
 }
 
 let _clFixTimer = null;

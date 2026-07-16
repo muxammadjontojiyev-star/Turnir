@@ -1647,6 +1647,11 @@ table { border-collapse: collapse; width: 100%; }
   padding: 0;
   gap: 0;
   overflow: hidden;
+  /* 2026-07-16: X (yopish) tugmasi chat oynasining O'NG YUQORI qismida tursin.
+     .modal-close absolute — relative ota bo'lmagani uchun butun ekran
+     yuqorisiga chiqib ketardi (barcha web bot chatlari: liga/ChL/Divizion
+     openWebChat va WC worldcup_chat.js shu klasslarni ishlatadi). */
+  position: relative;
 }
 
 .webchat-header {
@@ -4156,3 +4161,39 @@ tr.is-me .div-rating-user { color: #fff; }
   background: rgba(90,130,255,.14); border-radius: 6px;
   padding: 1px 7px; margin-left: 6px;
 }
+
+/* ============================================================
+   2026-07-16: Ligalar rejimi — "Ortga" tugmasi (rejim tanlashga qaytish)
+   .wc-back stilining o'zi qayta ishlatiladi, faqat joylashuv.
+   ============================================================ */
+.league-back {
+  margin: 4px 0 12px;
+  align-self: flex-start;
+}
+
+/* ============================================================
+   2026-07-16: Kubok yulduzchalari — sovrin (kubok) yutganlar
+   useri yonidagi ★. O'lchami user yozuvi o'lchamiga mos
+   (font-size: inherit). Barcha rejim tablarida umumiy.
+   ============================================================ */
+.prize-stars {
+  color: #ffd54a;
+  font-size: inherit;
+  margin-left: 4px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 6px rgba(255, 200, 60, 0.45);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   2026-07-16: Web chat X (yopish) tugmasi — barcha rejim chatlarida
+   TUZATISH: .modal-close absolute, lekin .webchat-box'da position:relative
+   YO'Q edi -> X viewport'ning eng yuqori o'ng burchagiga (Telegram status
+   bar ostiga) chiqib ketardi. Endi X chat oynasining o'ng yuqori qismida.
+   Liga/ChL/Divizion (api.js openWebChat) va WC (worldcup_chat.js) chatlari
+   bir xil .webchat-box/.webchat-header/.modal-close klasslarini ishlatadi.
+   ============================================================ */
+.webchat-box { position: relative; }
+/* X tugmasi header matni bilan ustma-ust tushmasligi uchun chat header
+   o'ng tomonida joy qoldiramiz (X: 32px + 14px chekka). */
+.webchat-header { padding-right: 56px; }
