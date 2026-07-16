@@ -334,6 +334,32 @@ def admin_resolve_match(match_id: int, action: str, score1: int | None, score2: 
     return True, "ok"
 
 
+def admin_cancel_match(match_id: int) -> tuple[bool, str]:
+    """
+    2026-07-16: Admin NATIJANI BEKOR QILADI — o'yin natija kiritilmagan
+    holatga qaytadi: status='pending', score1/score2/submitted_by NULL
+    (divizion div_admin_cancel_match naqshi). Istalgan statusdan ishlaydi.
+
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
+    Sabablar: "ok", "match_not_found"
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM matches WHERE id = ?", (match_id,))
+        if cursor.fetchone() is None:
+            return False, "match_not_found"
+        cursor.execute(
+            "UPDATE matches SET status='pending', score1=NULL, score2=NULL, "
+            "submitted_by=NULL WHERE id=?",
+            (match_id,),
+        )
+        conn.commit()
+        return True, "ok"
+    finally:
+        conn.close()
+
+
 def admin_fix_confirmed_match(match_id: int, score1: int, score2: int) -> tuple[bool, str]:
     """
     Admin allaqachon 'confirmed' (ikki tomon tasdiqlagan) matchning

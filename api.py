@@ -49,6 +49,7 @@ from queries import (
     wc_admin_resolve_pending, wc_get_admin_pending_matches,
     get_all_users_with_registration, remove_user_completely,
     get_rejected_matches, admin_resolve_match, admin_fix_confirmed_match,
+    admin_cancel_match,
     get_user_by_id, update_league_status, league_has_matches,
     get_league_members_for_notify, get_match_by_id,
     get_open_matchday, set_league_draw_date, delete_league_matches,
@@ -570,6 +571,21 @@ async def get_player_photo(user_id: int):
     except Exception:
         _photo_cache_put(user_id, None, "")
         raise HTTPException(status_code=404, detail="photo_unavailable")
+
+
+# ============ GET /prizes/stars ============
+# MUHIM: /prizes/{league_id} dan OLDIN e'lon qilinadi (FastAPI tartib bo'yicha
+# moslashtiradi — aks holda "stars" league_id sifatida 422 berardi).
+
+@app.get("/prizes/stars")
+def prizes_stars():
+    """
+    Kubok yulduzchalari (2026-07-16): sovrin yutganlar useri yonidagi ★ soni.
+    Faqat kuboklar (league_cup/wc_cup/cl_cup); oltin to'p va butsa mustasno.
+    Hammaga ochiq — yulduzcha barcha ishtirokchilarga ko'rinishi kerak.
+    """
+    from prize_stars import get_cup_star_counts
+    return get_cup_star_counts()
 
 
 # ============ GET /prizes/{league_id} ============
@@ -1261,6 +1277,7 @@ def user_prizes(user_id: int):
     return {"prizes": get_user_prizes(user_id)}
 
 
+
 @app.get("/season/celebration")
 def season_celebration(user: dict = Depends(get_authenticated_user)):
     """
@@ -1363,6 +1380,76 @@ def cl_participant_reassign(
     return {"status": "ok", **result}
 
 
+# ============================================================
+#  ISHTIROKCHINI ALMASHTIRISH — BARCHA REJIMLAR (2026-07-16)
+#  ChL naqshi liga/WC/Divizionga kengaytirildi (participant_admin.py).
+#  FAQAT BOSH ADMIN. Qur'a natijasiga ta'sir qilmaydi — jadval joyida
+#  qoladi, faqat player_id yangi akkountga ko'chiriladi.
+# ============================================================
+
+@app.get("/league/participants/all")
+def league_participants_all(admin: dict = Depends(get_authenticated_super_admin)):
+    """Barcha liga ishtirokchilari (admin almashtirish dropdown'i uchun)."""
+    from participant_admin import league_list_participants
+    return {"participants": league_list_participants()}
+
+
+@app.post("/league/participant/reassign")
+def league_participant_reassign(
+    old_user_id: int = Body(..., embed=True),
+    new_telegram_id: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """Liga ishtirokchisini yangi akkountga bog'laydi (faqat bosh admin)."""
+    from participant_admin import league_reassign_participant
+    success, result = league_reassign_participant(old_user_id, new_telegram_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
+@app.get("/wc/participants/all")
+def wc_participants_all(admin: dict = Depends(get_authenticated_super_admin)):
+    """Barcha WC ishtirokchilari (admin almashtirish dropdown'i uchun)."""
+    from participant_admin import wc_list_participants
+    return {"participants": wc_list_participants()}
+
+
+@app.post("/wc/participant/reassign")
+def wc_participant_reassign(
+    old_user_id: int = Body(..., embed=True),
+    new_telegram_id: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """WC ishtirokchisini yangi akkountga bog'laydi (faqat bosh admin)."""
+    from participant_admin import wc_reassign_participant
+    success, result = wc_reassign_participant(old_user_id, new_telegram_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
+@app.get("/div/participants/all")
+def div_participants_all(admin: dict = Depends(get_authenticated_super_admin)):
+    """Divizionda qatnashgan barcha ishtirokchilar (admin almashtirish uchun)."""
+    from participant_admin import div_list_participants
+    return {"participants": div_list_participants()}
+
+
+@app.post("/div/participant/reassign")
+def div_participant_reassign(
+    old_user_id: int = Body(..., embed=True),
+    new_telegram_id: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """Divizion ishtirokchisini yangi akkountga bog'laydi (faqat bosh admin)."""
+    from participant_admin import div_reassign_participant
+    success, result = div_reassign_participant(old_user_id, new_telegram_id)
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
 @app.get("/cl/admin/match/{match_id}/info")
 def cl_admin_match_info(match_id: int,
                         admin: dict = Depends(get_authenticated_super_admin)):
@@ -1384,6 +1471,20 @@ def cl_admin_set_result(match_id: int, score1: int, score2: int,
     validate_scores(score1, score2)
     from cl_admin_fix import cl_admin_set_result as _set
     success, reason = _set(match_id, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@app.post("/cl/admin/match/cancel")
+def cl_admin_match_cancel(match_id: int,
+                          admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-07-16: Admin ChL natijasini BEKOR QILADI — o'yin natija kiritilmagan
+    holatga (pending, hisob NULL) qaytadi. Liga/WC/Divizion bilan bir xil oqim.
+    """
+    from cl_admin_fix import cl_admin_cancel_match
+    success, reason = cl_admin_cancel_match(match_id)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}
@@ -2282,6 +2383,31 @@ def admin_fix_confirmed(
 
     validate_scores(score1, score2)  # AUDIT B2: admin xatosi ham reytingni buzmasin
     success, reason = admin_fix_confirmed_match(match_id, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+# ============ POST /admin/match/cancel ============
+
+@app.post("/admin/match/cancel")
+def admin_match_cancel(
+    match_id: int,
+    admin: dict = Depends(get_authenticated_league_admin),
+):
+    """
+    2026-07-16: Admin NATIJANI BEKOR QILADI — o'yin natija kiritilmagan
+    holatga qaytadi (pending, hisob NULL). Divizion/WC'dagi bekor qilish
+    bilan bir xil oqim. Liga admini faqat o'z ligasini (bosh admin — hammasini).
+    Query params: match_id. Xato: match_not_found, league_not_allowed.
+    """
+    match = get_match_by_id(match_id)
+    if match is None:
+        raise HTTPException(status_code=400, detail="match_not_found")
+    if not can_manage_league(admin["telegram_id"], match["league_id"]):
+        raise HTTPException(status_code=403, detail="league_not_allowed")
+
+    success, reason = admin_cancel_match(match_id)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "match_id": match_id}

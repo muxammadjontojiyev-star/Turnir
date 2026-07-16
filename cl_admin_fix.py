@@ -53,6 +53,41 @@ def cl_admin_get_match_info(match_id: int) -> dict | None:
         conn.close()
 
 
+def cl_admin_cancel_match(match_id: int) -> tuple[bool, str]:
+    """
+    2026-07-16: Admin NATIJANI BEKOR QILADI — o'yin natija kiritilmagan
+    holatga qaytadi: status='pending', score1/score2/submitted_by NULL
+    (liga admin_cancel_match / divizion naqshi). Istalgan statusdan ishlaydi.
+    Sabab: ok, match_not_found.
+    """
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        cursor.execute("SELECT id FROM cl_matches WHERE id = ?", (match_id,))
+        if not cursor.fetchone():
+            cursor.execute("ROLLBACK")
+            return False, "match_not_found"
+
+        cursor.execute(
+            "UPDATE cl_matches SET score1=NULL, score2=NULL, "
+            "submitted_by=NULL, status='pending' WHERE id=?",
+            (match_id,),
+        )
+        cursor.execute("COMMIT")
+        logger.info("ChL admin natijani bekor qildi: match %s -> pending", match_id)
+        return True, "ok"
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        raise
+    finally:
+        conn.close()
+
+
 def cl_admin_set_result(match_id: int, score1: int, score2: int
                         ) -> tuple[bool, str]:
     """
