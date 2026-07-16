@@ -1363,6 +1363,32 @@ def cl_participant_reassign(
     return {"status": "ok", **result}
 
 
+@app.get("/cl/admin/match/{match_id}/info")
+def cl_admin_match_info(match_id: int,
+                        admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Match ID bo'yicha ChL o'yin ma'lumoti (admin 'Match ID orqali tuzatish' formasi):
+    o'yinchilar, klublar (logo uchun), joriy hisob, tur. Topilmasa 404.
+    """
+    from cl_admin_fix import cl_admin_get_match_info
+    info = cl_admin_get_match_info(match_id)
+    if info is None:
+        raise HTTPException(status_code=404, detail="match_not_found")
+    return info
+
+
+@app.post("/cl/admin/match/set-result")
+def cl_admin_set_result(match_id: int, score1: int, score2: int,
+                        admin: dict = Depends(get_authenticated_super_admin)):
+    """Admin: ChL natijasini o'rnatish/tuzatish (istalgan statusdan -> confirmed)."""
+    validate_scores(score1, score2)
+    from cl_admin_fix import cl_admin_set_result as _set
+    success, reason = _set(match_id, score1, score2)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
 @app.post("/cl/schedule/rebuild")
 def cl_schedule_rebuild(
     force: bool = Body(False, embed=True),
