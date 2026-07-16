@@ -10,7 +10,7 @@
 //  Global: apiFetch, showToast, escHtml, CL, clLoadThenRender
 // ============================================================
 
-const CL_ADMIN = { isSuper: false, loaded: false };
+const CL_ADMIN = { isSuper: false, loaded: false, fixId: "", fixInfo: null };
 
 async function clLoadAdminPanel() {
   const panel = document.getElementById("cl-admin-panel");
@@ -68,6 +68,8 @@ async function clLoadAdminPanel() {
       <button class="btn btn--primary" id="cl-admin-start" ${started ? "disabled" : ""}>
         ${ICON.get("play", 16)} O'yinlarni boshlash
       </button>` : ""}
+
+      ${drawn ? clAdminFixForm() : ""}
     </div>`;
 
   if (typeof applyIcons === "function") applyIcons(panel);
@@ -85,6 +87,100 @@ async function clLoadAdminPanel() {
 
   const sbtn = document.getElementById("cl-admin-start");
   if (sbtn && !started) sbtn.addEventListener("click", () => void clAdminStart(sbtn));
+
+  // Match ID orqali tuzatish (liga naqshi)
+  const fixId = document.getElementById("cl-fix-match-id");
+  if (fixId) fixId.addEventListener("input", (e) => clFixIdChanged(e.target.value));
+  const fixSubmit = document.getElementById("cl-fix-submit");
+  if (fixSubmit) fixSubmit.addEventListener("click", () => void clAdminFixSubmit(fixSubmit));
+}
+
+// --- ChL "Match ID orqali tuzatish" (liga divAdminFixForm naqshi, ranglar ChL) ---
+function clAdminFixForm() {
+  const info = CL_ADMIN.fixInfo;
+  let preview = "";
+  if (info === "notfound") {
+    preview = `<div style="font-size:12px;color:#ff6b6b;margin:6px 0">O'yin topilmadi</div>`;
+  } else if (info) {
+    const p1 = info.player1_username ? "@" + info.player1_username : (info.player1_name || "—");
+    const p2 = info.player2_username ? "@" + info.player2_username : (info.player2_name || "—");
+    const cur = (info.score1 != null) ? `${info.score1} : ${info.score2}` : "— : —";
+    const badge = (club) => (typeof clClubBadge === "function") ? clClubBadge(club, 30) : "";
+    preview = `
+      <div class="card" style="margin:8px 0;padding:10px 12px">
+        <div style="opacity:.65;font-size:11.5px">#${info.id} · Guruh ${info.group_number} · ${info.matchday}-tur</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px">
+          ${badge(info.player1_club)}
+          <span style="font-weight:800;white-space:nowrap;font-size:16px">${cur}</span>
+          ${badge(info.player2_club)}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;opacity:.75;margin-top:4px">
+          <span>${escHtml(p1)}</span><span>${escHtml(p2)}</span>
+        </div>
+      </div>`;
+  }
+  const disabled = !info || info === "notfound";
+  return `
+    <div class="section-label" style="margin-top:16px">MATCH ID ORQALI TUZATISH</div>
+    <input id="cl-fix-match-id" class="modal-input" type="number" min="1"
+           placeholder="Match ID" value="${CL_ADMIN.fixId || ""}" style="margin-bottom:6px" />
+    ${preview}
+    <div class="score-input-row" style="display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0">
+      <input id="cl-fix-score1" class="score-input" type="number" min="0" max="99"
+             value="${info && info !== "notfound" && info.score1 != null ? info.score1 : 0}" />
+      <span class="score-separator">:</span>
+      <input id="cl-fix-score2" class="score-input" type="number" min="0" max="99"
+             value="${info && info !== "notfound" && info.score2 != null ? info.score2 : 0}" />
+    </div>
+    <button class="btn btn--primary" id="cl-fix-submit" ${disabled ? "disabled" : ""}
+            style="opacity:${disabled ? ".45" : "1"}">Tuzatish</button>`;
+}
+
+let _clFixTimer = null;
+function clFixIdChanged(raw) {
+  clearTimeout(_clFixTimer);
+  CL_ADMIN.fixId = raw;
+  const id = parseInt(raw, 10);
+  if (!id || id <= 0) { CL_ADMIN.fixInfo = null; clRerenderPanel(); return; }
+  _clFixTimer = setTimeout(async () => {
+    try {
+      CL_ADMIN.fixInfo = await apiFetch(`/cl/admin/match/${id}/info`);
+    } catch (_) {
+      CL_ADMIN.fixInfo = "notfound";
+    }
+    clRerenderPanel();
+  }, 350);
+}
+
+// Panelni qayta chizadi va ID inputga fokusni tiklaydi (qoida #40)
+function clRerenderPanel() {
+  void clLoadAdminPanel().then(() => {
+    const el = document.getElementById("cl-fix-match-id");
+    if (el) { el.focus(); const v = el.value; el.value = ""; el.value = v; }
+  });
+}
+
+async function clAdminFixSubmit(btn) {
+  const id = parseInt(CL_ADMIN.fixId, 10);
+  const s1 = Number(document.getElementById("cl-fix-score1").value || 0);
+  const s2 = Number(document.getElementById("cl-fix-score2").value || 0);
+  if (!id) { showToast("Match ID kiriting"); return; }
+  if (!confirm(`#${id} natijasi ${s1}:${s2} qilib tuzatilsinmi?`)) return;
+  btn.disabled = true;
+  btn.textContent = "Tuzatilmoqda…";
+  try {
+    await apiFetch(`/cl/admin/match/set-result?match_id=${id}&score1=${s1}&score2=${s2}`,
+                   { method: "POST" });
+    showToast("Natija tuzatildi");
+    CL_ADMIN.fixId = "";
+    CL_ADMIN.fixInfo = null;
+    await clLoadThenRender();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "Tuzatish";
+    const msg = { match_not_found: "o'yin topilmadi" }[e.message] || e.message;
+    showToast("Xato: " + msg);
+  }
 }
 
 // Kalendarni qayta qurish (ikki doira, to'g'ri tur raqamlari)
