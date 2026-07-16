@@ -77,6 +77,14 @@ function clNavigate(section) {
   if (section === "rating") void (CL.ratingTab === "scorers" ? clLoadScorers() : clLoadRating());
   if (section === "profile") void clLoadProfile();
   if (section === "prizes") void clLoadProfileForPrizes();
+  if (section === "admin") void clLoadAdminData();
+}
+
+// Admin sahifasi uchun groups + state kerak (panel matnlari uchun)
+async function clLoadAdminData() {
+  try { CL.groups = await apiFetch("/cl/groups"); } catch (_) {}
+  try { CL.state = (await apiFetch("/cl/state")); } catch (_) {}
+  renderChampionsLeague();
 }
 
 // Sovrinlar uchun user_id kerak — profil bir marta yuklanadi
@@ -90,6 +98,7 @@ async function clLoadProfileForPrizes() {
 }
 
 async function clLoadThenRender() {
+  if (typeof clCheckAdmin === "function") { try { await clCheckAdmin(); } catch (_) {} }
   try {
     CL.groups = await apiFetch("/cl/groups");
     CL.meParticipant = !!CL.groups.me_participant;
@@ -132,7 +141,14 @@ function renderChampionsLeague() {
   else if (CL.section === "rating") body = clRenderRating();
   else if (CL.section === "prizes") body = clRenderPrizes();
   else if (CL.section === "player") body = clRenderPlayer();
+  else if (CL.section === "admin") body = `<div id="cl-admin-page"></div>`;
   else body = clRenderProfile();
+
+  const adminTab = (typeof CL_ADMIN !== "undefined" && CL_ADMIN.isSuper) ? `
+      <button class="wc-nav-item ${CL.section === "admin" ? "active" : ""}" data-cl-tab="admin">
+        <span class="nav-icon" data-icon="shield"></span>
+        <span class="nav-label">Admin</span>
+      </button>` : "";
 
   root.innerHTML = `
     <div class="wc-header">
@@ -156,7 +172,7 @@ function renderChampionsLeague() {
       <button class="wc-nav-item ${CL.section === "prizes" ? "active" : ""}" data-cl-tab="prizes">
         <span class="nav-icon" data-icon="trophy"></span>
         <span class="nav-label">Sovrinlar</span>
-      </button>
+      </button>${adminTab}
     </nav>
   `;
 
@@ -168,6 +184,7 @@ function renderChampionsLeague() {
   if (CL.section === "player") clBindPlayer(root);
   if (CL.section === "profile") clBindProfile(root);
   if (CL.section === "prizes") void clBindPrizes();
+  if (CL.section === "admin") void clRenderAdminPage();
 }
 
 
@@ -303,7 +320,7 @@ function clRenderMatchItem(m) {
   return `
     <div class="cl-match-wrap">
       <div class="cl-match-head">
-        <span class="cl-match-round">${m.matchday}-tur</span>
+        <span class="cl-match-round">${m.matchday}-tur</span><span class="cl-match-id">#${m.id}</span>
         ${venue}
         <span class="match-status ${statusCls}">${statusText}</span>
       </div>

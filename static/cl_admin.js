@@ -12,17 +12,36 @@
 
 const CL_ADMIN = { isSuper: false, loaded: false, fixId: "", fixInfo: null };
 
-async function clLoadAdminPanel() {
-  const panel = document.getElementById("cl-admin-panel");
-  if (!panel) return;
-
+// Nav'da Admin tab ko'rsatish uchun rolni oldindan tekshiradi (bir marta)
+async function clCheckAdmin() {
+  if (CL_ADMIN.loaded) return CL_ADMIN.isSuper;
   try {
     const who = await apiFetch("/admin/whoami");
     CL_ADMIN.isSuper = !!who.is_super;
   } catch (_) {
     CL_ADMIN.isSuper = false;
   }
+  CL_ADMIN.loaded = true;
+  return CL_ADMIN.isSuper;
+}
 
+// Admin sahifasini chizadi (5-tab). Faqat super admin.
+async function clRenderAdminPage() {
+  const isSuper = await clCheckAdmin();
+  const page = document.getElementById("cl-admin-page");
+  if (!page) return;
+  if (!isSuper) {
+    page.innerHTML = `<div class="card">Bu sahifa faqat administrator uchun.</div>`;
+    return;
+  }
+  clLoadAdminPanel();
+}
+
+async function clLoadAdminPanel() {
+  const panel = document.getElementById("cl-admin-page") || document.getElementById("cl-admin-panel");
+  if (!panel) return;
+
+  await clCheckAdmin();
   if (!CL_ADMIN.isSuper) {
     panel.classList.add("hidden");
     panel.innerHTML = "";

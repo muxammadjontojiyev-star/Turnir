@@ -98,7 +98,7 @@ function clRenderPlayerMatchItem(m) {
   return `
     <div class="cl-match-wrap">
       <div class="cl-match-head">
-        <span class="cl-match-round">${m.matchday}-tur</span>
+        <span class="cl-match-round">${m.matchday}-tur</span><span class="cl-match-id">#${m.id}</span>
         <span class="match-status ${statusCls}">${statusText}</span>
       </div>
       <div class="cl-match-body">
