@@ -174,12 +174,16 @@ function divAvatarHtml(userId, name, size = 52, photoUrl = null) {
 }
 
 // Asosiy sahifadagi qur'a/o'yin bloki: RAQIB (bosiladi) — hisob — MEN
+// 2026-07-16: karta foni — division-bg.jpg (stadion rasmi); ustidagi barcha
+// elementlar (o'yinchilar, hisob, tugmalar, holat yozuvlari) SHISHA uslubida.
 function divTodayMatchCard() {
   const s = DIV.status;
   const m = s && s.my_match;
   if (!m) return "";
   if (m.is_bye) {
-    return `<div class="card" style="border-color:rgba(245,197,66,.5)">🎉 Bugun ishtirokchilar soni toq bo'lgani uchun sizga <b>avtomatik g'alaba (+15 achko)</b> berildi!</div>`;
+    return `<div class="card div-match-hero">
+      <div class="div-glass div-match-note" style="border-color:rgba(245,197,66,.5)">🎉 Bugun ishtirokchilar soni toq bo'lgani uchun sizga <b>avtomatik g'alaba (+15 achko)</b> berildi!</div>
+    </div>`;
   }
   const opp = m.opponent || {};
   const p1IsMe = (m.player1_id === s.me_id);
@@ -201,27 +205,27 @@ function divTodayMatchCard() {
            <button class="btn btn--primary" id="div-btn-confirm" style="flex:1">✅ Tasdiqlash</button>
            <button class="btn btn--ghost" id="div-btn-reject" style="flex:1">❌ Rad etish</button>
          </div>`
-      : `<div style="font-size:12px;opacity:.7;margin-top:8px">Raqib tasdig'i kutilmoqda…</div>`;
+      : `<div class="div-glass div-match-note">Raqib tasdig'i kutilmoqda…</div>`;
   } else if (m.status === "admin_pending") {
-    actions = `<div style="font-size:12px;opacity:.7;margin-top:8px">Admin tasdig'i kutilmoqda…</div>`;
+    actions = `<div class="div-glass div-match-note">Admin tasdig'i kutilmoqda…</div>`;
   } else if (m.status === "confirmed") {
-    actions = `<div style="font-size:12.5px;margin-top:8px">✅ Natija tasdiqlangan.</div>`;
+    actions = `<div class="div-glass div-match-note">✅ Natija tasdiqlangan.</div>`;
   }
 
   return `
-    <div class="card">
-      <div style="font-size:12px;opacity:.65;margin-bottom:10px">Bugungi o'yin</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div class="div-vs-player" id="div-opp-profile-open" style="flex:1">
+    <div class="card div-match-hero">
+      <div class="div-glass div-match-chip">Bugungi o'yin</div>
+      <div style="display:flex;align-items:stretch;justify-content:space-between;gap:8px">
+        <div class="div-vs-player div-glass div-match-side" id="div-opp-profile-open" style="flex:1">
           ${divAvatarHtml(opp.user_id, opp.nickname, 56)}
           <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(opp.nickname || "Raqib")}</div>
           ${opp.username ? `<div style="font-size:11.5px;color:var(--cyan)">@${escHtml(opp.username)}</div>` : ""}
         </div>
-        <div style="font-size:22px;font-weight:800;white-space:nowrap">${oppScore} : ${myScore}</div>
-        <div class="div-vs-player" style="flex:1">
+        <div class="div-glass div-match-score">${oppScore} : ${myScore}</div>
+        <div class="div-vs-player div-glass div-match-side" style="flex:1">
           ${divAvatarHtml(s.me_id, myName, 56, APP.currentUser && APP.currentUser.photo_url)}
           <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(myName || "Siz")}</div>
-          ${myUsername ? `<div style="font-size:11.5px;opacity:.7">@${escHtml(myUsername)}</div>` : ""}
+          ${myUsername ? `<div style="font-size:11.5px;opacity:.85">@${escHtml(myUsername)}</div>` : ""}
         </div>
       </div>
       <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%;margin-top:12px">👤 Raqib bilan bog'lanish</button>
@@ -260,9 +264,13 @@ function divRenderHome() {
   }
 
   // OYNA YOPIQ: bugungi o'yin (natija kiritish) + qoidalar. Ro'yxat ko'rsatilmaydi.
+  // 2026-07-16: "Ro'yxat yopiq..." yozuvi endi fon rasmi (division-bg.jpg,
+  // xiralashtirilmagan) USTIDA turadi; qoidalar kartasi fon rasmi OSTIDA.
   const todayCard = divTodayMatchCard();
   const noMatchHint = (!s.my_match)
-    ? `<div class="card">⏳ Ro'yxat yopiq. Har kuni <b>17:00–19:00</b> (Toshkent) oralig'ida ochiladi. Hozir: ${escHtml(win.now || "")}.</div>`
+    ? `<div class="div-hero">
+         <div class="div-hero-text">⏳ Ro'yxat yopiq. Har kuni <b class="div-hero-accent">17:00–19:00</b> (Toshkent) oralig'ida ochiladi.<br>Hozir: ${escHtml(win.now || "")}.</div>
+       </div>`
     : "";
   return `${todayCard}${noMatchHint}${divRulesCard()}`;
 }

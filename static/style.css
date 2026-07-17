@@ -4216,3 +4216,98 @@ tr.is-me .div-rating-user { color: #fff; }
   opacity: .8;
 }
 .chat-copy-id:active { opacity: .6; }
+
+/* ============================================================
+   2026-07-16: DIVIZION — fon rasmi (division-bg.jpg) + shisha uslubi
+   1) .div-hero — "Ro'yxat yopiq..." yozuvi fon rasmi USTIDA (rasm
+      xiralashtirilmagan; matn aniq ko'rinishi uchun faqat text-shadow).
+   2) .div-match-hero — "Bugungi o'yin" kartasi foni ham shu rasm;
+      ustidagi barcha elementlar (.div-glass) shisha uslubida.
+   ============================================================ */
+.div-hero {
+  background: url("division-bg.jpg?v=1") center/cover no-repeat;
+  border: 1px solid var(--border-accent);
+  border-radius: 18px;
+  min-height: 210px;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.div-hero-text {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.55;
+  color: #fff;
+  /* Rasm xiralashtirilmaydi — o'qilishi uchun faqat matn soyasi */
+  text-shadow: 0 2px 10px rgba(0,0,0,.95), 0 0 3px rgba(0,0,0,.9);
+}
+.div-hero-accent {
+  color: var(--cyan, #35e0ff);
+  text-shadow: 0 2px 10px rgba(0,0,0,.95);
+}
+
+/* Bugungi o'yin kartasi — fon rasmi */
+.div-match-hero {
+  background: url("division-bg.jpg?v=1") center/cover no-repeat;
+  border: 1px solid rgba(255,255,255,.18);
+  color: #f2f6ff;
+}
+
+/* Shisha (glassmorphism) elementlar — fon ustidagi hamma narsa */
+.div-glass {
+  background: rgba(16, 24, 44, .38);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  backdrop-filter: blur(10px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.25);
+}
+.div-match-chip {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  color: #eaf0ff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.div-match-side {
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+.div-match-score {
+  font-size: 22px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: #fff;
+  align-self: center;
+  padding: 10px 12px;
+  text-shadow: 0 1px 6px rgba(0,0,0,.6);
+}
+.div-match-note {
+  font-size: 12.5px;
+  color: #eaf0ff;
+  text-align: center;
+  padding: 8px 10px;
+  margin-top: 10px;
+}
+/* Karta ichidagi tugmalar ham shisha uslubida */
+.div-match-hero .btn--ghost {
+  background: rgba(16, 24, 44, .38);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  backdrop-filter: blur(10px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,.22);
+  color: #fff;
+}
+.div-match-hero .btn--primary {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.25);
+}
