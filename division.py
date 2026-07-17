@@ -82,6 +82,10 @@ def div_register(user_id: int, telegram_id: int, nickname: str) -> tuple[bool, s
     win = div_registration_window()
     if not win["open"]:
         return False, "window_closed"
+    # 2026-07-17: ban ostidagi ishtirokchi ro'yxatdan o'ta olmaydi
+    from division_bans import div_is_banned
+    if div_is_banned(telegram_id, win["day"]):
+        return False, "banned"
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -646,4 +650,7 @@ def div_registration_days(user_id: int, month: str | None = None) -> dict:
     days = [r["day"] for r in cursor.fetchall()]
     conn.close()
 
-    return {"month": month, "today": now.strftime("%Y-%m-%d"), "days": days}
+    # 2026-07-17: ban kunlari (kalendarda qizil ko'rinadi — hammaga)
+    from division_bans import div_banned_days_month
+    return {"month": month, "today": now.strftime("%Y-%m-%d"), "days": days,
+            "banned": div_banned_days_month(user_id, month)}

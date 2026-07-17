@@ -273,6 +273,26 @@ def init_db():
             reg_announced_at TIMESTAMP
         )
     """)
+    # div_bans: divizion kunlik banlar (2026-07-17, division_bans.py) —
+    # start_day..until_day (ikkalasi ham kiradi) oralig'ida ro'yxat yopiq
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS div_bans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            telegram_id INTEGER NOT NULL,
+            start_day TEXT NOT NULL,
+            until_day TEXT NOT NULL,
+            days INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_div_bans_tg ON div_bans(telegram_id, until_day)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_div_bans_user ON div_bans(user_id, until_day)"
+    )
     # div_messages: divizion o'yin ichidagi sodda chat (bot chati)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS div_messages (

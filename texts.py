@@ -209,6 +209,11 @@ TEXTS = {
         LANGUAGE_RU: "📝 Регистрация в дивизионе ОТКРЫТА! Записаться можно каждый день с 17:00 до 19:00 (Ташкент). Жеребьёвка — после 19:00. Заходите в приложение, чтобы участвовать! ⚽",
         LANGUAGE_EN: "📝 Division registration is OPEN! You can sign up every day between 17:00–19:00 (Tashkent). The draw takes place after 19:00. Open the app to join! ⚽",
     },
+    "notify_div_ban": {
+        LANGUAGE_UZ: "🚫 Siz Divizionda qoidabuzarlik uchun {days} kunlik BAN oldingiz. {until} sanasigacha (shu kun ham kiradi) Divizion ro'yxatidan o'ta olmaysiz.",
+        LANGUAGE_RU: "🚫 Вы получили БАН в дивизионе на {days} дн. за нарушение правил. До {until} (включительно) вы не сможете зарегистрироваться в дивизионе.",
+        LANGUAGE_EN: "🚫 You have been BANNED from the Division for {days} day(s) due to a rules violation. You cannot register in the Division until {until} (inclusive).",
+    },
     "notify_div_bye": {
         LANGUAGE_UZ: "🎲 Divizion qur'asi: bugun ishtirokchilar soni toq bo'lgani uchun sizga AVTOMATIK G'ALABA (+15 achko) berildi! 🎉",
         LANGUAGE_RU: "🎲 Жеребьёвка дивизиона: сегодня нечётное число участников — вам присуждена АВТОМАТИЧЕСКАЯ ПОБЕДА (+15 очков)! 🎉",

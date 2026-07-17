@@ -1923,6 +1923,36 @@ def div_admin_cancel(match_id: int,
     return {"status": "ok", "match_id": match_id}
 
 
+@app.post("/div/admin/ban")
+async def div_admin_ban(
+    user_id: int = Body(..., embed=True),
+    days: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    2026-07-17: Admin qoidabuzar ishtirokchiga KUNLIK ban beradi (faqat bosh
+    admin). Ban davomida ishtirokchi Divizion ro'yxatidan o'ta olmaydi;
+    kalendarida ban kunlari qizil ko'rinadi; telegramiga xabar boradi.
+    Xatolar: invalid_days, user_not_found.
+    """
+    from division_bans import div_ban_user
+    success, result = div_ban_user(user_id, days)
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+
+    # Telegram xabari — yuborilmasa ham ban kuchda qoladi (log yoziladi, qoida #44)
+    if result.get("telegram_id"):
+        try:
+            await notify_user(result["telegram_id"], "notify_div_ban",
+                              result.get("language"),
+                              days=result["days"], until=result["until_day"])
+        except Exception as exc:
+            logger.warning("Divizion ban xabari yuborilmadi (tg=%s): %s",
+                           result["telegram_id"], exc)
+    return {"status": "ok", "until_day": result["until_day"],
+            "start_day": result["start_day"], "days": result["days"]}
+
+
 @app.post("/div/admin/match/resolve")
 def div_admin_resolve(match_id: int, accept: bool = True,
                       admin: dict = Depends(get_authenticated_super_admin)):
