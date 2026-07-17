@@ -4311,3 +4311,298 @@ tr.is-me .div-rating-user { color: #fff; }
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,.25);
 }
+
+/* ============================================================
+   2026-07-16: ChL PREMIUM v2 — HAQIQIY UCL HISSI
+   Yulduzli tungi osmon (starball vibe), kinematik hero (shine
+   sweep), gradient sarlavha, chap tomoni nurli o'yin kartalari,
+   oqib turuvchi guruh chiplari, porlab turuvchi nav indikatori.
+   Faqat #cl-root ichida — boshqa rejimlarga ta'sir qilmaydi.
+   ============================================================ */
+
+/* -- Yulduzli osmon: ikki qatlam, sekin miltillash -- */
+#cl-root::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 11% 16%, rgba(255,255,255,.9), transparent 60%),
+    radial-gradient(1px 1px at 27% 34%,  rgba(190,210,255,.8), transparent 60%),
+    radial-gradient(1.5px 1.5px at 41% 9%,  rgba(255,255,255,.75), transparent 60%),
+    radial-gradient(1px 1px at 58% 27%,  rgba(160,190,255,.7), transparent 60%),
+    radial-gradient(1.5px 1.5px at 73% 12%, rgba(255,255,255,.85), transparent 60%),
+    radial-gradient(1px 1px at 88% 31%,  rgba(190,210,255,.75), transparent 60%),
+    radial-gradient(1px 1px at 17% 55%,  rgba(160,190,255,.5), transparent 60%),
+    radial-gradient(1.2px 1.2px at 66% 48%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(1px 1px at 93% 62%,  rgba(190,210,255,.45), transparent 60%),
+    radial-gradient(circle at 50% 6%, rgba(75,123,255,.16), transparent 46%);
+  animation: cl-twinkle 6s ease-in-out infinite alternate;
+}
+#cl-root .wc-body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 8% 42%,   rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(1.3px 1.3px at 33% 21%, rgba(190,210,255,.6), transparent 60%),
+    radial-gradient(1px 1px at 49% 39%,  rgba(255,255,255,.5), transparent 60%),
+    radial-gradient(1.3px 1.3px at 81% 19%, rgba(160,190,255,.6), transparent 60%),
+    radial-gradient(1px 1px at 70% 66%,  rgba(255,255,255,.4), transparent 60%);
+  animation: cl-twinkle 6s ease-in-out infinite alternate-reverse;
+}
+@keyframes cl-twinkle { from { opacity: .45; } to { opacity: 1; } }
+
+/* -- Hero: kinematik shine sweep + gradient sarlavha + ✦ bezaklar -- */
+#cl-root .cl-hero {
+  border: 1px solid rgba(105,148,255,.55);
+  box-shadow:
+    0 16px 54px rgba(35,50,160,.55),
+    0 0 0 1px rgba(56,214,255,.10) inset,
+    inset 0 0 70px rgba(15,10,60,.45);
+}
+#cl-root .cl-hero::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,.13) 46%, rgba(120,170,255,.10) 52%, transparent 64%);
+  transform: translateX(-130%);
+  animation: cl-sheen 7s ease-in-out infinite;
+}
+@keyframes cl-sheen {
+  0%, 55%  { transform: translateX(-130%); }
+  80%, 100% { transform: translateX(130%); }
+}
+#cl-root .cl-hero-title {
+  background: linear-gradient(180deg, #ffffff 15%, #b9ccff 85%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 16px rgba(10,18,70,.95));
+}
+#cl-root .cl-hero-kicker::after {
+  content: "✦ ✦ ✦";
+  font-size: 8px; letter-spacing: 4px; margin-left: 8px;
+  color: #8fb0ff; text-shadow: 0 0 8px rgba(120,160,255,.9);
+}
+#cl-root .cl-hero-status {
+  position: relative; overflow: hidden;
+  border: 1px solid rgba(140,170,255,.35);
+}
+
+/* -- Kartalar: chuqur soya + tepa qirra nuri -- */
+#cl-root .card,
+#cl-root .cl-match-wrap,
+#cl-root .card--table {
+  border: 1px solid rgba(105,145,255,.28) !important;
+  box-shadow: 0 12px 34px rgba(6,12,40,.55), inset 0 1px 0 rgba(160,190,255,.14);
+}
+
+/* -- O'yin kartasi: chapdan kamalak nur, porlagan hisob -- */
+#cl-root .cl-match-wrap { position: relative; overflow: hidden; }
+#cl-root .cl-match-wrap::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, #38d6ff, #2b5cff 55%, #8a4bff);
+  opacity: .9;
+}
+#cl-root .cl-match-round {
+  color: #9fb4ff; text-transform: uppercase; letter-spacing: .8px; font-size: 11px;
+}
+#cl-root .cl-match-body .match-score {
+  font-weight: 900;
+  text-shadow: 0 0 16px rgba(56,214,255,.5);
+}
+#cl-root .cl-match-id {
+  background: rgba(56,214,255,.10);
+  border: 1px solid rgba(56,214,255,.22);
+  color: #9fdcff;
+}
+
+/* -- Guruh chiplari: faolida oqib turuvchi gradient -- */
+#cl-root .cl-group-chip.active {
+  background: linear-gradient(120deg, #3a2b8c, #2456c8 45%, #6a3df0 90%, #3a2b8c);
+  background-size: 220% 100%;
+  animation: cl-flow 4s linear infinite;
+  box-shadow: 0 6px 24px rgba(60,90,220,.6), inset 0 0 0 1px rgba(150,185,255,.35);
+}
+@keyframes cl-flow { to { background-position: -220% 0; } }
+
+/* -- Guruh sarlavhalari va reyting -- */
+#cl-root .cl-rating-group-title {
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+  color: #cdd8ff; font-size: 13px; margin: 4px 2px 8px;
+  text-shadow: 0 0 12px rgba(75,123,255,.55);
+}
+#cl-root .rating-table thead th {
+  color: #8fa4e8; letter-spacing: 1px;
+  border-bottom: 1px solid rgba(105,145,255,.25);
+}
+#cl-root .rating-table tbody tr { transition: background .15s; }
+#cl-root .rating-table tbody tr:active { background: rgba(90,130,255,.10); }
+#cl-root .cl-rating-user { text-shadow: 0 0 10px rgba(86,217,245,.35); }
+
+/* -- Tugmalar: UCL ko'k-binafsha gradient -- */
+#cl-root .btn--primary {
+  background: linear-gradient(120deg, #2b5cff, #6a3df0) !important;
+  border: 1px solid rgba(150,180,255,.4) !important;
+  box-shadow: 0 8px 26px rgba(53,80,220,.55);
+}
+#cl-root .tab-btn.active {
+  background: linear-gradient(120deg, #2b5cff, #6a3df0);
+  border-color: rgba(150,180,255,.45);
+  box-shadow: 0 4px 18px rgba(53,80,220,.5);
+  color: #fff;
+}
+
+/* -- Pastki nav: faol bo'limda porlab turuvchi indikator -- */
+#cl-root .wc-nav-item { position: relative; }
+#cl-root .wc-nav-item.active::after {
+  content: ""; position: absolute; bottom: 5px; left: 50%;
+  width: 18px; height: 3px; border-radius: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #38d6ff, #4b7bff);
+  box-shadow: 0 0 12px rgba(56,214,255,.95);
+}
+
+/* -- Sahifa kirish animatsiyasi (yumshoq ko'tarilish) -- */
+#cl-root .wc-body > * { animation: rise-in .32s ease both; }
+
+/* ============================================================
+   2026-07-16: DIVIZION PREMIUM — binafsha-yashil (aurora) tema
+   Divizion brendi (#7c5cff -> #31d0aa) asosida: aurora fon,
+   gradient sarlavha, shisha kartalar, porlagan nav indikatori,
+   "men" qatori ajralib turadigan reyting. Faqat #div-root ichida.
+   ============================================================ */
+#div-root {
+  --div-purple: #7c5cff;
+  --div-teal: #31d0aa;
+  background:
+    radial-gradient(900px 430px at 12% -6%, rgba(124,92,255,.20), transparent 55%),
+    radial-gradient(900px 430px at 96% 6%, rgba(49,208,170,.13), transparent 55%),
+    linear-gradient(180deg, #0a0d1f 0%, #0d1026 58%, #090c1c 100%);
+}
+#div-root .wc-header { position: sticky; top: 0; z-index: 40; }
+#div-root .wc-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* Header: gradient sarlavha + nurli pastki chiziq */
+#div-root .wc-header {
+  background: linear-gradient(180deg, rgba(16,14,40,.95), rgba(10,13,31,.7));
+  border-bottom: 1px solid rgba(124,92,255,.3);
+}
+#div-root .wc-header-title {
+  background: linear-gradient(90deg, #cdbfff, #8ef0d8);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+#div-root .wc-back { color: var(--div-teal); }
+
+/* Pastki nav: asl "pill" shakli saqlanadi, faqat tema rangi (tint) */
+#div-root .wc-nav {
+  background: linear-gradient(180deg, rgba(27,24,52,.92), rgba(12,12,28,.96));
+  border: 1px solid rgba(140,125,255,.24);
+  border-top: 1px solid rgba(150,140,255,.3);
+}
+#div-root .wc-nav-item { position: relative; }
+#div-root .wc-nav-item.active { color: #fff; }
+#div-root .wc-nav-item.active .nav-icon .icon {
+  color: var(--div-teal);
+  filter: drop-shadow(0 0 8px rgba(49,208,170,.95));
+}
+#div-root .wc-nav-item.active::after {
+  content: ""; position: absolute; bottom: 5px; left: 50%;
+  width: 18px; height: 3px; border-radius: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, var(--div-purple), var(--div-teal));
+  box-shadow: 0 0 12px rgba(93,150,220,.9);
+}
+
+/* Kartalar: shisha + binafsha qirra */
+#div-root .card,
+#div-root .card--table {
+  background: linear-gradient(165deg, rgba(28,26,58,.72), rgba(14,16,36,.74)) !important;
+  border: 1px solid rgba(140,125,255,.20) !important;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 12px 32px rgba(6,8,26,.5), inset 0 1px 0 rgba(190,180,255,.12);
+}
+/* Fon rasmli kartalar (hero/bugungi o'yin) o'z fonini saqlaydi */
+#div-root .div-hero,
+#div-root .div-match-hero {
+  background-image: url("division-bg.jpg?v=1") !important;
+  background-size: cover !important;
+  background-position: center !important;
+  border: 1px solid rgba(140,125,255,.4) !important;
+  box-shadow: 0 14px 44px rgba(30,20,90,.5), 0 0 0 1px rgba(49,208,170,.10) inset;
+  position: relative; overflow: hidden;
+}
+#div-root .div-hero::after,
+#div-root .div-match-hero::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 34%, rgba(255,255,255,.10) 47%, transparent 60%);
+  transform: translateX(-130%);
+  animation: cl-sheen 8s ease-in-out infinite;
+}
+
+/* Bo'lim sarlavhalari: binafsha->yashil chiziq */
+#div-root .section-label { color: #b9b0f0; letter-spacing: 2px; }
+#div-root .section-label::after {
+  background: linear-gradient(90deg, var(--div-purple), var(--div-teal) 55%, transparent) !important;
+  opacity: .85;
+}
+
+/* Tugmalar */
+#div-root .btn--primary {
+  background: linear-gradient(120deg, #6a4df0, #23b898) !important;
+  border: 1px solid rgba(170,200,230,.35) !important;
+  box-shadow: 0 8px 26px rgba(80,90,210,.45);
+}
+#div-root .tab-btn.active {
+  background: linear-gradient(120deg, #6a4df0, #23b898);
+  border-color: rgba(170,200,230,.4);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(80,90,210,.45);
+}
+
+/* Reyting: "men" qatori aurora bilan ajralib turadi */
+#div-root tr.is-me {
+  background: linear-gradient(90deg, rgba(124,92,255,.20), rgba(49,208,170,.12)) !important;
+}
+#div-root tr.is-me td:first-child { position: relative; }
+#div-root tr.is-me td:first-child::before {
+  content: ""; position: absolute; left: 0; top: 15%; bottom: 15%; width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--div-purple), var(--div-teal));
+}
+#div-root .rating-table thead th {
+  color: #9a8fe0; letter-spacing: 1px;
+  border-bottom: 1px solid rgba(140,125,255,.25);
+}
+#div-root .rating-table tbody tr { transition: background .15s; }
+#div-root .rating-table tbody tr:active { background: rgba(124,92,255,.10); }
+#div-root .div-rating-user { color: #8ef0d8; }
+
+/* "Sizning o'rningiz" kartasi: premium gradient */
+#div-root .div-myrank {
+  background: linear-gradient(120deg, rgba(124,92,255,.22), rgba(49,208,170,.14)) !important;
+  border: 1px solid rgba(140,125,255,.35) !important;
+}
+
+/* Sahifa kirish animatsiyasi */
+#div-root .wc-body > * { animation: rise-in .32s ease both; }
+
+/* Umumiy yumshoq ko'tarilish animatsiyasi (ChL + Divizion) */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Harakat kamaytirilgan rejimda barcha bezak animatsiyalari o'chadi */
+@media (prefers-reduced-motion: reduce) {
+  #cl-root::before, #cl-root .wc-body::before,
+  #cl-root .cl-hero::after, #cl-root .cl-group-chip.active,
+  #div-root .div-hero::after, #div-root .div-match-hero::after,
+  #cl-root .wc-body > *, #div-root .wc-body > * {
+    animation: none !important;
+  }
+}
+
+/* ChL pastki nav: eski flat override o'rniga asl "pill" shakli + UCL tint
+   (yuqoridagi #cl-root .wc-nav qoidasini shu yerda qayta belgilaymiz) */
+#cl-root .wc-nav {
+  background: linear-gradient(180deg, rgba(24,27,56,.92), rgba(10,13,34,.96));
+  border: 1px solid rgba(105,145,255,.26);
+  border-top: 1px solid rgba(140,170,255,.32);
+}
