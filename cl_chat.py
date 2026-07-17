@@ -20,6 +20,26 @@ def _match_participants(cursor, match_id: int) -> tuple[int, int | None] | None:
     return row["player1_id"], row["player2_id"]
 
 
+def _round_open(cursor, match_id: int) -> bool:
+    """
+    2026-07-16: O'yin turi ochiqmi? Joriy tur va o'tgan turlar (tarix) — ochiq;
+    KELAJAK (hali ochilmagan) turlar — yopiq. Turlar boshlanmagan bo'lsa —
+    hammasi yopiq. Yopiq turda chat ochilmasin (server tomonida ham, qoida #41).
+    """
+    cursor.execute("SELECT matchday, season FROM cl_matches WHERE id = ?", (match_id,))
+    m = cursor.fetchone()
+    if not m:
+        return False
+    cursor.execute(
+        "SELECT started, current_matchday FROM cl_state WHERE season = ?",
+        (m["season"],),
+    )
+    st = cursor.fetchone()
+    if not st or not st["started"]:
+        return False
+    return m["matchday"] <= st["current_matchday"]
+
+
 def cl_send_message(match_id: int, sender_id: int,
                      text: str) -> tuple[bool, str, dict | None]:
     """
@@ -45,6 +65,9 @@ def cl_send_message(match_id: int, sender_id: int,
             return False, "match_not_found", None
         if sender_id not in parts:
             return False, "not_participant", None
+        if not _round_open(cursor, match_id):
+            # Yopiq (hali ochilmagan) turda chatga yozib bo'lmaydi
+            return False, "round_closed", None
         cursor.execute(
             "INSERT INTO cl_messages (match_id, sender_id, text) VALUES (?, ?, ?)",
             (match_id, sender_id, text),
@@ -57,9 +80,22 @@ def cl_send_message(match_id: int, sender_id: int,
         if opp_id is not None:      # bye o'yinda raqib yo'q
             cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (opp_id,))
             row = cursor.fetchone()
-            if row and row["telegram_id"]:
+            recipient_tg = row["telegram_id"] if (row and row["telegram_id"]) else None
+            if recipient_tg is None:
+                # 2026-07-16: users'da topilmasa (mavsum reset / o'chirilgan
+                # akkount) — cl_participants snapshotidagi telegram_id (zaxira).
+                # Shu bilan ChL chat bildirishnomasi har doim yetkaziladi.
+                cursor.execute(
+                    "SELECT telegram_id FROM cl_participants "
+                    "WHERE user_id = ? ORDER BY season DESC LIMIT 1",
+                    (opp_id,),
+                )
+                prow = cursor.fetchone()
+                if prow and prow["telegram_id"]:
+                    recipient_tg = prow["telegram_id"]
+            if recipient_tg is not None:
                 preview = text if len(text) <= 80 else text[:77] + "…"
-                notify = {"recipient_telegram_id": row["telegram_id"],
+                notify = {"recipient_telegram_id": recipient_tg,
                           "text_preview": preview}
         return True, "ok", notify
     finally:
@@ -77,6 +113,9 @@ def cl_get_messages(match_id: int, requester_id: int) -> list[dict] | None:
     try:
         parts = _match_participants(cursor, match_id)
         if parts is None or requester_id not in parts:
+            return None
+        if not _round_open(cursor, match_id):
+            # Yopiq (hali ochilmagan) turda chat ochilmaydi (server tomonida ham, qoida #41)
             return None
         # Raqib yozgan xabarlarni MEN o'qidim — belgilaymiz (✓✓ raqibda paydo bo'ladi)
         cursor.execute(

@@ -142,6 +142,91 @@ def league_reassign_participant(old_user_id: int, new_telegram_id: int
 
 
 # ============================================================
+#  LIGALARARO O'ZARO ALMASHTIRISH (SWAP) — 2026-07-16
+# ============================================================
+
+def league_swap_participants(user_id_a: int, user_id_b: int
+                             ) -> tuple[bool, str | dict]:
+    """
+    Ikki liga ishtirokchisini O'ZARO almashtiradi (masalan, LaLiga <-> Bundesliga).
+    O'RIN (liga, klub, jadval, kiritilgan natijalar) joyida qoladi — faqat
+    o'rin ortidagi ODAM almashadi: A endi B'ning ligasida B'ning klubi bilan
+    o'ynaydi va aksincha. QUR'AGA TA'SIR QILMAYDI.
+
+    Texnik: registrations.user_id UNIQUE + FK ON bo'lgani uchun almashtirish
+    sentinel (-1) orqali, FK shu ulanishda vaqtincha OFF (season_reset naqshi;
+    yakuniy holat baribir to'g'ri id'lar). matches/messages'da UNIQUE yo'q —
+    bitta CASE UPDATE bilan almashtiriladi.
+
+    Sabablar: same_user, participant_not_found.
+    """
+    if user_id_a == user_id_b:
+        return False, "same_user"
+
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    try:
+        # PRAGMA tranzaksiya ichida o'zgarmaydi — BEGIN'dan OLDIN o'chiriladi
+        cursor.execute("PRAGMA foreign_keys = OFF")
+        cursor.execute("BEGIN IMMEDIATE")
+
+        # Ikkala ishtirokchi ham ro'yxatda bo'lishi shart
+        cursor.execute(
+            "SELECT user_id FROM registrations WHERE user_id IN (?, ?)",
+            (user_id_a, user_id_b),
+        )
+        found = {r["user_id"] for r in cursor.fetchall()}
+        if user_id_a not in found or user_id_b not in found:
+            cursor.execute("ROLLBACK")
+            return False, "participant_not_found"
+
+        # 1) registrations: sentinel orqali user_id almashtiriladi
+        #    (league_id + club_name o'z qatorida qoladi — o'rin saqlanadi)
+        cursor.execute("UPDATE registrations SET user_id = -1 WHERE user_id = ?",
+                       (user_id_a,))
+        cursor.execute("UPDATE registrations SET user_id = ? WHERE user_id = ?",
+                       (user_id_a, user_id_b))
+        cursor.execute("UPDATE registrations SET user_id = ? WHERE user_id = -1",
+                       (user_id_b,))
+
+        # 2) matches: har ikkala liganing jadvalida id'lar o'zaro almashadi
+        #    (matchday, hisoblar, status — TEGILMAYDI)
+        swapped = 0
+        for col in ("player1_id", "player2_id", "submitted_by"):
+            cursor.execute(
+                f"UPDATE matches SET {col} = CASE {col} WHEN ? THEN ? WHEN ? THEN ? END "  # nosec — ustun nomi kod ichida qat'iy
+                f"WHERE {col} IN (?, ?)",
+                (user_id_a, user_id_b, user_id_b, user_id_a, user_id_a, user_id_b),
+            )
+            swapped += cursor.rowcount or 0
+
+        # 3) liga chat xabarlari — o'rin tarixi o'rin bilan qoladi
+        cursor.execute(
+            "UPDATE messages SET sender_id = CASE sender_id WHEN ? THEN ? WHEN ? THEN ? END "
+            "WHERE sender_id IN (?, ?)",
+            (user_id_a, user_id_b, user_id_b, user_id_a, user_id_a, user_id_b),
+        )
+
+        cursor.execute("COMMIT")
+        logger.info("Liga SWAP: user %s <-> %s, %s o'yin ustuni yangilandi",
+                    user_id_a, user_id_b, swapped)
+        return True, {"matches_updated": swapped}
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        raise
+    finally:
+        try:
+            cursor.execute("PRAGMA foreign_keys = ON")
+        except Exception:
+            pass
+        conn.close()
+
+
+# ============================================================
 #  WORLD CUP (guruh + play-off)
 # ============================================================
 

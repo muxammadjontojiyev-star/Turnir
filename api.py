@@ -1408,6 +1408,24 @@ def league_participant_reassign(
     return {"status": "ok", **result}
 
 
+@app.post("/league/participants/swap")
+def league_participants_swap(
+    user_id_a: int = Body(..., embed=True),
+    user_id_b: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    2026-07-16: Ikki liga ishtirokchisini O'ZARO almashtiradi (masalan,
+    LaLiga <-> Bundesliga). Qur'aga ta'sir qilmaydi — o'rin (liga, klub,
+    jadval, natijalar) joyida qoladi, faqat odamlar almashadi. Faqat bosh admin.
+    """
+    from participant_admin import league_swap_participants
+    success, result = league_swap_participants(user_id_a, user_id_b)
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
 @app.get("/wc/participants/all")
 def wc_participants_all(admin: dict = Depends(get_authenticated_super_admin)):
     """Barcha WC ishtirokchilari (admin almashtirish dropdown'i uchun)."""
