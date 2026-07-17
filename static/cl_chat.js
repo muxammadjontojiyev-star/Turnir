@@ -12,6 +12,14 @@ function clOpenOpponentModal(matchId) {
   if (!m) return;
   const t = APP.t || {};
 
+  // 2026-07-16: Yopiq (hali ochilmagan) turda VS/chat oynasi ochilmaydi —
+  // boshqa kirish nuqtalari uchun ham himoya (karta markazi allaqachon yopiq).
+  const st = CL.state || {};
+  if (m.status === "pending" && !(st.started && m.matchday === st.current_matchday)) {
+    showToast(t.matchday_locked_short || "Bu tur hali ochilmagan");
+    return;
+  }
+
   // Qaysi tomon men, qaysi biri raqib (me_id backend'dan — taxmin yo'q)
   const iAmP1 = clIsMe(m.player1_id);
   const me  = { name: iAmP1 ? m.player1_name : m.player2_name,

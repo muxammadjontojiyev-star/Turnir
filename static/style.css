@@ -4197,3 +4197,22 @@ tr.is-me .div-rating-user { color: #fff; }
 /* X tugmasi header matni bilan ustma-ust tushmasligi uchun chat header
    o'ng tomonida joy qoldiramiz (X: 32px + 14px chekka). */
 .webchat-header { padding-right: 56px; }
+
+/* ============================================================
+   2026-07-16: Chatdagi 8 xonali ID — bosilsa nusxalanadi
+   (barcha web chatlar: liga/ChL/Divizion api.js + WC worldcup_chat.js)
+   ============================================================ */
+.chat-copy-id {
+  color: var(--cyan, #35e0ff);
+  font-weight: 700;
+  text-decoration: underline dashed;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chat-copy-id::after {
+  content: " ⧉";
+  font-size: 0.85em;
+  opacity: .8;
+}
+.chat-copy-id:active { opacity: .6; }

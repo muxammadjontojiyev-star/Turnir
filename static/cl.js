@@ -317,6 +317,12 @@ function clRenderMatchItem(m) {
     ? `<span class="cl-venue cl-venue--home">UY</span>`
     : `<span class="cl-venue cl-venue--away">MEHMON</span>`;
 
+  // 2026-07-16: Yopiq (hali ochilmagan) turda VS/chat oynasi ochilmaydi
+  // (liga is_locked naqshi). O'ynalgan/o'tgan o'yinlar — ochiq (tarix).
+  const canOpenVs = isOpenRound || m.status !== "pending";
+  const centerCls = canOpenVs ? "match-center match-center--clickable" : "match-center";
+  const centerAttr = canOpenVs ? `data-cl-open-match="${m.id}"` : "";
+
   return `
     <div class="cl-match-wrap">
       <div class="cl-match-head">
@@ -325,7 +331,7 @@ function clRenderMatchItem(m) {
         <span class="match-status ${statusCls}">${statusText}</span>
       </div>
       <div class="cl-match-body">
-        <div class="match-center match-center--clickable" data-cl-open-match="${m.id}">${center}</div>
+        <div class="${centerCls}" ${centerAttr}>${center}</div>
         ${action}
       </div>
       ${reject}

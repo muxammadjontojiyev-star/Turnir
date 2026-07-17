@@ -306,7 +306,7 @@ function wcRenderWebChatMessages(messages) {
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${flagSpan}
         <div class="webchat-bubble">
-          <span class="webchat-text">${escHtml(msg.text)}</span>
+          <span class="webchat-text">${(typeof chatTextWithCopyableIds === "function") ? chatTextWithCopyableIds(escHtml(msg.text)) : escHtml(msg.text)}</span>
           <span class="webchat-meta">
             ${time ? `<span class="webchat-time">${time}</span>` : ""}
             ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}

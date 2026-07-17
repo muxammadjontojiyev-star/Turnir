@@ -1170,6 +1170,38 @@ async function reassignSubmit(url, boxId, tgInputId, btn, onDone) {
   }
 }
 
+// 2026-07-16: Ikki liga ishtirokchisini O'ZARO almashtirish (SWAP).
+// O'rin (liga, klub, jadval, natijalar) joyida qoladi — odamlar almashadi.
+// Qur'aga ta'sir qilmaydi. Faqat bosh admin (backend himoyalangan).
+async function submitLeagueSwap(btn, onDone) {
+  const selA = document.getElementById("league-swap-a-box-select");
+  const selB = document.getElementById("league-swap-b-box-select");
+  const a = selA ? Number(selA.value || 0) : 0;
+  const b = selB ? Number(selB.value || 0) : 0;
+  if (!a || !b) { showToast("Ikkala ishtirokchini ham tanlang"); return; }
+  if (a === b) { showToast("Bir xil ishtirokchi tanlandi — ikkitasi har xil bo'lsin"); return; }
+  const nameA = selA.options[selA.selectedIndex]?.text || "A";
+  const nameB = selB.options[selB.selectedIndex]?.text || "B";
+  if (!confirm(`Quyidagilar O'ZARO almashtirilsinmi?\n\n${nameA}\n⇅\n${nameB}\n\nQur'a natijasi o'zgarmaydi — faqat o'yinchilar almashadi.`)) return;
+  btn.disabled = true;
+  try {
+    const r = await apiFetch("/league/participants/swap", {
+      method: "POST",
+      body: JSON.stringify({ user_id_a: a, user_id_b: b }),
+    });
+    showToast(`✅ Almashtirildi: ${r.matches_updated || 0} o'yin ustuni yangilandi`);
+    if (onDone) await onDone();
+  } catch (e) {
+    const msg = {
+      same_user: "bir xil ishtirokchi tanlandi",
+      participant_not_found: "ishtirokchi(lar) topilmadi",
+    }[e.message] || e.message;
+    showToast("Xato: " + msg);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ============================================================
 //  ADMIN PANEL
 // ============================================================
@@ -1212,16 +1244,29 @@ async function loadAdminPanel() {
     await loadSeasonInfo();
 
     // Ishtirokchini almashtirish (2026-07-16) — ro'yxat + tugma
-    void reassignLoadList("/league/participants/all", "league-reassign-box",
-      (o) => `${o.league_name || "?"} · ${o.club_name || o.nickname || "—"}${o.username ? " · @" + o.username : ""}`);
+    const leagueReassignLabel =
+      (o) => `${o.league_name || "?"} · ${o.club_name || o.nickname || "—"}${o.username ? " · @" + o.username : ""}`;
+    void reassignLoadList("/league/participants/all", "league-reassign-box", leagueReassignLabel);
     const reassignBtn = document.getElementById("btn-league-reassign");
     if (reassignBtn && !reassignBtn._bound) {
       reassignBtn._bound = true;
       reassignBtn.addEventListener("click", () =>
         void reassignSubmit("/league/participant/reassign", "league-reassign-box",
           "league-reassign-new-tg", reassignBtn,
-          () => reassignLoadList("/league/participants/all", "league-reassign-box",
-            (o) => `${o.league_name || "?"} · ${o.club_name || o.nickname || "—"}${o.username ? " · @" + o.username : ""}`)));
+          () => reassignLoadList("/league/participants/all", "league-reassign-box", leagueReassignLabel)));
+    }
+
+    // Ishtirokchilarni O'ZARO almashtirish (SWAP, 2026-07-16) — ikkita ro'yxat + tugma.
+    // O'rin (liga, klub, jadval, natijalar) joyida qoladi — odamlar almashadi.
+    const reloadSwapLists = () => Promise.all([
+      reassignLoadList("/league/participants/all", "league-swap-a-box", leagueReassignLabel),
+      reassignLoadList("/league/participants/all", "league-swap-b-box", leagueReassignLabel),
+    ]);
+    void reloadSwapLists();
+    const swapBtn = document.getElementById("btn-league-swap");
+    if (swapBtn && !swapBtn._bound) {
+      swapBtn._bound = true;
+      swapBtn.addEventListener("click", () => void submitLeagueSwap(swapBtn, reloadSwapLists));
     }
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
@@ -2529,7 +2574,7 @@ function renderWebChatMessages(messages) {
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${clubLogo}
         <div class="webchat-bubble">
-          <span class="webchat-text">${escHtml(msg.text)}</span>
+          <span class="webchat-text">${chatTextWithCopyableIds(escHtml(msg.text))}</span>
           <span class="webchat-meta">
             ${time ? `<span class="webchat-time">${time}</span>` : ""}
             ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
@@ -2540,6 +2585,60 @@ function renderWebChatMessages(messages) {
   }).join("");
 
   if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+// ============================================================
+//  2026-07-16: Chatdagi 8 XONALI ID'lardan NUSXA OLISH
+//  Ishtirokchilar o'yin ID'sini (masalan, 44321462) chatda almashadi —
+//  ID bosilsa buferga nusxalanadi. Barcha web chatlar uchun (liga/ChL/Div
+//  api.js, WC worldcup_chat.js — bir xil helper, DRY).
+// ============================================================
+
+// escHtml'dan KEYIN qo'llanadi: aynan 8 xonali sonlarni (uzunroq son ichida
+// emas) bosiluvchan span'ga o'raydi. escHtml entity'lari (&#39; kabi) 8 xonali
+// raqam hosil qilmaydi — xavfsiz.
+function chatTextWithCopyableIds(escapedText) {
+  return String(escapedText).replace(
+    /(^|[^\d])(\d{8})(?!\d)/g,
+    (_all, pre, id) =>
+      `${pre}<span class="chat-copy-id" data-copy-id="${id}" title="ID nusxalash">${id}</span>`
+  );
+}
+
+// ID'ni buferga nusxalaydi (clipboard API + eski webview'lar uchun zaxira)
+function copyChatId(id) {
+  if (!id) return;
+  const done = () => showToast(`✅ ID nusxalandi: ${id}`);
+  const fallback = () => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = id;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    } catch (_) {
+      showToast("Nusxalab bo'lmadi — ID: " + id);
+    }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(id).then(done).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+// Bitta global delegatsiya — chat xabarlari har poll'da qayta chiziladi,
+// shuning uchun listener hujjat darajasida (bir marta bog'lanadi).
+if (!window._chatCopyIdBound) {
+  window._chatCopyIdBound = true;
+  document.addEventListener("click", (e) => {
+    const el = e.target && e.target.closest ? e.target.closest(".chat-copy-id") : null;
+    if (el) copyChatId(el.dataset.copyId);
+  });
 }
 
 // SQLite created_at (UTC) -> mahalliy "HH:MM"

@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20260716a" />
+  <link rel="stylesheet" href="style.css?v=20260716b" />
 </head>
 <body>
 
@@ -240,6 +240,17 @@
               <input id="league-reassign-new-tg" class="modal-input" type="number" inputmode="numeric"
                      placeholder="Yangi Telegram ID" style="margin-bottom:8px" />
               <button class="btn" id="btn-league-reassign">👤 Akkountni almashtirish</button>
+            </div>
+
+            <!-- 2026-07-16: ikki liga ishtirokchisini O'ZARO almashtirish
+                 (masalan LaLiga <-> Bundesliga). Qur'aga ta'sir qilmaydi:
+                 o'rin (liga, klub, jadval, natijalar) joyida — odamlar almashadi. -->
+            <div class="section-label">ISHTIROKCHILARNI O'ZARO ALMASHTIRISH</div>
+            <div class="admin-fix-form">
+              <div id="league-swap-a-box" style="margin-bottom:6px"></div>
+              <div style="text-align:center;font-size:14px;opacity:.6;margin-bottom:6px">⇅</div>
+              <div id="league-swap-b-box" style="margin-bottom:8px"></div>
+              <button class="btn" id="btn-league-swap">🔄 O'zaro almashtirish</button>
             </div>
 
             <div class="section-label" data-i18n="season_title">LIGA MAVSUMI</div>
@@ -523,13 +534,13 @@
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
   <script src="app.js?v=20260716a"></script>
-  <script src="api.js?v=20260716a"></script>
+  <script src="api.js?v=20260716b"></script>
   <!-- Mavsum yakuni tabrik oynasi (bir martalik) -->
   <script src="celebration.js?v=20260710a"></script>
   <!-- Chempionlar ligasi rejimi -->
-  <script src="cl.js?v=20260716a"></script>
+  <script src="cl.js?v=20260716b"></script>
   <script src="cl_home.js?v=20260715g"></script>
-  <script src="cl_chat.js?v=20260715a"></script>
+  <script src="cl_chat.js?v=20260716a"></script>
   <script src="cl_player.js?v=20260716a"></script>
   <script src="cl_profile.js?v=20260716a"></script>
   <script src="cl_admin.js?v=20260716a"></script>
@@ -538,7 +549,7 @@
   <script src="worldcup.js?v=20260716a"></script>
   <script src="worldcup_matches.js?v=20260716a"></script>
   <script src="worldcup_admin.js?v=20260716a"></script>
-  <script src="worldcup_chat.js?v=20260628c20"></script>
+  <script src="worldcup_chat.js?v=20260716a"></script>
   <script src="worldcup_playoff.js?v=20260628c20"></script>
 </body>
 </html>
