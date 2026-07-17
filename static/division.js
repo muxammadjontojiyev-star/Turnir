@@ -413,6 +413,15 @@ const DIV_MONTH_NAMES = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
   "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
 
 // Kalendar HTML — o'z profilim va boshqa ishtirokchi profili uchun BIR XIL (DRY).
+// 2026-07-17: O'yin tarixi qatorida achko o'zgarishi belgisi (DRY — o'z profil
+// va boshqa ishtirokchi profili). myScore — qaralayotgan o'yinchi nuqtai nazaridan.
+function divHistDeltaBadge(status, hasScore, myScore, oppScore) {
+  if (status !== "confirmed" || !hasScore) return "";
+  if (myScore > oppScore) return `<span class="div-hist-delta">+15</span>`;
+  if (myScore === oppScore) return `<span class="div-hist-delta div-hist-delta--draw">+10</span>`;
+  return `<span class="div-hist-delta div-hist-delta--loss">−10</span>`;
+}
+
 // mode: "me" (o'z profilim, /div/calendar) | "player" (boshqa ishtirokchi)
 function divCalendarHtml(cal, mode = "me") {
   if (!cal) {
@@ -422,6 +431,7 @@ function divCalendarHtml(cal, mode = "me") {
 
   const [year, month] = cal.month.split("-").map(Number);
   const marked = new Set(cal.days || []);       // ro'yxatdan o'tilgan kunlar
+  const banned = new Set(cal.banned || []);     // 2026-07-17: ban kunlari (qizil)
   const today = cal.today;
 
   const first = new Date(year, month - 1, 1);
@@ -437,11 +447,15 @@ function divCalendarHtml(cal, mode = "me") {
     const iso = `${cal.month}-${String(d).padStart(2, "0")}`;
     const cls = ["div-cal-cell"];
     if (marked.has(iso)) cls.push("div-cal-cell--on");   // yashil = ro'yxatdan o'tgan
+    if (banned.has(iso)) cls.push("div-cal-cell--ban");  // qizil = ban kuni (ustuvor)
     if (iso === today) cls.push("div-cal-cell--today");
     cells += `<div class="${cls.join(" ")}">${d}</div>`;
   }
 
   const count = (cal.days || []).length;
+  const banLegend = banned.size
+    ? `<span class="div-cal-dot div-cal-dot--ban" style="margin-left:10px"></span> Ban`
+    : "";
   const navAttr = (mode === "player") ? "data-div-pcal" : "data-div-cal";
   return `
     <div class="section-label">RO'YXAT KALENDARI</div>
@@ -453,7 +467,7 @@ function divCalendarHtml(cal, mode = "me") {
       </div>
       <div class="div-cal-grid">${wd}${cells}</div>
       <div class="div-cal-legend">
-        <span class="div-cal-dot div-cal-dot--on"></span> Ro'yxatdan o'tilgan kun
+        <span class="div-cal-dot div-cal-dot--on"></span> Ro'yxatdan o'tilgan kun${banLegend}
         <b style="margin-left:auto">${count} kun</b>
       </div>
     </div>`;
@@ -530,9 +544,9 @@ function divRenderProfile() {
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.opp_score} : ${h.my_score}` : "— : —";
-    // 2026-07-17: g'alaba bo'lsa o'ng tomonda +15 achko belgisi (faqat tasdiqlangan o'yinlarda)
-    const winBadge = (h.status === "confirmed" && hasScore && h.my_score > h.opp_score)
-      ? `<span class="div-hist-delta">+15</span>` : "";
+    // 2026-07-17: har bir tasdiqlangan o'yinda achko o'zgarishi (hammaga ko'rinadi):
+    // g'alaba +15 (yashil), durang +10 (moviy), mag'lubiyat −10 (qizil)
+    const winBadge = divHistDeltaBadge(h.status, hasScore, h.my_score, h.opp_score);
     const canOpen = !!h.opp_user_id;
     // Ism o'rniga USERNAME (yo'q bo'lsa — ism), bosilsa raqib profili ochiladi
     const label = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
@@ -798,6 +812,8 @@ function divRenderPlayer() {
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.my_score} : ${h.opp_score}` : "— : —";
+    // 2026-07-17: bu o'yinchi kimdan achko olgani/yo'qotgani hammaga ko'rinadi
+    const deltaBadge = divHistDeltaBadge(h.status, hasScore, h.my_score, h.opp_score);
     const label = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
     const canOpen = !!h.opp_user_id;
     const attrs = canOpen
@@ -807,7 +823,7 @@ function divRenderPlayer() {
       <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
       <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:${h.opp_username ? "var(--cyan)" : "inherit"}">${escHtml(label)}</b>
       <span style="font-weight:800;margin:0 8px">${score}</span>
-      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>
+      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>${deltaBadge}
     </div>`;
   }).join("");
 
@@ -830,7 +846,10 @@ function divBindSectionEvents(root) {
     } catch (err) {
       e.target.disabled = false;
       showToast(err.message === "window_closed"
-        ? "Ro'yxat vaqti tugagan (17:00–19:00)" : "Xato: " + err.message);
+        ? "Ro'yxat vaqti tugagan (17:00–19:00)"
+        : err.message === "banned"
+          ? "🚫 Siz ban ostidasiz — ro'yxatdan o'ta olmaysiz. Ban kunlari kalendaringizda qizil ko'rsatilgan."
+          : "Xato: " + err.message);
     }
   });
 
@@ -933,11 +952,16 @@ function divBindSectionEvents(root) {
   root.querySelector("#div-btn-reject")?.addEventListener("click", () => act(false));
 
   // Admin panel eventlari
-  root.querySelectorAll("[data-div-admin-day]").forEach(b =>
-    b.addEventListener("click", () => {
-      DIV.adminDay = (b.dataset.divAdminDay === "all") ? "all" : null;
-      void divLoadAdminMatches();
-    }));
+  // 2026-07-17: "Bugungi/Barcha kunlar" tablari olib tashlandi (o'rniga ban formasi)
+
+  // KUNLIK BAN formasi — ishtirokchi tanlash + kun soni + tugma
+  if (document.getElementById("div-ban-box")) {
+    const banLabel = (o) =>
+      `${o.username ? "@" + o.username : (o.nickname || "—")}${o.last_day ? " · " + o.last_day : ""}`;
+    void reassignLoadList("/div/participants/all", "div-ban-box", banLabel);
+    const banBtn = document.getElementById("div-btn-ban");
+    banBtn?.addEventListener("click", () => void divAdminBanSubmit(banBtn));
+  }
 
   // "MATCH ID ORQALI TUZATISH" formasi
   root.querySelector("#div-fix-match-id")?.addEventListener("input", (e) =>
@@ -1101,22 +1125,56 @@ function divAdminReassignForm() {
     </div>`;
 }
 
+// 2026-07-17: Admin ishtirokchiga kunlik ban beradi (tasdiq + POST /div/admin/ban)
+async function divAdminBanSubmit(btn) {
+  const sel = document.getElementById("div-ban-box-select");
+  const uid = sel ? Number(sel.value || 0) : 0;
+  const days = Math.floor(Number(document.getElementById("div-ban-days")?.value || 0));
+  if (!uid) { showToast("Ban beriladigan ishtirokchini tanlang"); return; }
+  if (!days || days < 1) { showToast("Ban kunlar sonini kiriting (kamida 1)"); return; }
+  const name = sel.options[sel.selectedIndex]?.text || "ishtirokchi";
+  if (!confirm(`${name} ga ${days} kunlik BAN berilsinmi?\n\nU shu muddat davomida Divizion ro'yxatidan o'ta olmaydi va telegramiga xabar boradi.`)) return;
+  btn.disabled = true;
+  try {
+    const r = await apiFetch("/div/admin/ban", {
+      method: "POST",
+      body: JSON.stringify({ user_id: uid, days }),
+    });
+    showToast(`🚫 Ban berildi: ${r.until_day} gacha (${days} kun)`);
+    const inp = document.getElementById("div-ban-days");
+    if (inp) inp.value = "";
+  } catch (e) {
+    const msg = {
+      invalid_days: "kunlar soni noto'g'ri (1–365)",
+      user_not_found: "ishtirokchi topilmadi",
+    }[e.message] || e.message;
+    showToast("Xato: " + msg);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// 2026-07-17: Kunlik ban formasi ("Bugungi/Barcha kunlar" tablari o'rniga).
+// Admin ishtirokchini tanlab, istalgancha kunlik ban beradi (faqat bosh admin).
+function divAdminBanForm() {
+  return `
+    <div class="section-label">KUNLIK BAN BERISH</div>
+    <div class="admin-fix-form">
+      <div id="div-ban-box" style="margin-bottom:6px"></div>
+      <input id="div-ban-days" class="modal-input" type="number" min="1" inputmode="numeric"
+             placeholder="Necha kunga (masalan, 3)" style="margin-bottom:8px" />
+      <button class="btn btn--danger" id="div-btn-ban">🚫 Ban berish</button>
+      <div style="font-size:11.5px;opacity:.65">Ban davomida ishtirokchi ro'yxatdan o'ta olmaydi; kalendarida ban kunlari qizil ko'rinadi; telegramiga xabar boradi.</div>
+    </div>`;
+}
+
 function divRenderAdmin() {
   const ms = DIV.adminMatches || [];
   if (!ms.length) {
-    const f = `
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
-        <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
-      </div>`;
-    return divAdminFixForm() + divAdminReassignForm() + f + `<div class="card">O'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
+    return divAdminFixForm() + divAdminReassignForm() + divAdminBanForm()
+      + `<div class="card">Bugun o'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
   }
-  const filter = `
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <button class="tab-btn ${DIV.adminDay !== "all" ? "active" : ""}" data-div-admin-day="today" style="flex:1">Bugungi</button>
-      <button class="tab-btn ${DIV.adminDay === "all" ? "active" : ""}" data-div-admin-day="all" style="flex:1">Barcha kunlar</button>
-    </div>`;
-  return divAdminFixForm() + divAdminReassignForm() + filter +
+  return divAdminFixForm() + divAdminReassignForm() + divAdminBanForm() +
     `<div class="card" style="font-size:12.5px;opacity:.75">✏️ natijani o'zgartirish (TASDIQLANGAN o'yinlar ham tuzatiladi), 🚫 natijani bekor qilish (o'yin qayta ochiladi), katta hisobda ✅/❌ qaror. O'yin raqami — #ID.</div>` +
     ms.map(m => {
       const p2 = m.player2_id ? escHtml(m.player2_name || "") : "<i>(toq — avto g'alaba)</i>";

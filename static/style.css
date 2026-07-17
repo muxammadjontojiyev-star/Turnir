@@ -4751,3 +4751,50 @@ select.modal-input:focus {
 #worldcup-root .wc-body .section-label { margin-top: 18px; }
 #section-admin .section-label:first-child,
 #cl-admin-page .section-label:first-child { margin-top: 0; }
+
+/* ============================================================
+   2026-07-17 (2-qism): DIVIZION — oraliqlar, ban kunlari, achko belgilari
+   ============================================================ */
+
+/* 1) Barcha oynalar (kartalar) orasi ochiq — wc-body flex ustun + 12px gap.
+   Ba'zi elementlarning eski margin'lari gap bilan qo'shilib katta bo'shliq
+   bermasligi uchun nolga tushiriladi. */
+#div-root .wc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#div-root .wc-body > .div-hero,
+#div-root .wc-body > .admin-fix-form,
+#div-root .wc-body > .card { margin-bottom: 0; }
+#div-root .wc-body > .section-label { margin-top: 6px; margin-bottom: -4px; }
+
+/* 2) Tur (kalendar) kataklari orasi ochiq (5px -> 9px) */
+#div-root .div-cal-grid { gap: 9px; }
+
+/* 3) Ban kunlari — qizil katak (ro'yxat yashilidan ustuvor) */
+.div-cal-cell--ban {
+  background: rgba(255,69,96,.20) !important;
+  border: 1px solid rgba(255,69,96,.6) !important;
+  color: #ff96a6 !important;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(255,69,96,.25);
+}
+.div-cal-dot--ban {
+  background: #ff4560;
+  box-shadow: 0 0 8px rgba(255,69,96,.7);
+}
+
+/* 4) Achko o'zgarishi belgilari: durang (moviy) va mag'lubiyat (qizil) */
+.div-hist-delta--draw {
+  color: #56d9f5;
+  background: rgba(86,217,245,.12);
+  border-color: rgba(86,217,245,.35);
+  text-shadow: 0 0 8px rgba(86,217,245,.5);
+}
+.div-hist-delta--loss {
+  color: #ff7a8a;
+  background: rgba(255,69,96,.12);
+  border-color: rgba(255,69,96,.4);
+  text-shadow: 0 0 8px rgba(255,69,96,.5);
+}
