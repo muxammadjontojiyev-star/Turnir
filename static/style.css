@@ -4257,9 +4257,10 @@ tr.is-me .div-rating-user { color: #fff; }
 
 /* Shisha (glassmorphism) elementlar — fon ustidagi hamma narsa */
 .div-glass {
-  background: rgba(16, 24, 44, .38);
-  -webkit-backdrop-filter: blur(10px) saturate(1.2);
-  backdrop-filter: blur(10px) saturate(1.2);
+  background: rgba(16, 24, 44, .42);
+  /* 2026-07-17: blur 10->6 — mobil GPUda yengilroq (kechikishga qarshi) */
+  -webkit-backdrop-filter: blur(6px) saturate(1.15);
+  backdrop-filter: blur(6px) saturate(1.15);
   border: 1px solid rgba(255,255,255,.18);
   border-radius: 14px;
   box-shadow: 0 4px 18px rgba(0,0,0,.25);
@@ -4300,9 +4301,9 @@ tr.is-me .div-rating-user { color: #fff; }
 }
 /* Karta ichidagi tugmalar ham shisha uslubida */
 .div-match-hero .btn--ghost {
-  background: rgba(16, 24, 44, .38);
-  -webkit-backdrop-filter: blur(10px) saturate(1.2);
-  backdrop-filter: blur(10px) saturate(1.2);
+  background: rgba(16, 24, 44, .42);
+  -webkit-backdrop-filter: blur(6px) saturate(1.15);
+  backdrop-filter: blur(6px) saturate(1.15);
   border: 1px solid rgba(255,255,255,.22);
   color: #fff;
 }
@@ -4323,6 +4324,7 @@ tr.is-me .div-rating-user { color: #fff; }
 /* -- Yulduzli osmon: ikki qatlam, sekin miltillash -- */
 #cl-root::before {
   content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  will-change: opacity;
   background-image:
     radial-gradient(1.5px 1.5px at 11% 16%, rgba(255,255,255,.9), transparent 60%),
     radial-gradient(1px 1px at 27% 34%,  rgba(190,210,255,.8), transparent 60%),
@@ -4336,8 +4338,9 @@ tr.is-me .div-rating-user { color: #fff; }
     radial-gradient(circle at 50% 6%, rgba(75,123,255,.16), transparent 46%);
   animation: cl-twinkle 6s ease-in-out infinite alternate;
 }
-#cl-root .wc-body::before {
+#cl-root::after {
   content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  will-change: opacity;
   background-image:
     radial-gradient(1px 1px at 8% 42%,   rgba(255,255,255,.55), transparent 60%),
     radial-gradient(1.3px 1.3px at 33% 21%, rgba(190,210,255,.6), transparent 60%),
@@ -4457,8 +4460,8 @@ tr.is-me .div-rating-user { color: #fff; }
   box-shadow: 0 0 12px rgba(56,214,255,.95);
 }
 
-/* -- Sahifa kirish animatsiyasi (yumshoq ko'tarilish) -- */
-#cl-root .wc-body > * { animation: rise-in .32s ease both; }
+/* 2026-07-17: rise-in olib tashlandi — har tab almashishda barcha kartalarni
+   animatsiya qilib, kuchsiz telefonlarda uzilish/kechikish berardi. */
 
 /* ============================================================
    2026-07-16: DIVIZION PREMIUM — binafsha-yashil (aurora) tema
@@ -4580,21 +4583,13 @@ tr.is-me .div-rating-user { color: #fff; }
   border: 1px solid rgba(140,125,255,.35) !important;
 }
 
-/* Sahifa kirish animatsiyasi */
-#div-root .wc-body > * { animation: rise-in .32s ease both; }
 
-/* Umumiy yumshoq ko'tarilish animatsiyasi (ChL + Divizion) */
-@keyframes rise-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
-}
 
 /* Harakat kamaytirilgan rejimda barcha bezak animatsiyalari o'chadi */
 @media (prefers-reduced-motion: reduce) {
-  #cl-root::before, #cl-root .wc-body::before,
+  #cl-root::before, #cl-root::after,
   #cl-root .cl-hero::after, #cl-root .cl-group-chip.active,
-  #div-root .div-hero::after, #div-root .div-match-hero::after,
-  #cl-root .wc-body > *, #div-root .wc-body > * {
+  #div-root .div-hero::after, #div-root .div-match-hero::after {
     animation: none !important;
   }
 }
@@ -4606,3 +4601,153 @@ tr.is-me .div-rating-user { color: #fff; }
   border: 1px solid rgba(105,145,255,.26);
   border-top: 1px solid rgba(140,170,255,.32);
 }
+
+/* ============================================================
+   2026-07-17: DIVIZION — reyting qatorlari orasi ochiq
+   (qatorlar bir-biriga tegib turardi; endi har qator alohida
+   yumaloq "plashka" ko'rinishida, 7px oraliq bilan)
+   ============================================================ */
+#div-root .rating-table {
+  border-collapse: separate !important;
+  border-spacing: 0 7px;
+}
+#div-root .rating-table thead th { border-bottom: none; padding-bottom: 2px; }
+#div-root .rating-table tbody td {
+  border-bottom: none !important;
+  background: rgba(255,255,255,.035);
+}
+#div-root .rating-table tbody td:first-child { border-radius: 12px 0 0 12px; }
+#div-root .rating-table tbody td:last-child  { border-radius: 0 12px 12px 0; }
+/* "Men" qatori gradienti endi td darajasida (border-spacing bilan mos) */
+#div-root tr.is-me { background: none !important; }
+#div-root tr.is-me td {
+  background: linear-gradient(90deg, rgba(124,92,255,.22), rgba(49,208,170,.13)) !important;
+}
+
+/* Divizion profil tarixida g'alaba belgisi: +15 (yashil, o'ng tomonda) */
+.div-hist-delta {
+  flex: none;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #3ae6b0;
+  background: rgba(49,208,170,.14);
+  border: 1px solid rgba(49,208,170,.35);
+  border-radius: 8px;
+  padding: 2px 7px;
+  text-shadow: 0 0 8px rgba(49,208,170,.5);
+}
+
+/* ============================================================
+   2026-07-17: PREMIUM — BARCHA SAHIFALAR
+   1) Ligalar (asosiy ilova) — kartalar chuqur soya + qirra nuri,
+      pastki nav faol indikatori.
+   2) World Cup (#worldcup-root) — oltin (kubok) urg'uli tema.
+   3) Modal oynalar — premium soya.
+   ============================================================ */
+
+/* -- Ligalar sahifalari (.section — faqat liga rejimi bo'limlari) -- */
+.section .card {
+  box-shadow: 0 10px 28px rgba(4,6,18,.45), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.bottom-nav .nav-item { position: relative; }
+.bottom-nav .nav-item.active::after {
+  content: ""; position: absolute; bottom: 5px; left: 50%;
+  width: 18px; height: 3px; border-radius: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, var(--cyan, #35e0ff), #7c5cff);
+  box-shadow: 0 0 12px rgba(53,224,255,.85);
+}
+
+/* -- World Cup: oltin kubok urg'usi -- */
+#worldcup-root {
+  background:
+    radial-gradient(900px 420px at 50% -6%, rgba(255,190,80,.10), transparent 55%),
+    linear-gradient(180deg, #0b0e1e 0%, #0b0d1c 60%, #090b18 100%);
+}
+#worldcup-root .wc-header {
+  background: linear-gradient(180deg, rgba(24,20,14,.55), rgba(11,13,28,.7));
+  border-bottom: 1px solid rgba(255,190,80,.22);
+}
+#worldcup-root .wc-header-title {
+  background: linear-gradient(90deg, #ffe9c2, #ffc766);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+#worldcup-root .wc-nav {
+  border: 1px solid rgba(255,190,80,.18);
+  border-top: 1px solid rgba(255,200,110,.26);
+}
+#worldcup-root .wc-nav-item { position: relative; }
+#worldcup-root .wc-nav-item.active .nav-icon .icon {
+  color: #ffc766;
+  filter: drop-shadow(0 0 8px rgba(255,190,80,.9));
+}
+#worldcup-root .wc-nav-item.active::after {
+  content: ""; position: absolute; bottom: 5px; left: 50%;
+  width: 18px; height: 3px; border-radius: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #ffd166, #f7913f);
+  box-shadow: 0 0 12px rgba(255,190,80,.9);
+}
+#worldcup-root .card,
+#worldcup-root .card--table {
+  box-shadow: 0 10px 28px rgba(4,6,18,.45), inset 0 1px 0 rgba(255,255,255,.05);
+}
+#worldcup-root .section-label::after {
+  background: linear-gradient(90deg, #ffd166, #f7913f 55%, transparent) !important;
+  opacity: .8;
+}
+
+/* -- Modal oynalar (barcha rejimlar) -- */
+.modal-box {
+  box-shadow: 0 -12px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* ============================================================
+   2026-07-17: ADMIN PANELLAR — QULAY ISH SHAROITI (barcha rejimlar)
+   Katta teginish maydonlari (44px+), formalar orasi ochiq, select
+   uchun chevron, aniq fokus holati, xavfli tugmalar ajratilgan.
+   ============================================================ */
+.admin-fix-form {
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 8px 24px rgba(4,6,18,.4), inset 0 1px 0 rgba(255,255,255,.04);
+  margin-bottom: 14px;
+}
+/* Kirish maydonlari va tugmalar — barmoq uchun qulay balandlik */
+.admin-fix-form .modal-input,
+.admin-fix-form select.modal-input,
+.admin-fix-form .btn {
+  min-height: 46px;
+  font-size: 15px;
+}
+/* Select: standart o'q o'rniga chevron + o'ngdan joy */
+select.modal-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239aa6d0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 38px;
+  min-height: 46px;
+}
+/* Fokus holati — qaysi maydonda turganingiz aniq ko'rinadi */
+.admin-fix-form .modal-input:focus,
+select.modal-input:focus {
+  outline: none;
+  border-color: rgba(124,150,255,.65);
+  box-shadow: 0 0 0 3px rgba(90,120,255,.18);
+}
+/* Admin ro'yxat qatorlari orasi ochiq */
+.admin-players-list > * { margin-bottom: 8px; }
+/* Admin bo'lim sarlavhalari orasi — bloklar aralashib ketmasin */
+#section-admin .section-label,
+#cl-admin-page .section-label,
+#div-root .wc-body .section-label,
+#worldcup-root .wc-body .section-label { margin-top: 18px; }
+#section-admin .section-label:first-child,
+#cl-admin-page .section-label:first-child { margin-top: 0; }

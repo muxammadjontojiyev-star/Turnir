@@ -530,6 +530,9 @@ function divRenderProfile() {
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
     const score = hasScore ? `${h.opp_score} : ${h.my_score}` : "— : —";
+    // 2026-07-17: g'alaba bo'lsa o'ng tomonda +15 achko belgisi (faqat tasdiqlangan o'yinlarda)
+    const winBadge = (h.status === "confirmed" && hasScore && h.my_score > h.opp_score)
+      ? `<span class="div-hist-delta">+15</span>` : "";
     const canOpen = !!h.opp_user_id;
     // Ism o'rniga USERNAME (yo'q bo'lsa — ism), bosilsa raqib profili ochiladi
     const label = h.opp_username ? "@" + h.opp_username : (h.opp_name || "Raqib");
@@ -543,7 +546,7 @@ function divRenderProfile() {
       <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
       <b style="flex:1;min-width:0;color:${h.opp_username ? "var(--cyan)" : "inherit"};overflow:hidden;text-overflow:ellipsis">${escHtml(label)}</b>
       <span style="font-weight:800;margin:0 8px">${score}</span>
-      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>
+      <span class="status-badge status--${h.status === "confirmed" ? "confirmed" : "awaiting"}" style="font-size:10px">${divStatusLabelShort(h.status)}</span>${winBadge}
     </div>`;
   }).join("");
   const historyBlock = `
