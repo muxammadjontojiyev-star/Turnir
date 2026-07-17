@@ -204,6 +204,11 @@ TEXTS = {
         LANGUAGE_RU: "🎲 Жеребьёвка дивизиона: ваш соперник сегодня — {opponent}. Сыграйте матч и внесите результат до 23:30!",
         LANGUAGE_EN: "🎲 Division draw: your opponent today is {opponent}. Play the match and submit the result by 23:30!",
     },
+    "notify_div_reg_open": {
+        LANGUAGE_UZ: "📝 Divizionda ro'yxatdan o'tish OCHILDI! Har kuni 17:00–19:00 (Toshkent) oralig'ida ro'yxatdan o'tishingiz mumkin. Qur'a 19:00 dan keyin o'tkaziladi. Qatnashish uchun ilovaga kiring! ⚽",
+        LANGUAGE_RU: "📝 Регистрация в дивизионе ОТКРЫТА! Записаться можно каждый день с 17:00 до 19:00 (Ташкент). Жеребьёвка — после 19:00. Заходите в приложение, чтобы участвовать! ⚽",
+        LANGUAGE_EN: "📝 Division registration is OPEN! You can sign up every day between 17:00–19:00 (Tashkent). The draw takes place after 19:00. Open the app to join! ⚽",
+    },
     "notify_div_bye": {
         LANGUAGE_UZ: "🎲 Divizion qur'asi: bugun ishtirokchilar soni toq bo'lgani uchun sizga AVTOMATIK G'ALABA (+15 achko) berildi! 🎉",
         LANGUAGE_RU: "🎲 Жеребьёвка дивизиона: сегодня нечётное число участников — вам присуждена АВТОМАТИЧЕСКАЯ ПОБЕДА (+15 очков)! 🎉",

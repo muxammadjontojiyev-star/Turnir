@@ -42,6 +42,38 @@ def div_registration_window() -> dict:
             "now": now.strftime("%H:%M")}
 
 
+# 2026-07-16: 17:00 "ro'yxat ochildi" e'loni — kuniga BIR MARTA yuborilishi
+# uchun idempotentlik belgilari (div_state.reg_announced_at, qoida #38).
+
+def div_is_reg_announced(day: str | None = None) -> bool:
+    """Bugungi "ro'yxat ochildi" e'loni yuborilganmi?"""
+    day = day or _today()
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT reg_announced_at FROM div_state WHERE day = ?", (day,))
+        row = cursor.fetchone()
+        return bool(row and row["reg_announced_at"])
+    finally:
+        conn.close()
+
+
+def div_mark_reg_announced(day: str | None = None) -> None:
+    """Bugungi e'lonni "yuborildi" deb belgilaydi (takror yuborilmasin)."""
+    day = day or _today()
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO div_state (day, reg_announced_at) VALUES (?, datetime('now')) "
+            "ON CONFLICT(day) DO UPDATE SET reg_announced_at = datetime('now')",
+            (day,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def div_register(user_id: int, telegram_id: int, nickname: str) -> tuple[bool, str]:
     """
     Bugungi ro'yxatga yozadi. Sabablar: ok, window_closed, already_registered.

@@ -269,7 +269,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS div_state (
             day TEXT PRIMARY KEY,
             paired_at TIMESTAMP,
-            resolved_at TIMESTAMP
+            resolved_at TIMESTAMP,
+            reg_announced_at TIMESTAMP
         )
     """)
     # div_messages: divizion o'yin ichidagi sodda chat (bot chati)
@@ -537,6 +538,8 @@ def init_db():
     # === MIGRATSIYALAR ===
     # Mavjud DB ga yangi ustunlar qo'shish (agar yo'q bo'lsa)
     migrations = [
+        # 2026-07-16: 17:00 "ro'yxat ochildi" e'loni — kuniga bir marta (idempotentlik)
+        "ALTER TABLE div_state ADD COLUMN reg_announced_at TIMESTAMP",
         "ALTER TABLE registrations ADD COLUMN club_name TEXT",
         "ALTER TABLE users ADD COLUMN username TEXT",
         "ALTER TABLE leagues ADD COLUMN draw_date TIMESTAMP",

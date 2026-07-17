@@ -162,12 +162,41 @@ async def _division_tick() -> None:
       - now >= 23:30 bo'lsa: div_auto_resolve_day() (0:0 durang / avto tasdiq).
     """
     from division import div_pair_day, div_auto_resolve_day
-    from config import DIV_REG_END_HOUR, DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE
+    from config import (DIV_REG_START_HOUR, DIV_REG_END_HOUR,
+                        DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE)
     from queries_leagues import _tournament_now
     from models import get_connection
     from notify import notify_user
 
     now = _tournament_now()
+
+    # 0) 2026-07-16: 17:00 — BARCHA /start bosgan foydalanuvchilarga
+    #    "ro'yxat ochildi" e'loni ("Kirish" WebApp tugmasi bilan).
+    #    Kuniga bir marta (div_state.reg_announced_at, qoida #38).
+    if DIV_REG_START_HOUR <= now.hour < DIV_REG_END_HOUR:
+        from division import div_is_reg_announced, div_mark_reg_announced
+        if not div_is_reg_announced():
+            # Avval belgilaymiz — scheduler har tsiklda qayta yubormasin
+            div_mark_reg_announced()
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT telegram_id, language FROM users "
+                "WHERE telegram_id IS NOT NULL"
+            )
+            recipients = [dict(r) for r in cursor.fetchall()]
+            conn.close()
+            sent = 0
+            for u in recipients:
+                ok = await notify_user(u["telegram_id"], "notify_div_reg_open",
+                                       u.get("language"),
+                                       open_button_key="btn_open_app")
+                if ok:
+                    sent += 1
+                # Telegram rate limit (~30 msg/s) uchun sekinlashtirish
+                await asyncio.sleep(0.05)
+            logger.info("Scheduler: Divizion 17:00 e'loni yuborildi: %d/%d.",
+                        sent, len(recipients))
 
     # 1) Qur'a — ro'yxat yopilgach (19:00+)
     if now.hour >= DIV_REG_END_HOUR:
