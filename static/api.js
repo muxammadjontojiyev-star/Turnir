@@ -2434,11 +2434,10 @@ function closeWebChat() {
   if (modal) modal.classList.add("hidden");
 }
 
-// Profil navigatsiya ikonkasi ustidagi umumiy o'qilmagan rozetka
-function updateProfileBadge() {
-  const navBtn = document.querySelector('.nav-item[data-section="profile"]');
+// 2026-07-19: UMUMIY yordamchi — istalgan nav tugmasiga qizil rozetka qo'yadi/olib
+// tashlaydi (liga, WC, ChL, Divizion navlarida qayta ishlatiladi — qoida #26 DRY).
+function setNavBadge(navBtn, total) {
   if (!navBtn) return;
-  const total = (APP.unread && APP.unread.total) || 0;
   let badge = navBtn.querySelector(".nav-badge");
   if (total > 0) {
     if (!badge) {
@@ -2450,6 +2449,14 @@ function updateProfileBadge() {
   } else if (badge) {
     badge.remove();
   }
+}
+
+// Profil navigatsiya ikonkasi ustidagi umumiy o'qilmagan rozetka (liga rejimi)
+function updateProfileBadge() {
+  setNavBadge(
+    document.querySelector('.nav-item[data-section="profile"]'),
+    (APP.unread && APP.unread.total) || 0
+  );
 }
 
 // Umumiy o'qilmagan sonni yuklab, profil rozetkasini yangilaydi (har sahifada).

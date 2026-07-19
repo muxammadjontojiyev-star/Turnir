@@ -27,6 +27,7 @@ const CL = {
   meParticipant: false,
   state: null,         // /cl/matches/my → tur holati (started, current_matchday)
   profile: null,       // /cl/profile javobi
+  unread: { total: 0, by_match: {} }, // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka)
 };
 
 // ---- Klub logosi (api.js: LEAGUE_CLUBS — qoida 26, DRY) ----
@@ -74,10 +75,30 @@ function exitChampionsLeague() {
 function clNavigate(section) {
   CL.section = section;
   renderChampionsLeague();
+  // 2026-07-19: har sahifada o'qilmagan rozetkani yangilab turamiz (liga naqshi)
+  void clRefreshUnreadBadge();
   if (section === "rating") void (CL.ratingTab === "scorers" ? clLoadScorers() : clLoadRating());
   if (section === "profile") void clLoadProfile();
   if (section === "prizes") void clLoadProfileForPrizes();
   if (section === "admin") void clLoadAdminData();
+}
+
+// 2026-07-19: ChL o'qilmagan soni — Profil nav tugmasidagi qizil rozetka (liga naqshi)
+async function clRefreshUnreadBadge() {
+  try {
+    CL.unread = await apiFetch("/cl/matches/unread");
+  } catch (_) {
+    CL.unread = { total: 0, by_match: {} };
+  }
+  clUpdateNavBadge();
+}
+
+function clUpdateNavBadge() {
+  if (typeof setNavBadge !== "function") return;
+  setNavBadge(
+    document.querySelector('#cl-root .wc-nav-item[data-cl-tab="profile"]'),
+    (CL.unread && CL.unread.total) || 0
+  );
 }
 
 // Admin sahifasi uchun groups + state kerak (panel matnlari uchun)
@@ -122,6 +143,13 @@ async function clLoadRating() {
 }
 
 async function clLoadMatches() {
+  // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka) — liga loadMyMatches naqshi
+  try {
+    CL.unread = await apiFetch("/cl/matches/unread");
+  } catch (_) {
+    CL.unread = { total: 0, by_match: {} };
+  }
+  clUpdateNavBadge();
   try {
     const d = await apiFetch("/cl/matches/my");
     CL.myMatches = d.matches || [];
@@ -177,6 +205,8 @@ function renderChampionsLeague() {
   `;
 
   if (typeof applyIcons === "function") applyIcons(root);
+  // 2026-07-19: nav har renderda qayta quriladi — rozetkani qayta qo'yamiz
+  clUpdateNavBadge();
   document.getElementById("cl-back-btn").addEventListener("click", exitChampionsLeague);
   root.querySelectorAll("[data-cl-tab]").forEach(b =>
     b.addEventListener("click", () => clNavigate(b.dataset.clTab)));
@@ -274,10 +304,16 @@ function clRenderMatches() {
 function clRenderMatchItem(m) {
   const hasScore = (m.score1 !== null && m.score1 !== undefined);
   const score = hasScore ? `${m.score1} : ${m.score2}` : "— : —";
+  // 2026-07-19: o'qilmagan chat rozetka — RAQIB logosi ustida (liga naqshi)
+  const unreadCount = (CL.unread && CL.unread.by_match && CL.unread.by_match[m.id]) || 0;
+  const unreadBadge = unreadCount > 0
+    ? `<span class="chat-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
+    : "";
+  const iAmPlayer1 = clIsMe(m.player1_id);
   const center = `
-    <span class="cl-mc-logo">${clClubBadge(m.player1_club, 26)}</span>
+    <span class="cl-mc-logo match-badge-wrap">${clClubBadge(m.player1_club, 26)}${iAmPlayer1 ? "" : unreadBadge}</span>
     <span class="match-score">${score}</span>
-    <span class="cl-mc-logo">${clClubBadge(m.player2_club, 26)}</span>`;
+    <span class="cl-mc-logo match-badge-wrap">${clClubBadge(m.player2_club, 26)}${iAmPlayer1 ? unreadBadge : ""}</span>`;
 
   let statusCls = "status--pending";
   let statusText = "KUTILMOQDA";

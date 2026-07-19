@@ -2286,6 +2286,7 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-secondary);
   font-size: 11px;
   cursor: pointer;
+  position: relative; /* 2026-07-19: .nav-badge (qizil rozetka) uchun */
 }
 .wc-nav-item .nav-icon .icon { width: 24px; height: 24px; }
 .wc-nav-item.active { color: var(--cyan); }

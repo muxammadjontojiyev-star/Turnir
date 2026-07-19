@@ -50,9 +50,15 @@ function wcPlayoffMatchItem(m) {
   const scoreNum = (m.score1 != null && m.score2 != null)
     ? `${m.score1} : ${m.score2}`
     : "— : —";
-  const scoreText = `<span class="wc-mc-flag">${flag1}</span>`
+  // 2026-07-19: o'qilmagan chat rozetka — RAQIB bayrog'i ustida.
+  // Play-off unread kaliti "p{id}" (wc_count_unread_messages formati).
+  const unreadCount = (WC.unread && WC.unread.by_match && WC.unread.by_match["p" + m.id]) || 0;
+  const unreadBadge = unreadCount > 0
+    ? `<span class="chat-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
+    : "";
+  const scoreText = `<span class="wc-mc-flag match-badge-wrap">${flag1}${iAmP1 ? "" : unreadBadge}</span>`
     + `<span class="wc-po-score-num">${escHtml(scoreNum)}</span>`
-    + `<span class="wc-mc-flag">${flag2}</span>`;
+    + `<span class="wc-mc-flag match-badge-wrap">${flag2}${iAmP1 ? unreadBadge : ""}</span>`;
 
   // Holat / amal
   let statusBadge = "";

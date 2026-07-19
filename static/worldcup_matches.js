@@ -207,6 +207,13 @@ async function wcLoadPlayoffMyMatches() {
 async function wcLoadMatches() {
   const list = document.getElementById("wc-matches-list");
   if (!list) return;
+  // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka) — liga loadMyMatches naqshi
+  try {
+    WC.unread = await apiFetch("/wc/matches/unread");
+  } catch (_) {
+    WC.unread = { total: 0, by_match: {} };
+  }
+  if (typeof wcUpdateNavBadge === "function") wcUpdateNavBadge();
   try {
     const data = await apiFetch("/wc/matches/my");
     WC.myMatches = data.matches || [];
@@ -234,9 +241,20 @@ function wcRenderMatchItem(m) {
   const flag1 = wcTeamFlag(m.player1_club);
   const flag2 = wcTeamFlag(m.player2_club);
   const hasScore = (m.score1 !== null && m.score1 !== undefined);
+
+  // 2026-07-19: o'qilmagan chat rozetka — RAQIB bayrog'i ustida (liga naqshi)
+  const badgeTgId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || null;
+  const iAmPlayer1 = m.player1_telegram_id === badgeTgId;
+  const unreadCount = (WC.unread && WC.unread.by_match && WC.unread.by_match[m.id]) || 0;
+  const unreadBadge = unreadCount > 0
+    ? `<span class="chat-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
+    : "";
+  const f1 = `<span class="wc-mc-flag match-badge-wrap">${flag1}${iAmPlayer1 ? "" : unreadBadge}</span>`;
+  const f2 = `<span class="wc-mc-flag match-badge-wrap">${flag2}${iAmPlayer1 ? unreadBadge : ""}</span>`;
+
   const center = hasScore
-    ? `<span class="wc-mc-flag">${flag1}</span><span class="match-score">${m.score1} : ${m.score2}</span><span class="wc-mc-flag">${flag2}</span>`
-    : `<span class="wc-mc-flag">${flag1}</span><span class="match-score">— : —</span><span class="wc-mc-flag">${flag2}</span>`;
+    ? `${f1}<span class="match-score">${m.score1} : ${m.score2}</span>${f2}`
+    : `${f1}<span class="match-score">— : —</span>${f2}`;
 
   // Status label (liga kabi)
   let statusCls  = "status--pending";

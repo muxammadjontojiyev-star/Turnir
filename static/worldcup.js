@@ -22,6 +22,7 @@ const WC = {
   activeMatchId: null,   // Natija/tasdiqlash modali uchun
   viewedProfile: null,   // Reytingdan bosilgan boshqa o'yinchi profili (faqat ko'rish)
   chatOpened:    null,    // Set: chat ochilgan WC matchlar (Natija tugmasi ochiladi)
+  unread:        { total: 0, by_match: {} }, // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka; play-off kaliti "p{id}")
 };
 
 // ---- 48 terma jamoa, 12 guruh (rasmga muvofiq) ----
@@ -121,6 +122,26 @@ function exitWorldCup() {
 function wcNavigate(section) {
   WC.section = section;
   renderWorldCup();
+  // 2026-07-19: har sahifada o'qilmagan rozetkani yangilab turamiz (liga naqshi)
+  void wcRefreshUnreadBadge();
+}
+
+// 2026-07-19: WC o'qilmagan soni — Profil nav tugmasidagi qizil rozetka (liga naqshi)
+async function wcRefreshUnreadBadge() {
+  try {
+    WC.unread = await apiFetch("/wc/matches/unread");
+  } catch (_) {
+    WC.unread = { total: 0, by_match: {} };
+  }
+  wcUpdateNavBadge();
+}
+
+function wcUpdateNavBadge() {
+  if (typeof setNavBadge !== "function") return;
+  setNavBadge(
+    document.querySelector('#worldcup-root .wc-nav-item[data-wc="profile"]'),
+    (WC.unread && WC.unread.total) || 0
+  );
 }
 
 // ============================================================
@@ -174,6 +195,9 @@ function renderWorldCup() {
 
   // Ikonlarni joylashtirish (mavjud applyIcons)
   if (typeof applyIcons === "function") applyIcons(root);
+
+  // 2026-07-19: nav har renderda qayta quriladi — rozetkani qayta qo'yamiz
+  wcUpdateNavBadge();
 
   // Hodisalarni bog'lash
   document.getElementById("wc-back-btn")?.addEventListener("click", exitWorldCup);

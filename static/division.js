@@ -24,6 +24,7 @@ const DIV = {
   ratingTab: "points",  // "points" (ball) | "scorers" (to'p urarlar)
   playerCalMonth: null, // boshqa ishtirokchi profilidagi kalendar oyi
   scorers: [],
+  unread: { total: 0, by_match: {} }, // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka)
 };
 
 // ---- Kirish nuqtasi ----
@@ -53,6 +54,8 @@ function exitDivision() {
 function divNavigate(section) {
   DIV.section = section;
   renderDivision();
+  // 2026-07-19: har sahifada o'qilmagan rozetkani yangilab turamiz (liga naqshi)
+  void divRefreshUnreadBadge();
   if (section === "rating") {
     if (DIV.ratingTab === "scorers") void divLoadScorers();
     else void divLoadRating();
@@ -66,7 +69,32 @@ async function divLoadStatus() {
   try {
     DIV.status = await apiFetch("/div/status");
   } catch (_) { DIV.status = null; }
+  // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka) — liga loadMyMatches naqshi
+  try {
+    DIV.unread = await apiFetch("/div/matches/unread");
+  } catch (_) {
+    DIV.unread = { total: 0, by_match: {} };
+  }
   renderDivision();
+}
+
+// 2026-07-19: Divizion o'qilmagan soni — "Asosiy" nav tugmasidagi qizil rozetka
+// (Divizion chati bugungi o'yin kartasida — Asosiy sahifada joylashgan).
+async function divRefreshUnreadBadge() {
+  try {
+    DIV.unread = await apiFetch("/div/matches/unread");
+  } catch (_) {
+    DIV.unread = { total: 0, by_match: {} };
+  }
+  divUpdateNavBadge();
+}
+
+function divUpdateNavBadge() {
+  if (typeof setNavBadge !== "function") return;
+  setNavBadge(
+    document.querySelector('#div-root .wc-nav-item[data-div-tab="home"]'),
+    (DIV.unread && DIV.unread.total) || 0
+  );
 }
 
 async function divLoadScorers() {
@@ -133,6 +161,8 @@ function renderDivision() {
   `;
 
   if (typeof applyIcons === "function") applyIcons(root);
+  // 2026-07-19: nav har renderda qayta quriladi — rozetkani qayta qo'yamiz
+  divUpdateNavBadge();
   document.getElementById("div-back-btn").addEventListener("click", exitDivision);
   root.querySelectorAll("[data-div-tab]").forEach(b =>
     b.addEventListener("click", () => divNavigate(b.dataset.divTab)));
@@ -187,14 +217,14 @@ function divTodayMatchCard() {
   }
   const opp = m.opponent || {};
   const p1IsMe = (m.player1_id === s.me_id);
-  const myName = p1IsMe ? m.player1_name : m.player2_name;
-  const myUsername = s.me_username;
+  // 2026-07-19: QAT'IY TARTIB — ikkala telefonda ham bir xil ko'rinishi uchun
+  // chapda DOIM player1, o'ngda DOIM player2 (nisbiy "raqib/men" emas).
+  // Hisob ham doim score1 : score2 (bazadagi tartib) — adashish yo'qoladi.
+  const p1 = { id: m.player1_id, name: m.player1_name, username: m.player1_username, isMe: p1IsMe };
+  const p2 = { id: m.player2_id, name: m.player2_name, username: m.player2_username, isMe: !p1IsMe };
 
-  let oppScore = "—", myScore = "—";
-  if (m.score1 !== null && m.score1 !== undefined) {
-    myScore = p1IsMe ? m.score1 : m.score2;
-    oppScore = p1IsMe ? m.score2 : m.score1;
-  }
+  const score1 = (m.score1 !== null && m.score1 !== undefined) ? m.score1 : "—";
+  const score2 = (m.score1 !== null && m.score1 !== undefined) ? m.score2 : "—";
 
   let actions = "";
   if (m.status === "pending") {
@@ -216,19 +246,22 @@ function divTodayMatchCard() {
     <div class="card div-match-hero">
       <div class="div-glass div-match-chip">Bugungi o'yin</div>
       <div style="display:flex;align-items:stretch;justify-content:space-between;gap:8px">
-        <div class="div-vs-player div-glass div-match-side" id="div-opp-profile-open" style="flex:1">
-          ${divAvatarHtml(opp.user_id, opp.nickname, 56)}
-          <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(opp.nickname || "Raqib")}</div>
-          ${opp.username ? `<div style="font-size:11.5px;color:var(--cyan)">@${escHtml(opp.username)}</div>` : ""}
-        </div>
-        <div class="div-glass div-match-score">${oppScore} : ${myScore}</div>
-        <div class="div-vs-player div-glass div-match-side" style="flex:1">
-          ${divAvatarHtml(s.me_id, myName, 56, APP.currentUser && APP.currentUser.photo_url)}
-          <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(myName || "Siz")}</div>
-          ${myUsername ? `<div style="font-size:11.5px;opacity:.85">@${escHtml(myUsername)}</div>` : ""}
-        </div>
+        ${[p1, p2].map(p => `
+        <div class="div-vs-player div-glass div-match-side" ${p.isMe ? "" : 'id="div-opp-profile-open"'} style="flex:1">
+          ${divAvatarHtml(p.id, p.name, 56, p.isMe ? (APP.currentUser && APP.currentUser.photo_url) : null)}
+          <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(p.name || "—")}</div>
+          ${p.username
+            ? `<div style="font-size:11.5px;${p.isMe ? "opacity:.85" : "color:var(--cyan)"}">@${escHtml(p.username)}</div>`
+            : ""}
+        </div>`).join(`<div class="div-glass div-match-score">${score1} : ${score2}</div>`)}
       </div>
-      <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%;margin-top:12px">👤 Raqib bilan bog'lanish</button>
+      <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%;margin-top:12px;position:relative">👤 Raqib bilan bog'lanish${
+        (() => {
+          // 2026-07-19: shu o'yindagi o'qilmagan xabarlar — tugma ustida qizil rozetka
+          const c = (DIV.unread && DIV.unread.by_match && DIV.unread.by_match[m.id]) || 0;
+          return c > 0 ? `<span class="chat-badge" style="top:-7px;right:-4px">${c > 9 ? "9+" : c}</span>` : "";
+        })()
+      }</button>
       ${actions}
     </div>`;
 }
@@ -653,8 +686,19 @@ function divOpenResultModal() {
   const m = s?.my_match;
   if (!m || m.is_bye || m.status !== "pending") return;
   const t = APP.t || {};
-  const opp = m.opponent || {};
-  const myName = (m.player1_id === s.me_id) ? m.player1_name : m.player2_name;
+  // 2026-07-19: QAT'IY TARTIB — bugungi o'yin kartasi bilan bir xil:
+  // chapda DOIM player1, o'ngda DOIM player2. Katakcha yonida RASM,
+  // rasm OSTIDA username. Tartib: Rasm-katakcha : katakcha-Rasm.
+  const p1IsMe = (m.player1_id === s.me_id);
+  const p1 = { id: m.player1_id, name: m.player1_name, username: m.player1_username, isMe: p1IsMe };
+  const p2 = { id: m.player2_id, name: m.player2_name, username: m.player2_username, isMe: !p1IsMe };
+  const sideCol = (p) => `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0">
+      ${divAvatarHtml(p.id, p.name, 44, p.isMe ? (APP.currentUser && APP.currentUser.photo_url) : null)}
+      <div style="font-size:11px;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${p.isMe ? "opacity:.85" : "color:var(--cyan)"}">
+        ${p.username ? "@" + escHtml(p.username) : escHtml(p.name || "—")}
+      </div>
+    </div>`;
 
   let modal = document.getElementById("modal-div-result");
   if (!modal) {
@@ -669,7 +713,7 @@ function divOpenResultModal() {
       <div class="score-input-row">
         <div class="score-input-group">
           <div class="score-logo-input">
-            <span class="div-avatar-mini" title="${escHtml(myName || "Siz")}">${escHtml((myName || "S").charAt(0).toUpperCase())}</span>
+            ${sideCol(p1)}
             <input id="div-input-score1" class="score-input" type="number" min="0" max="99" value="0" />
           </div>
         </div>
@@ -677,12 +721,9 @@ function divOpenResultModal() {
         <div class="score-input-group">
           <div class="score-logo-input">
             <input id="div-input-score2" class="score-input" type="number" min="0" max="99" value="0" />
-            <span class="div-avatar-mini div-avatar-mini--opp" title="${escHtml(opp.nickname || "Raqib")}">${escHtml((opp.nickname || "R").charAt(0).toUpperCase())}</span>
+            ${sideCol(p2)}
           </div>
         </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.7;margin-top:6px">
-        <span>${escHtml(myName || "Siz")}</span><span>${escHtml(opp.nickname || "Raqib")}</span>
       </div>
       <div class="modal-actions">
         <button class="btn btn--ghost" id="div-result-cancel">${escHtml(t.cancel || "Bekor")}</button>
@@ -697,11 +738,11 @@ function divOpenResultModal() {
   document.getElementById("div-result-submit").addEventListener("click", async (e) => {
     const s1 = Number(document.getElementById("div-input-score1").value || 0);
     const s2 = Number(document.getElementById("div-input-score2").value || 0);
-    // Hisob doim player1:player2 tartibida saqlanadi — men player2 bo'lsam almashtiramiz
-    const [a, b] = (m.player1_id === s.me_id) ? [s1, s2] : [s2, s1];
+    // 2026-07-19: modal endi QAT'IY player1:player2 tartibida — chap katakcha
+    // score1, o'ng katakcha score2. Almashtirish (swap) KERAK EMAS.
     e.target.disabled = true;
     try {
-      await apiFetch(`/div/match/submit-result?match_id=${m.id}&score1=${a}&score2=${b}`, { method: "POST" });
+      await apiFetch(`/div/match/submit-result?match_id=${m.id}&score1=${s1}&score2=${s2}`, { method: "POST" });
       close();
       showToast("Natija kiritildi ✅");
       await divLoadStatus();
