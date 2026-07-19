@@ -1680,6 +1680,14 @@ def cl_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
     return state
 
 
+@app.get("/cl/matches/unread")
+def cl_get_unread_counts(user: dict = Depends(get_authenticated_user)):
+    """2026-07-19: ChL o'qilmagan chat xabarlari (qizil rozetka) —
+    liga /matches/unread bilan bir xil format: {"total", "by_match"}."""
+    from cl_chat import cl_count_unread
+    return cl_count_unread(user["id"])
+
+
 @app.post("/cl/draw")
 def cl_draw_endpoint(admin: dict = Depends(get_authenticated_super_admin)):
     """
@@ -1871,6 +1879,14 @@ def div_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
     if state is None:
         raise HTTPException(status_code=403, detail="chat_no_access")
     return state
+
+
+@app.get("/div/matches/unread")
+def div_get_unread_counts(user: dict = Depends(get_authenticated_user)):
+    """2026-07-19: Divizion o'qilmagan chat xabarlari (qizil rozetka) —
+    liga /matches/unread bilan bir xil format: {"total", "by_match"}."""
+    from division_chat import div_count_unread
+    return div_count_unread(user["id"])
 
 
 # --- Divizion admin (faqat bosh admin, Divizion tabidagi panel) ---

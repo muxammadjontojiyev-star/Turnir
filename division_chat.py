@@ -163,3 +163,41 @@ def div_get_chat_state(match_id: int, requester_id: int) -> dict | None:
                 "opponent_username": username, "opponent_user_id": opp_id}
     finally:
         conn.close()
+
+
+def div_count_unread(user_id: int) -> dict:
+    """
+    2026-07-19: Divizion o'qilmagan xabarlar soni (qizil rozetka).
+    Liga queries_chat.count_unread_messages naqshi, div_matches/div_messages ustida.
+    Faqat AKTIV (pending/awaiting_confirmation) o'yinlardagi, raqib yuborgan,
+    o'qilmagan xabarlar sanaladi.
+
+    Qaytaradi: {"total": int, "by_match": {match_id: count, ...}}
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT msg.match_id AS match_id, COUNT(*) AS cnt
+            FROM div_messages msg
+            JOIN div_matches m ON m.id = msg.match_id
+            WHERE msg.is_read = 0
+              AND msg.sender_id != ?
+              AND (m.player1_id = ? OR m.player2_id = ?)
+              AND m.status IN ('pending', 'awaiting_confirmation')
+            GROUP BY msg.match_id
+            """,
+            (user_id, user_id, user_id),
+        )
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    by_match = {}
+    total = 0
+    for r in rows:
+        d = dict(r)
+        by_match[d["match_id"]] = d["cnt"]
+        total += d["cnt"]
+    return {"total": total, "by_match": by_match}
