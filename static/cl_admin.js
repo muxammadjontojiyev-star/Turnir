@@ -88,6 +88,12 @@ async function clLoadAdminPanel() {
         ${ICON.get("play", 16)} O'yinlarni boshlash
       </button>` : ""}
 
+      <div class="admin-hint" style="margin-top:14px">
+        <b>Play-off:</b> barcha guruh o'yinlari tugagach, har guruhdan top-2
+        (16 o'yinchi) 1/8 setkasiga joylanadi. Har juftlik uy+mehmon, final — 1 o'yin.
+      </div>
+      <button class="btn btn--primary" id="cl-admin-po-start">🏆 Play-off boshlash</button>
+
       ${drawn ? clAdminFixForm() : ""}
     </div>`;
 
@@ -106,6 +112,11 @@ async function clLoadAdminPanel() {
 
   const sbtn = document.getElementById("cl-admin-start");
   if (sbtn && !started) sbtn.addEventListener("click", () => void clAdminStart(sbtn));
+
+  // 2026-07-20: play-off boshlash (cl_playoff.js) — xatolar toast bilan tushuntiriladi
+  const pobtn = document.getElementById("cl-admin-po-start");
+  if (pobtn && typeof clpoAdminStart === "function")
+    pobtn.addEventListener("click", () => void clpoAdminStart(pobtn));
 
   // Match ID orqali tuzatish (liga naqshi)
   const fixId = document.getElementById("cl-fix-match-id");

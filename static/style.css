@@ -4799,3 +4799,17 @@ select.modal-input:focus {
   border-color: rgba(255,69,96,.4);
   text-shadow: 0 0 8px rgba(255,69,96,.5);
 }
+
+/* ===== ChL PLAY-OFF (2026-07-20) — setka WC .wc-bracket-* dan foydalanadi ===== */
+.cl-po-match { padding: 12px 14px; margin-bottom: 10px; }
+.cl-po-match-top { display: flex; justify-content: space-between; font-size: 11.5px; opacity: .8; margin-bottom: 8px; }
+.cl-po-round { font-weight: 800; color: var(--cyan); }
+.cl-po-match-mid { display: flex; align-items: center; gap: 8px; }
+.cl-po-opp { flex: 1; font-weight: 700; font-size: 14px; }
+.cl-po-ctx { font-size: 11.5px; opacity: .7; margin-top: 6px; }
+.cl-po-wait { font-size: 12px; opacity: .8; }
+.cl-po-actions { display: flex; gap: 8px; margin-top: 10px; }
+.cl-po-champion { text-align: center; margin-top: 12px; }
+.cl-po-champion-name { font-weight: 800; font-size: 14px; margin-top: 4px; }
+.cl-po-champion-label { font-size: 10.5px; letter-spacing: 2px; color: var(--cyan); }
+svg.wc-bracket-trophy { display: block; margin: 0 auto; }

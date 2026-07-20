@@ -56,6 +56,8 @@ function clRenderProfile() {
       </div>
     </div>
 
+    <div id="cl-po-my-box"></div>
+
     <div class="section-label">MENING O'YINLARIM</div>
     ${clRenderMatches()}`;
 }

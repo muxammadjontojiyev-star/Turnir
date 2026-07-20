@@ -215,6 +215,9 @@ function renderChampionsLeague() {
   if (typeof applyIcons === "function") applyIcons(root);
   // 2026-07-19: nav har renderda qayta quriladi — rozetkani qayta qo'yamiz
   clUpdateNavBadge();
+  // 2026-07-20: play-off bloklari (boshlanmagan bo'lsa bo'sh qoladi)
+  if (CL.section === "rating" && typeof clpoLoadBracket === "function") void clpoLoadBracket();
+  if (CL.section === "profile" && typeof clpoLoadMyMatches === "function") void clpoLoadMyMatches();
   document.getElementById("cl-back-btn").addEventListener("click", exitChampionsLeague);
   root.querySelectorAll("[data-cl-tab]").forEach(b =>
     b.addEventListener("click", () => clNavigate(b.dataset.clTab)));
@@ -296,7 +299,9 @@ function clRenderRating() {
       </div>`;
   }).join("");
 
-  return `${tabs}${blocks}`;
+  // 2026-07-20: play-off boshlangan bo'lsa setka guruh jadvallari TEPASIDA
+  // ko'rinadi (cl_playoff.js clpoLoadBracket to'ldiradi; boshlanmagan bo'lsa bo'sh).
+  return `${tabs}<div id="cl-po-bracket-box"></div>${blocks}`;
 }
 
 // ---- MATCHES ----
