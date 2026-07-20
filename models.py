@@ -480,6 +480,45 @@ def init_db():
         )
     """)
 
+    # === cl_playoff_matches (ChL play-off: 2 o'yinli juftliklar, final — 1 o'yin) ===
+    # 2026-07-20: round: r16|r8|r4|final. position: juftlik o'rni (r16: 0..7).
+    # leg: 1|2 (final faqat 1). player1_id = shu O'YINDA UY egasi.
+    # Juftlik tomonlari: sideA = leg1.player2 (2-o'yinda uyda), sideB = leg1.player1.
+    # 2-o'yin 1-o'yin tasdiqlangandan KEYIN yaratiladi. Agregat teng bo'lishi
+    # taqiqlanadi (eFootball'da qo'shimcha vaqt/penalti o'yin ichida hal qilinadi).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_playoff_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            season INTEGER NOT NULL,
+            round TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            leg INTEGER NOT NULL DEFAULT 1,
+            player1_id INTEGER,
+            player2_id INTEGER,
+            score1 INTEGER,
+            score2 INTEGER,
+            submitted_by INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (season, round, position, leg),
+            FOREIGN KEY (player1_id) REFERENCES users(id),
+            FOREIGN KEY (player2_id) REFERENCES users(id)
+        )
+    """)
+    # Tez-tez qidiriladigan ustunlar (qoida #30)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cl_po_season_round ON cl_playoff_matches(season, round)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cl_po_p1 ON cl_playoff_matches(player1_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cl_po_p2 ON cl_playoff_matches(player2_id)")
+
+    # === cl_playoff_state (mavsum bo'yicha: play-off boshlanganmi) ===
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_playoff_state (
+            season INTEGER PRIMARY KEY,
+            started INTEGER NOT NULL DEFAULT 0,
+            started_at TIMESTAMP
+        )
+    """)
+
     # === messages (WebApp chat — aktiv match raqibi bilan) ===
     # sender_id = users.id (kim yuborgan). is_read = raqib o'qidimi (ikkita ✓ uchun).
     cursor.execute("""

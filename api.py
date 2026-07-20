@@ -1688,6 +1688,73 @@ def cl_get_unread_counts(user: dict = Depends(get_authenticated_user)):
     return cl_count_unread(user["id"])
 
 
+# ============ ChL PLAY-OFF (2026-07-20) ============
+
+@app.get("/cl/playoff/status")
+def cl_playoff_status(user: dict = Depends(get_authenticated_user)):
+    """Play-off boshlanganmi (frontend setka ko'rsatish sharti)."""
+    from cl_playoff import cl_po_is_started
+    return {"started": cl_po_is_started()}
+
+
+@app.post("/cl/admin/playoff/start")
+def cl_admin_playoff_start(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin play-off'ni boshlaydi: har guruhdan top-2 → 1/8 (8 juftlik, 1-o'yinlar).
+    Xato: already_started, not_drawn, groups_not_finished, group_N_incomplete → 400
+    """
+    from cl_playoff import cl_po_start
+    success, result = cl_po_start()
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
+@app.get("/cl/playoff/bracket")
+def cl_playoff_bracket(user: dict = Depends(get_authenticated_user)):
+    """To'liq setka (Reyting sahifasi): juftliklar, 2 o'yin hisobi, agregat, chempion."""
+    from cl_playoff import cl_po_bracket
+    return cl_po_bracket()
+
+
+@app.get("/cl/playoff/my-matches")
+def cl_playoff_my_matches(user: dict = Depends(get_authenticated_user)):
+    """Foydalanuvchining play-off o'yinlari (Profil sahifasi)."""
+    from cl_playoff import cl_po_my_matches
+    return cl_po_my_matches(user["id"])
+
+
+@app.post("/cl/playoff/submit-result")
+def cl_playoff_submit(match_id: int, score1: int, score2: int,
+                      user: dict = Depends(get_authenticated_user)):
+    """
+    Play-off o'yin natijasini kiritish. Final durang bo'lmaydi; 2-o'yinda
+    agregat teng bo'lishi taqiqlanadi (o'yin ichida penalti hal qiladi).
+    Xato: not_found, not_participant, wrong_status, draw_not_allowed,
+    aggregate_draw_not_allowed → 400
+    """
+    validate_scores(score1, score2)
+    from cl_playoff_results import cl_po_submit_result
+    success, reason = cl_po_submit_result(match_id, score1, score2, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": reason, "match_id": match_id}
+
+
+@app.post("/cl/playoff/confirm-result")
+def cl_playoff_confirm(match_id: int, accept: bool = True,
+                       user: dict = Depends(get_authenticated_user)):
+    """
+    Play-off natijasini tasdiqlash/rad etish. Tasdiqda: 1-o'yin → 2-o'yin
+    ochiladi; 2-o'yin → agregat g'olibi keyingi bosqichga o'tadi.
+    """
+    from cl_playoff_results import cl_po_confirm_result
+    success, reason = cl_po_confirm_result(match_id, user["id"], accept)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": reason, "match_id": match_id}
+
+
 @app.post("/cl/draw")
 def cl_draw_endpoint(admin: dict = Depends(get_authenticated_super_admin)):
     """
