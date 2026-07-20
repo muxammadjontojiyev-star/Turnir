@@ -78,6 +78,8 @@ function showWorldCup() {
   WC.section = "home";
   // WC profilini (ro'yxatdan o'tganmi) yuklab, keyin chizamiz
   void wcLoadProfileThenRender();
+  // 2026-07-20: rejimga kirishdayoq rozetkani yuklaymiz — Profilga kirmasdan ham ko'rinsin
+  void wcRefreshUnreadBadge();
 }
 
 // WC profilini yuklaydi (ro'yxat holati), so'ng ekranni chizadi

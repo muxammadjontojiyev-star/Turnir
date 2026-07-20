@@ -2470,6 +2470,22 @@ async function refreshUnreadBadge() {
   updateProfileBadge();
 }
 
+// 2026-07-20: qizil rozetka POLLING — foydalanuvchi qaysi sahifada/rejimda
+// bo'lmasin, bot chatidan yangi xabar kelsa rozetka ~30s ichida ko'rinadi.
+// Bitta umumiy interval: qaysi rejim ochiq bo'lsa, o'shaning refresher'i chaqiriladi.
+const UNREAD_POLL_INTERVAL_MS = 30000;
+setInterval(() => {
+  if (document.hidden) return; // ilova fonda — behuda so'rov yubormaymiz (qoida #39)
+  const vis = (id) => {
+    const el = document.getElementById(id);
+    return !!el && !el.classList.contains("hidden");
+  };
+  if (vis("cl-root") && typeof clRefreshUnreadBadge === "function") { void clRefreshUnreadBadge(); return; }
+  if (vis("div-root") && typeof divRefreshUnreadBadge === "function") { void divRefreshUnreadBadge(); return; }
+  if (vis("worldcup-root") && typeof wcRefreshUnreadBadge === "function") { void wcRefreshUnreadBadge(); return; }
+  void refreshUnreadBadge(); // liga rejimi (yashirin bo'lsa ham zararsiz)
+}, UNREAD_POLL_INTERVAL_MS);
+
 async function loadWebChatMessages() {
   const matchId = APP.chatMatchId;
   if (!matchId) return;

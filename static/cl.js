@@ -64,6 +64,8 @@ function showChampionsLeague() {
   root.classList.remove("hidden");
   CL.section = "home";
   void clLoadThenRender();
+  // 2026-07-20: rejimga kirishdayoq rozetkani yuklaymiz — Profilga kirmasdan ham ko'rinsin
+  void clRefreshUnreadBadge();
 }
 
 function exitChampionsLeague() {
@@ -77,7 +79,9 @@ function clNavigate(section) {
   renderChampionsLeague();
   // 2026-07-19: har sahifada o'qilmagan rozetkani yangilab turamiz (liga naqshi)
   void clRefreshUnreadBadge();
-  if (section === "rating") void (CL.ratingTab === "scorers" ? clLoadScorers() : clLoadRating());
+  // 2026-07-20: pir-pirash tuzatildi — navigate allaqachon render qildi; fetch'dan
+  // keyin faqat ma'lumot O'ZGARGAN bo'lsa qayta chizamiz (onlyIfChanged=true)
+  if (section === "rating") void (CL.ratingTab === "scorers" ? clLoadScorers(true) : clLoadRating(true));
   if (section === "profile") void clLoadProfile();
   if (section === "prizes") void clLoadProfileForPrizes();
   if (section === "admin") void clLoadAdminData();
@@ -130,7 +134,8 @@ async function clLoadThenRender() {
   renderChampionsLeague();
 }
 
-async function clLoadRating() {
+async function clLoadRating(onlyIfChanged = false) {
+  const prev = JSON.stringify(CL.ratingAll || []);
   try {
     const d = await apiFetch("/cl/rating-all");
     CL.ratingAll = d.groups || [];
@@ -139,6 +144,9 @@ async function clLoadRating() {
       g.rating.forEach((p, i) => CL.rating.push({ ...p, _group: g.group_number, _pos: i + 1 }));
     }
   } catch (_) { CL.ratingAll = []; CL.rating = []; }
+  // 2026-07-20: pir-pirash tuzatildi — sahifa allaqachon chizilgan bo'lsa va
+  // ma'lumot o'zgarmagan bo'lsa, ikkinchi (keraksiz) to'liq renderni o'tkazib yuboramiz
+  if (onlyIfChanged && JSON.stringify(CL.ratingAll || []) === prev) return;
   renderChampionsLeague();
 }
 
@@ -198,7 +206,7 @@ function renderChampionsLeague() {
         <span class="nav-label">Profil</span>
       </button>
       <button class="wc-nav-item ${CL.section === "prizes" ? "active" : ""}" data-cl-tab="prizes">
-        <span class="nav-icon" data-icon="trophy"></span>
+        <span class="nav-icon" data-icon="gift"></span>
         <span class="nav-label">Sovrinlar</span>
       </button>${adminTab}
     </nav>
@@ -221,11 +229,14 @@ function renderChampionsLeague() {
 // ---- HOME ----  → cl_home.js (qoida 21: fayl 300 qatordan oshmasin)
 
 // ---- SCORERS (to'purarlar) ----
-async function clLoadScorers() {
+async function clLoadScorers(onlyIfChanged = false) {
+  const prev = JSON.stringify(CL.scorers || []);
   try {
     const d = await apiFetch("/cl/scorers");
     CL.scorers = d.scorers || [];
   } catch (_) { CL.scorers = []; }
+  // 2026-07-20: pir-pirash tuzatildi (clLoadRating bilan bir xil mantiq)
+  if (onlyIfChanged && JSON.stringify(CL.scorers || []) === prev) return;
   renderChampionsLeague();
 }
 
