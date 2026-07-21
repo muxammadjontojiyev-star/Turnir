@@ -1683,9 +1683,72 @@ def cl_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
 @app.get("/cl/matches/unread")
 def cl_get_unread_counts(user: dict = Depends(get_authenticated_user)):
     """2026-07-19: ChL o'qilmagan chat xabarlari (qizil rozetka) —
-    liga /matches/unread bilan bir xil format: {"total", "by_match"}."""
+    liga /matches/unread bilan bir xil format: {"total", "by_match"}.
+    2026-07-21: play-off chati ham qo'shiladi (kalitlar "p{id}", WC naqshi)."""
     from cl_chat import cl_count_unread
-    return cl_count_unread(user["id"])
+    from cl_playoff_chat import cl_po_count_unread
+    group = cl_count_unread(user["id"])
+    po = cl_po_count_unread(user["id"])
+    return {"total": group["total"] + po["total"],
+            "by_match": {**group["by_match"], **po["by_match"]}}
+
+
+# --- ChL PLAY-OFF chati (2026-07-21, guruh /cl/matches/{id}/... bilan bir xil oqim) ---
+
+@app.get("/cl/playoff/matches/{match_id}/messages")
+def cl_po_chat_messages(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """Play-off o'yin chatidagi xabarlar (ochilganda o'qilgan deb belgilanadi)."""
+    from cl_playoff_chat import cl_po_get_messages
+    messages = cl_po_get_messages(match_id, user["id"])
+    if messages is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"messages": messages}
+
+
+@app.post("/cl/playoff/matches/{match_id}/messages")
+async def cl_po_chat_send(match_id: int, text: str = Body(..., embed=True),
+                          user: dict = Depends(get_authenticated_user)):
+    """Play-off chatiga xabar yuborish. Body: {"text": "..."} (guruh oqimi bilan bir xil)."""
+    from cl_playoff_chat import cl_po_send_message
+    success, reason, notify = cl_po_send_message(match_id, user["id"], text)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+
+    if notify is not None:
+        try:
+            recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            lang = recipient.get("language") if recipient else None
+            await notify_user(
+                notify["recipient_telegram_id"],
+                "notify_chat_message",
+                lang,
+                open_button_key="btn_open_app",
+                mode=t("mode_name_cl", lang),
+                preview=notify["text_preview"],
+            )
+        except Exception as exc:
+            logger.warning("ChL play-off chat bildirishnomasi yuborilmadi: %s", exc)
+
+    return {"status": "ok"}
+
+
+@app.post("/cl/playoff/matches/{match_id}/typing")
+def cl_po_chat_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """Play-off chatida 'yozmoqda' signali."""
+    from cl_playoff_chat import cl_po_set_typing
+    if not cl_po_set_typing(match_id, user["id"]):
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"status": "ok"}
+
+
+@app.get("/cl/playoff/matches/{match_id}/state")
+def cl_po_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
+    """Play-off chat header holati (online/typing/last_seen)."""
+    from cl_playoff_chat import cl_po_get_chat_state
+    state = cl_po_get_chat_state(match_id, user["id"])
+    if state is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return state
 
 
 # ============ ChL PLAY-OFF (2026-07-20) ============

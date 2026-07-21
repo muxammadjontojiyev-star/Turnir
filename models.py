@@ -519,6 +519,24 @@ def init_db():
         )
     """)
 
+    # === cl_po_messages (ChL PLAY-OFF o'yin ichidagi chat — cl_messages naqshi) ===
+    # 2026-07-21: alohida jadval (cl_messages bilan match_id to'qnashuvi bo'lmasligi
+    # uchun — u cl_matches'ga, bu cl_playoff_matches'ga bog'langan).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cl_po_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES cl_playoff_matches(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_cl_po_messages_match ON cl_po_messages(match_id)"
+    )
+
     # === messages (WebApp chat — aktiv match raqibi bilan) ===
     # sender_id = users.id (kim yuborgan). is_read = raqib o'qidimi (ikkita ✓ uchun).
     cursor.execute("""
