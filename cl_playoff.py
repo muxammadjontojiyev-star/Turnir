@@ -12,13 +12,15 @@ Konventsiya (models.py cl_playoff_matches izohiga mos):
   - 2-o'yin 1-o'yin TASDIQLANGACH yaratiladi (cl_playoff_results.py).
   - Agregat teng bo'lishi mumkin emas (o'yin ichida penalti/qo'shimcha vaqt).
 
-1/8 juftlash (bir guruhdoshlar uchrashmaydi, yarmlar ajratilgan):
-  pos0 W(G1)-RU(G2), pos1 W(G3)-RU(G4), pos2 W(G5)-RU(G6), pos3 W(G7)-RU(G8),
-  pos4 W(G2)-RU(G1), pos5 W(G4)-RU(G3), pos6 W(G6)-RU(G5), pos7 W(G8)-RU(G7).
+1/8 juftlash — TASODIFIY QUR'A (2026-07-21, real ChL kabi):
+  har guruh G'OLIBI tasodifiy BOSHQA guruh IKKINCHISI bilan tushadi;
+  bir guruhdoshlar 1/8 da uchrasha olmaydi (keyingi bosqichlarda — mumkin,
+  real ChL dagidek). Setkadagi juftlik o'rinlari (pos 0..7) ham tasodifiy.
 G'olib oqimi: (pos 2k, 2k+1) g'oliblari keyingi bosqich pos k'da uchrashadi.
 """
 
 import logging
+import random
 
 from models import get_connection
 from config import MATCH_STATUS_PENDING, MATCH_STATUS_CONFIRMED
@@ -27,8 +29,29 @@ logger = logging.getLogger(__name__)
 
 CL_PO_ROUNDS = ["r16", "r8", "r4", "final"]
 
-# (g'olib guruhi, ikkinchi o'rin guruhi) — pos 0..7 tartibida
-CL_PO_R16_PAIRING = [(1, 2), (3, 4), (5, 6), (7, 8), (2, 1), (4, 3), (6, 5), (8, 7)]
+
+def _draw_r16_pairs(q: dict) -> list[tuple[int, int]]:
+    """
+    Real ChL uslubidagi TASODIFIY qur'a: har g'olibga tasodifiy BOSHQA guruh
+    ikkinchisi tushadi (o'z guruhdoshi taqiqlanadi), juftliklarning setkadagi
+    o'rni ham tasodifiy. Qaytaradi: [(sideA=g'olib user_id, sideB=ikkinchi user_id), ...]
+    pos 0..7 tartibida.
+    """
+    winners = [(g, q["winners"][g]) for g in range(1, 9)]
+    runners = [(g, q["runners"][g]) for g in range(1, 9)]
+
+    pairing = None
+    for _ in range(200):  # 8 tadan tasodifiy taqsimotda deyarli darhol topiladi
+        random.shuffle(runners)
+        if all(w[0] != r[0] for w, r in zip(winners, runners)):
+            pairing = list(zip(winners, runners))
+            break
+    if pairing is None:  # deterministik zaxira: ikkinchilarni bir pog'ona surish
+        rs = sorted(runners)
+        pairing = list(zip(sorted(winners), rs[1:] + rs[:1]))
+
+    random.shuffle(pairing)  # setkadagi pozitsiyalar ham qur'a bilan
+    return [(w_id, r_id) for (_wg, w_id), (_rg, r_id) in pairing]
 
 
 def _current_season(cursor) -> int:
@@ -113,9 +136,8 @@ def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
             return False, reason
 
         created = 0
-        for pos, (wg, rg) in enumerate(CL_PO_R16_PAIRING):
-            side_a = q["winners"][wg]    # 2-o'yinda uyda
-            side_b = q["runners"][rg]    # 1-o'yinda uyda
+        for pos, (side_a, side_b) in enumerate(_draw_r16_pairs(q)):
+            # side_a = guruh g'olibi (2-o'yinda uyda), side_b = ikkinchi (1-o'yinda uyda)
             cursor.execute(
                 "INSERT INTO cl_playoff_matches "
                 "(season, round, position, leg, player1_id, player2_id, status) "
