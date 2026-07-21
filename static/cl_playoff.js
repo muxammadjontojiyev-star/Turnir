@@ -7,6 +7,8 @@ const CLPO = {
   bracket: null,      // /cl/playoff/bracket javobi
   my: null,           // /cl/playoff/my-matches javobi
   activeMatch: null,  // modal ochilgan o'yin (obyekt)
+  chatOpened: null,   // Set: chat ochilgan o'yinlar (💬 → "Natija", guruh oqimi kabi)
+  _lastMyJson: null,  // 2026-07-21: pir-pirashga qarshi — o'zgarmagan bo'lsa DOM yozilmaydi
 };
 
 const CLPO_ROUND_NAMES = { r16: "1/8 final", r8: "1/4 final", r4: "1/2 final", final: "Final" };
@@ -128,22 +130,49 @@ function clpoRenderBracket(data) {
 // clRenderMatchItem) bilan BIR XIL: .cl-match-wrap karta, umumiy #modal-result
 // modali (klub logolari + input-score1/2), tasdiqlash — bir bosishda, rad — alohida qator.
 
-async function clpoLoadMyMatches() {
+async function clpoLoadMyMatches(force = false) {
   const box = document.getElementById("cl-po-my-box");
   if (!box) return;
   try {
     CLPO.my = await apiFetch("/cl/playoff/my-matches");
   } catch (_) { CLPO.my = null; }
+  // 2026-07-21: PIR-PIRASH TUZATISH — har profil renderida qayta yozish o'rniga
+  // ma'lumot O'ZGARMAGAN bo'lsa DOM tegilmaydi (JSON solishtiruv).
+  const json = JSON.stringify(CLPO.my && CLPO.my.matches);
+  if (!force && json === CLPO._lastMyJson && box.innerHTML !== "") return;
+  CLPO._lastMyJson = json;
+  clpoRenderMyBox();
+}
+
+// Faqat renderlash (fetch'siz) — chat ochilganda 💬 → "Natija" almashinuvi uchun
+function clpoRenderMyBox() {
+  const box = document.getElementById("cl-po-my-box");
+  if (!box) return;
   if (!CLPO.my || !CLPO.my.started || !CLPO.my.matches.length) { box.innerHTML = ""; return; }
   box.innerHTML = `
     <div class="section-label">PLAY-OFF O'YINLARIM</div>
     <div class="matches-list">${CLPO.my.matches.map(clpoMyMatchItem).join("")}</div>`;
+  if (typeof applyIcons === "function") applyIcons(box);
   box.querySelectorAll("[data-clpo-result]").forEach(b =>
     b.addEventListener("click", () => clpoOpenResultModal(parseInt(b.dataset.clpoResult))));
+  box.querySelectorAll("[data-clpo-chat]").forEach(b =>
+    b.addEventListener("click", () => clpoChatThenResult(parseInt(b.dataset.clpoChat))));
+  box.querySelectorAll("[data-clpo-open-match]").forEach(b =>
+    b.addEventListener("click", () => clpoChatThenResult(parseInt(b.dataset.clpoOpenMatch))));
   box.querySelectorAll("[data-clpo-confirm]").forEach(b =>
     b.addEventListener("click", () => void clpoConfirm(parseInt(b.dataset.clpoConfirm), true)));
   box.querySelectorAll("[data-clpo-reject]").forEach(b =>
     b.addEventListener("click", () => void clpoConfirm(parseInt(b.dataset.clpoReject), false)));
+}
+
+// 💬 yoki logolar bosilganda: VS-oyna (ikkita chat) + "Natija" tugmasi ochiladi
+// (guruh clOpenChatThenResult oqimi). Faqat LOKAL box qayta chiziladi —
+// to'liq renderChampionsLeague chaqirilmaydi (pir-pirash bo'lmasin).
+function clpoChatThenResult(matchId) {
+  if (!CLPO.chatOpened) CLPO.chatOpened = new Set();
+  CLPO.chatOpened.add(matchId);
+  clpoOpenOpponentModal(matchId);
+  clpoRenderMyBox();
 }
 
 function clpoLegLabel(m) {
@@ -159,10 +188,17 @@ function clpoMyMatchItem(m) {
   const hasScore = m.score1 !== null && m.score1 !== undefined;
   const score = hasScore ? `${m.score1} : ${m.score2}` : "— : —";
 
+  // 2026-07-21: o'qilmagan chat rozetka — RAQIB logosi ustida (guruh kartasi kabi,
+  // play-off kalitlari "p{id}" — /cl/matches/unread endi ularni ham qaytaradi)
+  const unreadCount = (typeof CL !== "undefined" && CL.unread && CL.unread.by_match
+    && CL.unread.by_match["p" + m.id]) || 0;
+  const unreadBadge = unreadCount > 0
+    ? `<span class="chat-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
+    : "";
   const center = `
-    <span class="cl-mc-logo">${clClubBadge(m.p1_club, 26)}</span>
+    <span class="cl-mc-logo match-badge-wrap">${clClubBadge(m.p1_club, 26)}${isHome ? "" : unreadBadge}</span>
     <span class="match-score">${score}</span>
-    <span class="cl-mc-logo">${clClubBadge(m.p2_club, 26)}</span>`;
+    <span class="cl-mc-logo match-badge-wrap">${clClubBadge(m.p2_club, 26)}${isHome ? unreadBadge : ""}</span>`;
 
   let statusCls = "status--pending", statusText = "KUTILMOQDA";
   if (m.status === "awaiting_confirmation") { statusCls = "status--awaiting"; statusText = "TASDIQ"; }
@@ -170,7 +206,10 @@ function clpoMyMatchItem(m) {
 
   let action = "";
   if (m.status === "pending") {
-    action = `<button class="match-action-btn" data-clpo-result="${m.id}">Natija</button>`;
+    // 2026-07-21: guruh oqimi bilan bir xil — avval 💬 chat, chat ochilgach "Natija"
+    action = (CLPO.chatOpened && CLPO.chatOpened.has(m.id))
+      ? `<button class="match-action-btn" data-clpo-result="${m.id}">Natija</button>`
+      : `<button class="match-action-btn match-chat-btn" data-clpo-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
   } else if (m.status === "awaiting_confirmation") {
     action = mine
       ? `<span class="match-waiting">Kutilmoqda</span>`
@@ -195,12 +234,85 @@ function clpoMyMatchItem(m) {
         <span class="match-status ${statusCls}">${statusText}</span>
       </div>
       <div class="cl-match-body">
-        <div class="match-center">${center}</div>
+        <div class="match-center match-center--clickable" data-clpo-open-match="${m.id}">${center}</div>
         ${action}
       </div>
       ${ctx}
       ${reject}
     </div>`;
+}
+
+// ---- VS-oyna: IKKITA chat (bot chati + Telegram) — cl_chat.js clOpenOpponentModal naqshi ----
+// 2026-07-21: logolar juftligi yoki 💬 bosilganda ochiladi. WebApp chati
+// /cl/playoff/matches prefiksi bilan ishlaydi (guruh chatidan alohida jadval).
+
+function clpoOpenOpponentModal(matchId) {
+  const m = (CLPO.my?.matches || []).find(x => x.id === matchId);
+  if (!m) return;
+  const t = APP.t || {};
+  const meId = CLPO.my.me_id;
+  const iAmP1 = m.player1_id === meId;
+
+  const me  = { nick: iAmP1 ? m.p1_nick : m.p2_nick,
+                club: iAmP1 ? m.p1_club : m.p2_club,
+                username: iAmP1 ? m.p1_user : m.p2_user };
+  const opp = { nick: iAmP1 ? m.p2_nick : m.p1_nick,
+                club: iAmP1 ? m.p2_club : m.p1_club,
+                username: iAmP1 ? m.p2_user : m.p1_user };
+
+  let modal = document.getElementById("modal-clpo-opponent");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "modal-clpo-opponent";
+    modal.className = "modal hidden";
+    document.body.appendChild(modal);
+  }
+
+  const side = (p) => `
+    <div class="opp-side">
+      <div class="cl-vs-logo">${clClubBadge(p.club, 72)}</div>
+      <div class="opp-club">${escHtml(p.club || p.nick || "—")}</div>
+      <div class="opp-user">${p.username ? "@" + escHtml(p.username) : "—"}</div>
+    </div>`;
+
+  const tgBtn = opp.username
+    ? `<button class="opp-chat-btn" id="clpo-opp-tg">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
+    : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
+
+  modal.innerHTML = `
+    <div class="modal-box opp-modal-box">
+      <button class="modal-close" id="clpo-opp-close">${ICON.get("close", 18)}</button>
+      <div class="opp-vs">
+        ${side(me)}
+        <div class="opp-vs-sep">VS</div>
+        ${side(opp)}
+      </div>
+      <button class="opp-chat-btn opp-webchat-btn" id="clpo-opp-webchat">
+        ${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}
+      </button>
+      ${tgBtn}
+    </div>`;
+  modal.classList.remove("hidden");
+  if (typeof applyIcons === "function") applyIcons(modal);
+
+  const close = () => modal.classList.add("hidden");
+  document.getElementById("clpo-opp-close").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  document.getElementById("clpo-opp-webchat").addEventListener("click", () => {
+    close();
+    openWebChat(m.id, opp.nick || "Raqib", "/cl/playoff/matches");   // api.js webchat (DRY)
+  });
+  document.getElementById("clpo-opp-tg")?.addEventListener("click", () => {
+    const tg = window.Telegram?.WebApp;
+    const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
+    if (tg?.openTelegramLink) {
+      try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); }
+    } else {
+      window.open(link, "_blank");
+    }
+    close();
+  });
 }
 
 // ---- Natija modali: guruh o'yinlaridagi UMUMIY #modal-result (clOpenResultModal naqshi) ----
