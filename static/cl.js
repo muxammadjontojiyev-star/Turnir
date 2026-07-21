@@ -183,31 +183,31 @@ function renderChampionsLeague() {
   const adminTab = (typeof CL_ADMIN !== "undefined" && CL_ADMIN.isSuper) ? `
       <button class="wc-nav-item ${CL.section === "admin" ? "active" : ""}" data-cl-tab="admin">
         <span class="nav-icon" data-icon="shield"></span>
-        <span class="nav-label">Admin</span>
+        <span class="nav-label">${CT("cl_nav_admin")}</span>
       </button>` : "";
 
   root.innerHTML = `
     <div class="wc-header">
       <button class="wc-back" id="cl-back-btn">←</button>
-      <div class="wc-header-title cl-title">${ICON.get("ucl", 20)} <span>Chempionlar ligasi</span></div>
+      <div class="wc-header-title cl-title">${ICON.get("ucl", 20)} <span>${CT("cl_title")}</span></div>
     </div>
     <div class="wc-body" style="padding-bottom:90px;">${body}</div>
     <nav class="wc-nav">
       <button class="wc-nav-item ${CL.section === "home" ? "active" : ""}" data-cl-tab="home">
         <span class="nav-icon" data-icon="home"></span>
-        <span class="nav-label">Asosiy</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_home) || "Asosiy"}</span>
       </button>
       <button class="wc-nav-item ${CL.section === "rating" ? "active" : ""}" data-cl-tab="rating">
         <span class="nav-icon" data-icon="trophy"></span>
-        <span class="nav-label">Reyting</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_rating) || "Reyting"}</span>
       </button>
       <button class="wc-nav-item ${CL.section === "profile" ? "active" : ""}" data-cl-tab="profile">
         <span class="nav-icon" data-icon="user"></span>
-        <span class="nav-label">Profil</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_profile) || "Profil"}</span>
       </button>
       <button class="wc-nav-item ${CL.section === "prizes" ? "active" : ""}" data-cl-tab="prizes">
         <span class="nav-icon" data-icon="gift"></span>
-        <span class="nav-label">Sovrinlar</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_prizes) || "Sovrinlar"}</span>
       </button>${adminTab}
     </nav>
   `;
@@ -245,8 +245,8 @@ async function clLoadScorers(onlyIfChanged = false) {
 
 function clRenderScorers() {
   const rows = CL.scorers;
-  if (rows === null) return `<div class="wc-loading-row">Yuklanmoqda…</div>`;
-  if (!rows.length) return `<div class="wc-loading-row">Hozircha gol urilmagan.</div>`;
+  if (rows === null) return `<div class="wc-loading-row">${CT("cl_loading")}</div>`;
+  if (!rows.length) return `<div class="wc-loading-row">${CT("cl_no_goals")}</div>`;
 
   const body = rows.map((p, i) => `
     <tr>
@@ -262,7 +262,7 @@ function clRenderScorers() {
 
   return `
     <table class="rating-table">
-      <thead><tr><th>#</th><th>O'yinchi</th><th>Guruh</th><th>O</th><th>Gol</th></tr></thead>
+      <thead><tr><th>#</th><th>${CT("cl_player_col")}</th><th>${CT("cl_col_group")}</th><th>${CT("cl_played_col")}</th><th>${CT("cl_col_goals")}</th></tr></thead>
       <tbody>${body}</tbody>
     </table>`;
 }
@@ -271,9 +271,9 @@ function clRenderScorers() {
 function clRenderRating() {
   const tabs = `
     <div class="cl-rating-tabs">
-      <button class="tab-btn${CL.ratingTab === "groups" ? " active" : ""}" data-cl-rtab="groups">Guruhlar</button>
-      <button class="tab-btn${CL.ratingTab === "scorers" ? " active" : ""}" data-cl-rtab="scorers">To'purarlar</button>
-      <button class="tab-btn${CL.ratingTab === "bracket" ? " active" : ""}" data-cl-rtab="bracket">Setka</button>
+      <button class="tab-btn${CL.ratingTab === "groups" ? " active" : ""}" data-cl-rtab="groups">${CT("cl_tab_groups")}</button>
+      <button class="tab-btn${CL.ratingTab === "scorers" ? " active" : ""}" data-cl-rtab="scorers">${CT("cl_tab_scorers")}</button>
+      <button class="tab-btn${CL.ratingTab === "bracket" ? " active" : ""}" data-cl-rtab="bracket">${CT("cl_tab_bracket")}</button>
     </div>`;
   if (CL.ratingTab === "scorers") return `${tabs}<div class="card card--table">${clRenderScorers()}</div>`;
   // 2026-07-21: Setka — WC kabi ALOHIDA tab (cl_playoff.js clpoLoadBracket to'ldiradi)
@@ -282,8 +282,8 @@ function clRenderRating() {
 
   // Barcha guruhlar ketma-ket (Guruh 1 → jadval, Guruh 2 → jadval ...)
   const groups = CL.ratingAll;
-  if (groups === null || groups === undefined) return `${tabs}<div class="wc-loading-row">Yuklanmoqda…</div>`;
-  if (!groups.length) return `${tabs}<div class="card">Hozircha guruhlar yo'q (qur'a kutilmoqda).</div>`;
+  if (groups === null || groups === undefined) return `${tabs}<div class="wc-loading-row">${CT("cl_loading")}</div>`;
+  if (!groups.length) return `${tabs}<div class="card">${CT("cl_no_groups")}</div>`;
 
   const blocks = groups.map(g => {
     const rows = g.rating.map((p, i) => `
@@ -294,10 +294,10 @@ function clRenderRating() {
         <td><b>${p.points}</b></td>
       </tr>`).join("");
     return `
-      <div class="cl-rating-group-title">${ICON.get("ucl", 15)} Guruh ${g.group_number}</div>
+      <div class="cl-rating-group-title">${ICON.get("ucl", 15)} ${CT("cl_col_group")} ${g.group_number}</div>
       <div class="card card--table" style="margin-bottom:14px">
         <table class="rating-table">
-          <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>GF</th><th>Ochko</th></tr></thead>
+          <thead><tr><th>#</th><th>${CT("cl_player_col")}</th><th>${CT("cl_played_col")}</th><th>GF</th><th>${CT("cl_col_points")}</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
@@ -309,11 +309,11 @@ function clRenderRating() {
 // ---- MATCHES ----
 function clRenderMatches() {
   if (!CL.meParticipant) {
-    return `<div class="card">Siz Chempionlar ligasi ishtirokchisi emassiz.</div>`;
+    return `<div class="card">${CT("cl_not_participant")}</div>`;
   }
   const ms = CL.myMatches || [];
   if (!ms.length) {
-    return `<div class="wc-loading-row">Hozircha o'yinlar yo'q (qur'a kutilmoqda).</div>`;
+    return `<div class="wc-loading-row">${CT("cl_no_matches")}</div>`;
   }
   return `<div class="matches-list">${ms.map(clRenderMatchItem).join("")}</div>`;
 }
@@ -348,22 +348,22 @@ function clRenderMatchItem(m) {
   let action = "";
   if (m.status === "pending") {
     if (!isOpenRound) {
-      action = `<span class="cl-locked" title="Bu tur hali ochilmagan">${ICON.get("lock", 16)}</span>`;
+      action = `<span class="cl-locked" title="${CT("cl_round_locked")}">${ICON.get("lock", 16)}</span>`;
     } else if (CL.chatOpened && CL.chatOpened.has(m.id)) {
       // Chat ochilgan — endi "Natija" tugmasi
-      action = `<button class="match-action-btn" data-cl-result="${m.id}">Natija</button>`;
+      action = `<button class="match-action-btn" data-cl-result="${m.id}">${CT("cl_result")}</button>`;
     } else {
       // Avval raqib bilan chat: 💬 tugmasi (bosilgach Natija ochiladi)
-      action = `<button class="match-action-btn match-chat-btn" data-cl-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
+      action = `<button class="match-action-btn match-chat-btn" data-cl-chat="${m.id}" title="${CT("cl_agree_first")}">${ICON.get("chat", 18)}</button>`;
     }
   } else if (m.status === "awaiting_confirmation") {
     action = (m.submitted_by && !clIsMe(m.submitted_by))
       ? `<button class="match-action-btn" data-cl-confirm="${m.id}">${ICON.get("check", 16)}</button>`
-      : `<span class="match-waiting">Kutilmoqda</span>`;
+      : `<span class="match-waiting">${CT("cl_pending")}</span>`;
   }
 
   const reject = (m.status === "awaiting_confirmation" && m.submitted_by && !clIsMe(m.submitted_by))
-    ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">${ICON.get("cross", 15)} Rad etish</button></div>` : "";
+    ? `<div class="cl-score-row"><button class="btn" data-cl-reject="${m.id}">${ICON.get("cross", 15)} ${CT("cl_reject")}</button></div>` : "";
 
   // Uy/mehmon: player1 — uy egasi (cl_matches yozilish tartibi)
   const isHome = clIsMe(m.player1_id);
@@ -398,8 +398,8 @@ function clIsMe(userId) {
 }
 
 function clStatusLabel(s) {
-  return ({ pending: "Kutilmoqda", awaiting_confirmation: "Tasdiq kutilmoqda",
-            confirmed: "Tasdiqlangan", admin_pending: "Admin tasdig'i" })[s] || s;
+  return ({ pending: CT("cl_pending"), awaiting_confirmation: CT("cl_awaiting"),
+            confirmed: CT("cl_confirmed"), admin_pending: CT("cl_admin_pending") })[s] || s;
 }
 
 // ---- Eventlar ----
@@ -457,10 +457,10 @@ function clHandleClick(e, root) {
 async function clConfirmMatch(id, accept) {
   try {
     await apiFetch(`/cl/match/confirm?match_id=${id}&accept=${accept}`, { method: "POST" });
-    showToast(accept ? "Tasdiqlandi" : "Rad etildi");
+    showToast(accept ? CT("cl_toast_confirmed") : CT("cl_toast_rejected"));
     await clLoadMatches();
   } catch (e) {
-    showToast("Xato: " + e.message);
+    showToast(CT("cl_error") + e.message);
   }
 }
 
@@ -479,9 +479,9 @@ function clOpenChatThenResult(matchId) {
 
 function clOpenResultModal(matchId) {
   const m = (CL.myMatches || []).find(x => String(x.id) === String(matchId));
-  if (!m) { showToast("O'yin topilmadi"); return; }
+  if (!m) { showToast(CT("cl_match_404")); return; }
   const modal = document.getElementById("modal-result");
-  if (!modal) { showToast("Modal topilmadi"); return; }
+  if (!modal) { showToast(CT("cl_modal_404")); return; }
 
   CL._resultMatchId = matchId;         // submitMatchResult() shu flagni tekshiradi
 
@@ -518,11 +518,11 @@ async function clSubmitResultFromModal() {
                    { method: "POST" });
     document.getElementById("modal-result").classList.add("hidden");
     CL._resultMatchId = null;
-    showToast("Natija yuborildi");
+    showToast(CT("cl_toast_result_sent"));
     await clLoadMatches();
   } catch (e) {
-    const msg = { matchday_locked: "Bu tur hali ochilmagan",
-                  match_not_found: "O'yin topilmadi" }[e.message] || e.message;
-    showToast("Xato: " + msg);
+    const msg = { matchday_locked: CT("cl_round_locked"),
+                  match_not_found: CT("cl_match_404") }[e.message] || e.message;
+    showToast(CT("cl_error") + msg);
   }
 }

@@ -29,7 +29,7 @@ async function clLoadPlayerMatches(userId) {
 
 function clRenderPlayer() {
   const p = CL.viewPlayer;
-  if (!p) return `<div class="card">Ishtirokchi topilmadi.</div>`;
+  if (!p) return `<div class="card">${CT("cl_player_404")}</div>`;
 
   const letter = (p.nickname || "?")[0].toUpperCase();
 
@@ -65,7 +65,7 @@ function clRenderPlayer() {
       </div>
       <div class="stat-card">
         <span class="stat-card-value neon-red">${p.losses}</span>
-        <span class="stat-card-label">Mag'lubiyat</span>
+        <span class="stat-card-label">${CT("cl_losses")}</span>
       </div>
     </div>
 
@@ -76,8 +76,8 @@ function clRenderPlayer() {
 // Boshqa o'yinchining o'yinlari — faqat ko'rish (tugmasiz)
 function clRenderPlayerMatches() {
   const ms = CL.viewPlayerMatches;
-  if (ms === null) return `<div class="wc-loading-row">Yuklanmoqda…</div>`;
-  if (!ms.length) return `<div class="wc-loading-row">O'yinlar yo'q.</div>`;
+  if (ms === null) return `<div class="wc-loading-row">${CT("cl_loading")}</div>`;
+  if (!ms.length) return `<div class="wc-loading-row">${CT("cl_no_matches_short")}</div>`;
 
   return `<div class="matches-list">${ms.map(clRenderPlayerMatchItem).join("")}</div>`;
 }

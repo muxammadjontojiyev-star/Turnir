@@ -143,19 +143,19 @@ function renderDivision() {
     <nav class="wc-nav">
       <button class="wc-nav-item ${DIV.section === "home" ? "active" : ""}" data-div-tab="home">
         <span class="nav-icon" data-icon="home"></span>
-        <span class="nav-label">Asosiy</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_home) || "Asosiy"}</span>
       </button>
       <button class="wc-nav-item ${DIV.section === "rating" ? "active" : ""}" data-div-tab="rating">
         <span class="nav-icon" data-icon="trophy"></span>
-        <span class="nav-label">Reyting</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_rating) || "Reyting"}</span>
       </button>
       <button class="wc-nav-item ${DIV.section === "profile" ? "active" : ""}" data-div-tab="profile">
         <span class="nav-icon" data-icon="user"></span>
-        <span class="nav-label">Profil</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_profile) || "Profil"}</span>
       </button>
       <button class="wc-nav-item ${DIV.section === "prizes" ? "active" : ""}" data-div-tab="prizes">
         <span class="nav-icon" data-icon="gift"></span>
-        <span class="nav-label">Sovrinlar</span>
+        <span class="nav-label">${(APP.t && APP.t.nav_prizes) || "Sovrinlar"}</span>
       </button>${adminNav}
     </nav>
   `;
@@ -183,7 +183,7 @@ function divRulesCard() {
     <div class="card card--flat">
       <div class="card-header">
         <span class="card-header-icon" data-icon="clipboard"></span>
-        <span class="card-header-text">Qoidalar</span>
+        <span class="card-header-text">${DT("div_rules_title")}</span>
       </div>
       <ul class="rules-list">${items}</ul>
     </div>`;
@@ -212,7 +212,7 @@ function divTodayMatchCard() {
   if (!m) return "";
   if (m.is_bye) {
     return `<div class="card div-match-hero">
-      <div class="div-glass div-match-note" style="border-color:rgba(245,197,66,.5)">🎉 Bugun ishtirokchilar soni toq bo'lgani uchun sizga <b>avtomatik g'alaba (+15 achko)</b> berildi!</div>
+      <div class="div-glass div-match-note" style="border-color:rgba(245,197,66,.5)">${DT("div_bye_note")}</div>
     </div>`;
   }
   const opp = m.opponent || {};
@@ -228,23 +228,23 @@ function divTodayMatchCard() {
 
   let actions = "";
   if (m.status === "pending") {
-    actions = `<button class="btn btn--primary btn--glow" id="div-btn-open-result" style="width:100%;margin-top:10px">Natija kiritish</button>`;
+    actions = `<button class="btn btn--primary btn--glow" id="div-btn-open-result" style="width:100%;margin-top:10px">${DT("div_submit_result")}</button>`;
   } else if (m.status === "awaiting_confirmation") {
     actions = (m.submitted_by !== s.me_id)
       ? `<div style="display:flex;gap:8px;margin-top:10px">
-           <button class="btn btn--primary" id="div-btn-confirm" style="flex:1">✅ Tasdiqlash</button>
-           <button class="btn btn--ghost" id="div-btn-reject" style="flex:1">❌ Rad etish</button>
+           <button class="btn btn--primary" id="div-btn-confirm" style="flex:1">${DT("div_confirm")}</button>
+           <button class="btn btn--ghost" id="div-btn-reject" style="flex:1">${DT("div_reject")}</button>
          </div>`
-      : `<div class="div-glass div-match-note">Raqib tasdig'i kutilmoqda…</div>`;
+      : `<div class="div-glass div-match-note">${DT("div_wait_opponent")}</div>`;
   } else if (m.status === "admin_pending") {
-    actions = `<div class="div-glass div-match-note">Admin tasdig'i kutilmoqda…</div>`;
+    actions = `<div class="div-glass div-match-note">${DT("div_wait_admin")}</div>`;
   } else if (m.status === "confirmed") {
-    actions = `<div class="div-glass div-match-note">✅ Natija tasdiqlangan.</div>`;
+    actions = `<div class="div-glass div-match-note">${DT("div_result_confirmed")}</div>`;
   }
 
   return `
     <div class="card div-match-hero">
-      <div class="div-glass div-match-chip">Bugungi o'yin</div>
+      <div class="div-glass div-match-chip">${DT("div_today_match")}</div>
       <div style="display:flex;align-items:stretch;justify-content:space-between;gap:8px">
         ${[p1, p2].map(p => `
         <div class="div-vs-player div-glass div-match-side" ${p.isMe ? "" : 'id="div-opp-profile-open"'} style="flex:1">
@@ -255,7 +255,7 @@ function divTodayMatchCard() {
             : ""}
         </div>`).join(`<div class="div-glass div-match-score">${score1} : ${score2}</div>`)}
       </div>
-      <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%;margin-top:12px;position:relative">👤 Raqib bilan bog'lanish${
+      <button class="btn btn--ghost" id="div-btn-opponent" style="width:100%;margin-top:12px;position:relative">${DT("div_contact_opponent")}${
         (() => {
           // 2026-07-19: shu o'yindagi o'qilmagan xabarlar — tugma ustida qizil rozetka
           const c = (DIV.unread && DIV.unread.by_match && DIV.unread.by_match[m.id]) || 0;
@@ -266,34 +266,64 @@ function divTodayMatchCard() {
     </div>`;
 }
 
+// 2026-07-21: Mavsum chizig'i — hero fon rasmi USTIDA, matn TEPASIDA.
+// Uchta raqam: mavsum boshlanganiga necha kun bo'ldi | tugashiga qolgan kun |
+// nechinchi mavsum. Orqasi shisha uslubida (.div-glass — boshqa rejimlardagidek).
+// Ma'lumot: /div/status → season {number, day_index, days_left} (division_season.py).
+// 2026-07-21: tarjima yordamchisi — APP.t dan kalitni oladi; til yuklanmagan
+// yoki kalit yo'q bo'lsa DIV_TEXTS.uz dagi o'zbekcha matn zaxira sifatida ishlatiladi
+// (texts_division.js). Shu tufayli har chaqiruvda uzun fallback yozish shart emas.
+function DT(key) {
+  if (APP && APP.t && APP.t[key] !== undefined) return APP.t[key];
+  if (typeof DIV_TEXTS !== "undefined" && DIV_TEXTS.uz[key] !== undefined) return DIV_TEXTS.uz[key];
+  return "";
+}
+
+function divSeasonStrip() {
+  const se = (DIV.status && DIV.status.season) || null;
+  if (!se) return "";                       // ma'lumot yo'q — chiziq ko'rsatilmaydi
+  const t = APP.t || {};
+  const cell = (value, label) => `
+    <div class="div-season-cell div-glass">
+      <div class="div-season-num">${value}</div>
+      <div class="div-season-label">${escHtml(label)}</div>
+    </div>`;
+  return `
+    <div class="div-season-strip">
+      ${cell(se.day_index, DT("div_season_elapsed"))}
+      ${cell(se.days_left, DT("div_season_left"))}
+      ${cell(se.number, (APP.t && APP.t.season) || "Mavsum")}
+    </div>`;
+}
+
 function divRenderHome() {
   const s = DIV.status;
-  if (!s) return `<div class="card">Ma'lumot yuklanmadi. Qayta urinib ko'ring.</div>`;
+  if (!s) return `<div class="card">${DT("div_load_failed")}</div>`;
   const win = s.window || {};
 
   // OYNA OCHIQ (17:00–19:00): ro'yxat tugmasi + bugungi ishtirokchilar ro'yxati
   if (win.open) {
     let regBlock;
     if (s.me_registered) {
-      regBlock = `<div class="card" style="border-color:rgba(49,208,170,.5)">✅ Siz bugungi ro'yxatdasiz. Qur'a soat 19:00 dan keyin o'tkaziladi va natija telegram orqali yuboriladi.</div>`;
+      regBlock = `<div class="card" style="border-color:rgba(49,208,170,.5)">${DT("div_reg_done")}</div>`;
     } else {
       regBlock = `
         <div class="card">
-          <b>Ro'yxat ochiq (17:00–19:00)</b>
-          <div style="font-size:12.5px;opacity:.75;margin:4px 0 10px">Hozir: ${escHtml(win.now || "")}. Qur'a 19:00 dan keyin, o'yin deadline'i — 23:30.</div>
-          <button class="btn btn--primary" id="div-btn-register" style="width:100%">📝 Ro'yxatdan o'tish</button>
+          <b>${DT("div_reg_open_title")}</b>
+          <div style="font-size:12.5px;opacity:.75;margin:4px 0 10px">${DT("div_now")}: ${escHtml(win.now || "")}. ${DT("div_reg_open_hint")}</div>
+          <button class="btn btn--primary" id="div-btn-register" style="width:100%">${DT("div_reg_button")}</button>
         </div>`;
     }
     const regs = s.registrations || [];
     const list = regs.length
       ? regs.map((r, i) => `
           <div class="match-item">
-            <b>${i + 1}. ${escHtml(r.nickname || "Ishtirokchi")}</b>
+            <b>${i + 1}. ${escHtml(r.nickname || DT("div_participant"))}</b>
             ${r.username ? `<span style="font-size:12px;opacity:.7">@${escHtml(r.username)}</span>` : ""}
           </div>`).join("")
-      : `<div style="font-size:13px;opacity:.7">Bugun hali hech kim ro'yxatdan o'tmagan.</div>`;
+      : `<div style="font-size:13px;opacity:.7">${DT("div_reg_empty")}</div>`;
     return `${regBlock}
-      <div class="card"><b>Bugungi ishtirokchilar (${regs.length})</b><div style="margin-top:8px">${list}</div></div>`;
+      <div class="card"><b>${DT("div_reg_today_list")} (${regs.length})</b><div style="margin-top:8px">${list}</div></div>`;
   }
 
   // OYNA YOPIQ: bugungi o'yin (natija kiritish) + qoidalar. Ro'yxat ko'rsatilmaydi.
@@ -302,7 +332,8 @@ function divRenderHome() {
   const todayCard = divTodayMatchCard();
   const noMatchHint = (!s.my_match)
     ? `<div class="div-hero">
-         <div class="div-hero-text">⏳ Ro'yxat yopiq. Har kuni <b class="div-hero-accent">17:00–19:00</b> (Toshkent) oralig'ida ochiladi.<br>Hozir: ${escHtml(win.now || "")}.</div>
+         ${divSeasonStrip()}
+         <div class="div-hero-text">${DT("div_reg_closed")}<br>${DT("div_now")}: ${escHtml(win.now || "")}.</div>
        </div>`
     : "";
   return `${todayCard}${noMatchHint}${divRulesCard()}`;
@@ -319,16 +350,16 @@ function divRenderRating() {
   const myRankCard = myRank
     ? `<div class="card div-myrank" id="div-myrank-card">
          <div>
-           <div style="font-size:12px;opacity:.65">Sizning o'rningiz</div>
+           <div style="font-size:12px;opacity:.65">${DT("div_my_rank")}</div>
            <div style="font-size:26px;font-weight:800" class="neon-cyan">${myRank}</div>
          </div>
          <div style="text-align:right">
-           <div style="font-size:12px;opacity:.65">Ball</div>
+           <div style="font-size:12px;opacity:.65">${DT("div_points")}</div>
            <div style="font-size:20px;font-weight:800">${list[myIndex].rating ?? 1500}</div>
          </div>
-         <div class="div-myrank-hint">Ko'rsatish ↓</div>
+         <div class="div-myrank-hint">${DT("div_show")}</div>
        </div>`
-    : `<div class="card" style="font-size:13px;opacity:.75">Siz hali reytingda yo'qsiz — birinchi o'yiningizdan so'ng o'rningiz shu yerda ko'rinadi.</div>`;
+    : `<div class="card" style="font-size:13px;opacity:.75">${DT("div_not_rated")}</div>`;
 
   const rows = list.map((p, i) => {
     const isMe = meId && p.user_id === meId;
@@ -349,8 +380,8 @@ function divRenderRating() {
   // Tab tanlash: Achko reytingi | To'p urarlar
   const tabs = `
     <div class="div-rating-tabs">
-      <button class="tab-btn ${DIV.ratingTab !== "scorers" ? "active" : ""}" data-div-rtab="points">🏆 Reyting</button>
-      <button class="tab-btn ${DIV.ratingTab === "scorers" ? "active" : ""}" data-div-rtab="scorers">⚽ To'p urarlar</button>
+      <button class="tab-btn ${DIV.ratingTab !== "scorers" ? "active" : ""}" data-div-rtab="points">${DT("div_tab_rating")}</button>
+      <button class="tab-btn ${DIV.ratingTab === "scorers" ? "active" : ""}" data-div-rtab="scorers">${DT("div_tab_scorers")}</button>
     </div>`;
 
   if (DIV.ratingTab === "scorers") return tabs + divRenderScorers();
@@ -359,11 +390,11 @@ function divRenderRating() {
   return `
     ${tabs}
     ${myRankCard}
-    <div class="card div-rating-legend">G'alaba <b>+15</b> · Durang <b>+10</b> · Mag'lubiyat <b>−10</b></div>
+    <div class="card div-rating-legend">${DT("div_legend")}</div>
     <div class="card card--table">
       <table class="rating-table">
-        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>Ball</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="4">Hozircha natijalar yo'q</td></tr>`}</tbody>
+        <thead><tr><th>#</th><th>${DT("div_col_player")}</th><th>${DT("div_col_played")}</th><th>${DT("div_points")}</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="4">${DT("div_no_results")}</td></tr>`}</tbody>
       </table>
     </div>`;
 }
@@ -374,7 +405,7 @@ function divRenderScorers() {
   const meId = DIV.ratingMeId;
 
   if (!list.length) {
-    return `<div class="card" style="opacity:.75;font-size:13px">Hozircha gol urilmagan.</div>`;
+    return `<div class="card" style="opacity:.75;font-size:13px">${DT("div_no_goals")}</div>`;
   }
 
   const rows = list.map((p, i) => {
@@ -394,23 +425,23 @@ function divRenderScorers() {
   const myCard = myIdx >= 0
     ? `<div class="card div-myrank" id="div-myscorer-card">
          <div>
-           <div style="font-size:12px;opacity:.65">Sizning o'rningiz</div>
+           <div style="font-size:12px;opacity:.65">${DT("div_my_rank")}</div>
            <div style="font-size:26px;font-weight:800" class="neon-cyan">${myIdx + 1}</div>
          </div>
          <div style="text-align:right">
-           <div style="font-size:12px;opacity:.65">Gollar</div>
+           <div style="font-size:12px;opacity:.65">${DT("div_col_goals")}</div>
            <div style="font-size:20px;font-weight:800">${list[myIdx].goals_for}</div>
          </div>
-         <div class="div-myrank-hint">Ko'rsatish ↓</div>
+         <div class="div-myrank-hint">${DT("div_show")}</div>
        </div>`
     : "";
 
   return `
     ${myCard}
-    <div class="card div-rating-legend">⚽ Eng ko'p <b>gol</b> urgan ishtirokchilar</div>
+    <div class="card div-rating-legend">${DT("div_scorers_legend")}</div>
     <div class="card card--table">
       <table class="rating-table">
-        <thead><tr><th>#</th><th>O'yinchi</th><th>O</th><th>Gollar</th></tr></thead>
+        <thead><tr><th>#</th><th>${DT("div_col_player")}</th><th>${DT("div_col_played")}</th><th>${DT("div_col_goals")}</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
@@ -459,7 +490,7 @@ function divHistDeltaBadge(status, hasScore, myScore, oppScore) {
 function divCalendarHtml(cal, mode = "me") {
   if (!cal) {
     return `<div class="section-label">RO'YXAT KALENDARI</div>
-      <div class="card" style="opacity:.7;font-size:13px">Yuklanmoqda…</div>`;
+      <div class="card" style="opacity:.7;font-size:13px">${DT("div_loading")}</div>`;
   }
 
   const [year, month] = cal.month.split("-").map(Number);
@@ -487,7 +518,7 @@ function divCalendarHtml(cal, mode = "me") {
 
   const count = (cal.days || []).length;
   const banLegend = banned.size
-    ? `<span class="div-cal-dot div-cal-dot--ban" style="margin-left:10px"></span> Ban`
+    ? `<span class="div-cal-dot div-cal-dot--ban" style="margin-left:10px"></span> ${DT("div_cal_ban")}`
     : "";
   const navAttr = (mode === "player") ? "data-div-pcal" : "data-div-cal";
   return `
@@ -536,7 +567,7 @@ function divRenderProfile() {
           <div style="font-size:18px;font-weight:800;overflow:hidden;text-overflow:ellipsis">${escHtml(s.me_nickname || "—")}</div>
           ${s.me_username ? `<div style="font-size:12.5px;opacity:.7">@${escHtml(s.me_username)}${prizeStarsHtml({ user_id: s.me_user_id, telegram_id: APP.currentUser?.id, username: s.me_username })}</div>` : ""}
         </div>
-        <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
+        <div class="div-ball" title="${DT("div_start_rating_hint")}">
           <div class="div-ball-value">${rating}</div>
           <div class="div-ball-label">BALL</div>
         </div>
@@ -553,15 +584,15 @@ function divRenderProfile() {
       </div>
       <div class="stat-card">
         <span class="stat-card-value neon-cyan">${st.wins}</span>
-        <span class="stat-card-label">G'alaba</span>
+        <span class="stat-card-label">${DT("div_wins")}</span>
       </div>
       <div class="stat-card">
         <span class="stat-card-value">${st.draws}</span>
-        <span class="stat-card-label">Durang</span>
+        <span class="stat-card-label">${DT("div_draws")}</span>
       </div>
       <div class="stat-card">
         <span class="stat-card-value neon-red">${st.losses}</span>
-        <span class="stat-card-label">Mag'lubiyat</span>
+        <span class="stat-card-label">${DT("div_losses")}</span>
       </div>
     </div>`;
 
@@ -571,7 +602,7 @@ function divRenderProfile() {
     if (h.is_bye) {
       return `<div class="match-item">
         <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
-        <b style="flex:1;text-align:center">🎉 Avto g'alaba (toq)</b>
+        <b style="flex:1;text-align:center">${DT("div_auto_win")}</b>
         <span class="status-badge status--confirmed">+15</span>
       </div>`;
     }
@@ -599,7 +630,7 @@ function divRenderProfile() {
   const historyBlock = `
     <div class="section-label">O'YIN TARIXI</div>
     ${hist.length ? `<div class="card">${histRows}</div>`
-                  : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}`;
+                  : `<div class="card" style="opacity:.7;font-size:13px">${DT("div_no_matches")}</div>`}`;
 
   return meCard + statsGrid + divCalendarHtml(DIV.calendar, "me") + historyBlock;
 }
@@ -664,7 +695,7 @@ function divOpenOpponentModal() {
   document.getElementById("div-opp-webchat")?.addEventListener("click", () => {
     modal.classList.add("hidden");
     // Liga webchat modalining o'zi — faqat Divizion API prefiksi bilan (DRY)
-    openWebChat(m.id, opp.nickname || "Raqib", "/div/matches");
+    openWebChat(m.id, opp.nickname || DT("div_opponent"), "/div/matches");
   });
   document.getElementById("div-opp-tg")?.addEventListener("click", () => {
     const tg = window.Telegram?.WebApp;
@@ -744,11 +775,11 @@ function divOpenResultModal() {
     try {
       await apiFetch(`/div/match/submit-result?match_id=${m.id}&score1=${s1}&score2=${s2}`, { method: "POST" });
       close();
-      showToast("Natija kiritildi ✅");
+      showToast(DT("div_toast_result_sent"));
       await divLoadStatus();
     } catch (err) {
       e.target.disabled = false;
-      showToast("Xato: " + err.message);
+      showToast(DT("div_toast_error") + err.message);
     }
   });
 }
@@ -784,7 +815,7 @@ async function divLoadPlayer(userId, month) {
     DIV.player = await apiFetch(`/div/player/${userId}/profile${q}`);
     DIV.playerCalMonth = DIV.player?.calendar?.month || null;
   } catch (e) {
-    showToast("Profil ochilmadi: " + e.message);
+    showToast(DT("div_toast_profile_err") + e.message);
     if (!DIV.player) DIV.section = DIV.playerBackTo;
   }
   renderDivision();
@@ -796,7 +827,7 @@ function divRenderPlayer() {
       <span class="back-btn-arrow" data-icon="back"></span><span>Ortga</span>
     </button>`;
   if (!data) {
-    return `${back}<div class="card" style="text-align:center;opacity:.7">Yuklanmoqda…</div>`;
+    return `${back}<div class="card" style="text-align:center;opacity:.7">${DT("div_loading")}</div>`;
   }
 
   const st = data.stats || { wins: 0, draws: 0, losses: 0, win_rate: 0 };
@@ -812,7 +843,7 @@ function divRenderPlayer() {
   const rating = (st.rating !== undefined && st.rating !== null) ? st.rating : 1500;
 
   const tgBtn = data.username
-    ? `<button class="btn btn--ghost" id="div-player-tg" style="width:100%;margin-top:12px">✈️ Telegramda ochish</button>`
+    ? `<button class="btn btn--ghost" id="div-player-tg" style="width:100%;margin-top:12px">${DT("div_open_telegram")}</button>`
     : "";
 
   const headCard = `
@@ -823,7 +854,7 @@ function divRenderPlayer() {
           <div style="font-size:19px;font-weight:800;overflow:hidden;text-overflow:ellipsis">${escHtml(data.nickname || "—")}</div>
           ${data.username ? `<div style="font-size:13px;color:var(--cyan)">@${escHtml(data.username)}${prizeStarsHtml({ user_id: data.user_id, username: data.username })}</div>` : ""}
         </div>
-        <div class="div-ball" title="Boshlang'ich 1500 ball + o'yin achkolari">
+        <div class="div-ball" title="${DT("div_start_rating_hint")}">
           <div class="div-ball-value">${rating}</div>
           <div class="div-ball-label">BALL</div>
         </div>
@@ -835,9 +866,9 @@ function divRenderPlayer() {
     <div class="section-label">STATISTIKA</div>
     <div class="stats-grid">
       <div class="stat-card stat-card--primary"><span class="stat-card-value neon-cyan">${st.win_rate}%</span><span class="stat-card-label">G'alaba foizi</span></div>
-      <div class="stat-card"><span class="stat-card-value neon-cyan">${st.wins}</span><span class="stat-card-label">G'alaba</span></div>
-      <div class="stat-card"><span class="stat-card-value">${st.draws}</span><span class="stat-card-label">Durang</span></div>
-      <div class="stat-card"><span class="stat-card-value neon-red">${st.losses}</span><span class="stat-card-label">Mag'lubiyat</span></div>
+      <div class="stat-card"><span class="stat-card-value neon-cyan">${st.wins}</span><span class="stat-card-label">${DT("div_wins")}</span></div>
+      <div class="stat-card"><span class="stat-card-value">${st.draws}</span><span class="stat-card-label">${DT("div_draws")}</span></div>
+      <div class="stat-card"><span class="stat-card-value neon-red">${st.losses}</span><span class="stat-card-label">${DT("div_losses")}</span></div>
     </div>`;
 
   // Ro'yxat kalendari (o'z profilim bilan bir xil — DRY: divCalendarHtml)
@@ -848,7 +879,7 @@ function divRenderPlayer() {
     if (h.is_bye) {
       return `<div class="match-item">
         <span style="opacity:.55;font-size:11px;min-width:34px">#${h.id}</span>
-        <b style="flex:1;text-align:center">🎉 Avto g'alaba</b>
+        <b style="flex:1;text-align:center">${DT("div_auto_win_short")}</b>
         <span class="status-badge status--confirmed">+15</span></div>`;
     }
     const hasScore = (h.my_score !== null && h.my_score !== undefined);
@@ -871,7 +902,7 @@ function divRenderPlayer() {
   const historyBlock = `
     <div class="section-label">O'YIN TARIXI</div>
     ${hist ? `<div class="card">${hist}</div>`
-           : `<div class="card" style="opacity:.7;font-size:13px">Hozircha o'yinlar yo'q.</div>`}`;
+           : `<div class="card" style="opacity:.7;font-size:13px">${DT("div_no_matches")}</div>`}`;
 
   return back + headCard + statsGrid + calBlock + historyBlock;
 }
@@ -882,15 +913,15 @@ function divBindSectionEvents(root) {
     e.target.disabled = true; // ikki marta bosishdan himoya (qoida #38/#40)
     try {
       await apiFetch("/div/register", { method: "POST" });
-      showToast("Ro'yxatdan o'tdingiz ✅");
+      showToast(DT("div_toast_registered"));
       await divLoadStatus();
     } catch (err) {
       e.target.disabled = false;
       showToast(err.message === "window_closed"
-        ? "Ro'yxat vaqti tugagan (17:00–19:00)"
+        ? DT("div_toast_reg_closed")
         : err.message === "banned"
-          ? "🚫 Siz ban ostidasiz — ro'yxatdan o'ta olmaysiz. Ban kunlari kalendaringizda qizil ko'rsatilgan."
-          : "Xato: " + err.message);
+          ? DT("div_toast_banned")
+          : DT("div_toast_error") + err.message);
     }
   });
 
@@ -983,10 +1014,10 @@ function divBindSectionEvents(root) {
     if (!m) return;
     try {
       await apiFetch(`/div/match/confirm?match_id=${m.id}&accept=${accept}`, { method: "POST" });
-      showToast(accept ? "Tasdiqlandi ✅" : "Rad etildi");
+      showToast(accept ? DT("div_toast_confirmed") : DT("div_toast_rejected"));
       await divLoadStatus();
     } catch (err) {
-      showToast("Xato: " + err.message);
+      showToast(DT("div_toast_error") + err.message);
     }
   };
   root.querySelector("#div-btn-confirm")?.addEventListener("click", () => act(true));
@@ -1023,7 +1054,7 @@ function divBindSectionEvents(root) {
       await divLoadAdminMatches();
     } catch (err) {
       e.target.disabled = false;
-      showToast("Xato: " + err.message);
+      showToast(DT("div_toast_error") + err.message);
     }
   });
 
@@ -1032,21 +1063,21 @@ function divBindSectionEvents(root) {
   root.querySelectorAll("[data-div-admin-cancel]").forEach(b =>
     b.addEventListener("click", async () => {
       const id = Number(b.dataset.divAdminCancel);
-      if (!confirm("Natija bekor qilinsinmi? O'yin qayta ochiladi va ishtirokchilar natijani yana kiritishi mumkin bo'ladi.")) return;
+      if (!confirm(DT("div_admin_cancel_ask"))) return;
       try {
         await apiFetch(`/div/admin/match/cancel?match_id=${id}`, { method: "POST" });
-        showToast("Natija bekor qilindi — o'yin qayta ochildi 🔄");
+        showToast(DT("div_admin_cancelled"));
         await divLoadAdminMatches();
-      } catch (err) { showToast("Xato: " + err.message); }
+      } catch (err) { showToast(DT("div_toast_error") + err.message); }
     }));
 
   // Katta hisob (admin_pending) qarori — liga admin oqimi kabi
   const resolveBig = async (id, accept) => {
     try {
       await apiFetch(`/div/admin/match/resolve?match_id=${id}&accept=${accept}`, { method: "POST" });
-      showToast(accept ? "Natija tasdiqlandi ✅" : "Rad etildi — o'yin qayta ochildi 🔄");
+      showToast(accept ? DT("div_admin_approved") : DT("div_admin_rejected"));
       await divLoadAdminMatches();
-    } catch (err) { showToast("Xato: " + err.message); }
+    } catch (err) { showToast(DT("div_toast_error") + err.message); }
   };
   root.querySelectorAll("[data-div-admin-approve]").forEach(b =>
     b.addEventListener("click", () => resolveBig(Number(b.dataset.divAdminApprove), true)));
@@ -1078,8 +1109,8 @@ async function divLoadAdminMatches() {
 }
 
 function divAdminStatusLabel(st) {
-  return ({ pending: "⏳ Kutilmoqda", awaiting_confirmation: "🤝 Tasdiq kutilmoqda",
-            confirmed: "✅ Tasdiqlangan", admin_pending: "👑 Katta hisob — admin qarori" })[st] || st;
+  return ({ pending: DT("div_status_pending"), awaiting_confirmation: DT("div_admin_pending"),
+            confirmed: DT("div_admin_confirmed"), admin_pending: DT("div_admin_big_score") })[st] || st;
 }
 
 // Liga uslubidagi "TASDIQLANGAN NATIJANI TUZATISH" formasi (Match ID orqali)
@@ -1087,10 +1118,10 @@ function divAdminFixForm() {
   const info = DIV.adminFixInfo;   // ID yozilganda /div/admin/match/{id}/info dan keladi
   let preview = "";
   if (info === "notfound") {
-    preview = `<div style="font-size:12px;color:var(--red-neon);margin:6px 0">O'yin topilmadi</div>`;
+    preview = `<div style="font-size:12px;color:var(--red-neon);margin:6px 0">${DT("div_admin_match_404")}</div>`;
   } else if (info) {
     const p1 = info.player1_username ? "@" + info.player1_username : (info.player1_name || "—");
-    const p2 = info.is_bye ? "(toq — avto g'alaba)"
+    const p2 = info.is_bye ? DT("div_admin_bye")
       : (info.player2_username ? "@" + info.player2_username : (info.player2_name || "—"));
     const cur = (info.score1 !== null && info.score1 !== undefined) ? `${info.score1} : ${info.score2}` : "— : —";
     preview = `
@@ -1108,7 +1139,7 @@ function divAdminFixForm() {
     <div class="section-label">MATCH ID ORQALI TUZATISH</div>
     <div class="admin-fix-form">
       <input id="div-fix-match-id" class="modal-input" type="number" min="1"
-             placeholder="Match ID" value="${DIV.adminFixId || ""}" />
+             placeholder="${DT("div_admin_match_id")}" value="${DIV.adminFixId || ""}" />
       ${preview}
       <div class="score-input-row">
         <div class="score-input-group">
@@ -1161,8 +1192,8 @@ function divAdminReassignForm() {
     <div class="admin-fix-form" style="margin-bottom:12px">
       <div id="div-reassign-box" style="margin-bottom:6px"></div>
       <input id="div-reassign-new-tg" class="modal-input" type="number" inputmode="numeric"
-             placeholder="Yangi Telegram ID" style="margin-bottom:8px" />
-      <button class="btn" id="div-btn-reassign">👤 Akkountni almashtirish</button>
+             placeholder="${DT("div_admin_new_tg_id")}" style="margin-bottom:8px" />
+      <button class="btn" id="div-btn-reassign">${DT("div_admin_switch_acc")}</button>
     </div>`;
 }
 
@@ -1171,8 +1202,8 @@ async function divAdminBanSubmit(btn) {
   const sel = document.getElementById("div-ban-box-select");
   const uid = sel ? Number(sel.value || 0) : 0;
   const days = Math.floor(Number(document.getElementById("div-ban-days")?.value || 0));
-  if (!uid) { showToast("Ban beriladigan ishtirokchini tanlang"); return; }
-  if (!days || days < 1) { showToast("Ban kunlar sonini kiriting (kamida 1)"); return; }
+  if (!uid) { showToast(DT("div_admin_ban_pick")); return; }
+  if (!days || days < 1) { showToast(DT("div_admin_ban_days")); return; }
   const name = sel.options[sel.selectedIndex]?.text || "ishtirokchi";
   if (!confirm(`${name} ga ${days} kunlik BAN berilsinmi?\n\nU shu muddat davomida Divizion ro'yxatidan o'ta olmaydi va telegramiga xabar boradi.`)) return;
   btn.disabled = true;
@@ -1186,10 +1217,10 @@ async function divAdminBanSubmit(btn) {
     if (inp) inp.value = "";
   } catch (e) {
     const msg = {
-      invalid_days: "kunlar soni noto'g'ri (1–365)",
+      invalid_days: DT("div_admin_ban_bad"),
       user_not_found: "ishtirokchi topilmadi",
     }[e.message] || e.message;
-    showToast("Xato: " + msg);
+    showToast(DT("div_toast_error") + msg);
   } finally {
     btn.disabled = false;
   }
@@ -1203,9 +1234,9 @@ function divAdminBanForm() {
     <div class="admin-fix-form">
       <div id="div-ban-box" style="margin-bottom:6px"></div>
       <input id="div-ban-days" class="modal-input" type="number" min="1" inputmode="numeric"
-             placeholder="Necha kunga (masalan, 3)" style="margin-bottom:8px" />
-      <button class="btn btn--danger" id="div-btn-ban">🚫 Ban berish</button>
-      <div style="font-size:11.5px;opacity:.65">Ban davomida ishtirokchi ro'yxatdan o'ta olmaydi; kalendarida ban kunlari qizil ko'rinadi; telegramiga xabar boradi.</div>
+             placeholder="${DT("div_admin_ban_days_ph")}" style="margin-bottom:8px" />
+      <button class="btn btn--danger" id="div-btn-ban">${DT("div_admin_ban_title")}</button>
+      <div style="font-size:11.5px;opacity:.65">${DT("div_admin_ban_hint")}</div>
     </div>`;
 }
 
@@ -1213,12 +1244,12 @@ function divRenderAdmin() {
   const ms = DIV.adminMatches || [];
   if (!ms.length) {
     return divAdminFixForm() + divAdminReassignForm() + divAdminBanForm()
-      + `<div class="card">Bugun o'yinlar yo'q (qur'a hali o'tkazilmagan bo'lishi mumkin).</div>`;
+      + `<div class="card">${DT("div_admin_no_matches")}</div>`;
   }
   return divAdminFixForm() + divAdminReassignForm() + divAdminBanForm() +
-    `<div class="card" style="font-size:12.5px;opacity:.75">✏️ natijani o'zgartirish (TASDIQLANGAN o'yinlar ham tuzatiladi), 🚫 natijani bekor qilish (o'yin qayta ochiladi), katta hisobda ✅/❌ qaror. O'yin raqami — #ID.</div>` +
+    `<div class="card" style="font-size:12.5px;opacity:.75">${DT("div_admin_hint")}</div>` +
     ms.map(m => {
-      const p2 = m.player2_id ? escHtml(m.player2_name || "") : "<i>(toq — avto g'alaba)</i>";
+      const p2 = m.player2_id ? escHtml(m.player2_name || "") : `<i>${DT("div_admin_bye")}</i>`;
       const hasScore = (m.score1 !== null && m.score1 !== undefined);
       const score = hasScore ? `${m.score1} : ${m.score2}` : "— : —";
       const isBye = !m.player2_id;
@@ -1228,12 +1259,12 @@ function divRenderAdmin() {
         if (m.status === "admin_pending") {
           // Liga admin oqimi: katta hisob — tasdiqlash yoki rad etish
           buttons = `
-            <button class="btn btn--primary" data-div-admin-approve="${m.id}" style="flex:1">✅ Tasdiqlash</button>
-            <button class="btn btn--ghost" data-div-admin-reject="${m.id}" style="flex:1">❌ Rad etish</button>`;
+            <button class="btn btn--primary" data-div-admin-approve="${m.id}" style="flex:1">${DT("div_confirm")}</button>
+            <button class="btn btn--ghost" data-div-admin-reject="${m.id}" style="flex:1">${DT("div_reject")}</button>`;
         } else {
-          buttons = `<button class="btn btn--primary" data-div-admin-edit="${m.id}" style="flex:1">✏️ Natijani o'zgartirish</button>`;
+          buttons = `<button class="btn btn--primary" data-div-admin-edit="${m.id}" style="flex:1">${DT("div_admin_edit")}</button>`;
           if (hasScore || m.status !== "pending") {
-            buttons += `<button class="btn btn--ghost" data-div-admin-cancel="${m.id}" style="flex:1">🚫 Natijani bekor qilish</button>`;
+            buttons += `<button class="btn btn--ghost" data-div-admin-cancel="${m.id}" style="flex:1">${DT("div_admin_cancel")}</button>`;
           }
         }
       }
@@ -1263,7 +1294,7 @@ function divAdminEdit(matchId) {
   }
   modal.innerHTML = `
     <div class="modal-box">
-      <div class="modal-title">✏️ Natijani o'zgartirish</div>
+      <div class="modal-title">${DT("div_admin_edit")}</div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;opacity:.75;margin-bottom:6px">
         <span>${escHtml(m.player1_name || "")}</span><span>${escHtml(m.player2_name || "")}</span>
       </div>
@@ -1292,11 +1323,11 @@ function divAdminEdit(matchId) {
     try {
       await apiFetch(`/div/admin/match/set-result?match_id=${matchId}&score1=${s1}&score2=${s2}`, { method: "POST" });
       close();
-      showToast("Natija saqlandi ✅");
+      showToast(DT("div_admin_saved"));
       await divLoadAdminMatches();
     } catch (err) {
       e.target.disabled = false;
-      showToast("Xato: " + err.message);
+      showToast(DT("div_toast_error") + err.message);
     }
   });
 }

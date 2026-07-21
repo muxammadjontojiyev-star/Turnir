@@ -11,13 +11,13 @@ const CLPO = {
   _lastMyJson: null,  // 2026-07-21: pir-pirashga qarshi — o'zgarmagan bo'lsa DOM yozilmaydi
 };
 
-const CLPO_ROUND_NAMES = { r16: "1/8 final", r8: "1/4 final", r4: "1/2 final", final: "Final" };
+const CLPO_ROUND_NAMES = { r16: "1/8 final", r8: "1/4 final", r4: "1/2 final", final: CT("clpo_final") };
 const CLPO_SIDE_ROUNDS = ["r16", "r8", "r4"];
 
 // 2026-07-21: kubok — Sovrinlar sahifasidagi RASM (cl-trophy.png, clRenderPrizes
 // bilan bir xil fayl); .wc-bracket-trophy klassi o'lcham/animatsiya beradi.
 function clpoTrophySvg() {
-  return `<img src="cl-trophy.png" alt="Chempionlar ligasi kubogi" class="wc-bracket-trophy" />`;
+  return `<img src="cl-trophy.png" alt="${CT("cl_cup_title")}" class="wc-bracket-trophy" />`;
 }
 
 // ---- SETKA (Reyting sahifasi) ----
@@ -29,7 +29,7 @@ async function clpoLoadBracket() {
     CLPO.bracket = await apiFetch("/cl/playoff/bracket");
   } catch (_) { CLPO.bracket = null; }
   if (!CLPO.bracket || !CLPO.bracket.started) {
-    box.innerHTML = `<div class="card">Play-off hali boshlanmagan. Guruh bosqichi tugagach, setka shu yerda paydo bo'ladi.</div>`;
+    box.innerHTML = `<div class="card">${CT("clpo_not_started")}</div>`;
     return;
   }
   box.innerHTML = clpoRenderBracket(CLPO.bracket);
@@ -208,15 +208,15 @@ function clpoMyMatchItem(m) {
   if (m.status === "pending") {
     // 2026-07-21: guruh oqimi bilan bir xil — avval 💬 chat, chat ochilgach "Natija"
     action = (CLPO.chatOpened && CLPO.chatOpened.has(m.id))
-      ? `<button class="match-action-btn" data-clpo-result="${m.id}">Natija</button>`
+      ? `<button class="match-action-btn" data-clpo-result="${m.id}">${CT("cl_result")}</button>`
       : `<button class="match-action-btn match-chat-btn" data-clpo-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
   } else if (m.status === "awaiting_confirmation") {
     action = mine
-      ? `<span class="match-waiting">Kutilmoqda</span>`
+      ? `<span class="match-waiting">${CT("cl_pending")}</span>`
       : `<button class="match-action-btn" data-clpo-confirm="${m.id}">${ICON.get("check", 16)}</button>`;
   }
   const reject = (m.status === "awaiting_confirmation" && !mine)
-    ? `<div class="cl-score-row"><button class="btn" data-clpo-reject="${m.id}">${ICON.get("cross", 15)} Rad etish</button></div>` : "";
+    ? `<div class="cl-score-row"><button class="btn" data-clpo-reject="${m.id}">${ICON.get("cross", 15)} ${CT("cl_reject")}</button></div>` : "";
 
   const venue = isHome
     ? `<span class="cl-venue cl-venue--home">UY</span>`
@@ -319,9 +319,9 @@ function clpoOpenOpponentModal(matchId) {
 
 function clpoOpenResultModal(matchId) {
   const m = (CLPO.my?.matches || []).find(x => x.id === matchId);
-  if (!m) { showToast("O'yin topilmadi"); return; }
+  if (!m) { showToast(CT("cl_match_404")); return; }
   const modal = document.getElementById("modal-result");
-  if (!modal) { showToast("Modal topilmadi"); return; }
+  if (!modal) { showToast(CT("cl_modal_404")); return; }
 
   CLPO._resultMatchId = matchId;   // submitMatchResult() shu flag orqali play-off'ga yo'naltiradi
   if (modal.parentElement !== document.body) document.body.appendChild(modal);
@@ -344,14 +344,14 @@ function clpoOpenResultModal(matchId) {
 }
 
 const CLPO_ERRORS = {
-  draw_not_allowed: "Finalda durang bo'lmaydi — o'yinni penaltigacha yakunlang",
-  aggregate_draw_not_allowed: "Agregat teng bo'lishi mumkin emas — o'yinni qo'shimcha vaqt/penaltigacha yakunlab, YAKUNIY hisobni kiriting",
-  wrong_status: "O'yin holati o'zgargan — sahifani yangilang",
-  not_participant: "Siz bu o'yin ishtirokchisi emassiz",
-  cannot_confirm_own: "O'z natijangizni o'zingiz tasdiqlay olmaysiz",
-  already_started: "Play-off allaqachon boshlangan",
-  groups_not_finished: "Guruh o'yinlari hali tugamagan",
-  not_drawn: "Qur'a hali o'tkazilmagan",
+  draw_not_allowed: CT("clpo_err_draw"),
+  aggregate_draw_not_allowed: CT("clpo_err_agg_draw"),
+  wrong_status: CT("clpo_err_status"),
+  not_participant: CT("clpo_err_not_part"),
+  cannot_confirm_own: CT("clpo_err_own"),
+  already_started: CT("clpo_err_started"),
+  groups_not_finished: CT("clpo_err_groups"),
+  not_drawn: CT("clpo_err_not_drawn"),
 };
 
 // Umumiy modaldagi "Yuborish" shu funksiyaga yo'naltiriladi (api.js submitMatchResult)
@@ -363,7 +363,7 @@ async function clpoSubmitResultFromModal() {
     await apiFetch(`/cl/playoff/submit-result?match_id=${id}&score1=${s1}&score2=${s2}`, { method: "POST" });
     CLPO._resultMatchId = null;
     closeResultModal();
-    showToast("Natija yuborildi");
+    showToast(CT("cl_toast_result_sent"));
     void clpoLoadMyMatches();
   } catch (e) {
     showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
@@ -373,7 +373,7 @@ async function clpoSubmitResultFromModal() {
 async function clpoConfirm(matchId, accept) {
   try {
     await apiFetch(`/cl/playoff/confirm-result?match_id=${matchId}&accept=${accept}`, { method: "POST" });
-    showToast(accept ? "✅ Tasdiqlandi" : "Rad etildi — natija qayta kiritilsin");
+    showToast(accept ? CT("clpo_confirmed") : CT("clpo_rejected"));
     void clpoLoadMyMatches();
   } catch (e) {
     showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
@@ -438,11 +438,11 @@ function clpoDrawBracketLines() {
 // ---- ADMIN: Play-off boshlash ----
 
 async function clpoAdminStart(btn) {
-  if (!confirm("Play-off boshlansinmi? Har guruhdan top-2 (16 o'yinchi) 1/8 setkasiga joylanadi.")) return;
+  if (!confirm(CT("clpo_start_ask"))) return;
   btn.disabled = true;
   try {
     const r = await apiFetch("/cl/admin/playoff/start", { method: "POST" });
-    showToast(`✅ Play-off boshlandi (${r.created} ta 1/8 o'yin)`);
+    showToast(`✅ ${CT("clpo_started")} (${r.created})`);
     if (typeof clRenderAdminPage === "function") void clRenderAdminPage();
   } catch (e) {
     showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));

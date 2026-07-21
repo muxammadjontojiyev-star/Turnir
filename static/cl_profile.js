@@ -17,13 +17,13 @@ async function clLoadProfile() {
 // ---- PROFIL: WC naqshi (card--profile + stats-grid + matches-list) ----
 function clRenderProfile() {
   const p = CL.profile;
-  if (!p) return `<div class="card">Profil yuklanmadi. Qayta urinib ko'ring.</div>`;
+  if (!p) return `<div class="card">${CT("cl_profile_failed")}</div>`;
   if (!p.registered) {
-    return `<div class="card">Siz Chempionlar ligasi ishtirokchisi emassiz.</div>`;
+    return `<div class="card">${CT("cl_not_participant")}</div>`;
   }
 
   const letter = (p.nickname || "?")[0].toUpperCase();
-  const groupLabel = p.group_number ? `Guruh ${p.group_number}` : "Qur'a kutilmoqda";
+  const groupLabel = p.group_number ? `Guruh ${p.group_number}` : CT("cl_draw_pending");
   const pos = p.position ? `#${p.position}` : "—";
 
   return `
@@ -52,7 +52,7 @@ function clRenderProfile() {
       </div>
       <div class="stat-card">
         <span class="stat-card-value neon-red">${p.losses}</span>
-        <span class="stat-card-label">Mag'lubiyat</span>
+        <span class="stat-card-label">${CT("cl_losses")}</span>
       </div>
     </div>
 
@@ -79,13 +79,13 @@ function clBindProfile(root) {
 function clRenderPrizes() {
   return `
     <div class="cl-trophy-hero">
-      <img src="cl-trophy.png" alt="Chempionlar ligasi kubogi" class="cl-trophy-img">
-      <div class="cl-trophy-caption">Chempionlar ligasi kubogi</div>
-      <div class="cl-trophy-sub">Final g'olibi sovrin egasi bo'ladi</div>
+      <img src="cl-trophy.png" alt="${CT("cl_cup_title")}" class="cl-trophy-img">
+      <div class="cl-trophy-caption">${CT("cl_cup_title")}</div>
+      <div class="cl-trophy-sub">${CT("cl_cup_sub")}</div>
     </div>
     <div class="section-label">MENING SOVRINLARIM</div>
     <div id="cl-prizes-section">
-      <div class="card" style="opacity:.7">Yuklanmoqda…</div>
+      <div class="card" style="opacity:.7">${CT("cl_loading")}</div>
     </div>`;
 }
 
@@ -101,9 +101,9 @@ async function clBindPrizes() {
     box.innerHTML = "";
     await loadPrizesInto(uid, "cl-prizes-section");   // api.js — DRY (qoida 26)
     if (!box.innerHTML.trim()) {
-      box.innerHTML = `<div class="card" style="opacity:.75">Hozircha sovrinlar yo'q.</div>`;
+      box.innerHTML = `<div class="card" style="opacity:.75">${CT("cl_no_prizes")}</div>`;
     }
   } catch (_) {
-    box.innerHTML = `<div class="card">Sovrinlarni yuklab bo'lmadi.</div>`;
+    box.innerHTML = `<div class="card">${CT("cl_prizes_failed")}</div>`;
   }
 }

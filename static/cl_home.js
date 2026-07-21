@@ -7,7 +7,7 @@
 // ---- HOME: WC naqshi (hero + guruh tanlash + guruh a'zolari) ----
 function clRenderHome() {
   const g = CL.groups;
-  if (!g) return `<div class="card">Ma'lumot yuklanmadi. Qayta urinib ko'ring.</div>`;
+  if (!g) return `<div class="card">${CT("cl_load_failed")}</div>`;
 
   if (!g.drawn) return clRenderHomeBeforeDraw();
 
@@ -23,7 +23,7 @@ function clRenderHome() {
     { v: members.length, l: "ISHTIROKCHI" },
     { v: CL_GROUP_COUNT, l: "GURUHLAR" },
     { v: g.cl_season ?? 1, l: "MAVSUM" },
-  ], CL.meParticipant ? "Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
+  ], CL.meParticipant ? CT("cl_you_in") : CT("cl_you_out"));
 
   let chips = `<div class="section-label">GURUH TANLASH</div><div class="cl-group-grid">`;
   for (let n = 1; n <= CL_GROUP_COUNT; n++) {
@@ -37,7 +37,7 @@ function clRenderHome() {
           ${clClubBadge(p.club_name, 26)}
           <b>${escHtml(p.nickname || "")}</b>
         </div>`).join("")
-    : `<div class="wc-loading-row">Bu guruhda ishtirokchi yo'q.</div>`;
+    : `<div class="wc-loading-row">${CT("cl_group_empty")}</div>`;
 
   return `${hero}${chips}
     <div class="section-label">GURUHDAGI ISHTIROKCHILAR</div>
@@ -70,14 +70,14 @@ function clRenderHomeBeforeDraw() {
     { v: qs.length, l: "KVALIFIKANT" },
     { v: CL_GROUP_COUNT, l: "GURUHLAR" },
     { v: CL_GROUP_SIZE, l: "HAR GURUHDA" },
-  ], CL.meParticipant ? "Siz ishtirokchisiz" : "Siz ishtirokchi emassiz");
+  ], CL.meParticipant ? CT("cl_you_in") : CT("cl_you_out"));
 
   if (!qs.length) {
-    return `${hero}<div class="card">Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 5 liga bo'yicha top-6 va eng yaxshi 2 ta 7-o'rin (jami 32) shu yerda ko'rinadi.</div>${clRenderRules()}`;
+    return `${hero}<div class="card">${CT("cl_qual_pending")}</div>${clRenderRules()}`;
   }
   const rows = qs.map(q => `
     <div class="match-item cl-group-row">
-      <b>${escHtml(q.nickname || "Ishtirokchi")}</b>
+      <b>${escHtml(q.nickname || CT("cl_participant"))}</b>
       <span class="cl-qual-meta">${escHtml(q.league_name || "")} · ${q.position}-o'rin · ${q.points} ochko</span>
     </div>`).join("");
   return `${hero}

@@ -593,7 +593,7 @@ async function refreshWcFixPreview() {
       const actual = !!info.is_playoff;
       if (cb.checked !== actual) {
         cb.checked = actual;
-        showToast(actual ? "Bu play-off o'yini ✅" : "Bu guruh o'yini ✅");
+        showToast(actual ? WT("wca_is_playoff") : WT("wca_is_group"));
       }
     }
 

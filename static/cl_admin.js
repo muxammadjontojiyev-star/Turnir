@@ -57,8 +57,8 @@ async function clLoadAdminPanel() {
       <b>${ICON.get("shield", 16)} ChL admin paneli</b>
       <div style="font-size:12.5px;opacity:.75;margin:4px 0 10px">
         ${drawn
-          ? "Qur'a o'tkazilgan. Guruhlar va kalendar tayyor."
-          : "Qur'a: 32 kvalifikant tasodifiy 8 guruhga (4 tadan) bo'linadi va kalendar tuziladi. Bu amalni ortga qaytarib bo'lmaydi."}
+          ? CT("cla_draw_done")
+          : CT("cla_draw_hint")}
       </div>
       <button class="btn btn--primary" id="cl-admin-draw" ${drawn ? "disabled" : ""}>
         ${ICON.get("dice", 16)} Qur'a o'tkazish
@@ -81,18 +81,18 @@ async function clLoadAdminPanel() {
 
       <div style="font-size:12.5px;opacity:.75;margin:12px 0 8px">
         ${started
-          ? `O'yinlar boshlangan. Joriy tur: <b>${st.current_matchday}</b> / ${st.total_matchdays}. Har kuni 23:30 (Toshkent) da joriy tur yopiladi (kiritilmagan o'yinlar 0:0) va keyingisi ochiladi.`
-          : "O'yinlarni boshlash: 1-tur ochiladi. Keyingi turlar har kuni 23:30 da avtomatik ochiladi."}
+          ? CT("cla_started_hint").replace("{cur}", st.current_matchday).replace("{total}", st.total_matchdays)
+          : CT("cla_start_hint")}
       </div>
       <button class="btn btn--primary" id="cl-admin-start" ${started ? "disabled" : ""}>
         ${ICON.get("play", 16)} O'yinlarni boshlash
       </button>` : ""}
 
       <div class="admin-hint" style="margin-top:14px">
-        <b>Play-off:</b> barcha guruh o'yinlari tugagach, har guruhdan top-2
+        <b>${CT("cla_playoff")}</b> barcha guruh o'yinlari tugagach, har guruhdan top-2
         (16 o'yinchi) 1/8 setkasiga joylanadi. Har juftlik uy+mehmon, final — 1 o'yin.
       </div>
-      <button class="btn btn--primary" id="cl-admin-po-start">🏆 Play-off boshlash</button>
+      <button class="btn btn--primary" id="cl-admin-po-start">${CT("cla_playoff_start")}</button>
 
       ${drawn ? clAdminFixForm() : ""}
     </div>`;
@@ -135,18 +135,18 @@ async function clAdminCancelResult(btn) {
   const t = APP.t || {};
   const id = parseInt(CL_ADMIN.fixId, 10);
   if (!id) { showToast("Match ID kiriting"); return; }
-  if (!confirm(t.admin_reset_confirm || "Bu o'yin natijasini bekor qilasizmi? O'yin qayta — : — bo'ladi.")) return;
+  if (!confirm(t.admin_reset_confirm || CT("cla_cancel_ask"))) return;
   btn.disabled = true;
   try {
     await apiFetch(`/cl/admin/match/cancel?match_id=${id}`, { method: "POST" });
-    showToast(t.admin_reset_done || "✅ Natija bekor qilindi");
+    showToast(t.admin_reset_done || CT("cla_cancelled"));
     CL_ADMIN.fixId = "";
     CL_ADMIN.fixInfo = null;
     await clLoadThenRender();
   } catch (e) {
     btn.disabled = false;
-    const msg = { match_not_found: "o'yin topilmadi" }[e.message] || e.message;
-    showToast("Xato: " + msg);
+    const msg = { match_not_found: CT("cla_match_404_low") }[e.message] || e.message;
+    showToast(CT("cl_error") + msg);
   }
 }
 
@@ -155,7 +155,7 @@ function clAdminFixForm() {
   const info = CL_ADMIN.fixInfo;
   let preview = "";
   if (info === "notfound") {
-    preview = `<div style="font-size:12px;color:#ff6b6b;margin:6px 0">O'yin topilmadi</div>`;
+    preview = `<div style="font-size:12px;color:#ff6b6b;margin:6px 0">${CT("cl_match_404")}</div>`;
   } else if (info) {
     const p1 = info.player1_username ? "@" + info.player1_username : (info.player1_name || "—");
     const p2 = info.player2_username ? "@" + info.player2_username : (info.player2_name || "—");
@@ -191,7 +191,7 @@ function clAdminFixForm() {
             style="opacity:${disabled ? ".45" : "1"}">Tuzatish</button>
     <button class="btn btn--ghost" id="cl-fix-cancel-result" ${disabled ? "disabled" : ""}
             style="margin-top:8px;color:var(--red-neon);border-color:rgba(255,69,96,.3);opacity:${disabled ? ".45" : "1"}">
-      ${escHtml((APP.t && APP.t.admin_reset_btn) || "Natijani bekor qilish")}
+      ${escHtml((APP.t && APP.t.admin_reset_btn) || CT("cla_cancel_result"))}
     </button>`;
 }
 
@@ -230,15 +230,15 @@ async function clAdminFixSubmit(btn) {
   try {
     await apiFetch(`/cl/admin/match/set-result?match_id=${id}&score1=${s1}&score2=${s2}`,
                    { method: "POST" });
-    showToast("Natija tuzatildi");
+    showToast(CT("cla_result_fixed"));
     CL_ADMIN.fixId = "";
     CL_ADMIN.fixInfo = null;
     await clLoadThenRender();
   } catch (e) {
     btn.disabled = false;
     btn.textContent = "Tuzatish";
-    const msg = { match_not_found: "o'yin topilmadi" }[e.message] || e.message;
-    showToast("Xato: " + msg);
+    const msg = { match_not_found: CT("cla_match_404_low") }[e.message] || e.message;
+    showToast(CT("cl_error") + msg);
   }
 }
 
@@ -251,7 +251,7 @@ async function clLoadOrphans() {
     const d = await apiFetch("/cl/participants/all");
     const list = d.participants || [];
     if (!list.length) {
-      box.innerHTML = `<div style="font-size:12px;opacity:.6">Ishtirokchilar topilmadi.</div>`;
+      box.innerHTML = `<div style="font-size:12px;opacity:.6">${CT("cla_players_404")}</div>`;
       return;
     }
     const opts = list.map(o => {
@@ -263,7 +263,7 @@ async function clLoadOrphans() {
       <option value="">— almashtiriladigan ishtirokchini tanlang —</option>${opts}
     </select>`;
   } catch (_) {
-    box.innerHTML = `<div style="font-size:12px;opacity:.6">Ro'yxat yuklanmadi.</div>`;
+    box.innerHTML = `<div style="font-size:12px;opacity:.6">${CT("cla_list_failed")}</div>`;
   }
 }
 
@@ -277,7 +277,7 @@ async function clAdminReassign(btn) {
   if (!confirm(`Tanlangan ishtirokchi yangi akkountga (${newTg}) bog'lansinmi?`)) return;
   btn.disabled = true;
   const prev = btn.innerHTML;
-  btn.textContent = "Bog'lanmoqda…";
+  btn.textContent = CT("cla_connecting");
   try {
     const r = await apiFetch("/cl/participant/reassign", {
       method: "POST",
@@ -293,14 +293,14 @@ async function clAdminReassign(btn) {
       nothing_to_reassign: "bu id topilmadi",
       new_already_participant: "yangi akkount allaqachon ishtirokchi",
     }[e.message] || e.message;
-    showToast("Xato: " + msg);
+    showToast(CT("cl_error") + msg);
   }
 }
 
 async function clAdminRebuild(btn, force = false) {
   const msg = force
-    ? "MAJBURIY qayta qurish? Kiritilgan natijalar saqlanadi, buzuq turlar tuzatiladi."
-    : "Kalendar qayta qurilsinmi? Barcha (o'ynalmagan) o'yinlar qaytadan yoziladi.";
+    ? CT("cla_rebuild_force")
+    : CT("cla_rebuild_ask");
   if (!confirm(msg)) return;
   btn.disabled = true;
   btn.textContent = "Qayta qurilmoqda…";
@@ -317,20 +317,19 @@ async function clAdminRebuild(btn, force = false) {
     btn.innerHTML = `${ICON.get("recycle", 16)} Kalendarni qayta qurish (uy+mehmon)`;
     if (e.message === "results_exist") {
       // Natija bor — majburiy (natijalarni saqlab) qurishni taklif qilamiz
-      if (confirm("Natija kiritilgan o'yinlar bor. Ularni SAQLAB, buzuq kalendarni "
-                  + "tuzataymi? (natijalar yangi turlarga ko'chiriladi)")) {
+      if (confirm(CT("cla_rebuild_keep"))) {
         return clAdminRebuild(btn, true);
       }
     } else {
-      showToast("Xato: " + clDrawErrorText(e.message));
+      showToast(CT("cl_error") + clDrawErrorText(e.message));
     }
   }
 }
 
 async function clAdminDraw(btn) {
-  if (!confirm("Qur'a o'tkazilsinmi? Bu amalni ortga qaytarib bo'lmaydi.")) return;
+  if (!confirm(CT("cla_draw_ask"))) return;
   btn.disabled = true;                       // ikki marta bosishdan himoya (qoida 38)
-  btn.textContent = "Qur'a o'tkazilmoqda…";  // vizual javob (qoida 40)
+  btn.textContent = CT("cla_drawing");  // vizual javob (qoida 40)
   try {
     const r = await apiFetch("/cl/draw", { method: "POST" });
     showToast(`Qur'a o'tkazildi: ${r.groups} guruh, ${r.matches} o'yin`);
@@ -339,15 +338,15 @@ async function clAdminDraw(btn) {
   } catch (e) {
     btn.disabled = false;
     btn.innerHTML = `${ICON.get("dice", 16)} Qur'a o'tkazish`;
-    showToast("Xato: " + clDrawErrorText(e.message));
+    showToast(CT("cl_error") + clDrawErrorText(e.message));
   }
 }
 
 // Turlarni boshlash (1-tur ochiladi)
 async function clAdminStart(btn) {
-  if (!confirm("O'yinlar boshlansinmi? 1-tur ochiladi.")) return;
+  if (!confirm(CT("cla_start_ask"))) return;
   btn.disabled = true;
-  btn.textContent = "Boshlanmoqda…";
+  btn.textContent = CT("cla_starting");
   try {
     const r = await apiFetch("/cl/rounds/start", { method: "POST" });
     showToast(`Boshlandi: ${r.current_matchday}-tur ochildi`);
@@ -356,17 +355,17 @@ async function clAdminStart(btn) {
   } catch (e) {
     btn.disabled = false;
     btn.innerHTML = `${ICON.get("play", 16)} O'yinlarni boshlash`;
-    showToast("Xato: " + clDrawErrorText(e.message));
+    showToast(CT("cl_error") + clDrawErrorText(e.message));
   }
 }
 
 function clDrawErrorText(reason) {
   return ({
-    already_drawn: "qur'a allaqachon o'tkazilgan",
-    no_participants: "kvalifikantlar topilmadi",
-    not_drawn: "avval qur'a o'tkazing",
-    results_exist: "natija kiritilgan o'yinlar bor — kalendar qayta qurilmaydi",
-    already_started: "o'yinlar allaqachon boshlangan",
-    matchday_locked: "bu tur hali ochilmagan",
+    already_drawn: CT("cla_err_drawn"),
+    no_participants: CT("cla_err_no_qual"),
+    not_drawn: CT("cla_err_draw_first"),
+    results_exist: CT("cla_err_has_results"),
+    already_started: CT("cla_err_started"),
+    matchday_locked: CT("cl_round_locked").toLowerCase(),
   })[reason] || reason;
 }
