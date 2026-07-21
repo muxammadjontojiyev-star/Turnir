@@ -107,6 +107,8 @@ const TEXTS = {
       "Dedline har kuni tungi soat **23:30** da.",
       "Agar raqib javob bermasa yoki hisobni noto'g'ri kiritsa — **rasm yoki video bilan adminga murojaat qiling**.",
     ],
+    div_season_elapsed: "Kun bo'ldi",
+    div_season_left:    "Kun qoldi",
     div_rules_list: [
       "Har kuni **17:00–19:00** (Toshkent) oralig'ida ro'yxatdan o'tiladi.",
       "Ro'yxat yopilgach bot ishtirokchilarni **qur'a** orqali juftlaydi.",
@@ -409,6 +411,8 @@ const TEXTS = {
       "Дедлайн каждый день в **23:30** ночи.",
       "Если соперник не отвечает или вводит неверный счёт — **обратитесь к админу со скриншотом или видео**.",
     ],
+    div_season_elapsed: "Дней прошло",
+    div_season_left:    "Дней осталось",
     div_rules_list: [
       "Каждый день регистрация с **17:00 до 19:00** (Ташкент).",
       "После закрытия регистрации бот проводит **жеребьёвку** пар.",
@@ -705,6 +709,8 @@ const TEXTS = {
       "Deadline every day at **23:30** at night.",
       "If your opponent doesn't respond or enters the wrong score, **contact an admin with a screenshot or video**.",
     ],
+    div_season_elapsed: "Days in",
+    div_season_left:    "Days left",
     div_rules_list: [
       "Registration is open daily from **17:00 to 19:00** (Tashkent).",
       "After registration closes, the bot **pairs** players by draw.",
