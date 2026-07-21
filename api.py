@@ -1845,8 +1845,12 @@ def div_status(user: dict = Depends(get_authenticated_user)):
     regs = div_day_registrations(win["day"])
     my_match = div_get_my_match(user["id"], win["day"])
     from division import div_my_stats, div_my_matches
+    from division_season import div_current_season
     return {
         "window": win,
+        # 2026-07-21: joriy mavsum (1 oy) — {number, start, end, total_days,
+        # day_index (necha kun bo'ldi), days_left (qolgan kun)}
+        "season": div_current_season(),
         "registrations": regs,
         "me_registered": any(r["telegram_id"] == user["telegram_id"] for r in regs),
         "my_match": my_match,

@@ -326,16 +326,25 @@ def div_auto_resolve_day(day: str | None = None) -> dict:
         conn.close()
 
 
-def div_rating() -> list[dict]:
+def div_rating(day: str | None = None) -> list[dict]:
     """
-    Umumiy Divizion reytingi: barcha kunlar bo'yicha confirmed o'yinlardan
-    achko yig'indisi (+15/+10/-10; bye=+15). Kamayish tartibida.
+    JORIY MAVSUM Divizion reytingi: mavsum sana oralig'idagi confirmed
+    o'yinlardan achko yig'indisi (+15/+10/-10; bye=+15). Kamayish tartibida.
+
+    2026-07-21: reyting har mavsumda NOLDAN boshlanadi — o'yinlar `day` ustuni
+    bo'yicha mavsum oralig'iga filtrlanadi (o'yin tarixi div_my_matches'da
+    to'liq saqlanadi). `day` berilsa — o'sha sana tegishli mavsum reytingi.
     """
+    from division_season import div_season_range
+    start, end = div_season_range(day)
+
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
         "SELECT m.player1_id, m.player2_id, m.score1, m.score2 "
-        "FROM div_matches m WHERE m.status = 'confirmed'"
+        "FROM div_matches m "
+        "WHERE m.status = 'confirmed' AND m.day >= ? AND m.day < ?",
+        (start, end),
     )
     matches = cursor.fetchall()
 
@@ -402,7 +411,7 @@ def div_scorers() -> list[dict]:
     """
     "To'p urarlar" tabi: eng ko'p gol urgan ishtirokchilar.
 
-    Gol = confirmed o'yinlarda ishtirokchining O'Z hisobidagi gollar yig'indisi
+    Gol = JORIY MAVSUM confirmed o'yinlarida ishtirokchining O'Z hisobidagi gollar yig'indisi
     (masalan 3:0 va 1:2 o'ynasa -> 3+1 = 4 gol). Manba div_rating() bilan bir xil
     (DRY, qoida #26) — bir xil o'yinlardan hisoblanadi.
 
@@ -527,7 +536,7 @@ def div_admin_resolve_pending(match_id: int, accept: bool) -> tuple[bool, str]:
 
 def div_my_stats(user_id: int) -> dict:
     """
-    Foydalanuvchining Divizion shaxsiy statistikasi (profil sahifasi uchun):
+    Foydalanuvchining JORIY MAVSUMdagi Divizion statistikasi (profil sahifasi):
       {wins, draws, losses, played, win_rate, points}
     win_rate = g'alaba / (g'alaba+durang+mag'lubiyat) * 100, butun foiz.
     Manba — confirmed div_matches (bye = g'alaba). div_rating bilan izchil (DRY).

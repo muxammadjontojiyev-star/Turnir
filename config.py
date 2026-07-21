@@ -132,4 +132,8 @@ DIV_POINTS_WIN = 15          # G'alaba achkosi
 DIV_POINTS_DRAW = 10         # Durang achkosi
 DIV_POINTS_LOSS = -10        # Mag'lubiyat achkosi
 DIV_START_RATING = 1500      # Har bir ishtirokchining boshlang'ich umumiy balli
+# 2026-07-21: Divizion mavsumi — 1 mavsum = 1 oy, chegara har oyning shu SANASIDA.
+# 1-mavsum shu kundan boshlanadi; keyingi oyning 10-sanasida 2-mavsum boshlanadi.
+# Reyting har mavsumda noldan (o'yin tarixi saqlanadi — day oralig'i bo'yicha filtr).
+DIV_SEASON_FIRST_DAY = "2026-07-10"
                              # (o'yin achkolari shunga qo'shiladi/ayriladi)
