@@ -273,8 +273,12 @@ function clRenderRating() {
     <div class="cl-rating-tabs">
       <button class="tab-btn${CL.ratingTab === "groups" ? " active" : ""}" data-cl-rtab="groups">Guruhlar</button>
       <button class="tab-btn${CL.ratingTab === "scorers" ? " active" : ""}" data-cl-rtab="scorers">To'purarlar</button>
+      <button class="tab-btn${CL.ratingTab === "bracket" ? " active" : ""}" data-cl-rtab="bracket">Setka</button>
     </div>`;
   if (CL.ratingTab === "scorers") return `${tabs}<div class="card card--table">${clRenderScorers()}</div>`;
+  // 2026-07-21: Setka — WC kabi ALOHIDA tab (cl_playoff.js clpoLoadBracket to'ldiradi)
+  if (CL.ratingTab === "bracket")
+    return `${tabs}<div id="cl-po-bracket-box"><div class="wc-loading-row">Yuklanmoqda…</div></div>`;
 
   // Barcha guruhlar ketma-ket (Guruh 1 → jadval, Guruh 2 → jadval ...)
   const groups = CL.ratingAll;
@@ -299,9 +303,7 @@ function clRenderRating() {
       </div>`;
   }).join("");
 
-  // 2026-07-20: play-off boshlangan bo'lsa setka guruh jadvallari TEPASIDA
-  // ko'rinadi (cl_playoff.js clpoLoadBracket to'ldiradi; boshlanmagan bo'lsa bo'sh).
-  return `${tabs}<div id="cl-po-bracket-box"></div>${blocks}`;
+  return `${tabs}${blocks}`;
 }
 
 // ---- MATCHES ----
@@ -445,7 +447,9 @@ function clHandleClick(e, root) {
   if ((el = hit("[data-cl-rtab]"))) {
     CL.ratingTab = el.dataset.clRtab;
     renderChampionsLeague();
-    if (CL.ratingTab === "scorers") void clLoadScorers(); else void clLoadRating();
+    if (CL.ratingTab === "scorers") void clLoadScorers();
+    else if (CL.ratingTab === "bracket") { /* 2026-07-21: clpoLoadBracket render hookida chaqiriladi */ }
+    else void clLoadRating();
     return;
   }
 }

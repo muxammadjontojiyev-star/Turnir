@@ -35,8 +35,15 @@ async function clpoLoadBracket() {
   try {
     CLPO.bracket = await apiFetch("/cl/playoff/bracket");
   } catch (_) { CLPO.bracket = null; }
-  if (!CLPO.bracket || !CLPO.bracket.started) { box.innerHTML = ""; return; }
+  if (!CLPO.bracket || !CLPO.bracket.started) {
+    box.innerHTML = `<div class="card">Play-off hali boshlanmagan. Guruh bosqichi tugagach, setka shu yerda paydo bo'ladi.</div>`;
+    return;
+  }
   box.innerHTML = clpoRenderBracket(CLPO.bracket);
+  // 2026-07-21: kataklarni bog'lovchi chiziqlar (WC wcDrawBracketLines naqshi).
+  // Layout o'lchamlari tayyor bo'lishi uchun keyingi kadr + zaxira kechikish.
+  requestAnimationFrame(clpoDrawBracketLines);
+  setTimeout(clpoDrawBracketLines, 250);
 }
 
 // Juftlikning bir tomoni (klub + @user + 2 o'yin hisobi + agregat)
@@ -64,7 +71,8 @@ function clpoTieCard(tie, side) {
   const mirror = side === "right";
   const sideCls = mirror ? "wc-bracket-card--right" : "wc-bracket-card--left";
   return `
-    <div class="wc-bracket-card ${sideCls}">
+    <div class="wc-bracket-card ${sideCls}"
+         data-br-round="${escHtml(tie.round)}" data-br-pos="${tie.position}" data-br-side="${side}">
       ${clpoTieSide(tie, "a", mirror)}
       ${clpoTieSide(tie, "b", mirror)}
     </div>`;
@@ -94,13 +102,14 @@ function clpoRenderBracket(data) {
     </div>` : "";
   const centerCol = `<div class="wc-bracket-col wc-bracket-col--center">
     ${clpoTrophySvg()}
-    ${finals.length ? `<div class="wc-bracket-round-label wc-bracket-final-label">Final</div>${finals.map(t => clpoTieCard(t, "left")).join("")}` : ""}
+    ${finals.length ? `<div class="wc-bracket-round-label wc-bracket-final-label">Final</div>${finals.map(t => clpoTieCard(t, "center")).join("")}` : ""}
     ${champHtml}
   </div>`;
   return `
     <div class="section-label">PLAY-OFF SETKASI</div>
     <div class="wc-bracket-scroll">
       <div class="wc-bracket-inner">
+        <svg class="wc-bracket-lines" preserveAspectRatio="none"></svg>
         <div class="wc-bracket wc-bracket--two-sided">
           ${leftCols.join("")}
           ${centerCol}
@@ -258,6 +267,61 @@ async function clpoReject(matchId) {
     void clpoLoadMyMatches();
   } catch (e) {
     showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
+  }
+}
+
+// ---- Kataklarni bog'lovchi chiziqlar (2026-07-21, WC wcDrawBracketLines naqshi) ----
+// ChL bosqichlari: r16 → r8 → r4 → final. Keyingi juftlik pos = floor(pos/2).
+// Final markazda (side="center") — chap 1/2 final unga o'ngdan, o'ng 1/2 final chapdan ulanadi.
+function clpoDrawBracketLines() {
+  const box = document.getElementById("cl-po-bracket-box");
+  const inner = box ? box.querySelector(".wc-bracket-inner") : null;
+  const svg = inner ? inner.querySelector(".wc-bracket-lines") : null;
+  const bracket = inner ? inner.querySelector(".wc-bracket") : null;
+  if (!inner || !svg || !bracket) return;
+
+  const W = bracket.scrollWidth, H = bracket.scrollHeight;
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = "";
+
+  const base = bracket.getBoundingClientRect();
+  const map = {};
+  bracket.querySelectorAll(".wc-bracket-card[data-br-round]").forEach(c => {
+    const rc = c.getBoundingClientRect();
+    map[`${c.dataset.brRound}:${c.dataset.brPos}:${c.dataset.brSide}`] = {
+      top: rc.top - base.top, left: rc.left - base.left, w: rc.width, h: rc.height,
+    };
+  });
+
+  const NS = "http://www.w3.org/2000/svg";
+  function line(x1, y1, x2, y2) {
+    const path = document.createElementNS(NS, "path");
+    const midX = (x1 + x2) / 2;
+    path.setAttribute("d", `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "rgba(255,255,255,0.22)");
+    path.setAttribute("stroke-width", "2");
+    svg.appendChild(path);
+  }
+
+  const HOPS = [["r16", "r8"], ["r8", "r4"], ["r4", "final"]];
+  for (const [r, nextR] of HOPS) {
+    for (const key of Object.keys(map)) {
+      const [rr, posStr, side] = key.split(":");
+      if (rr !== r) continue;
+      const cur = map[key];
+      const childPos = Math.floor(parseInt(posStr) / 2);
+      // Keyingi katak o'z tomonida, topilmasa markazda (final)
+      const nxt = map[`${nextR}:${childPos}:${side}`] || map[`${nextR}:${childPos}:center`];
+      if (!nxt) continue;
+      if (side === "left") {
+        line(cur.left + cur.w, cur.top + cur.h / 2, nxt.left, nxt.top + nxt.h / 2);
+      } else {
+        line(cur.left, cur.top + cur.h / 2, nxt.left + nxt.w, nxt.top + nxt.h / 2);
+      }
+    }
   }
 }
 
