@@ -56,10 +56,10 @@ function clRenderProfile() {
       </div>
     </div>
 
-    <div id="cl-po-my-box"></div>
-
     <div class="section-label">MENING O'YINLARIM</div>
-    ${clRenderMatches()}`;
+    ${clRenderMatches()}
+
+    <div id="cl-po-my-box"></div>`;
 }
 
 // Avatar rasmini yuklash (bo'lmasa — harf qoladi, qoida 40)

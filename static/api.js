@@ -2195,6 +2195,7 @@ function openResultModal(matchId) {
 
 function closeResultModal() {
   if (typeof CL !== "undefined") CL._resultMatchId = null;
+  if (typeof CLPO !== "undefined") CLPO._resultMatchId = null;  // 2026-07-21: ChL play-off
   APP.activeMatchId = null;
   document.getElementById("modal-result").classList.add("hidden");
   document.getElementById("input-score1").value = "0";
@@ -2726,6 +2727,10 @@ function openBigScoreModal() {
 }
 
 async function submitMatchResult() {
+  // 2026-07-21: ChL PLAY-OFF modalidan ochilgan bo'lsa — play-off endpointiga
+  if (typeof CLPO !== "undefined" && CLPO._resultMatchId != null) {
+    return clpoSubmitResultFromModal();
+  }
   // ChL modaldan ochilgan bo'lsa — ChL endpointiga yo'naltiramiz (qoida #26)
   if (typeof CL !== "undefined" && CL._resultMatchId != null) {
     return clSubmitResultFromModal();
