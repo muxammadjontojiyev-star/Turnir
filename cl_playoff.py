@@ -138,11 +138,21 @@ def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
         created = 0
         for pos, (side_a, side_b) in enumerate(_draw_r16_pairs(q)):
             # side_a = guruh g'olibi (2-o'yinda uyda), side_b = ikkinchi (1-o'yinda uyda)
+            # 2026-07-22: IKKALA o'yin (uy+mehmon) bir vaqtda yaratiladi — o'yinchilar
+            # 1-o'yin tasdig'ini kutmasdan har ikkovini ko'radi/kiritadi.
+            #   leg1: player1=sideB (uyda), player2=sideA (mehmon)
+            #   leg2: player1=sideA (uyda), player2=sideB (mehmon)
             cursor.execute(
                 "INSERT INTO cl_playoff_matches "
                 "(season, round, position, leg, player1_id, player2_id, status) "
                 "VALUES (?, 'r16', ?, 1, ?, ?, ?)",
                 (season, pos, side_b, side_a, MATCH_STATUS_PENDING),
+            )
+            cursor.execute(
+                "INSERT INTO cl_playoff_matches "
+                "(season, round, position, leg, player1_id, player2_id, status) "
+                "VALUES (?, 'r16', ?, 2, ?, ?, ?)",
+                (season, pos, side_a, side_b, MATCH_STATUS_PENDING),
             )
             created += 1
 
@@ -166,8 +176,66 @@ def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
         conn.close()
 
 
-def _po_rows(cursor, season: int) -> list[dict]:
-    """Barcha play-off qatorlari o'yinchi nomi/klubi bilan (SELECT * emas — qoida #32)."""
+def cl_po_backfill_second_legs(season: int | None = None) -> int:
+    """
+    2026-07-22: bir martalik ta'mirlash — IKKALA o'yin bir vaqtda ochilishiga
+    o'tishdan OLDIN boshlangan play-off juftliklarida 2-o'yin (leg2) yaratilmagan
+    bo'lsa, uni qo'shadi. Endi start ikkala legni birga yaratadi; bu funksiya
+    faqat eski (chala) juftliklarni to'ldiradi.
+
+    Har final bo'lmagan juftlik (round, position) uchun: leg1 bor-u leg2 yo'q
+    bo'lsa — leg2 yaratiladi (player1=sideA=leg1.player2, player2=sideB=leg1.player1;
+    uy/mehmon almashadi). O'yinchisi hali NULL bo'lgan juftliklar (keyingi bosqich
+    bo'sh kataklari) e'tiborsiz. Idempotent — takror ishlashi xavfsiz.
+
+    Qaytaradi: qo'shilgan leg2 o'yinlari soni.
+    """
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    added = 0
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        if season is None:
+            season = _current_season(cursor)
+        # Final bo'lmagan, leg1 mavjud juftliklar
+        cursor.execute(
+            "SELECT round, position, player1_id, player2_id "
+            "FROM cl_playoff_matches "
+            "WHERE season = ? AND leg = 1 AND round != 'final'",
+            (season,),
+        )
+        leg1_rows = [dict(r) for r in cursor.fetchall()]
+        for r in leg1_rows:
+            # Shu juftlikda leg2 bormi?
+            cursor.execute(
+                "SELECT 1 FROM cl_playoff_matches "
+                "WHERE season = ? AND round = ? AND position = ? AND leg = 2",
+                (season, r["round"], r["position"]),
+            )
+            if cursor.fetchone():
+                continue  # allaqachon bor
+            # leg1: player1=sideB, player2=sideA → leg2: player1=sideA, player2=sideB
+            cursor.execute(
+                "INSERT INTO cl_playoff_matches "
+                "(season, round, position, leg, player1_id, player2_id, status) "
+                "VALUES (?, ?, ?, 2, ?, ?, ?)",
+                (season, r["round"], r["position"],
+                 r["player2_id"], r["player1_id"], MATCH_STATUS_PENDING),
+            )
+            added += 1
+        cursor.execute("COMMIT")
+        if added:
+            logger.info("ChL PO backfill: %s ta 2-o'yin qo'shildi (mavsum %s)", added, season)
+        return added
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        raise
+    finally:
+        conn.close()
     cursor.execute(
         """
         SELECT m.id, m.round, m.position, m.leg, m.player1_id, m.player2_id,

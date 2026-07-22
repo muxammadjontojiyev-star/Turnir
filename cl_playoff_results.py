@@ -51,14 +51,29 @@ def _leg1_of(cursor, m: dict) -> dict | None:
 
 
 def _aggregate_would_draw(cursor, m: dict, score1: int, score2: int) -> bool:
-    """2-o'yin uchun: kiritilayotgan hisob agregatni teng qiladimi?
-    leg2: player1=sideA(uyda), player2=sideB. leg1: player1=sideB, player2=sideA.
-    aggA = leg1.score2 + score1;  aggB = leg1.score1 + score2."""
-    leg1 = _leg1_of(cursor, m)
-    if not leg1 or leg1["status"] != MATCH_STATUS_CONFIRMED:
-        return False  # bo'lmasligi kerak (leg2 faqat leg1'dan keyin yaratiladi)
-    agg_a = leg1["score2"] + score1
-    agg_b = leg1["score1"] + score2
+    """
+    Kiritilayotgan hisob juftlik agregatini teng qiladimi? 2026-07-22: ikkala o'yin
+    bir vaqtda ochiq bo'lgani uchun leg1 YOKI leg2 kiritilishi mumkin — qaysi
+    kiritilayotgan bo'lsa, IKKINCHISI (agar confirmed bo'lsa) bilan solishtiriladi.
+
+    Agregat konventsiyasi: aggA (sideA) = leg1.score2 + leg2.score1;
+                           aggB (sideB) = leg1.score1 + leg2.score2.
+    Boshqa leg hali confirmed bo'lmasa — teng qilib bo'lmaydi (False; juftlik
+    hal bo'lganda _tie_winner_if_ready qat'iy tekshiradi).
+    """
+    leg1, leg2 = _both_legs(cursor, m)
+    if m["leg"] == 2:
+        other = leg1
+        if not other or other["status"] != MATCH_STATUS_CONFIRMED:
+            return False
+        agg_a = other["score2"] + score1   # leg1.score2 + leg2.score1
+        agg_b = other["score1"] + score2   # leg1.score1 + leg2.score2
+    else:  # leg == 1
+        other = leg2
+        if not other or other["status"] != MATCH_STATUS_CONFIRMED:
+            return False
+        agg_a = score2 + other["score1"]   # leg1.score2 + leg2.score1
+        agg_b = score1 + other["score2"]   # leg1.score1 + leg2.score2
     return agg_a == agg_b
 
 
@@ -82,7 +97,8 @@ def cl_po_submit_result(match_id: int, score1: int, score2: int,
             cursor.execute("ROLLBACK"); return False, "wrong_status"
         if m["round"] == "final" and score1 == score2:
             cursor.execute("ROLLBACK"); return False, "draw_not_allowed"
-        if m["leg"] == 2 and _aggregate_would_draw(cursor, m, score1, score2):
+        # Ikkala o'yin bir vaqtda ochiq — istalgan leg boshqasini teng qilmasin
+        if m["round"] != "final" and _aggregate_would_draw(cursor, m, score1, score2):
             cursor.execute("ROLLBACK"); return False, "aggregate_draw_not_allowed"
 
         cursor.execute(
@@ -103,19 +119,33 @@ def cl_po_submit_result(match_id: int, score1: int, score2: int,
 
 
 def _ensure_next_tie(cursor, season: int, next_round: str, position: int) -> None:
-    """Keyingi bosqich juftligining 1-o'yin qatorini (bo'sh) yaratadi (idempotent)."""
+    """
+    Keyingi bosqich juftligining IKKALA o'yin qatorini (bo'sh) yaratadi (idempotent).
+    2026-07-22: uy+mehmon bir vaqtda ko'rinishi uchun leg1 va leg2 birga ochiladi.
+    Final — bitta o'yin (leg1). O'yinchilar hali NULL; g'oliblar kelib to'ldiriladi.
+    """
     cursor.execute(
         "INSERT OR IGNORE INTO cl_playoff_matches "
         "(season, round, position, leg, status) VALUES (?, ?, ?, 1, ?)",
         (season, next_round, position, MATCH_STATUS_PENDING),
     )
+    if next_round != "final":
+        cursor.execute(
+            "INSERT OR IGNORE INTO cl_playoff_matches "
+            "(season, round, position, leg, status) VALUES (?, ?, ?, 2, ?)",
+            (season, next_round, position, MATCH_STATUS_PENDING),
+        )
 
 
 def _advance_winner(cursor, m: dict, winner_id: int) -> None:
     """
-    2-o'yin tasdiqlangach g'olibni keyingi bosqichga yozadi.
-    pos 2k → sideA (leg1.player2; final: player1), pos 2k+1 → sideB (player1;
-    final: player2). Keyingi bosqich pos = m.position // 2.
+    Juftlik hal bo'lgach g'olibni keyingi bosqichga yozadi.
+    pos 2k → sideA, pos 2k+1 → sideB. Keyingi bosqich pos = m.position // 2.
+
+    2026-07-22: keyingi bosqichda IKKALA leg mavjud (uy+mehmon bir vaqtda), shuning
+    uchun g'olib har ikkovida to'g'ri slotga yoziladi:
+      - final (bitta o'yin): sideA=player1, sideB=player2.
+      - oddiy bosqich: leg1 → player1=sideB, player2=sideA ; leg2 teskari.
     """
     idx = CL_PO_ROUNDS.index(m["round"])
     next_round = CL_PO_ROUNDS[idx + 1]
@@ -124,16 +154,70 @@ def _advance_winner(cursor, m: dict, winner_id: int) -> None:
 
     goes_side_a = (m["position"] % 2 == 0)
     if next_round == "final":
+        # Final — bitta o'yin: sideA→player1, sideB→player2
         col = "player1_id" if goes_side_a else "player2_id"
+        cursor.execute(
+            f"UPDATE cl_playoff_matches SET {col} = ? "
+            "WHERE season = ? AND round = ? AND position = ? AND leg = 1",
+            (winner_id, m["season"], next_round, next_pos),
+        )
     else:
-        col = "player2_id" if goes_side_a else "player1_id"
-    cursor.execute(
-        f"UPDATE cl_playoff_matches SET {col} = ? "
-        "WHERE season = ? AND round = ? AND position = ? AND leg = 1",
-        (winner_id, m["season"], next_round, next_pos),
-    )
+        # leg1: player1=sideB, player2=sideA ; leg2 teskari (uy/mehmon almashadi)
+        leg1_col = "player2_id" if goes_side_a else "player1_id"
+        leg2_col = "player1_id" if goes_side_a else "player2_id"
+        cursor.execute(
+            f"UPDATE cl_playoff_matches SET {leg1_col} = ? "
+            "WHERE season = ? AND round = ? AND position = ? AND leg = 1",
+            (winner_id, m["season"], next_round, next_pos),
+        )
+        cursor.execute(
+            f"UPDATE cl_playoff_matches SET {leg2_col} = ? "
+            "WHERE season = ? AND round = ? AND position = ? AND leg = 2",
+            (winner_id, m["season"], next_round, next_pos),
+        )
     logger.info("ChL PO: %s pos%s g'olibi (user %s) → %s pos%s",
                 m["round"], m["position"], winner_id, next_round, next_pos)
+
+
+def _both_legs(cursor, m: dict) -> tuple[dict | None, dict | None]:
+    """Juftlikning leg1 va leg2 qatorlarini (to'liq) qaytaradi."""
+    cursor.execute(
+        "SELECT leg, score1, score2, status, player1_id, player2_id "
+        "FROM cl_playoff_matches "
+        "WHERE season = ? AND round = ? AND position = ?",
+        (m["season"], m["round"], m["position"]),
+    )
+    leg1 = leg2 = None
+    for r in cursor.fetchall():
+        d = dict(r)
+        if d["leg"] == 1:
+            leg1 = d
+        elif d["leg"] == 2:
+            leg2 = d
+    return leg1, leg2
+
+
+def _tie_winner_if_ready(cursor, m: dict) -> int | None:
+    """
+    2026-07-22: juftlik hal bo'ldimi? IKKALA o'yin (uy+mehmon) tasdiqlangan bo'lsa —
+    agregat g'olibini qaytaradi; aks holda None (hali erta). Tartibdan mustaqil —
+    leg1 yoki leg2 oxirgi tasdiqlanishidan qat'i nazar ishlaydi.
+
+    Agregat: sideA = leg2.player1 (leg1.player2). aggA = leg1.score2 + leg2.score1;
+             aggB = leg1.score1 + leg2.score2. Teng bo'lsa None (bo'lmasligi kerak —
+             kiritishda taqiqlangan).
+    """
+    leg1, leg2 = _both_legs(cursor, m)
+    if not (leg1 and leg2):
+        return None
+    if leg1["status"] != MATCH_STATUS_CONFIRMED or leg2["status"] != MATCH_STATUS_CONFIRMED:
+        return None
+    agg_a = leg1["score2"] + leg2["score1"]   # sideA
+    agg_b = leg1["score1"] + leg2["score2"]   # sideB
+    if agg_a == agg_b:
+        return None
+    # sideA = leg2.player1, sideB = leg2.player2
+    return leg2["player1_id"] if agg_a > agg_b else leg2["player2_id"]
 
 
 def cl_po_confirm_result(match_id: int, user_id: int,
@@ -141,7 +225,9 @@ def cl_po_confirm_result(match_id: int, user_id: int,
     """
     Tasdiqlash (accept=True) yoki rad etish (False).
     Xato sabablari: not_found, not_participant, wrong_status, cannot_confirm_own.
-    Tasdiqda: leg1 → leg2 yaratiladi; leg2 → g'olib keyingi bosqichga.
+    2026-07-22: uy+mehmon o'yinlari bir vaqtda ochiq (start'da yaratiladi). Har
+    o'yin alohida tasdiqlanadi; IKKALA o'yin tasdiqlangach agregat g'olibi
+    avtomatik keyingi bosqichga o'tadi (tartibdan mustaqil).
     """
     conn = get_connection()
     conn.isolation_level = None
@@ -167,8 +253,9 @@ def cl_po_confirm_result(match_id: int, user_id: int,
             cursor.execute("COMMIT")
             return True, "rejected"
 
-        # Himoya: tasdiqlash paytida ham agregat tekshiruvi (qoida #41)
-        if m["leg"] == 2 and _aggregate_would_draw(cursor, m, m["score1"], m["score2"]):
+        # Himoya: tasdiqlash paytida ham agregat tekshiruvi (qoida #41).
+        # Ikkala o'yin ochiq — qaysi leg tasdiqlanayotgan bo'lsa, boshqasi bilan.
+        if m["round"] != "final" and _aggregate_would_draw(cursor, m, m["score1"], m["score2"]):
             cursor.execute("ROLLBACK")
             return False, "aggregate_draw_not_allowed"
 
@@ -177,22 +264,14 @@ def cl_po_confirm_result(match_id: int, user_id: int,
             (MATCH_STATUS_CONFIRMED, match_id),
         )
 
-        if m["round"] != "final" and m["leg"] == 1:
-            # 2-o'yin: uy/mehmon almashadi (sideA endi uyda) — idempotent
-            cursor.execute(
-                "INSERT OR IGNORE INTO cl_playoff_matches "
-                "(season, round, position, leg, player1_id, player2_id, status) "
-                "VALUES (?, ?, ?, 2, ?, ?, ?)",
-                (m["season"], m["round"], m["position"],
-                 m["player2_id"], m["player1_id"], MATCH_STATUS_PENDING),
-            )
-        elif m["round"] != "final" and m["leg"] == 2:
-            leg1 = _leg1_of(cursor, m)
-            agg_a = leg1["score2"] + m["score1"]   # sideA = leg2.player1
-            agg_b = leg1["score1"] + m["score2"]   # sideB = leg2.player2
-            winner = m["player1_id"] if agg_a > agg_b else m["player2_id"]
-            _advance_winner(cursor, m, winner)
-        # final: qo'shimcha ish yo'q — chempion bracket'da hisoblanadi
+        if m["round"] == "final":
+            # Final — bitta o'yin; chempion bracket'da hisoblanadi
+            pass
+        else:
+            # Ikkala o'yin ham tasdiqlangan bo'lsa — g'olib keyingi bosqichga
+            winner = _tie_winner_if_ready(cursor, m)
+            if winner is not None:
+                _advance_winner(cursor, m, winner)
 
         cursor.execute("COMMIT")
         return True, "confirmed"

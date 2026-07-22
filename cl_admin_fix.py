@@ -188,15 +188,16 @@ def cl_admin_po_set_result(match_id: int, score1: int, score2: int
                            ) -> tuple[bool, str]:
     """
     Play-off natijasini o'rnatadi/tuzatadi: istalgan statusdan -> confirmed.
-    So'ng, agar bu 2-o'yin (yoki final) bo'lsa — agregat g'olibini keyingi
-    bosqichga ko'chiradi (cl_playoff_results._advance_winner qayta ishlatiladi).
+    So'ng, IKKALA o'yin (uy+mehmon) confirmed bo'lsa — agregat g'olibini keyingi
+    bosqichga ko'chiradi (cl_playoff_results._tie_winner_if_ready/_advance_winner
+    qayta ishlatiladi — DRY; g'olib o'zgarsa keyingi slot idempotent qayta yoziladi).
 
-    Ehtiyot (qoida #41): final durang bo'lmaydi; 2-o'yin agregatni teng qilsa
-    rad etiladi (eFootballda penalti/qo'shimcha vaqt o'yin ichida hal bo'ladi).
+    Ehtiyot (qoida #41): final durang bo'lmaydi; istalgan o'yinni tuzatish juftlik
+    agregatini teng qilsa rad etiladi (eFootballda penalti/extra-time o'yin ichida).
 
     Sabablar: ok / match_not_found / draw_not_allowed / aggregate_draw_not_allowed
     """
-    from cl_playoff_results import _leg1_of, _advance_winner
+    from cl_playoff_results import _aggregate_would_draw, _tie_winner_if_ready, _advance_winner
 
     conn = get_connection()
     conn.isolation_level = None
@@ -219,15 +220,10 @@ def cl_admin_po_set_result(match_id: int, score1: int, score2: int
             cursor.execute("ROLLBACK")
             return False, "draw_not_allowed"
 
-        # 2-o'yin: agregat teng bo'lib qolmasin (leg1 tasdiqlangan bo'lishi kerak)
-        if m["leg"] == 2:
-            leg1 = _leg1_of(cursor, m)
-            if leg1 and leg1["status"] == MATCH_STATUS_CONFIRMED:
-                agg_a = leg1["score2"] + score1   # sideA = leg2.player1 (uyda)
-                agg_b = leg1["score1"] + score2   # sideB = leg2.player2
-                if agg_a == agg_b:
-                    cursor.execute("ROLLBACK")
-                    return False, "aggregate_draw_not_allowed"
+        # Istalgan o'yinni tuzatish juftlik agregatini teng qilmasin (ikkala leg ochiq)
+        if m["round"] != "final" and _aggregate_would_draw(cursor, m, score1, score2):
+            cursor.execute("ROLLBACK")
+            return False, "aggregate_draw_not_allowed"
 
         cursor.execute(
             "UPDATE cl_playoff_matches SET score1 = ?, score2 = ?, status = ? "
@@ -235,15 +231,12 @@ def cl_admin_po_set_result(match_id: int, score1: int, score2: int
             (score1, score2, MATCH_STATUS_CONFIRMED, match_id),
         )
 
-        # G'olibni keyingi bosqichga ko'chirish (faqat 2-o'yin; final — chempion
-        # bracket'da hisoblanadi, keyingi bosqich yo'q). Idempotent: _advance_winner
+        # G'olibni keyingi bosqichga ko'chirish — IKKALA o'yin confirmed bo'lganda
+        # (final — chempion bracket'da hisoblanadi). Idempotent: _advance_winner
         # keyingi slotni bir xil g'olib bilan qayta yozadi (g'olib o'zgarsa — tuzatadi).
-        if m["round"] != "final" and m["leg"] == 2:
-            leg1 = _leg1_of(cursor, m)
-            if leg1 and leg1["status"] == MATCH_STATUS_CONFIRMED:
-                agg_a = leg1["score2"] + score1
-                agg_b = leg1["score1"] + score2
-                winner = m["player1_id"] if agg_a > agg_b else m["player2_id"]
+        if m["round"] != "final":
+            winner = _tie_winner_if_ready(cursor, m)
+            if winner is not None:
                 _advance_winner(cursor, m, winner)
 
         cursor.execute("COMMIT")

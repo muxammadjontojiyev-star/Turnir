@@ -43,6 +43,15 @@ def main() -> None:
     fixed = wc_playoff_backfill_advancements()
     logger.info("Play-off backfill: %d ta confirmed match qayta ishlandi.", fixed)
 
+    # 2026-07-22: ChL play-off — uy+mehmon bir vaqtda ochilishiga o'tishdan oldin
+    # boshlangan juftliklarda 2-o'yin yaratilmagan bo'lsa qo'shamiz (idempotent).
+    try:
+        from cl_playoff import cl_po_backfill_second_legs
+        cl_added = cl_po_backfill_second_legs()
+        logger.info("ChL play-off 2-o'yin backfill: %d ta qo'shildi.", cl_added)
+    except Exception as e:
+        logger.warning("ChL play-off 2-o'yin backfill xatosi: %s", e)
+
     # API ni alohida threadda ishga tushirish
     api_thread = threading.Thread(target=run_api, daemon=True)
     api_thread.start()
