@@ -264,10 +264,12 @@ def cl_po_bracket(season: int | None = None) -> dict:
     return {"started": True, "rounds": rounds, "champion": champion}
 
 
-def cl_po_my_matches(user_id: int, season: int | None = None) -> dict:
+def _po_user_matches(user_id: int, season: int | None = None
+                     ) -> tuple[bool, list[dict]]:
     """
-    Foydalanuvchining play-off o'yinlari (Profil sahifasi uchun).
-    Har o'yinga juftlik konteksti (leg2 uchun leg1 hisobi — agregat ko'rsatish).
+    Bitta ishtirokchining play-off o'yinlarini (juftlik konteksti bilan) yig'adi.
+    Qaytaradi: (started, matches). O'z profili ham, boshqa ishtirokchi profili
+    ham shu yordamchidan foydalanadi (DRY — qoida #26).
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -278,7 +280,7 @@ def cl_po_my_matches(user_id: int, season: int | None = None) -> dict:
             "SELECT started FROM cl_playoff_state WHERE season = ?", (season,))
         st = cursor.fetchone()
         if not (st and st["started"]):
-            return {"started": False, "matches": [], "me_id": user_id}
+            return False, []
         rows = _po_rows(cursor, season)
     finally:
         conn.close()
@@ -297,4 +299,23 @@ def cl_po_my_matches(user_id: int, season: int | None = None) -> dict:
         m["other_leg_score2"] = other["score2"] if other else None
         m["other_leg_status"] = other["status"] if other else None
         matches.append(m)
-    return {"started": True, "matches": matches, "me_id": user_id}
+    return True, matches
+
+
+def cl_po_my_matches(user_id: int, season: int | None = None) -> dict:
+    """
+    Foydalanuvchining play-off o'yinlari (Profil sahifasi uchun).
+    Har o'yinga juftlik konteksti (leg2 uchun leg1 hisobi — agregat ko'rsatish).
+    """
+    started, matches = _po_user_matches(user_id, season)
+    return {"started": started, "matches": matches, "me_id": user_id}
+
+
+def cl_po_user_matches(target_id: int, season: int | None = None) -> dict:
+    """
+    Boshqa ishtirokchining play-off o'yinlari (2026-07-22, talab 3): profil
+    sahifasi orqali boshqa ishtirokchilarga ham ko'rinadi — FAQAT O'QISH.
+    me_id qaytarilmaydi (bu boshqa odam; natija tugmalari ko'rinmaydi).
+    """
+    started, matches = _po_user_matches(target_id, season)
+    return {"started": started, "matches": matches}
