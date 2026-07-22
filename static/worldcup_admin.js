@@ -117,6 +117,15 @@ function wcRenderAdminPanel() {
         <button class="btn" id="wc-btn-reassign">👤 Akkountni almashtirish</button>
       </div>
 
+      <!-- 2026-07-22: play-off setkada ikki pozitsiyani almashtirish (faqat bosh admin).
+           Faqat natija kiritilmagan (pending) pozitsiyalar; natijali bo'lsa avval bekor qilinadi. -->
+      <div class="section-label">PLAY-OFF O'RINLARINI ALMASHTIRISH</div>
+      <div class="admin-fix-form">
+        <div id="wc-po-swap-box">
+          <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
+        </div>
+      </div>
+
       <div class="section-label">${escHtml(t.admin_manage_title || "ADMIN TAYINLASH")}</div>
       <div class="admin-fix-form">
         <input id="wc-admin-new-id" class="modal-input" type="number" min="1"
@@ -171,6 +180,9 @@ function wcBindAdminPanel() {
           "wc-reassign-new-tg", wcReassignBtn,
           () => reassignLoadList("/wc/participants/all", "wc-reassign-box", wcReassignLabel)));
     }
+
+    // 2026-07-22: play-off setka o'rinlarini almashtirish
+    void wcLoadPlayoffSwap();
   }
   // Katta hisob ro'yxati — barcha WC adminlariga (bosh + oddiy)
   void wcLoadPendingMatches();
@@ -609,5 +621,107 @@ async function refreshWcFixPreview() {
     slot1.innerHTML = mark; slot2.innerHTML = mark;
     console.error("WC fix preview xatosi:", reason);
     showToast("Bayroq yuklanmadi — " + reason);
+  }
+}
+
+
+// ============================================================
+//  2026-07-22: PLAY-OFF SETKA O'RINLARINI ALMASHTIRISH (bosh admin)
+// ============================================================
+
+// Pozitsiya qiymati: "matchId:slot" (slot 1=player1, 2=player2).
+// Faqat bo'sh bo'lmagan va natija kiritilmagan (pending, hisobsiz) slotlar tanlanadi.
+async function wcLoadPlayoffSwap() {
+  const box = document.getElementById("wc-po-swap-box");
+  if (!box) return;
+  let data;
+  try {
+    data = await apiFetch("/wc/playoff/bracket");
+  } catch (_) {
+    box.innerHTML = `<div class="admin-player-league">Setka yuklanmadi.</div>`;
+    return;
+  }
+  if (!data || !data.started) {
+    box.innerHTML = `<div class="admin-player-league">Play-off hali boshlanmagan.</div>`;
+    return;
+  }
+
+  // Barcha bosqichlardan tanlanadigan pozitsiyalarni yig'amiz (bo'sh/natijali emas)
+  const opts = [];
+  const rounds = data.rounds || {};
+  const order = ["r32", "r16", "r8", "r4", "final", "bronze"];
+  const roundName = (typeof WC_PLAYOFF_ROUND_NAMES !== "undefined") ? WC_PLAYOFF_ROUND_NAMES : {};
+  for (const rnd of order) {
+    for (const m of (rounds[rnd] || [])) {
+      const hasScore = m.score1 !== null && m.score1 !== undefined
+                    || m.score2 !== null && m.score2 !== undefined;
+      const locked = (m.status && m.status !== "pending") || hasScore;
+      const label = roundName[rnd] || rnd;
+      [[1, m.player1_id, m.p1_user, m.p1_nick, m.p1_team],
+       [2, m.player2_id, m.p2_user, m.p2_nick, m.p2_team]].forEach(([slot, uid, user, nick, team]) => {
+        if (!uid) return;            // bo'sh slot — tanlab bo'lmaydi
+        const who = user ? "@" + user : (nick || ("#" + uid));
+        const tm = team ? (team + " · ") : "";
+        opts.push({
+          value: `${m.id}:${slot}`,
+          text: `${label} · ${tm}${who}${locked ? " (natijali)" : ""}`,
+          locked,
+        });
+      });
+    }
+  }
+
+  if (opts.length < 2) {
+    box.innerHTML = `<div class="admin-player-league">Almashtirishga yetarli ishtirokchi yo'q.</div>`;
+    return;
+  }
+
+  const optionsHtml = (skipVal) => opts
+    .filter(o => o.value !== skipVal)
+    .map(o => `<option value="${o.value}"${o.locked ? " disabled" : ""}>${escHtml(o.text)}</option>`)
+    .join("");
+
+  box.innerHTML = `
+    <select id="wc-po-swap-a" class="modal-input" style="margin-bottom:6px">${optionsHtml("")}</select>
+    <select id="wc-po-swap-b" class="modal-input" style="margin-bottom:8px">${optionsHtml("")}</select>
+    <button class="btn" id="wc-btn-po-swap">🔁 O'rinlarni almashtirish</button>
+    <div class="admin-player-league" style="margin:6px 2px 0">
+      Faqat natija kiritilmagan o'rinlar. Natijali bo'lsa — avval bekor qiling.
+    </div>`;
+
+  document.getElementById("wc-btn-po-swap")?.addEventListener("click", wcPlayoffSwapSubmit);
+}
+
+async function wcPlayoffSwapSubmit(e) {
+  const btn = e.currentTarget;
+  const aVal = document.getElementById("wc-po-swap-a")?.value || "";
+  const bVal = document.getElementById("wc-po-swap-b")?.value || "";
+  if (!aVal || !bVal) { showToast("Ikkala o'rinni tanlang"); return; }
+  if (aVal === bVal) { showToast("Bir xil o'rin tanlandi"); return; }
+  const [ma, sa] = aVal.split(":").map(Number);
+  const [mb, sb] = bVal.split(":").map(Number);
+
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = "Almashtirilmoqda…";
+  try {
+    await apiFetch("/wc/admin/playoff/swap", {
+      method: "POST",
+      body: JSON.stringify({ match_a_id: ma, slot_a: sa, match_b_id: mb, slot_b: sb }),
+    });
+    showToast("O'rinlar almashtirildi");
+    await wcLoadPlayoffSwap();               // ro'yxatni yangilaymiz
+    if (typeof wcLoadBracket === "function") void wcLoadBracket();  // setka yangilansin
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = prev;
+    const reason = {
+      same_position: "bir xil o'rin",
+      slot_invalid: "noto'g'ri slot",
+      match_not_found: "o'yin topilmadi",
+      slot_empty: "o'rin bo'sh",
+      has_result: "o'rinda natija bor — avval bekor qiling",
+    }[err && err.message] || (err && err.message) || "xato";
+    showToast("Almashtirilmadi — " + reason);
   }
 }
