@@ -15,7 +15,9 @@ from config import ADMIN_TELEGRAM_IDS
 
 SCOPE_LEAGUE = "league"
 SCOPE_WC = "wc"
-VALID_SCOPES = (SCOPE_LEAGUE, SCOPE_WC)
+SCOPE_CL = "cl"              # 2026-07-22: Chempionlar ligasi admin scope'i
+SCOPE_DIVISION = "division"  # 2026-07-22: Divizion admin scope'i
+VALID_SCOPES = (SCOPE_LEAGUE, SCOPE_WC, SCOPE_CL, SCOPE_DIVISION)
 
 
 def is_super_admin(telegram_id: int) -> bool:

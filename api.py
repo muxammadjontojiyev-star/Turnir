@@ -318,6 +318,34 @@ def get_authenticated_super_admin(x_telegram_init_data: str = Header(...)) -> di
     return user
 
 
+def _authenticated_scope_admin(x_telegram_init_data: str, scope: str) -> dict:
+    """
+    2026-07-22: berilgan scope ('cl'/'division'/...) admini (bosh admin YOKI
+    o'sha scope'ga tayinlangan oddiy admin). Talab 2 uchun umumiy yordamchi.
+    """
+    telegram_user = verify_telegram_init_data(x_telegram_init_data)
+    telegram_id = telegram_user["id"]
+    if not is_scope_admin(telegram_id, scope):
+        raise HTTPException(status_code=403, detail="Ruxsat yo'q")
+    first_name = telegram_user.get("first_name", f"user_{telegram_id}")
+    username   = telegram_user.get("username")
+    user = dict(get_or_create_user(telegram_id, first_name, username))
+    user["telegram_id"] = telegram_id
+    return user
+
+
+def get_authenticated_cl_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    """ChL admini: bosh admin yoki 'cl' scope'ga tayinlangan admin."""
+    from admin_roles import SCOPE_CL
+    return _authenticated_scope_admin(x_telegram_init_data, SCOPE_CL)
+
+
+def get_authenticated_div_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    """Divizion admini: bosh admin yoki 'division' scope'ga tayinlangan admin."""
+    from admin_roles import SCOPE_DIVISION
+    return _authenticated_scope_admin(x_telegram_init_data, SCOPE_DIVISION)
+
+
 def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
     """
     Har bir match'ga 'is_locked', 'entry_locked', 'near_deadline' (bool) qo'shadi.
@@ -1491,7 +1519,7 @@ def div_participant_reassign(
 
 @app.get("/cl/admin/match/{match_id}/info")
 def cl_admin_match_info(match_id: int, is_playoff: int = 0,
-                        admin: dict = Depends(get_authenticated_super_admin)):
+                        admin: dict = Depends(get_authenticated_cl_admin)):
     """
     Match ID bo'yicha ChL o'yin ma'lumoti (admin 'Match ID orqali tuzatish' formasi):
     o'yinchilar, klublar (logo uchun), joriy hisob, tur. Topilmasa 404.
@@ -1513,7 +1541,7 @@ def cl_admin_match_info(match_id: int, is_playoff: int = 0,
 @app.post("/cl/admin/match/set-result")
 def cl_admin_set_result(match_id: int, score1: int, score2: int,
                         is_playoff: int = 0,
-                        admin: dict = Depends(get_authenticated_super_admin)):
+                        admin: dict = Depends(get_authenticated_cl_admin)):
     """
     Admin: ChL natijasini o'rnatish/tuzatish (istalgan statusdan -> confirmed).
     2026-07-22 (talab 1): is_playoff=1 → play-off; 2-o'yin/final bo'lsa g'olib
@@ -1534,7 +1562,7 @@ def cl_admin_set_result(match_id: int, score1: int, score2: int,
 
 @app.post("/cl/admin/match/cancel")
 def cl_admin_match_cancel(match_id: int, is_playoff: int = 0,
-                          admin: dict = Depends(get_authenticated_super_admin)):
+                          admin: dict = Depends(get_authenticated_cl_admin)):
     """
     2026-07-16: Admin ChL natijasini BEKOR QILADI — o'yin natija kiritilmagan
     holatga (pending, hisob NULL) qaytadi. Liga/WC/Divizion bilan bir xil oqim.
@@ -1912,7 +1940,9 @@ def div_status(user: dict = Depends(get_authenticated_user)):
         "me_id": user["id"],
         "me_nickname": user["nickname"],
         "me_username": user.get("username"),
-        "is_admin": is_super_admin(user["telegram_id"]),
+        "is_admin": is_super_admin(user["telegram_id"])
+                    or is_scope_admin(user["telegram_id"], "division"),
+        "is_super": is_super_admin(user["telegram_id"]),  # admin tayinlash oynasi uchun
         "stats": div_my_stats(user["id"]),
         "history": div_my_matches(user["id"]),
     }
@@ -2082,7 +2112,7 @@ def div_get_unread_counts(user: dict = Depends(get_authenticated_user)):
 
 @app.get("/div/admin/matches")
 def div_admin_matches(day: str | None = None,
-                      admin: dict = Depends(get_authenticated_super_admin)):
+                      admin: dict = Depends(get_authenticated_div_admin)):
     """
     Divizion o'yinlari (admin). day=None -> bugungi; day='all' -> barcha kunlar
     (oxirgi 100) — o'tgan kunlardagi tasdiqlangan natijalarni tuzatish uchun.
@@ -2093,7 +2123,7 @@ def div_admin_matches(day: str | None = None,
 
 @app.post("/div/admin/match/set-result")
 def div_admin_set(match_id: int, score1: int, score2: int,
-                  admin: dict = Depends(get_authenticated_super_admin)):
+                  admin: dict = Depends(get_authenticated_div_admin)):
     """Admin: natijani o'rnatish/tuzatish (istalgan statusdan -> confirmed)."""
     validate_scores(score1, score2)
     from division import div_admin_set_result
@@ -2105,7 +2135,7 @@ def div_admin_set(match_id: int, score1: int, score2: int,
 
 @app.get("/div/admin/match/{match_id}/info")
 def div_admin_match_info_endpoint(
-        match_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+        match_id: int, admin: dict = Depends(get_authenticated_div_admin)):
     """
     Match ID bo'yicha o'yin ma'lumoti (admin 'Match ID orqali tuzatish' formasi:
     ID yozilganda o'yinchilar va joriy hisob ko'rinadi). Topilmasa 404.
@@ -2119,7 +2149,7 @@ def div_admin_match_info_endpoint(
 
 @app.post("/div/admin/match/cancel")
 def div_admin_cancel(match_id: int,
-                     admin: dict = Depends(get_authenticated_super_admin)):
+                     admin: dict = Depends(get_authenticated_div_admin)):
     """Admin: natijani bekor qilish — o'yin pending'ga qaytadi, qayta kiritiladi."""
     from division import div_admin_cancel_match
     success, reason = div_admin_cancel_match(match_id)
@@ -2160,7 +2190,7 @@ async def div_admin_ban(
 
 @app.post("/div/admin/match/resolve")
 def div_admin_resolve(match_id: int, accept: bool = True,
-                      admin: dict = Depends(get_authenticated_super_admin)):
+                      admin: dict = Depends(get_authenticated_div_admin)):
     """
     Admin: katta hisob (admin_pending) qarori — liga admin oqimi kabi.
     accept=True tasdiqlaydi, accept=False rad etadi (pending'ga qaytadi).
@@ -2295,10 +2325,13 @@ def admin_whoami(x_telegram_init_data: str = Header(...)):
     """
     telegram_user = verify_telegram_init_data(x_telegram_init_data)
     tid = telegram_user["id"]
+    from admin_roles import SCOPE_CL, SCOPE_DIVISION
     return {
         "is_super": is_super_admin(tid),
         "is_league_admin": is_scope_admin(tid, SCOPE_LEAGUE),
         "is_wc_admin": is_scope_admin(tid, SCOPE_WC),
+        "is_cl_admin": is_scope_admin(tid, SCOPE_CL),
+        "is_div_admin": is_scope_admin(tid, SCOPE_DIVISION),
     }
 
 
