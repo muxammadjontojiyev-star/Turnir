@@ -75,7 +75,7 @@ from membership import is_user_subscribed
 from admin_roles import (
     is_super_admin, is_scope_admin, add_admin, remove_admin, list_admins,
     assign_league, unassign_league, get_admin_league_ids, can_manage_league,
-    SCOPE_LEAGUE, SCOPE_WC,
+    SCOPE_LEAGUE, SCOPE_WC, VALID_SCOPES,
 )
 from wc_chat import (
     wc_send_chat_message, wc_get_chat_messages, wc_count_unread_messages,
@@ -2243,11 +2243,11 @@ def wc_playoff_confirm(
 @app.get("/admin/roles/{scope}")
 def admin_list_roles(scope: str, admin: dict = Depends(get_authenticated_super_admin)):
     """
-    Berilgan scope ('league'/'wc') uchun tayinlangan oddiy adminlar ro'yxati.
+    Berilgan scope ('league'/'wc'/'cl'/'division') uchun tayinlangan oddiy adminlar ro'yxati.
     Faqat bosh admin ko'ra oladi.
     Xato: invalid_scope → 400
     """
-    if scope not in (SCOPE_LEAGUE, SCOPE_WC):
+    if scope not in VALID_SCOPES:
         raise HTTPException(status_code=400, detail="invalid_scope")
     return {"scope": scope, "admins": list_admins(scope)}
 
@@ -2261,7 +2261,7 @@ def admin_add_role(scope: str, telegram_id: int, admin: dict = Depends(get_authe
     Query param: telegram_id (int)
     Xato: invalid_scope, already_admin, cannot_add_super → 400
     """
-    if scope not in (SCOPE_LEAGUE, SCOPE_WC):
+    if scope not in VALID_SCOPES:
         raise HTTPException(status_code=400, detail="invalid_scope")
     success, reason = add_admin(telegram_id, scope, admin["telegram_id"])
     if not success:
@@ -2275,7 +2275,7 @@ def admin_remove_role(scope: str, telegram_id: int, admin: dict = Depends(get_au
     Oddiy adminni scope'idan o'chiradi (faqat bosh admin).
     Xato: invalid_scope, not_found → 400
     """
-    if scope not in (SCOPE_LEAGUE, SCOPE_WC):
+    if scope not in VALID_SCOPES:
         raise HTTPException(status_code=400, detail="invalid_scope")
     if not remove_admin(telegram_id, scope):
         raise HTTPException(status_code=400, detail="not_found")
