@@ -2492,6 +2492,20 @@ table { border-collapse: collapse; width: 100%; }
   min-width: 14px;
   text-align: right;
 }
+/* 2026-07-22: play-off setkada IKKI O'YIN natijasi alohida ustunlarda (agregat emas).
+   Har o'yin bir xil kenglikda — Tojiyev "2 6" va Xusanov "1 4" ustunlari tekis turadi. */
+.clpo-leg-scores {
+  display: inline-flex;
+  gap: 4px;
+  min-width: auto;
+}
+.clpo-leg-score {
+  display: inline-block;
+  min-width: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+/* Bitta o'yindan (final) iborat juftlikda faqat bitta katak bo'ladi — normal ko'rinadi */
 
 /* WC Sovrinlar — kubok kartasi */
 .wc-prize-card {

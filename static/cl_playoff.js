@@ -56,7 +56,9 @@ function clpoBindBracketSides(box) {
   });
 }
 
-// Juftlikning bir tomoni (klub + @user + 2 o'yin hisobi + agregat)
+// Juftlikning bir tomoni (klub + @user + IKKI O'YIN natijasi alohida ustunlarda)
+// 2026-07-22: agregat o'rniga 1-o'yin va 2-o'yin natijalari YONMA-YON alohida
+// ko'rsatiladi (masalan: Tojiyev  2  6 / Xusanov  1  4). Final — bitta o'yin.
 function clpoTieSide(tie, side, mirror) {
   const p = side === "a" ? tie.a : tie.b;
   const won = tie.winner_id && p.user_id === tie.winner_id;
@@ -65,15 +67,18 @@ function clpoTieSide(tie, side, mirror) {
   // Hisoblar: sideA — leg1'da mehmon (score2), leg2'da uyda (score1)
   const l1 = tie.leg1, l2 = tie.leg2;
   const s = (m, key) => (m && m.status === "confirmed") ? m[key] : null;
-  const legTxt = (tie.round === "final")
+  const legVals = (tie.round === "final")
     ? [s(l1, side === "a" ? "score1" : "score2")]
     : [s(l1, side === "a" ? "score2" : "score1"), s(l2, side === "a" ? "score1" : "score2")];
-  const scores = p.user_id ? legTxt.map(v => v === null ? "–" : v).join("·") : "";
-  const agg = (side === "a" ? tie.agg_a : tie.agg_b);
-  const aggTxt = agg === null || agg === undefined ? "" : `<b>${agg}</b>`;
+  // Har o'yin uchun alohida katak (bo'sh/o'ynalmagan bo'lsa "–")
+  const legCells = p.user_id
+    ? legVals.map(v => `<span class="clpo-leg-score">${v === null ? "–" : v}</span>`).join("")
+    : "";
+  const scoresText = p.user_id ? legVals.map(v => v === null ? "–" : v).join("·") : "";
+  const scoreBlock = `<span class="wc-bracket-score clpo-leg-scores">${legCells}</span>`;
   const inner = mirror
-    ? `<span class="wc-bracket-score">${aggTxt || scores}</span><span class="wc-bracket-name">${escHtml(name)}</span><span class="wc-bracket-flag">${badge}</span>`
-    : `<span class="wc-bracket-flag">${badge}</span><span class="wc-bracket-name">${escHtml(name)}</span><span class="wc-bracket-score">${aggTxt || scores}</span>`;
+    ? `${scoreBlock}<span class="wc-bracket-name">${escHtml(name)}</span><span class="wc-bracket-flag">${badge}</span>`
+    : `<span class="wc-bracket-flag">${badge}</span><span class="wc-bracket-name">${escHtml(name)}</span>${scoreBlock}`;
   // 2026-07-22 (talab 2): ishtirokchi aniq bo'lsa — bosilganda profili ochiladi.
   // Bo'sh tomon (hali aniqlanmagan) bosilmaydi; ma'lumot data-atributlarda.
   const cls = "wc-bracket-side" + (won ? " winner" : "")
@@ -84,7 +89,7 @@ function clpoTieSide(tie, side, mirror) {
       + ` data-clpo-user="${escHtml(p.username || "")}"`
       + ` data-clpo-club="${escHtml(p.club_name || "")}"`
     : "";
-  return `<div class="${cls}"${dataAttrs} title="O'yinlar: ${scores}">${inner}</div>`;
+  return `<div class="${cls}"${dataAttrs} title="O'yinlar: ${scoresText}">${inner}</div>`;
 }
 
 function clpoTieCard(tie, side) {
