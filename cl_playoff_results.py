@@ -283,3 +283,85 @@ def cl_po_confirm_result(match_id: int, user_id: int,
         raise
     finally:
         conn.close()
+
+
+def cl_po_auto_confirm_awaiting(season: int | None = None) -> dict:
+    """
+    2026-07-22 (talab 2): deadline (23:30) da ChL play-off o'yinlarini avtomatik
+    yopish. FAQAT awaiting_confirmation (hisob kiritilgan, tasdiq kutayotgan) →
+    confirmed. PENDING (hisob kiritilmagan) TEGILMAYDI — play-off'da durang
+    yo'q, shuning uchun 0:0 qilib bo'lmaydi; ularni admin qo'lda tasdiqlaydi.
+
+    Har yopilgan o'yindan keyin, agar juftlikning IKKALA legi ham confirmed
+    bo'lsa — agregat g'olibi keyingi bosqichga o'tadi (_tie_winner_if_ready +
+    _advance_winner qayta ishlatiladi — DRY). Agregat teng bo'lsa g'olib chiqmaydi
+    (bu holat kiritishda taqiqlangani uchun deyarli bo'lmaydi).
+
+    Idempotent — kuniga necha marta chaqirilsa ham awaiting qolmagach 0 qaytaradi.
+    Scheduler chaqiradi (cl_tick yonida).
+    """
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        if season is None:
+            cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
+            r = cursor.fetchone()
+            season = r["current_season"] if r else 1
+
+        # Play-off boshlangan bo'lishi kerak
+        cursor.execute(
+            "SELECT started FROM cl_playoff_state WHERE season = ?", (season,))
+        st = cursor.fetchone()
+        if not (st and st["started"]):
+            cursor.execute("ROLLBACK")
+            return {"confirmed": 0, "advanced": 0}
+
+        # Awaiting o'yinlarni yig'amiz (advance uchun round/position/leg kerak)
+        cursor.execute(
+            "SELECT id, season, round, position, leg, player1_id, player2_id "
+            "FROM cl_playoff_matches WHERE season = ? AND status = ?",
+            (season, MATCH_STATUS_AWAITING_CONFIRMATION),
+        )
+        awaiting = [dict(r) for r in cursor.fetchall()]
+        if not awaiting:
+            cursor.execute("ROLLBACK")
+            return {"confirmed": 0, "advanced": 0}
+
+        # 1) Hammasini confirmed qilamiz
+        cursor.execute(
+            "UPDATE cl_playoff_matches SET status = ? "
+            "WHERE season = ? AND status = ?",
+            (MATCH_STATUS_CONFIRMED, season, MATCH_STATUS_AWAITING_CONFIRMATION),
+        )
+        confirmed = cursor.rowcount or 0
+
+        # 2) Har juftlik uchun (takrorsiz) g'olibni tekshiramiz
+        advanced = 0
+        seen = set()
+        for m in awaiting:
+            if m["round"] == "final":
+                continue
+            key = (m["round"], m["position"])
+            if key in seen:
+                continue
+            seen.add(key)
+            winner = _tie_winner_if_ready(cursor, m)
+            if winner is not None:
+                _advance_winner(cursor, m, winner)
+                advanced += 1
+
+        cursor.execute("COMMIT")
+        if confirmed:
+            logger.info("ChL play-off deadline: %s awaiting → confirmed, %s juftlik advance.",
+                        confirmed, advanced)
+        return {"confirmed": confirmed, "advanced": advanced}
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        raise
+    finally:
+        conn.close()

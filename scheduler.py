@@ -147,6 +147,36 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: ChL tur siljitishda xato: %s", exc)
 
+    # === PLAY-OFF (barcha rejim): 23:30 da AWAITING o'yinlar avtomatik tasdiqlanadi ===
+    # 2026-07-22 (talab 2): play-off'da durang yo'q — hisob KIRITILGAN (awaiting)
+    # o'yinlar deadline'da confirmed bo'ladi; hisob KIRITILMAGAN (pending) kataklar
+    # TEGILMAYDI (0:0 durang qilinmaydi) — ularni admin qo'lda tasdiqlaydi.
+    try:
+        from queries_leagues import _tournament_now
+        from config import MATCHDAY_UNLOCK_HOUR
+        _now = _tournament_now()
+        if (_now.hour, _now.minute) >= (MATCHDAY_UNLOCK_HOUR, 30):
+            # ChL play-off
+            try:
+                from cl_playoff_results import cl_po_auto_confirm_awaiting
+                clp = cl_po_auto_confirm_awaiting()
+                if clp["confirmed"]:
+                    logger.info("Scheduler: ChL play-off deadline — %d awaiting → confirmed, %d advance.",
+                                clp["confirmed"], clp["advanced"])
+            except Exception as exc:
+                logger.warning("Scheduler: ChL play-off auto-confirmda xato: %s", exc)
+            # WC play-off
+            try:
+                from queries_wc_playoff_results import wc_playoff_auto_confirm_awaiting
+                wcp = wc_playoff_auto_confirm_awaiting()
+                if wcp["confirmed"]:
+                    logger.info("Scheduler: WC play-off deadline — %d awaiting → confirmed, %d advance.",
+                                wcp["confirmed"], wcp["advanced"])
+            except Exception as exc:
+                logger.warning("Scheduler: WC play-off auto-confirmda xato: %s", exc)
+    except Exception as exc:
+        logger.warning("Scheduler: play-off deadline blokida xato: %s", exc)
+
     # === DIVIZION: 19:00 dan keyin qur'a + telegram xabar; 23:30 dan keyin yopish ===
     try:
         await _division_tick()

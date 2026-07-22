@@ -167,3 +167,41 @@ def wc_playoff_get_champion() -> dict | None:
     elif row["score2"] > row["score1"]:
         return {"user_id": row["player2_id"], "nickname": row["n2"], "username": row["us2"], "team_name": row["t2"]}
     return None
+
+
+def wc_playoff_auto_confirm_awaiting() -> dict:
+    """
+    2026-07-22 (talab 2): deadline (23:30) da WC play-off o'yinlarini avtomatik
+    yopish. FAQAT awaiting_confirmation (hisob kiritilgan) → confirmed. PENDING
+    (hisob kiritilmagan) TEGILMAYDI — play-off'da durang yo'q, admin qo'lda
+    tasdiqlaydi. Har yopilgan o'yindan keyin g'olib keyingi bosqichga o'tadi
+    (wc_playoff_advance_winner qayta ishlatiladi — DRY; idempotent).
+
+    Scheduler chaqiradi. Idempotent — awaiting qolmagach 0 qaytaradi.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id FROM wc_playoff_matches WHERE status = 'awaiting_confirmation'"
+    )
+    ids = [r["id"] for r in cursor.fetchall()]
+    if not ids:
+        conn.close()
+        return {"confirmed": 0, "advanced": 0}
+
+    cursor.execute(
+        "UPDATE wc_playoff_matches SET status = 'confirmed' "
+        "WHERE status = 'awaiting_confirmation'"
+    )
+    conn.commit()
+    conn.close()
+
+    # G'oliblarni keyingi bosqichga (advance idempotent — bir xil slotni qayta yozadi)
+    advanced = 0
+    for mid in ids:
+        try:
+            wc_playoff_advance_winner(mid)
+            advanced += 1
+        except Exception:
+            pass  # bitta o'yin xatosi qolganlarini to'xtatmasin (scheduler log qiladi)
+    return {"confirmed": len(ids), "advanced": advanced}

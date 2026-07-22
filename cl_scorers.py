@@ -60,6 +60,24 @@ def cl_top_scorers(season: int | None = None, limit: int = 32) -> list[dict]:
                 p2["goals"] += m["score2"]
                 p2["played"] += 1
 
+        # 2026-07-22 (talab 1): play-off bahslaridagi gollar ham qo'shiladi.
+        # cl_playoff_matches — guruh bilan bir xil ustun nomlari (player1/2_id, score1/2).
+        # Ikkala leg (uy+mehmon) alohida o'yin sifatida sanaladi.
+        cursor.execute(
+            "SELECT player1_id, player2_id, score1, score2 FROM cl_playoff_matches "
+            "WHERE season = ? AND status = ? AND score1 IS NOT NULL",
+            (season, MATCH_STATUS_CONFIRMED),
+        )
+        for m in cursor.fetchall():
+            p1 = players.get(m["player1_id"])
+            p2 = players.get(m["player2_id"])
+            if p1:
+                p1["goals"] += m["score1"]
+                p1["played"] += 1
+            if p2:
+                p2["goals"] += m["score2"]
+                p2["played"] += 1
+
         rows = sorted(
             players.values(),
             key=lambda p: (-p["goals"], p["played"], (p["nickname"] or "").lower()),
