@@ -1096,6 +1096,14 @@ function divBindSectionEvents(root) {
           "div-reassign-new-tg", divReassignBtn, () => divLoadAdminMatches()));
     }
   }
+
+  // 2026-07-22 (talab 2): admin tayinlash — faqat bosh admin (api.js DRY yordamchisi)
+  if (document.getElementById("div-admin-roles-list")) {
+    const addBtn = document.getElementById("div-btn-admin-add");
+    if (addBtn) addBtn.addEventListener("click",
+      () => void scopeAdminRoleAdd("division", "div-admin-new-id", "div-admin-roles-list"));
+    void scopeAdminRolesLoad("division", "div-admin-roles-list");
+  }
 }
 
 // ---- ADMIN PANEL (faqat bosh admin) ----
@@ -1240,13 +1248,27 @@ function divAdminBanForm() {
     </div>`;
 }
 
+// 2026-07-22 (talab 2): admin tayinlash formasi — faqat bosh admin.
+// ChL bilan bir xil (api.js scopeAdminRoles* DRY yordamchilari, scope='division').
+function divAdminRolesForm() {
+  if (!DIV.status?.is_super) return "";
+  return `
+    <div class="section-label">ADMIN TAYINLASH</div>
+    <div class="admin-fix-form" style="margin-bottom:12px">
+      <input id="div-admin-new-id" class="modal-input" type="number" min="1"
+             placeholder="Telegram ID" style="margin-bottom:8px" />
+      <button class="btn btn--primary" id="div-btn-admin-add">Admin qo'shish</button>
+      <div id="div-admin-roles-list" class="admin-players-list" style="margin-top:8px"></div>
+    </div>`;
+}
+
 function divRenderAdmin() {
   const ms = DIV.adminMatches || [];
   if (!ms.length) {
-    return divAdminFixForm() + divAdminReassignForm() + divAdminBanForm()
+    return divAdminFixForm() + divAdminReassignForm() + divAdminRolesForm() + divAdminBanForm()
       + `<div class="card">${DT("div_admin_no_matches")}</div>`;
   }
-  return divAdminFixForm() + divAdminReassignForm() + divAdminBanForm() +
+  return divAdminFixForm() + divAdminReassignForm() + divAdminRolesForm() + divAdminBanForm() +
     `<div class="card" style="font-size:12.5px;opacity:.75">${DT("div_admin_hint")}</div>` +
     ms.map(m => {
       const p2 = m.player2_id ? escHtml(m.player2_name || "") : `<i>${DT("div_admin_bye")}</i>`;

@@ -10,28 +10,32 @@
 //  Global: apiFetch, showToast, escHtml, CL, clLoadThenRender
 // ============================================================
 
-const CL_ADMIN = { isSuper: false, loaded: false, fixId: "", fixInfo: null,
-                   fixIsPlayoff: false };  // 2026-07-22: play-off checkbox holati (talab 1)
+const CL_ADMIN = { isSuper: false, isCl: false, loaded: false, fixId: "", fixInfo: null,
+                   fixIsPlayoff: false };  // 2026-07-22: play-off checkbox + ChL admin roli
 
-// Nav'da Admin tab ko'rsatish uchun rolni oldindan tekshiradi (bir marta)
+// Nav'da Admin tab ko'rsatish uchun rolni oldindan tekshiradi (bir marta).
+// 2026-07-22 (talab 2): bosh admin YOKI tayinlangan ChL admin panelni ko'radi;
+// admin tayinlash oynasi esa faqat bosh adminda (quyida isSuper bilan).
 async function clCheckAdmin() {
-  if (CL_ADMIN.loaded) return CL_ADMIN.isSuper;
+  if (CL_ADMIN.loaded) return CL_ADMIN.isSuper || CL_ADMIN.isCl;
   try {
     const who = await apiFetch("/admin/whoami");
     CL_ADMIN.isSuper = !!who.is_super;
+    CL_ADMIN.isCl = !!who.is_cl_admin;
   } catch (_) {
     CL_ADMIN.isSuper = false;
+    CL_ADMIN.isCl = false;
   }
   CL_ADMIN.loaded = true;
-  return CL_ADMIN.isSuper;
+  return CL_ADMIN.isSuper || CL_ADMIN.isCl;
 }
 
-// Admin sahifasini chizadi (5-tab). Faqat super admin.
+// Admin sahifasini chizadi (5-tab). Bosh admin yoki tayinlangan ChL admin.
 async function clRenderAdminPage() {
-  const isSuper = await clCheckAdmin();
+  const canView = await clCheckAdmin();
   const page = document.getElementById("cl-admin-page");
   if (!page) return;
-  if (!isSuper) {
+  if (!canView) {
     page.innerHTML = `<div class="card">Bu sahifa faqat administrator uchun.</div>`;
     return;
   }
@@ -43,7 +47,7 @@ async function clLoadAdminPanel() {
   if (!panel) return;
 
   await clCheckAdmin();
-  if (!CL_ADMIN.isSuper) {
+  if (!(CL_ADMIN.isSuper || CL_ADMIN.isCl)) {
     panel.classList.add("hidden");
     panel.innerHTML = "";
     return;
@@ -96,6 +100,15 @@ async function clLoadAdminPanel() {
       <button class="btn btn--primary" id="cl-admin-po-start">${CT("cla_playoff_start")}</button>
 
       ${drawn ? clAdminFixForm() : ""}
+
+      ${CL_ADMIN.isSuper ? `
+      <div class="section-label" style="margin-top:16px">ADMIN TAYINLASH</div>
+      <div class="admin-fix-form">
+        <input id="cl-admin-new-id" class="modal-input" type="number" min="1"
+               placeholder="Telegram ID" style="margin-bottom:8px" />
+        <button class="btn btn--primary" id="cl-btn-admin-add">Admin qo'shish</button>
+        <div id="cl-admin-roles-list" class="admin-players-list" style="margin-top:8px"></div>
+      </div>` : ""}
     </div>`;
 
   if (typeof applyIcons === "function") applyIcons(panel);
@@ -136,6 +149,15 @@ async function clLoadAdminPanel() {
   // Natijani bekor qilish (2026-07-16) — o'yin natija kiritilmagan holatga qaytadi
   const fixCancel = document.getElementById("cl-fix-cancel-result");
   if (fixCancel) fixCancel.addEventListener("click", () => void clAdminCancelResult(fixCancel));
+
+  // 2026-07-22 (talab 2): admin tayinlash — faqat bosh admin (api.js DRY yordamchisi)
+  if (CL_ADMIN.isSuper) {
+    const addBtn = document.getElementById("cl-btn-admin-add");
+    if (addBtn) addBtn.addEventListener("click",
+      () => void scopeAdminRoleAdd("cl", "cl-admin-new-id", "cl-admin-roles-list"));
+    if (document.getElementById("cl-admin-roles-list"))
+      void scopeAdminRolesLoad("cl", "cl-admin-roles-list");
+  }
 }
 
 // 2026-07-16: Admin ChL natijasini BEKOR QILADI (pending, — : —).

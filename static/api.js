@@ -1141,6 +1141,71 @@ async function reassignLoadList(url, boxId, labelFn) {
 }
 
 // Tanlangan ishtirokchini yangi Telegram ID'ga bog'laydi (POST url).
+// 2026-07-22: Umumiy scope-admin roles yordamchisi (ChL/Div uchun — talab 2).
+// Liga chiplari YO'Q (WC naqshi): faqat ro'yxat + qo'shish + o'chirish.
+// listId — <div> ro'yxati; inputId — Telegram ID input; scope — 'cl'/'division'.
+async function scopeAdminRolesLoad(scope, listId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  try {
+    const data = await apiFetch(`/admin/roles/${scope}`);
+    const admins = data.admins || [];
+    if (admins.length === 0) {
+      list.innerHTML = `<div class="empty-state">${APP.t.admin_no_admins || "Tayinlangan admin yo'q"}</div>`;
+      return;
+    }
+    list.innerHTML = admins.map(a => {
+      const name = a.username ? `@${escHtml(a.username)}` : (a.nickname ? escHtml(a.nickname) : `ID ${a.telegram_id}`);
+      return `
+        <div class="admin-player-item">
+          <div class="admin-player-info">
+            ${name}
+            <div class="admin-player-league">ID ${a.telegram_id}</div>
+          </div>
+          <button class="admin-remove-btn" data-tid="${a.telegram_id}">${escHtml(APP.t.admin_remove_role || "O'chirish")}</button>
+        </div>`;
+    }).join("");
+    list.querySelectorAll(".admin-remove-btn").forEach(btn => {
+      btn.addEventListener("click", () => scopeAdminRoleRemove(scope, parseInt(btn.dataset.tid), listId));
+    });
+  } catch (_) {
+    list.innerHTML = `<div class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</div>`;
+  }
+}
+
+async function scopeAdminRoleAdd(scope, inputId, listId) {
+  const t = APP.t;
+  const tid = parseInt(document.getElementById(inputId)?.value || 0);
+  if (!tid) { showToast("❌ " + (t.admin_id_invalid || "Telegram ID ni kiriting")); return; }
+  try {
+    await apiFetch(`/admin/roles/${scope}?telegram_id=${tid}`, { method: "POST" });
+    showToast(t.admin_added || "✅ Admin qo'shildi");
+    const inp = document.getElementById(inputId);
+    if (inp) inp.value = "";
+    await scopeAdminRolesLoad(scope, listId);
+  } catch (e) {
+    const msg = {
+      already_admin:    t.admin_already  || "Bu odam allaqachon admin",
+      cannot_add_super: t.admin_is_super || "Bu odam allaqachon bosh admin",
+      invalid_scope:    "noto'g'ri scope",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+  }
+}
+
+async function scopeAdminRoleRemove(scope, telegramId, listId) {
+  const t = APP.t;
+  if (!window.confirm(t.admin_remove_confirm || "Bu adminni o'chirasizmi?")) return;
+  try {
+    await apiFetch(`/admin/roles/${scope}/${telegramId}`, { method: "DELETE" });
+    showToast(t.admin_removed || "✅ Admin o'chirildi");
+    await scopeAdminRolesLoad(scope, listId);
+  } catch (e) {
+    showToast("❌ " + e.message);
+  }
+}
+
+
 async function reassignSubmit(url, boxId, tgInputId, btn, onDone) {
   const sel = document.getElementById(`${boxId}-select`);
   const oldUid = sel ? Number(sel.value || 0) : 0;
