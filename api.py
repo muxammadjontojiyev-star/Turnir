@@ -1433,6 +1433,27 @@ def wc_participants_all(admin: dict = Depends(get_authenticated_super_admin)):
     return {"participants": wc_list_participants()}
 
 
+@app.post("/wc/admin/playoff/swap")
+def wc_admin_playoff_swap(
+    match_a_id: int = Body(..., embed=True),
+    slot_a: int = Body(..., embed=True),
+    match_b_id: int = Body(..., embed=True),
+    slot_b: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    2026-07-22: WC play-off setkada ikki pozitsiyadagi ishtirokchini O'ZARO
+    almashtiradi (1/16, 1/8, ... aralash). Faqat bosh admin. Faqat natija
+    kiritilmagan (pending, hisobsiz) pozitsiyalar — natija bor bo'lsa admin
+    avval bekor qilishi kerak (has_result xatosi). slot: 1=player1, 2=player2.
+    """
+    from wc_playoff_swap import wc_playoff_swap_positions
+    success, result = wc_playoff_swap_positions(match_a_id, slot_a, match_b_id, slot_b)
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
 @app.post("/wc/participant/reassign")
 def wc_participant_reassign(
     old_user_id: int = Body(..., embed=True),
