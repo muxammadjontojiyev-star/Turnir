@@ -10,7 +10,8 @@
 //  Global: apiFetch, showToast, escHtml, CL, clLoadThenRender
 // ============================================================
 
-const CL_ADMIN = { isSuper: false, loaded: false, fixId: "", fixInfo: null };
+const CL_ADMIN = { isSuper: false, loaded: false, fixId: "", fixInfo: null,
+                   fixIsPlayoff: false };  // 2026-07-22: play-off checkbox holati (talab 1)
 
 // Nav'da Admin tab ko'rsatish uchun rolni oldindan tekshiradi (bir marta)
 async function clCheckAdmin() {
@@ -121,6 +122,14 @@ async function clLoadAdminPanel() {
   // Match ID orqali tuzatish (liga naqshi)
   const fixId = document.getElementById("cl-fix-match-id");
   if (fixId) fixId.addEventListener("input", (e) => clFixIdChanged(e.target.value));
+
+  // 2026-07-22 (talab 1): "Play-off o'yini" checkbox — o'zgarsa preview qayta so'raladi
+  const fixPo = document.getElementById("cl-fix-is-playoff");
+  if (fixPo) fixPo.addEventListener("change", (e) => {
+    CL_ADMIN.fixIsPlayoff = e.target.checked;
+    if (CL_ADMIN.fixId) clFixIdChanged(CL_ADMIN.fixId);  // yangi jadvaldan info olib preview yangilanadi
+    else clRerenderPanel();
+  });
   const fixSubmit = document.getElementById("cl-fix-submit");
   if (fixSubmit) fixSubmit.addEventListener("click", () => void clAdminFixSubmit(fixSubmit));
 
@@ -137,8 +146,9 @@ async function clAdminCancelResult(btn) {
   if (!id) { showToast("Match ID kiriting"); return; }
   if (!confirm(t.admin_reset_confirm || CT("cla_cancel_ask"))) return;
   btn.disabled = true;
+  const po = CL_ADMIN.fixIsPlayoff ? 1 : 0;
   try {
-    await apiFetch(`/cl/admin/match/cancel?match_id=${id}`, { method: "POST" });
+    await apiFetch(`/cl/admin/match/cancel?match_id=${id}&is_playoff=${po}`, { method: "POST" });
     showToast(t.admin_reset_done || CT("cla_cancelled"));
     CL_ADMIN.fixId = "";
     CL_ADMIN.fixInfo = null;
@@ -161,9 +171,13 @@ function clAdminFixForm() {
     const p2 = info.player2_username ? "@" + info.player2_username : (info.player2_name || "—");
     const cur = (info.score1 != null) ? `${info.score1} : ${info.score2}` : "— : —";
     const badge = (club) => (typeof clClubBadge === "function") ? clClubBadge(club, 30) : "";
+    // 2026-07-22 (talab 1): play-off o'yinida bosqich+leg, guruhda tur ko'rsatiladi
+    const meta = info.is_playoff
+      ? `#${info.id} · ${escHtml(info.round_label || info.round || "Play-off")}${info.round !== "final" ? " · " + info.leg + "-o'yin" : ""}`
+      : `#${info.id} · Guruh ${info.group_number} · ${info.matchday}-tur`;
     preview = `
       <div class="card" style="margin:8px 0;padding:10px 12px">
-        <div style="opacity:.65;font-size:11.5px">#${info.id} · Guruh ${info.group_number} · ${info.matchday}-tur</div>
+        <div style="opacity:.65;font-size:11.5px">${meta}</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px">
           ${badge(info.player1_club)}
           <span style="font-weight:800;white-space:nowrap;font-size:16px">${cur}</span>
@@ -179,6 +193,10 @@ function clAdminFixForm() {
     <div class="section-label" style="margin-top:16px">MATCH ID ORQALI TUZATISH</div>
     <input id="cl-fix-match-id" class="modal-input" type="number" min="1"
            placeholder="Match ID" value="${CL_ADMIN.fixId || ""}" style="margin-bottom:6px" />
+    <label class="admin-fix-playoff-check" style="display:flex;align-items:center;gap:8px;margin:2px 2px 8px;font-size:13.5px">
+      <input id="cl-fix-is-playoff" type="checkbox" ${CL_ADMIN.fixIsPlayoff ? "checked" : ""} />
+      <span>${escHtml((APP.t && APP.t.admin_fix_is_playoff) || "Play-off o'yini")}</span>
+    </label>
     ${preview}
     <div class="score-input-row" style="display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0">
       <input id="cl-fix-score1" class="score-input" type="number" min="0" max="99"
@@ -202,8 +220,13 @@ function clFixIdChanged(raw) {
   const id = parseInt(raw, 10);
   if (!id || id <= 0) { CL_ADMIN.fixInfo = null; clRerenderPanel(); return; }
   _clFixTimer = setTimeout(async () => {
+    const po = CL_ADMIN.fixIsPlayoff ? 1 : 0;
     try {
-      CL_ADMIN.fixInfo = await apiFetch(`/cl/admin/match/${id}/info`);
+      CL_ADMIN.fixInfo = await apiFetch(`/cl/admin/match/${id}/info?is_playoff=${po}`);
+      // Serverdan HAQIQIY is_playoff kelsa (fallback ishlagan bo'lsa) — checkbox'ni to'g'rilaymiz
+      if (CL_ADMIN.fixInfo && typeof CL_ADMIN.fixInfo.is_playoff !== "undefined") {
+        CL_ADMIN.fixIsPlayoff = !!CL_ADMIN.fixInfo.is_playoff;
+      }
     } catch (_) {
       CL_ADMIN.fixInfo = "notfound";
     }
@@ -223,12 +246,13 @@ async function clAdminFixSubmit(btn) {
   const id = parseInt(CL_ADMIN.fixId, 10);
   const s1 = Number(document.getElementById("cl-fix-score1").value || 0);
   const s2 = Number(document.getElementById("cl-fix-score2").value || 0);
+  const po = CL_ADMIN.fixIsPlayoff ? 1 : 0;
   if (!id) { showToast("Match ID kiriting"); return; }
   if (!confirm(`#${id} natijasi ${s1}:${s2} qilib tuzatilsinmi?`)) return;
   btn.disabled = true;
   btn.textContent = "Tuzatilmoqda…";
   try {
-    await apiFetch(`/cl/admin/match/set-result?match_id=${id}&score1=${s1}&score2=${s2}`,
+    await apiFetch(`/cl/admin/match/set-result?match_id=${id}&score1=${s1}&score2=${s2}&is_playoff=${po}`,
                    { method: "POST" });
     showToast(CT("cla_result_fixed"));
     CL_ADMIN.fixId = "";
@@ -237,7 +261,12 @@ async function clAdminFixSubmit(btn) {
   } catch (e) {
     btn.disabled = false;
     btn.textContent = "Tuzatish";
-    const msg = { match_not_found: CT("cla_match_404_low") }[e.message] || e.message;
+    // Play-off maxsus xatolari (talab 1) — server sabablari
+    const msg = {
+      match_not_found: CT("cla_match_404_low"),
+      draw_not_allowed: "final durang bo'lmaydi",
+      aggregate_draw_not_allowed: "ikki o'yin agregati teng bo'lib qoladi (g'olib aniq bo'lsin)",
+    }[e.message] || e.message;
     showToast(CT("cl_error") + msg);
   }
 }

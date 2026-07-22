@@ -33,10 +33,27 @@ async function clpoLoadBracket() {
     return;
   }
   box.innerHTML = clpoRenderBracket(CLPO.bracket);
+  clpoBindBracketSides(box);
   // 2026-07-21: kataklarni bog'lovchi chiziqlar (WC wcDrawBracketLines naqshi).
   // Layout o'lchamlari tayyor bo'lishi uchun keyingi kadr + zaxira kechikish.
   requestAnimationFrame(clpoDrawBracketLines);
   setTimeout(clpoDrawBracketLines, 250);
+}
+
+// 2026-07-22 (talab 2): setkadagi ishtirokchi tomoniga bosilganda profil ochiladi
+// (cl_player.js clOpenPlayerFromBracket — reytingda topilsa to'liq, topilmasa minimal).
+function clpoBindBracketSides(box) {
+  box.querySelectorAll(".clpo-side--clickable").forEach(el => {
+    el.addEventListener("click", () => {
+      const uid = parseInt(el.dataset.clpoPlayer, 10);
+      if (!uid || typeof clOpenPlayerFromBracket !== "function") return;
+      clOpenPlayerFromBracket(uid, {
+        nickname: el.dataset.clpoNick || "",
+        username: el.dataset.clpoUser || "",
+        club_name: el.dataset.clpoClub || "",
+      });
+    });
+  });
 }
 
 // Juftlikning bir tomoni (klub + @user + 2 o'yin hisobi + agregat)
@@ -57,7 +74,17 @@ function clpoTieSide(tie, side, mirror) {
   const inner = mirror
     ? `<span class="wc-bracket-score">${aggTxt || scores}</span><span class="wc-bracket-name">${escHtml(name)}</span><span class="wc-bracket-flag">${badge}</span>`
     : `<span class="wc-bracket-flag">${badge}</span><span class="wc-bracket-name">${escHtml(name)}</span><span class="wc-bracket-score">${aggTxt || scores}</span>`;
-  return `<div class="wc-bracket-side ${won ? "winner" : ""}" title="O'yinlar: ${scores}">${inner}</div>`;
+  // 2026-07-22 (talab 2): ishtirokchi aniq bo'lsa — bosilganda profili ochiladi.
+  // Bo'sh tomon (hali aniqlanmagan) bosilmaydi; ma'lumot data-atributlarda.
+  const cls = "wc-bracket-side" + (won ? " winner" : "")
+    + (p.user_id ? " clpo-side--clickable" : "");
+  const dataAttrs = p.user_id
+    ? ` data-clpo-player="${p.user_id}"`
+      + ` data-clpo-nick="${escHtml(p.nickname || "")}"`
+      + ` data-clpo-user="${escHtml(p.username || "")}"`
+      + ` data-clpo-club="${escHtml(p.club_name || "")}"`
+    : "";
+  return `<div class="${cls}"${dataAttrs} title="O'yinlar: ${scores}">${inner}</div>`;
 }
 
 function clpoTieCard(tie, side) {

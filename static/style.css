@@ -2477,6 +2477,9 @@ table { border-collapse: collapse; width: 100%; }
   background: rgba(0, 230, 195, 0.12);
 }
 .wc-bracket-side.winner .wc-bracket-name { color: var(--cyan); font-weight: 700; }
+/* 2026-07-22 (talab 2): setkadagi ishtirokchi bosilib profili ochiladi */
+.wc-bracket-side.clpo-side--clickable { cursor: pointer; }
+.wc-bracket-side.clpo-side--clickable:active { background: rgba(120, 130, 255, 0.14); }
 .wc-bracket-flag { font-size: 14px; }
 .wc-bracket-name {
   flex: 1;
