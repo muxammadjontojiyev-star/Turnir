@@ -236,6 +236,10 @@ def cl_po_backfill_second_legs(season: int | None = None) -> int:
         raise
     finally:
         conn.close()
+
+
+def _po_rows(cursor, season: int) -> list[dict]:
+    """Barcha play-off qatorlari o'yinchi nomi/klubi bilan (SELECT * emas — qoida #32)."""
     cursor.execute(
         """
         SELECT m.id, m.round, m.position, m.leg, m.player1_id, m.player2_id,
