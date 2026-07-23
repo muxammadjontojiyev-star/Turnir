@@ -371,6 +371,12 @@ def _po_user_matches(user_id: int, season: int | None = None
         m["other_leg_score2"] = other["score2"] if other else None
         m["other_leg_status"] = other["status"] if other else None
         matches.append(m)
+
+    # 2026-07-23: profil sahifasida BOSQICH TARTIBIDA ko'rinsin (1/8 → 1/4 → 1/2 → Final),
+    # har bosqich ichida 1-o'yin → 2-o'yin. _po_rows faqat position/leg bo'yicha
+    # saralaydi (setka uchun kerak), shuning uchun bosqichlar aralashib ketardi.
+    _round_idx = {r: i for i, r in enumerate(CL_PO_ROUNDS)}
+    matches.sort(key=lambda m: (_round_idx.get(m["round"], 99), m["leg"]))
     return True, matches
 
 
