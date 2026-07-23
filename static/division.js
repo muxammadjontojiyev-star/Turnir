@@ -1195,6 +1195,9 @@ function divFocusFixId() {
 // 2026-07-16: Ishtirokchini almashtirish formasi (faqat bosh admin; backend
 // super-admin bilan himoyalangan). Qur'a/juftlashga ta'sir qilmaydi.
 function divAdminReassignForm() {
+  // 2026-07-22: akkount almashtirish — backend super_admin talab qiladi,
+  // shuning uchun tayinlangan div adminga ko'rsatilmaydi (403 chalkashligi bo'lmasin)
+  if (!DIV.status?.is_super) return "";
   return `
     <div class="section-label">ISHTIROKCHINI ALMASHTIRISH</div>
     <div class="admin-fix-form" style="margin-bottom:12px">
@@ -1237,6 +1240,8 @@ async function divAdminBanSubmit(btn) {
 // 2026-07-17: Kunlik ban formasi ("Bugungi/Barcha kunlar" tablari o'rniga).
 // Admin ishtirokchini tanlab, istalgancha kunlik ban beradi (faqat bosh admin).
 function divAdminBanForm() {
+  // 2026-07-22: ban berish — backend super_admin talab qiladi (bosh admin ishi)
+  if (!DIV.status?.is_super) return "";
   return `
     <div class="section-label">KUNLIK BAN BERISH</div>
     <div class="admin-fix-form">

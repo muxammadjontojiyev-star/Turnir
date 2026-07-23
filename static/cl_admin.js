@@ -57,9 +57,12 @@ async function clLoadAdminPanel() {
   const st = CL.state || {};
   const started = !!st.started;
   panel.classList.remove("hidden");
+  // 2026-07-22: qur'a / kalendar / akkount almashtirish / o'yin+play-off boshlash —
+  // FAQAT bosh admin. Tayinlangan ChL admin faqat natija tuzatishni ko'radi.
   panel.innerHTML = `
     <div class="card" style="border-color:rgba(245,197,66,.45)">
       <b>${ICON.get("shield", 16)} ChL admin paneli</b>
+      ${CL_ADMIN.isSuper ? `
       <div style="font-size:12.5px;opacity:.75;margin:4px 0 10px">
         ${drawn
           ? CT("cla_draw_done")
@@ -98,6 +101,7 @@ async function clLoadAdminPanel() {
         (16 o'yinchi) 1/8 setkasiga joylanadi. Har juftlik uy+mehmon, final — 1 o'yin.
       </div>
       <button class="btn btn--primary" id="cl-admin-po-start">${CT("cla_playoff_start")}</button>
+      ` : ""}
 
       ${drawn ? clAdminFixForm() : ""}
 

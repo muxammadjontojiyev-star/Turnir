@@ -180,7 +180,8 @@ function renderChampionsLeague() {
   else if (CL.section === "admin") body = `<div id="cl-admin-page"></div>`;
   else body = clRenderProfile();
 
-  const adminTab = (typeof CL_ADMIN !== "undefined" && CL_ADMIN.isSuper) ? `
+  // 2026-07-22: Admin tab — bosh admin YOKI tayinlangan ChL admin (isCl) ko'radi
+  const adminTab = (typeof CL_ADMIN !== "undefined" && (CL_ADMIN.isSuper || CL_ADMIN.isCl)) ? `
       <button class="wc-nav-item ${CL.section === "admin" ? "active" : ""}" data-cl-tab="admin">
         <span class="nav-icon" data-icon="shield"></span>
         <span class="nav-label">${CT("cl_nav_admin")}</span>
