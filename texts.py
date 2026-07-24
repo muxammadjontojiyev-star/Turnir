@@ -205,9 +205,9 @@ TEXTS = {
         LANGUAGE_EN: "🎲 Division draw: your opponent today is {opponent}. Play the match and submit the result by 23:30!",
     },
     "notify_div_reg_open": {
-        LANGUAGE_UZ: "📝 Divizionda ro'yxatdan o'tish OCHILDI! Har kuni 17:00–19:00 (Toshkent) oralig'ida ro'yxatdan o'tishingiz mumkin. Qur'a 19:00 dan keyin o'tkaziladi. Qatnashish uchun ilovaga kiring! ⚽",
-        LANGUAGE_RU: "📝 Регистрация в дивизионе ОТКРЫТА! Записаться можно каждый день с 17:00 до 19:00 (Ташкент). Жеребьёвка — после 19:00. Заходите в приложение, чтобы участвовать! ⚽",
-        LANGUAGE_EN: "📝 Division registration is OPEN! You can sign up every day between 17:00–19:00 (Tashkent). The draw takes place after 19:00. Open the app to join! ⚽",
+        LANGUAGE_UZ: "📝 Divizionda ro'yxatdan o'tish OCHILDI! Har kuni 17:00–20:00 (Toshkent) oralig'ida ro'yxatdan o'tishingiz mumkin. Qur'a 20:00 dan keyin o'tkaziladi. Qatnashish uchun ilovaga kiring! ⚽",
+        LANGUAGE_RU: "📝 Регистрация в дивизионе ОТКРЫТА! Записаться можно каждый день с 17:00 до 20:00 (Ташкент). Жеребьёвка — после 20:00. Заходите в приложение, чтобы участвовать! ⚽",
+        LANGUAGE_EN: "📝 Division registration is OPEN! You can sign up every day between 17:00–20:00 (Tashkent). The draw takes place after 20:00. Open the app to join! ⚽",
     },
     "notify_div_ban": {
         LANGUAGE_UZ: "🚫 Siz Divizionda qoidabuzarlik uchun {days} kunlik BAN oldingiz. {until} sanasigacha (shu kun ham kiradi) Divizion ro'yxatidan o'ta olmaysiz.",
@@ -221,7 +221,7 @@ TEXTS = {
     },
     "div_rules_list": {
         LANGUAGE_UZ: [
-            "Har kuni **17:00–19:00** (Toshkent) oralig'ida ro'yxatdan o'tiladi.",
+            "Har kuni **17:00–20:00** (Toshkent) oralig'ida ro'yxatdan o'tiladi.",
             "Ro'yxat yopilgach bot ishtirokchilarni **qur'a** orqali juftlaydi.",
             "Raqibingiz **profil** bo'limida va telegram xabarida ko'rinadi.",
             "O'yin natijasini **23:30** gacha kiritib, raqib tasdiqlashi kerak.",
@@ -231,7 +231,7 @@ TEXTS = {
             "Ko'p achko to'plagan ishtirokchi **reyting**da yuqoriga ko'tariladi.",
         ],
         LANGUAGE_RU: [
-            "Каждый день регистрация с **17:00 до 19:00** (Ташкент).",
+            "Каждый день регистрация с **17:00 до 20:00** (Ташкент).",
             "После закрытия регистрации бот проводит **жеребьёвку** пар.",
             "Соперник виден в разделе **профиль** и в сообщении telegram.",
             "Результат нужно внести до **23:30**, соперник подтверждает.",
@@ -241,7 +241,7 @@ TEXTS = {
             "Набравший больше очков поднимается выше в **рейтинге**.",
         ],
         LANGUAGE_EN: [
-            "Registration is open daily from **17:00 to 19:00** (Tashkent).",
+            "Registration is open daily from **17:00 to 20:00** (Tashkent).",
             "After registration closes, the bot **pairs** players by draw.",
             "Your opponent appears in the **profile** tab and a telegram message.",
             "Submit the result by **23:30**; the opponent must confirm it.",

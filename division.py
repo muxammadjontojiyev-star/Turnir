@@ -2,8 +2,8 @@
 division.py — Divizion (3-tab) asosiy mantig'i.
 
 Kunlik tsikl (Toshkent vaqti, _tournament_now):
-  17:00–19:00  ro'yxatdan o'tish oynasi (div_register)
-  19:00+       qur'a: ro'yxatdan o'tganlar tasodifiy juftlanadi (div_pair_day);
+  17:00–20:00  ro'yxatdan o'tish oynasi (div_register)
+  20:00+       qur'a: ro'yxatdan o'tganlar tasodifiy juftlanadi (div_pair_day);
                toq qolgan ishtirokchiga AVTOMATIK G'ALABA (player2=NULL, confirmed).
                Har bir ishtirokchiga qur'a natijasi telegram orqali yuboriladi
                (scheduler chaqiradi, notify.py).

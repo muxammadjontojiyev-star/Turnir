@@ -1920,7 +1920,7 @@ def cl_draw_endpoint(admin: dict = Depends(get_authenticated_super_admin)):
 @app.get("/div/status")
 def div_status(user: dict = Depends(get_authenticated_user)):
     """
-    Divizion asosiy holati: ro'yxat oynasi (17:00-19:00), bugungi ro'yxat,
+    Divizion asosiy holati: ro'yxat oynasi (17:00-20:00), bugungi ro'yxat,
     mening bugungi o'yinim (qur'adan keyin — raqib useri/username bilan).
     """
     from division import div_registration_window, div_day_registrations, div_get_my_match
@@ -1950,7 +1950,7 @@ def div_status(user: dict = Depends(get_authenticated_user)):
 
 @app.post("/div/register")
 def div_register_endpoint(user: dict = Depends(get_authenticated_user)):
-    """Bugungi Divizion ro'yxatiga yozilish (faqat 17:00-19:00)."""
+    """Bugungi Divizion ro'yxatiga yozilish (faqat 17:00-20:00)."""
     from division import div_register
     success, reason = div_register(user["id"], user["telegram_id"], user["nickname"])
     if not success:

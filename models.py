@@ -228,7 +228,7 @@ def init_db():
     )
 
     # === DIVIZION (3-tab) ===
-    # Har kuni 17:00-19:00 (Toshkent) ro'yxat, 19:00 dan keyin qur'a (juftlash),
+    # Har kuni 17:00-20:00 (Toshkent) ro'yxat, 20:00 dan keyin qur'a (juftlash),
     # deadline 23:30. Achko: g'alaba +15, durang +10, mag'lubiyat -10.
     # div_registrations: kunlik ro'yxat (day = 'YYYY-MM-DD').
     cursor.execute("""

@@ -177,7 +177,7 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: play-off deadline blokida xato: %s", exc)
 
-    # === DIVIZION: 19:00 dan keyin qur'a + telegram xabar; 23:30 dan keyin yopish ===
+    # === DIVIZION: 20:00 dan keyin qur'a + telegram xabar; 23:30 dan keyin yopish ===
     try:
         await _division_tick()
     except Exception as exc:
@@ -187,7 +187,7 @@ async def _check_and_notify_once() -> None:
 async def _division_tick() -> None:
     """
     Divizion kunlik tsikli (idempotent — div_state belgilariga tayanadi):
-      - now >= 19:00 va qur'a qilinmagan bo'lsa: div_pair_day() + har ishtirokchiga
+      - now >= 20:00 va qur'a qilinmagan bo'lsa: div_pair_day() + har ishtirokchiga
         qur'a natijasi (raqib nomi yoki avto-g'alaba) telegram orqali yuboriladi.
       - now >= 23:30 bo'lsa: div_auto_resolve_day() (0:0 durang / avto tasdiq).
     """
@@ -228,7 +228,7 @@ async def _division_tick() -> None:
             logger.info("Scheduler: Divizion 17:00 e'loni yuborildi: %d/%d.",
                         sent, len(recipients))
 
-    # 1) Qur'a — ro'yxat yopilgach (19:00+)
+    # 1) Qur'a — ro'yxat yopilgach (20:00+)
     if now.hour >= DIV_REG_END_HOUR:
         result = div_pair_day()
         if result:
