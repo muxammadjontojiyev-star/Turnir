@@ -23,14 +23,14 @@ const DIV_TEXTS = {
     div_season_left:       "Kun qoldi",
 
     // --- Asosiy sahifa (ro'yxat) ---
-    div_reg_open_title:    "Ro'yxat ochiq (17:00–19:00)",
-    div_reg_open_hint:     "Qur'a 19:00 dan keyin, o'yin natijasi 23:30 gacha kiritiladi.",
+    div_reg_open_title:    "Ro'yxat ochiq (17:00–20:00)",
+    div_reg_open_hint:     "Qur'a 20:00 dan keyin, o'yin natijasi 23:30 gacha kiritiladi.",
     div_reg_button:        "📝 Ro'yxatdan o'tish",
-    div_reg_done:          "✅ Siz bugungi ro'yxatdasiz. Qur'a soat 19:00 dan keyin o'tkaziladi va natija telegram orqali yuboriladi.",
+    div_reg_done:          "✅ Siz bugungi ro'yxatdasiz. Qur'a soat 20:00 dan keyin o'tkaziladi va natija telegram orqali yuboriladi.",
     div_reg_empty:         "Bugun hali hech kim ro'yxatdan o'tmagan.",
     div_reg_today_list:    "Bugungi ishtirokchilar",
     div_participant:       "Ishtirokchi",
-    div_reg_closed:        "⏳ Ro'yxat yopiq. Har kuni <b class=\"div-hero-accent\">17:00–19:00</b> (Toshkent) oralig'ida ochiladi.",
+    div_reg_closed:        "⏳ Ro'yxat yopiq. Har kuni <b class=\"div-hero-accent\">17:00–20:00</b> (Toshkent) oralig'ida ochiladi.",
     div_now:               "Hozir",
 
     // --- Reyting ---
@@ -62,7 +62,7 @@ const DIV_TEXTS = {
 
     // --- Toastlar ---
     div_toast_registered:  "Ro'yxatdan o'tdingiz ✅",
-    div_toast_reg_closed:  "Ro'yxat vaqti tugagan (17:00–19:00)",
+    div_toast_reg_closed:  "Ro'yxat vaqti tugagan (17:00–20:00)",
     div_toast_banned:      "🚫 Siz ban ostidasiz — ro'yxatdan o'ta olmaysiz. Ban kunlari kalendaringizda qizil ko'rsatilgan.",
     div_toast_result_sent: "Natija kiritildi ✅",
     div_toast_confirmed:   "Tasdiqlandi ✅",
@@ -114,14 +114,14 @@ const DIV_TEXTS = {
     div_season_elapsed:    "Дней прошло",
     div_season_left:       "Дней осталось",
 
-    div_reg_open_title:    "Регистрация открыта (17:00–19:00)",
-    div_reg_open_hint:     "Жеребьёвка после 19:00, результат вводится до 23:30.",
+    div_reg_open_title:    "Регистрация открыта (17:00–20:00)",
+    div_reg_open_hint:     "Жеребьёвка после 20:00, результат вводится до 23:30.",
     div_reg_button:        "📝 Зарегистрироваться",
-    div_reg_done:          "✅ Вы в списке на сегодня. Жеребьёвка пройдёт после 19:00, результат придёт в telegram.",
+    div_reg_done:          "✅ Вы в списке на сегодня. Жеребьёвка пройдёт после 20:00, результат придёт в telegram.",
     div_reg_empty:         "Сегодня пока никто не зарегистрировался.",
     div_reg_today_list:    "Участники сегодня",
     div_participant:       "Участник",
-    div_reg_closed:        "⏳ Регистрация закрыта. Открывается ежедневно с <b class=\"div-hero-accent\">17:00 до 19:00</b> (Ташкент).",
+    div_reg_closed:        "⏳ Регистрация закрыта. Открывается ежедневно с <b class=\"div-hero-accent\">17:00 до 20:00</b> (Ташкент).",
     div_now:               "Сейчас",
 
     div_tab_rating:        "🏆 Рейтинг",
@@ -150,7 +150,7 @@ const DIV_TEXTS = {
     div_loading:           "Загрузка…",
 
     div_toast_registered:  "Вы зарегистрированы ✅",
-    div_toast_reg_closed:  "Время регистрации истекло (17:00–19:00)",
+    div_toast_reg_closed:  "Время регистрации истекло (17:00–20:00)",
     div_toast_banned:      "🚫 Вы в бане — регистрация недоступна. Дни бана отмечены красным в календаре.",
     div_toast_result_sent: "Результат отправлен ✅",
     div_toast_confirmed:   "Подтверждено ✅",
@@ -201,14 +201,14 @@ const DIV_TEXTS = {
     div_season_elapsed:    "Days in",
     div_season_left:       "Days left",
 
-    div_reg_open_title:    "Registration open (17:00–19:00)",
-    div_reg_open_hint:     "Draw after 19:00, results must be submitted by 23:30.",
+    div_reg_open_title:    "Registration open (17:00–20:00)",
+    div_reg_open_hint:     "Draw after 20:00, results must be submitted by 23:30.",
     div_reg_button:        "📝 Register",
-    div_reg_done:          "✅ You are on today's list. The draw is held after 19:00 and the result is sent via telegram.",
+    div_reg_done:          "✅ You are on today's list. The draw is held after 20:00 and the result is sent via telegram.",
     div_reg_empty:         "Nobody has registered today yet.",
     div_reg_today_list:    "Today's players",
     div_participant:       "Player",
-    div_reg_closed:        "⏳ Registration is closed. It opens daily from <b class=\"div-hero-accent\">17:00 to 19:00</b> (Tashkent).",
+    div_reg_closed:        "⏳ Registration is closed. It opens daily from <b class=\"div-hero-accent\">17:00 to 20:00</b> (Tashkent).",
     div_now:               "Now",
 
     div_tab_rating:        "🏆 Rating",
@@ -237,7 +237,7 @@ const DIV_TEXTS = {
     div_loading:           "Loading…",
 
     div_toast_registered:  "You are registered ✅",
-    div_toast_reg_closed:  "Registration time is over (17:00–19:00)",
+    div_toast_reg_closed:  "Registration time is over (17:00–20:00)",
     div_toast_banned:      "🚫 You are banned — registration is unavailable. Ban days are marked red in your calendar.",
     div_toast_result_sent: "Result submitted ✅",
     div_toast_confirmed:   "Confirmed ✅",

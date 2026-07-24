@@ -1739,14 +1739,14 @@ function renderAdminPlayers(players) {
     return;
   }
 
-  // O'yinchilarni liga bo'yicha guruhlaymiz
+  // O'yinchilarni liga bo'yicha guruhlaymiz.
+  // 2026-07-23 (talab 2): "Ro'yxatdan o'tilmagan" tabi OLIB TASHLANDI — u yuzlab
+  // (184+) ligaga yozilmagan foydalanuvchini DOM'ga chizardi, ortiqcha yuk edi.
+  // Endi faqat ligaga yozilgan o'yinchilar guruhlanadi.
   const groups = {};            // league_id -> [players]
-  const noLeague = [];          // ro'yxatdan o'tmaganlar
   players.forEach(p => {
     if (p.league_id) {
       (groups[p.league_id] = groups[p.league_id] || []).push(p);
-    } else {
-      noLeague.push(p);
     }
   });
 
@@ -1786,33 +1786,25 @@ function renderAdminPlayers(players) {
     return na.localeCompare(nb);
   });
 
-  // Tanlangan filter (birinchi marta — birinchi liga, yoki avval tanlangani)
-  const validFilters = [...leagueIds.map(String), ...(noLeague.length ? ["none"] : [])];
+  // Tanlangan filter (birinchi marta — birinchi liga, yoki avval tanlangani).
+  // 2026-07-23: "none" (ro'yxatdan o'tilmagan) filtri olib tashlandi.
+  const validFilters = leagueIds.map(String);
   if (!APP.adminFilter || !validFilters.includes(String(APP.adminFilter))) {
     APP.adminFilter = validFilters[0];
   }
   const filter = String(APP.adminFilter);
 
-  // Tab tugmalari (har liga + ro'yxatdan o'tmaganlar)
+  // Tab tugmalari (faqat ligalar)
   let tabs = `<div class="admin-filter">`;
   leagueIds.forEach(lid => {
     const name = (APP.leagues || []).find(l => l.id === lid)?.name || `Liga #${lid}`;
     const active = filter === String(lid) ? " active" : "";
     tabs += `<button class="admin-filter-btn${active}" data-filter="${lid}">${escHtml(name)} <span class="admin-league-count">${groups[lid].length}</span></button>`;
   });
-  if (noLeague.length > 0) {
-    const active = filter === "none" ? " active" : "";
-    tabs += `<button class="admin-filter-btn${active}" data-filter="none">${escHtml(t.not_registered || "Ro'yxatdan o'tilmagan")} <span class="admin-league-count">${noLeague.length}</span></button>`;
-  }
   tabs += `</div>`;
 
   // Faqat tanlangan ligadagi o'yinchilar
-  let rowsHtml = "";
-  if (filter === "none") {
-    rowsHtml = noLeague.map(renderRow).join("");
-  } else {
-    rowsHtml = (groups[Number(filter)] || []).map(renderRow).join("");
-  }
+  const rowsHtml = (groups[Number(filter)] || []).map(renderRow).join("");
 
   list.innerHTML = tabs + `<div class="admin-filter-rows">${rowsHtml}</div>`;
 

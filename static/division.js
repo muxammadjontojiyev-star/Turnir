@@ -301,7 +301,7 @@ function divRenderHome() {
   if (!s) return `<div class="card">${DT("div_load_failed")}</div>`;
   const win = s.window || {};
 
-  // OYNA OCHIQ (17:00–19:00): ro'yxat tugmasi + bugungi ishtirokchilar ro'yxati
+  // OYNA OCHIQ (17:00–20:00): ro'yxat tugmasi + bugungi ishtirokchilar ro'yxati
   if (win.open) {
     let regBlock;
     if (s.me_registered) {

@@ -109,7 +109,7 @@ const TEXTS = {
     div_season_elapsed: "Kun bo'ldi",
     div_season_left:    "Kun qoldi",
     div_rules_list: [
-      "Har kuni **17:00–19:00** (Toshkent) oralig'ida ro'yxatdan o'tiladi.",
+      "Har kuni **17:00–20:00** (Toshkent) oralig'ida ro'yxatdan o'tiladi.",
       "Ro'yxat yopilgach bot ishtirokchilarni **qur'a** orqali juftlaydi.",
       "Raqibingiz **profil** bo'limida va telegram xabarida ko'rinadi.",
       "O'yin natijasini **23:30** gacha kiritib, raqib tasdiqlashi kerak.",
@@ -412,7 +412,7 @@ const TEXTS = {
     div_season_elapsed: "Дней прошло",
     div_season_left:    "Дней осталось",
     div_rules_list: [
-      "Каждый день регистрация с **17:00 до 19:00** (Ташкент).",
+      "Каждый день регистрация с **17:00 до 20:00** (Ташкент).",
       "После закрытия регистрации бот проводит **жеребьёвку** пар.",
       "Соперник виден в разделе **профиль** и в сообщении telegram.",
       "Результат нужно внести до **23:30**, соперник подтверждает.",
@@ -709,7 +709,7 @@ const TEXTS = {
     div_season_elapsed: "Days in",
     div_season_left:    "Days left",
     div_rules_list: [
-      "Registration is open daily from **17:00 to 19:00** (Tashkent).",
+      "Registration is open daily from **17:00 to 20:00** (Tashkent).",
       "After registration closes, the bot **pairs** players by draw.",
       "Your opponent appears in the **profile** tab and a telegram message.",
       "Submit the result by **23:30**; the opponent must confirm it.",
