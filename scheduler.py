@@ -189,9 +189,10 @@ async def _division_tick() -> None:
     Divizion kunlik tsikli (idempotent — div_state belgilariga tayanadi):
       - now >= 20:00 va qur'a qilinmagan bo'lsa: div_pair_day() + har ishtirokchiga
         qur'a natijasi (raqib nomi yoki avto-g'alaba) telegram orqali yuboriladi.
-      - now >= 23:30 bo'lsa: div_auto_resolve_day() (0:0 durang / avto tasdiq).
+      - now >= 16:00 bo'lsa: OLDINGI kunlarning ochiq o'yinlarini yopadi
+        (div_days_pending_resolve + div_auto_resolve_day — 0:0 durang / avto tasdiq).
     """
-    from division import div_pair_day, div_auto_resolve_day
+    from division import div_pair_day, div_auto_resolve_day, div_days_pending_resolve
     from config import (DIV_REG_START_HOUR, DIV_REG_END_HOUR,
                         DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE)
     from queries_leagues import _tournament_now
@@ -257,12 +258,19 @@ async def _division_tick() -> None:
             logger.info("Scheduler: Divizion qur'asi yuborildi (%d o'yin).",
                         result["matches"])
 
-    # 2) Deadline (23:30) — avtomatik yopish
+    # 2) Deadline (16:00) — OLDINGI kun(lar)ning ochiq o'yinlari yopiladi.
+    # 2026-07-25 TUZATISH: o'yin kun X, 20:00 da qur'a qilinadi va X+1 kuni 16:00
+    # gacha o'ynaladi. Ilgari div_auto_resolve_day(bugun) chaqirilardi — 16:00 dan
+    # keyingi har qanday tekshiruvda (masalan o'sha kuni 23:11) BUGUNGI yangi
+    # qur'a qilingan o'yin darhol yopilardi. Endi faqat bugundan OLDINGI, hali
+    # resolve qilinmagan kunlar yopiladi (bugungi o'yin ertaga 16:00 gacha ochiq).
     if (now.hour, now.minute) >= (DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE):
-        res = div_auto_resolve_day()
-        if not res.get("already") and (res["pending"] or res["awaiting"]):
-            logger.info("Scheduler: Divizion deadline — 0:0 durang: %d, tasdiq: %d.",
-                        res["pending"], res["awaiting"])
+        today = now.date().isoformat()
+        for pd in div_days_pending_resolve(before_day=today):
+            res = div_auto_resolve_day(pd)
+            if not res.get("already") and (res["pending"] or res["awaiting"]):
+                logger.info("Scheduler: Divizion deadline (%s) — 0:0 durang: %d, tasdiq: %d.",
+                            pd, res["pending"], res["awaiting"])
 
 
 async def _scheduler_loop() -> None:

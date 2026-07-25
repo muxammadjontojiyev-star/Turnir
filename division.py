@@ -357,6 +357,36 @@ def div_confirm_or_reject(match_id: int, action: str,
     return True, "ok"
 
 
+def div_days_pending_resolve(before_day: str | None = None) -> list[str]:
+    """
+    2026-07-25: DEADLINE uchun — berilgan kundan OLDINGI, hali yakuniy yopilmagan
+    (resolved_at yo'q) va ochiq o'yini (pending/awaiting) bor kunlar ro'yxati.
+
+    O'yin kun X, 20:00 da qur'a qilinadi va X+1 kuni 16:00 gacha o'ynaladi;
+    shuning uchun deadline BUGUNGI emas, oldingi kunlarga tegishli. Odatda bitta
+    kun (kecha) qaytadi, lekin scheduler bir kun ishlamay qolsa bir nechta bo'lishi
+    mumkin — hammasini yopamiz.
+    """
+    before_day = before_day or _today()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT DISTINCT m.day
+        FROM div_matches m
+        LEFT JOIN div_state s ON s.day = m.day
+        WHERE m.day < ?
+          AND m.status IN ('pending', 'awaiting_confirmation')
+          AND (s.resolved_at IS NULL)
+        ORDER BY m.day ASC
+        """,
+        (before_day,),
+    )
+    days = [r["day"] for r in cursor.fetchall()]
+    conn.close()
+    return days
+
+
 def div_auto_resolve_day(day: str | None = None) -> dict:
     """
     Deadline (23:30) o'tgach: pending -> 0:0 durang, awaiting -> tasdiq.
