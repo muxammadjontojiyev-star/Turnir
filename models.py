@@ -631,10 +631,11 @@ def init_db():
         # Liga/WC mavsumini ajratish: WC uchun alohida mavsum raqami + cooldown vaqti
         "ALTER TABLE season_state ADD COLUMN wc_season INTEGER NOT NULL DEFAULT 1",
         "ALTER TABLE season_state ADD COLUMN wc_last_finalized_at TIMESTAMP",
-        # 2026-07-23: ChL mavsumini yakunlash (cl_cup sovrini) — takror bosishdan
-        # himoya uchun cooldown. ChL ALOHIDA mavsum raqamiga ega emas: u ligalar
-        # bilan bir mavsumda ketadi (season_state.current_season), chunki keyingi
-        # mavsum ishtirokchilari ligalardagi top-6 orqali tanlanadi.
+        # 2026-07-23: ChL mavsumini yakunlash (cl_cup sovrini). ChL O'ZINING alohida
+        # mavsum raqamiga ega — chunki liga mavsumi (current_season) ChL'dan mustaqil
+        # oshadi (liga avval yakunlangan bo'lishi mumkin). cl_season "ChL mavsumini
+        # yakunlash"da oshadi. cl_last_finalized_at — takror bosishdan cooldown.
+        "ALTER TABLE season_state ADD COLUMN cl_season INTEGER NOT NULL DEFAULT 1",
         "ALTER TABLE season_state ADD COLUMN cl_last_finalized_at TIMESTAMP",
         # Sovrin yozuvini liga/WC turiga ajratish (eski yozuvlar quyida to'g'rilanadi)
         "ALTER TABLE season_prizes ADD COLUMN season_kind TEXT NOT NULL DEFAULT 'league'",
@@ -714,9 +715,48 @@ def init_db():
         logger.error("WC mavsum tuzatish xatosi: %s", exc)
         raise
 
-    conn.close()
+    # 2026-07-23: ChL cl_cup sovrini current_season (liga mavsumi) bilan yozilib
+    # qolgan — liga allaqachon 2-mavsumda bo'lgani uchun "Mavsum 2" ko'rinardi.
+    # Aslida bu 1-mavsum ChL chempioni. cl_season endi ALOHIDA hisoblanadi.
+    # Tuzatish: mavjud cl_cup yozuvlarini season_number bo'yicha 1 dan qayta
+    # raqamlash (eng eski = 1-mavsum) va cl_season ni (yakunlangan_soni + 1) qilish.
+    # Guard: cl_season_fix_done = 1 — qayta ishlamaydi (idempotent).
+    try:
+        cursor.execute("ALTER TABLE season_state ADD COLUMN cl_season_fix_done INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+    except sqlite3.OperationalError as exc:
+        if "duplicate column" not in str(exc).lower():
+            logger.error("cl_season_fix_done ustun xatosi: %s", exc)
+            raise
+    try:
+        cursor.execute("SELECT cl_season_fix_done FROM season_state WHERE id = 1")
+        row = cursor.fetchone()
+        if row is not None and not row["cl_season_fix_done"]:
+            # Mavjud cl_cup yozuvlari (eski season_number tartibida) 1,2,3... qilib qayta raqamlanadi
+            cursor.execute(
+                "SELECT id FROM season_prizes WHERE prize_type = 'cl_cup' "
+                "ORDER BY season_number ASC, id ASC"
+            )
+            cl_ids = [r["id"] for r in cursor.fetchall()]
+            for new_num, pid in enumerate(cl_ids, start=1):
+                cursor.execute(
+                    "UPDATE season_prizes SET season_number = ?, season_kind = 'cl' WHERE id = ?",
+                    (new_num, pid),
+                )
+            # Keyingi ChL mavsumi = yakunlanganlar soni + 1
+            cursor.execute(
+                "UPDATE season_state SET cl_season = ?, cl_season_fix_done = 1 WHERE id = 1",
+                (len(cl_ids) + 1,),
+            )
+            conn.commit()
+            if cl_ids:
+                logger.info("ChL mavsum tuzatildi: %s ta cl_cup qayta raqamlandi, cl_season=%s",
+                            len(cl_ids), len(cl_ids) + 1)
+    except sqlite3.OperationalError as exc:
+        logger.error("ChL mavsum tuzatish xatosi: %s", exc)
+        raise
 
-    # Tuzatuvchi migratsiyalar (jadval rebuild + UNIQUE + indekslar) —
+    conn.close()
     # db_migrations.py'da, oddiy ALTER'lardan KEYIN ishlashi shart
     # (is_playoff ustuni allaqachon qo'shilgan bo'ladi).
     from db_migrations import run_migrations  # lokal import — circular oldini olish

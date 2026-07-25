@@ -483,16 +483,18 @@ def finalize_cl_season() -> dict:
 def _finalize_cl_locked(conn, cursor) -> dict:
     cursor.execute("BEGIN IMMEDIATE")
 
-    cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
+    # ChL O'ZINING mavsum raqami (cl_season) — liga mavsumidan (current_season)
+    # mustaqil. Birinchi ChL yakunlashda cl_season=1.
+    cursor.execute("SELECT cl_season FROM season_state WHERE id = 1")
     row = cursor.fetchone()
-    season = row["current_season"] if row else 1
+    season = row["cl_season"] if row else 1
 
     if _cooldown_active(cursor, "cl_last_finalized_at"):
         cursor.execute("ROLLBACK")
         conn.close()
         return {"season": season, "already": True, "counts": {}, "prizes": None}
 
-    # Shu mavsumda ChL yozuvi bormi? (qo'shimcha himoya)
+    # Shu ChL mavsumida yozuv bormi? (qo'shimcha himoya)
     cursor.execute(
         "SELECT 1 FROM season_prizes WHERE season_kind = 'cl' AND season_number = ? LIMIT 1",
         (season,),
@@ -519,8 +521,10 @@ def _finalize_cl_locked(conn, cursor) -> dict:
     )
     counts = {"cl_cup": 1}
 
+    # ChL mavsumi oshadi + cooldown belgilanadi
     cursor.execute(
-        "UPDATE season_state SET cl_last_finalized_at = datetime('now') WHERE id = 1"
+        "UPDATE season_state SET cl_season = cl_season + 1, "
+        "cl_last_finalized_at = datetime('now') WHERE id = 1"
     )
     cursor.execute("COMMIT")
     conn.close()
