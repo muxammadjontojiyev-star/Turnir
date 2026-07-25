@@ -118,6 +118,70 @@ def div_day_registrations(day: str | None = None) -> list[dict]:
     return rows
 
 
+def _div_prev_opponents(cursor, day: str) -> dict:
+    """
+    2026-07-25 (talab 2): berilgan kundan OLDINGI eng yaqin qur'a qilingan kunning
+    juftliklarini {user_id: raqib_user_id} sifatida qaytaradi. Ketma-ket ikki kun
+    bir xil raqib tushmasligini ta'minlash uchun ishlatiladi.
+
+    "Kecha" = kalendar bo'yicha oldingi kun emas, balki div_matches'da mavjud
+    eng oxirgi (day'dan kichik) o'yin kuni — ba'zi kunlar qur'a bo'lmasligi mumkin.
+    """
+    cursor.execute(
+        "SELECT day FROM div_matches WHERE day < ? ORDER BY day DESC LIMIT 1", (day,)
+    )
+    row = cursor.fetchone()
+    if not row:
+        return {}
+    prev_day = row["day"]
+    cursor.execute(
+        "SELECT player1_id, player2_id FROM div_matches "
+        "WHERE day = ? AND player2_id IS NOT NULL",
+        (prev_day,),
+    )
+    opp = {}
+    for r in cursor.fetchall():
+        a, b = r["player1_id"], r["player2_id"]
+        opp[a] = b
+        opp[b] = a
+    return opp
+
+
+def _avoid_repeat_pairs(regs: list, prev_opp: dict) -> None:
+    """
+    2026-07-25 (talab 2): regs ro'yxatini (shuffle qilingan) shunday qayta tartiblaydi
+    ki, ketma-ket juftlar (0-1, 2-3, ...) kechagi bilan bir xil bo'lmasin.
+
+    Har juft (i, i+1) uchun agar ular kecha raqib bo'lgan bo'lsa, regs[i+1] ni
+    ro'yxatdagi BOSHQA ishtirokchi bilan almashtiramiz — shunday tanlaymizki, na
+    yangi juft (a, yangi), na almashtirilgan o'rindagi juft takror bo'lmasin.
+    Joyida (in-place). Imkonsiz bo'lsa (juda kichik ro'yxat) — bor holicha qoladi.
+    """
+    n = len(regs)
+    for i in range(0, n - 1, 2):
+        a = regs[i]["user_id"]
+        b = regs[i + 1]["user_id"]
+        if prev_opp.get(a) != b:
+            continue  # bu juft kecha raqib bo'lmagan — yaxshi
+
+        # regs[i+1] o'rniga qo'yish uchun butun ro'yxatdan nomzod (k != i, i+1)
+        for k in range(n):
+            if k == i or k == i + 1:
+                continue
+            cand = regs[k]["user_id"]
+            if prev_opp.get(a) == cand:
+                continue  # (a, cand) ham kechagi juft — yaramaydi
+            # regs[k] ning joyiga regs[i+1] (b) boradi. k qaysi juftda?
+            k_partner_idx = k - 1 if k % 2 == 1 else k + 1
+            if 0 <= k_partner_idx < n and k_partner_idx not in (i, i + 1):
+                k_partner = regs[k_partner_idx]["user_id"]
+                if prev_opp.get(k_partner) == b:
+                    continue  # (b, k_partner) yangi takror yaratadi — o'tkazamiz
+            regs[i + 1], regs[k] = regs[k], regs[i + 1]
+            break
+        # nomzod topilmasa — imkon yo'q, bor holicha qoladi
+
+
 def div_pair_day(day: str | None = None) -> dict | None:
     """
     Kunlik qur'a: ro'yxatdagilarni tasodifiy juftlaydi, toq qolganga bye (avto
@@ -147,6 +211,13 @@ def div_pair_day(day: str | None = None) -> dict | None:
             return None
 
         random.shuffle(regs)
+
+        # 2026-07-25 (talab 2): ketma-ket ikki kun BIR XIL raqib tushmasin.
+        # Kechagi juftliklarni olib, shuffle'dan keyin takror juftlik chiqsa —
+        # keyingi mos ishtirokchi bilan joyini almashtiramiz (imkon bo'lsa).
+        prev_opp = _div_prev_opponents(cursor, day)
+        _avoid_repeat_pairs(regs, prev_opp)
+
         pairs = []
         created = 0
         i = 0

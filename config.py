@@ -126,8 +126,8 @@ REQUIRE_CHANNEL_MEMBERSHIP = os.getenv("REQUIRE_CHANNEL_MEMBERSHIP", "true").low
 # === DIVIZION (3-tab) sozlamalari ===
 DIV_REG_START_HOUR = 17      # Ro'yxat ochilishi (Toshkent)
 DIV_REG_END_HOUR = 20        # Ro'yxat yopilishi va qur'a vaqti (2026-07-23: 19 -> 20)
-DIV_DEADLINE_HOUR = 23       # Kunlik o'yin deadline'i: 23:30
-DIV_DEADLINE_MINUTE = 30
+DIV_DEADLINE_HOUR = 16       # Kunlik o'yin deadline'i: 16:00 (2026-07-25: 23:30 -> 16:00)
+DIV_DEADLINE_MINUTE = 0
 DIV_POINTS_WIN = 15          # G'alaba achkosi
 DIV_POINTS_DRAW = 10         # Durang achkosi
 DIV_POINTS_LOSS = -10        # Mag'lubiyat achkosi
