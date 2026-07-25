@@ -1298,6 +1298,26 @@ def season_wc_finalize(admin: dict = Depends(get_authenticated_super_admin)):
     return {"status": "ok", "season": result["season"], "counts": result["counts"]}
 
 
+@app.post("/season/cl/finalize")
+def season_cl_finalize(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-07-23: Bosh admin ChL mavsumini yakunlaydi: play-off chempioni
+    (ChL kubogi) season_prizes'ga saqlanadi va ChL ma'lumoti tozalanadi
+    (keyingi mavsum ishtirokchilari ligalardagi top-6 orqali tanlanadi).
+    Kubok profil sahifasida va yulduzchada doimiy qoladi. Qaytarib bo'lmaydi.
+
+    Xato: already_finalized (takror bosildi) / no_champion (final o'ynalmagan).
+    """
+    from season_prizes import finalize_cl_season
+    result = finalize_cl_season()
+    if result.get("already"):
+        raise HTTPException(status_code=400, detail="already_finalized")
+    if result.get("reason") == "no_champion":
+        raise HTTPException(status_code=400, detail="no_champion")
+    return {"status": "ok", "season": result["season"], "counts": result["counts"],
+            "champion": (result.get("prizes") or {}).get("cl_cup")}
+
+
 @app.get("/users/{user_id}/prizes")
 def user_prizes(user_id: int):
     """Foydalanuvchining barcha sovrinlari (mavsum bo'yicha)."""
@@ -1639,6 +1659,55 @@ def cl_profile(user: dict = Depends(get_authenticated_user)):
     from season_prizes import get_league_season
     from cl_profile import cl_get_profile
     return cl_get_profile(user["id"], get_league_season())
+
+
+@app.get("/cl/cup-holder")
+def cl_cup_holder():
+    """
+    2026-07-23: ChL kubogi egasi (Sovrinlar sahifasi uchun).
+
+    Ikki manba:
+      1) season_prizes'dagi OXIRGI cl_cup — mavsum yakunlangan bo'lsa (doimiy).
+      2) joriy play-off setkasi chempioni — final o'ynalgan, lekin mavsum hali
+         yakunlanmagan bo'lsa (jonli ko'rsatish).
+
+    Qaytaradi: {"holder": {user_id, nickname, username, club_name, season} | None,
+                "finalized": bool}
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # 1) Saqlangan kubok (eng yangi mavsum)
+        cursor.execute(
+            """
+            SELECT sp.season_number, sp.telegram_id, sp.user_id,
+                   u.id AS cur_user_id, u.nickname, u.username
+            FROM season_prizes sp
+            LEFT JOIN users u ON u.telegram_id = sp.telegram_id
+            WHERE sp.prize_type = 'cl_cup'
+            ORDER BY sp.season_number DESC, sp.id DESC
+            LIMIT 1
+            """
+        )
+        row = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if row:
+        return {"finalized": True, "holder": {
+            "user_id": row["cur_user_id"] or row["user_id"],
+            "nickname": row["nickname"],
+            "username": row["username"],
+            "club_name": None,
+            "season": row["season_number"],
+        }}
+
+    # 2) Joriy setka chempioni (mavsum hali yakunlanmagan)
+    from season_prizes import calculate_cl_prizes
+    champ = calculate_cl_prizes().get("cl_cup")
+    if champ:
+        return {"finalized": False, "holder": {**champ, "season": None}}
+    return {"finalized": False, "holder": None}
 
 
 @app.get("/cl/matches/my")

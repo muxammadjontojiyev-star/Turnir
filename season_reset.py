@@ -43,6 +43,14 @@ _WC_TABLES = [
     "wc_playoff_matches", "wc_matches", "wc_registrations", "wc_groups",
 ]
 
+# 2026-07-23: ChL kontenti (users, season_prizes TEGILMAYDI).
+# Keyingi mavsum ishtirokchilari ligalardagi top-6 orqali qaytadan tanlanadi,
+# shuning uchun guruh/o'yin/setka ma'lumoti saqlanmaydi.
+_CL_TABLES = [
+    "cl_po_messages", "cl_messages",
+    "cl_playoff_matches", "cl_matches", "cl_participants", "cl_qualifiers",
+]
+
 
 def reset_league_data() -> dict:
     """
@@ -108,6 +116,48 @@ def reset_wc_data() -> dict:
             pass
         conn.close()
         logger.exception("reset_wc_data xatosi")
+        raise
+    conn.close()
+    return {"tables": counts}
+
+
+def reset_cl_data() -> dict:
+    """
+    2026-07-23: ChL ma'lumotlarini tozalaydi (mavsum yakunlangach).
+
+    O'chiriladi: cl_qualifiers, cl_participants, cl_matches, cl_messages,
+                 cl_playoff_matches, cl_po_messages
+    Nolga qaytariladi: cl_state, cl_playoff_state (barcha mavsum qatorlari)
+
+    users, season_prizes — TEGILMAYDI (kubok tarixi saqlanadi).
+
+    Sabab: keyingi mavsum ishtirokchilari ligalardagi top-6 orqali qaytadan
+    tanlanadi, shuning uchun eski guruh/o'yin/setka saqlanmaydi.
+
+    Qaytaradi: {"tables": {jadval: o'chirilgan_qatorlar}}
+    """
+    conn = _reset_connection()
+    cursor = conn.cursor()
+    counts = {}
+    try:
+        cursor.execute("BEGIN")
+        for tbl in _CL_TABLES:
+            cursor.execute(f"DELETE FROM {tbl}")
+            counts[tbl] = cursor.rowcount
+        # Holat jadvallari: barcha mavsum qatorlari o'chiriladi — ChL qaytadan
+        # boshlanganda cl_draw/cl_po_start yangi qator yaratadi.
+        cursor.execute("DELETE FROM cl_state")
+        counts["cl_state"] = cursor.rowcount
+        cursor.execute("DELETE FROM cl_playoff_state")
+        counts["cl_playoff_state"] = cursor.rowcount
+        cursor.execute("COMMIT")
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        conn.close()
+        logger.exception("reset_cl_data xatosi")
         raise
     conn.close()
     return {"tables": counts}

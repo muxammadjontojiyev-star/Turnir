@@ -423,3 +423,115 @@ def get_user_prizes(user_id: int) -> list[dict]:
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return rows
+
+
+# ============================================================
+#  Chempionlar ligasi mavsumi (2026-07-23)
+# ============================================================
+
+def calculate_cl_prizes() -> dict:
+    """
+    ChL sovrinlari — joriy holatga ko'ra.
+
+    Qaytaradi: {"cl_cup": {user_id, nickname, username, club_name} | None}
+    Chempion = play-off final g'olibi (cl_po_bracket champion).
+    """
+    from cl_playoff import cl_po_bracket
+    try:
+        bracket = cl_po_bracket()
+    except Exception:
+        logger.exception("calculate_cl_prizes: bracket o'qishda xato")
+        return {"cl_cup": None}
+    champ = bracket.get("champion") if bracket.get("started") else None
+    # Chempion aniqlangan bo'lsa ham user_id bo'lmasa — sovrin yozib bo'lmaydi
+    if champ and not champ.get("user_id"):
+        champ = None
+    return {"cl_cup": champ}
+
+
+def finalize_cl_season() -> dict:
+    """
+    ChL mavsumini yakunlaydi: cl_cup (play-off chempioni) hisoblanadi va
+    season_kind='cl' bilan saqlanadi. Kubok season_prizes'da DOIMIY qoladi
+    (profil sahifasida va yulduzchada ko'rinadi — prize_stars.CUP_PRIZE_TYPES).
+
+    ChL alohida mavsum raqamiga ega emas: season_state.current_season
+    ishlatiladi (ChL ligalar bilan bir mavsumda ketadi).
+
+    IDEMPOTENTLIK: BEGIN IMMEDIATE + cooldown (cl_last_finalized_at) +
+    "shu mavsumda cl yozuvi bormi" tekshiruvi. Takror bosishda {"already": True}.
+
+    Sovrin saqlangach ChL ma'lumoti tozalanadi (reset_cl_data) — keyingi mavsum
+    ishtirokchilari ligalardagi top-6 orqali qaytadan tanlanadi.
+
+    Qaytaradi: {season, already, counts, prizes, reset}
+    """
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    try:
+        return _finalize_cl_locked(conn, cursor)
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        conn.close()
+        raise
+
+
+def _finalize_cl_locked(conn, cursor) -> dict:
+    cursor.execute("BEGIN IMMEDIATE")
+
+    cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
+    row = cursor.fetchone()
+    season = row["current_season"] if row else 1
+
+    if _cooldown_active(cursor, "cl_last_finalized_at"):
+        cursor.execute("ROLLBACK")
+        conn.close()
+        return {"season": season, "already": True, "counts": {}, "prizes": None}
+
+    # Shu mavsumda ChL yozuvi bormi? (qo'shimcha himoya)
+    cursor.execute(
+        "SELECT 1 FROM season_prizes WHERE season_kind = 'cl' AND season_number = ? LIMIT 1",
+        (season,),
+    )
+    if cursor.fetchone() is not None:
+        cursor.execute("ROLLBACK")
+        conn.close()
+        return {"season": season, "already": True, "counts": {}, "prizes": None}
+
+    prizes = calculate_cl_prizes()
+
+    # Chempion aniqlanmagan bo'lsa (final o'ynalmagan) — yakunlamaymiz
+    if not prizes.get("cl_cup"):
+        cursor.execute("ROLLBACK")
+        conn.close()
+        return {"season": season, "already": False, "counts": {"cl_cup": 0},
+                "prizes": prizes, "reason": "no_champion"}
+
+    _uid = prizes["cl_cup"]["user_id"]
+    cursor.execute(
+        "INSERT INTO season_prizes (user_id, telegram_id, prize_type, league_id, season_number, season_kind) "
+        "VALUES (?, ?, 'cl_cup', NULL, ?, 'cl')",
+        (_uid, _telegram_id_for(cursor, _uid), season),
+    )
+    counts = {"cl_cup": 1}
+
+    cursor.execute(
+        "UPDATE season_state SET cl_last_finalized_at = datetime('now') WHERE id = 1"
+    )
+    cursor.execute("COMMIT")
+    conn.close()
+
+    # Kubok saqlandi — ChL ma'lumotini tozalaymiz (users/season_prizes tegilmaydi)
+    reset_info = None
+    try:
+        from season_reset import reset_cl_data
+        reset_info = reset_cl_data()
+    except Exception:
+        logger.exception("ChL reset xatosi (kubok saqlangan)")
+
+    return {"season": season, "already": False, "counts": counts,
+            "prizes": prizes, "reset": reset_info}

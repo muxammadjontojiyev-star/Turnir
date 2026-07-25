@@ -631,6 +631,11 @@ def init_db():
         # Liga/WC mavsumini ajratish: WC uchun alohida mavsum raqami + cooldown vaqti
         "ALTER TABLE season_state ADD COLUMN wc_season INTEGER NOT NULL DEFAULT 1",
         "ALTER TABLE season_state ADD COLUMN wc_last_finalized_at TIMESTAMP",
+        # 2026-07-23: ChL mavsumini yakunlash (cl_cup sovrini) — takror bosishdan
+        # himoya uchun cooldown. ChL ALOHIDA mavsum raqamiga ega emas: u ligalar
+        # bilan bir mavsumda ketadi (season_state.current_season), chunki keyingi
+        # mavsum ishtirokchilari ligalardagi top-6 orqali tanlanadi.
+        "ALTER TABLE season_state ADD COLUMN cl_last_finalized_at TIMESTAMP",
         # Sovrin yozuvini liga/WC turiga ajratish (eski yozuvlar quyida to'g'rilanadi)
         "ALTER TABLE season_prizes ADD COLUMN season_kind TEXT NOT NULL DEFAULT 'league'",
         # Sovrinni DOIMIY telegram_id ga bog'lash (users o'chsa ham tarix qoladi)
