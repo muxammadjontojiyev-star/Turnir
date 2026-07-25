@@ -24,7 +24,7 @@ const DIV_TEXTS = {
 
     // --- Asosiy sahifa (ro'yxat) ---
     div_reg_open_title:    "Ro'yxat ochiq (17:00–20:00)",
-    div_reg_open_hint:     "Qur'a 20:00 dan keyin, o'yin natijasi 23:30 gacha kiritiladi.",
+    div_reg_open_hint:     "Qur'a 20:00 dan keyin, o'yin natijasi 16:00 gacha kiritiladi.",
     div_reg_button:        "📝 Ro'yxatdan o'tish",
     div_reg_done:          "✅ Siz bugungi ro'yxatdasiz. Qur'a soat 20:00 dan keyin o'tkaziladi va natija telegram orqali yuboriladi.",
     div_reg_empty:         "Bugun hali hech kim ro'yxatdan o'tmagan.",
@@ -115,7 +115,7 @@ const DIV_TEXTS = {
     div_season_left:       "Дней осталось",
 
     div_reg_open_title:    "Регистрация открыта (17:00–20:00)",
-    div_reg_open_hint:     "Жеребьёвка после 20:00, результат вводится до 23:30.",
+    div_reg_open_hint:     "Жеребьёвка после 20:00, результат вводится до 16:00.",
     div_reg_button:        "📝 Зарегистрироваться",
     div_reg_done:          "✅ Вы в списке на сегодня. Жеребьёвка пройдёт после 20:00, результат придёт в telegram.",
     div_reg_empty:         "Сегодня пока никто не зарегистрировался.",
@@ -202,7 +202,7 @@ const DIV_TEXTS = {
     div_season_left:       "Days left",
 
     div_reg_open_title:    "Registration open (17:00–20:00)",
-    div_reg_open_hint:     "Draw after 20:00, results must be submitted by 23:30.",
+    div_reg_open_hint:     "Draw after 20:00, results must be submitted by 16:00.",
     div_reg_button:        "📝 Register",
     div_reg_done:          "✅ You are on today's list. The draw is held after 20:00 and the result is sent via telegram.",
     div_reg_empty:         "Nobody has registered today yet.",
