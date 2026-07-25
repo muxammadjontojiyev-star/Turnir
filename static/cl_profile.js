@@ -81,7 +81,7 @@ function clRenderPrizes() {
     <div class="cl-trophy-hero">
       <img src="cl-trophy.png" alt="${CT("cl_cup_title")}" class="cl-trophy-img">
       <div class="cl-trophy-caption">${CT("cl_cup_title")}</div>
-      <div class="cl-trophy-sub">${CT("cl_cup_sub")}</div>
+      <div id="cl-cup-holder" class="cl-trophy-sub">${CT("cl_cup_sub")}</div>
     </div>
     <div class="section-label">MENING SOVRINLARIM</div>
     <div id="cl-prizes-section">
@@ -89,7 +89,28 @@ function clRenderPrizes() {
     </div>`;
 }
 
+// 2026-07-23 (talab 1): kubok egasi useri — mavsum yakunlangach saqlangan
+// cl_cup egasi, yakunlanmagan bo'lsa joriy setka chempioni. Topilmasa —
+// asl "Final g'olibi sovrin egasi bo'ladi" matni qoladi.
+async function clLoadCupHolder() {
+  const box = document.getElementById("cl-cup-holder");
+  if (!box) return;
+  try {
+    const d = await apiFetch("/cl/cup-holder");
+    const h = d && d.holder;
+    if (!h) return;                       // hali egasi yo'q — asl matn qoladi
+    const who = h.username ? "@" + h.username : (h.nickname || "—");
+    const seasonPart = h.season ? ` · ${h.season}-mavsum` : "";
+    box.innerHTML = `
+      <span class="cl-cup-holder-name">🏆 ${escHtml(who)}</span>
+      <span class="cl-cup-holder-sub">${d.finalized ? "kubok egasi" : "chempion"}${escHtml(seasonPart)}</span>`;
+  } catch (_) {
+    /* xato — asl matn qoladi (qoida #40: jim qolmaymiz, lekin bu ikkilamchi ma'lumot) */
+  }
+}
+
 async function clBindPrizes() {
+  void clLoadCupHolder();          // 2026-07-23: kubok egasi useri (talab 1)
   const uid = CL.profile && CL.profile.user_id;
   const box = document.getElementById("cl-prizes-section");
   if (!box) return;

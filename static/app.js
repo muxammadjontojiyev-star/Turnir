@@ -219,6 +219,7 @@ const TEXTS = {
     // Prizes
     prizes_title:       "SOVRINLAR",
     wc_trophy_name:     "Jahon Chempionati Kubogi",
+    cl_trophy_name:     "Chempionlar Ligasi Kubogi",
     wc_trophy_desc:     "Play-off g'olibi — jahon chempioni",
     wc_scorer_name:     "Jahon Chempionati To'purari",
     wc_scorer_desc:     "Eng ko'p gol urgan o'yinchi",
@@ -516,6 +517,7 @@ const TEXTS = {
     club_taken:          "Этот клуб уже занят",
     prizes_title:       "ПРИЗЫ",
     wc_trophy_name:     "Кубок Чемпионата Мира",
+    cl_trophy_name:     "Кубок Лиги Чемпионов",
     wc_trophy_desc:     "Победитель плей-офф — чемпион мира",
     wc_scorer_name:     "Лучший бомбардир Чемпионата Мира",
     wc_scorer_desc:     "Игрок, забивший больше всех голов",
@@ -813,6 +815,7 @@ const TEXTS = {
     club_taken:          "This club is already taken",
     prizes_title:       "PRIZES",
     wc_trophy_name:     "World Cup Trophy",
+    cl_trophy_name:     "Champions League Trophy",
     wc_trophy_desc:     "Play-off winner — world champion",
     wc_scorer_name:     "World Cup Top Scorer",
     wc_scorer_desc:     "Player with the most goals",

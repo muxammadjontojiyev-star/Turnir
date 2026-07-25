@@ -834,6 +834,10 @@ function prizeVisual(p) {
   if (p.prize_type === "wc_golden_boot") {
     return { img: "wc-goldenball.png", name: t.wc_scorer_name || "JCH To'purari" };
   }
+  // 2026-07-23: ChL kubogi — mavsum yakunlangach profil sahifasida ko'rinadi
+  if (p.prize_type === "cl_cup") {
+    return { img: "cl-trophy.png", name: t.cl_trophy_name || "ChL Kubogi" };
+  }
   if (p.prize_type === "league_cup") {
     const trophyFile = LEAGUE_TROPHIES[p.league_name] || null;
     return { img: trophyFile, name: (p.league_name || "") + " " + (t.league_trophy || "Kubogi") };

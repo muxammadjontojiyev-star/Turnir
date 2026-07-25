@@ -101,6 +101,17 @@ async function clLoadAdminPanel() {
         (16 o'yinchi) 1/8 setkasiga joylanadi. Har juftlik uy+mehmon, final — 1 o'yin.
       </div>
       <button class="btn btn--primary" id="cl-admin-po-start">${CT("cla_playoff_start")}</button>
+
+      <div class="admin-hint" style="margin-top:14px">
+        <b>Mavsumni yakunlash:</b> final g'olibi ChL kubogini oladi — kubok
+        profil sahifasida va useri oldida yulduzcha (★) bo'lib doimiy qoladi.
+        So'ng ChL ma'lumoti tozalanadi (keyingi mavsum ishtirokchilari
+        ligalardagi top-6 orqali tanlanadi). Qaytarib bo'lmaydi!
+      </div>
+      <button class="btn" id="cl-admin-finalize"
+              style="border-color:rgba(245,197,66,.55);color:#f5c542">
+        🏆 ChL mavsumini yakunlash
+      </button>
       ` : ""}
 
       ${drawn ? clAdminFixForm() : ""}
@@ -161,6 +172,35 @@ async function clLoadAdminPanel() {
       () => void scopeAdminRoleAdd("cl", "cl-admin-new-id", "cl-admin-roles-list"));
     if (document.getElementById("cl-admin-roles-list"))
       void scopeAdminRolesLoad("cl", "cl-admin-roles-list");
+
+    // 2026-07-23: ChL mavsumini yakunlash (kubok saqlanadi + ma'lumot tozalanadi)
+    const finBtn = document.getElementById("cl-admin-finalize");
+    if (finBtn) finBtn.addEventListener("click", () => void clAdminFinalizeSeason(finBtn));
+  }
+}
+
+// 2026-07-23: ChL mavsumini yakunlash — final g'olibi kubokni oladi.
+async function clAdminFinalizeSeason(btn) {
+  if (!confirm("ChL mavsumi yakunlansinmi?\n\nFinal g'olibi ChL kubogini oladi "
+             + "(profil va yulduzchada doimiy qoladi), so'ng ChL ma'lumoti tozalanadi.\n\n"
+             + "Bu amalni qaytarib bo'lmaydi!")) return;
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = "Yakunlanmoqda…";
+  try {
+    const r = await apiFetch("/season/cl/finalize", { method: "POST" });
+    const champ = r.champion || {};
+    const who = champ.username ? "@" + champ.username : (champ.nickname || "chempion");
+    showToast(`🏆 Mavsum yakunlandi — kubok: ${who}`);
+    await clLoadThenRender();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = prev;
+    const msg = {
+      already_finalized: "mavsum allaqachon yakunlangan",
+      no_champion: "chempion aniqlanmagan — final o'ynalmagan",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
   }
 }
 
