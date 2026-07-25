@@ -137,7 +137,13 @@ async function clLoadThenRender() {
 async function clLoadRating(onlyIfChanged = false) {
   const prev = JSON.stringify(CL.ratingAll || []);
   try {
-    const d = await apiFetch("/cl/rating-all");
+    // 2026-07-23: yulduzchalar reyting bilan birga yangilanadi — yangi berilgan
+    // kubok (cl_cup) darhol ko'rinadi (ilgari faqat ilova ochilganда yuklanardi,
+    // shuning uchun yangi kubok egasining ★ chiqmasди).
+    const [d] = await Promise.all([
+      apiFetch("/cl/rating-all"),
+      (typeof loadPrizeStars === "function") ? loadPrizeStars() : Promise.resolve(),
+    ]);
     CL.ratingAll = d.groups || [];
     CL.rating = [];
     for (const g of CL.ratingAll) {

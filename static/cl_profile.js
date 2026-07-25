@@ -7,7 +7,12 @@
 
 async function clLoadProfile() {
   try {
-    CL.profile = await apiFetch("/cl/profile");
+    // 2026-07-23: yulduzchalar profil bilan birga yangilanadi (yangi kubok ★ ko'rinsin)
+    const [prof] = await Promise.all([
+      apiFetch("/cl/profile"),
+      (typeof loadPrizeStars === "function") ? loadPrizeStars() : Promise.resolve(),
+    ]);
+    CL.profile = prof;
   } catch (_) {
     CL.profile = null;
   }
