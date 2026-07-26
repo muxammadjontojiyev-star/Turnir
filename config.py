@@ -24,7 +24,10 @@ MATCHES_PER_MATCHDAY = MAX_PLAYERS_PER_LEAGUE // 2  # Har turda nechta o'yin (10
 TOURNAMENT_TIMEZONE_OFFSET = 5   # Toshkent (UTC+5) — soat farqi
 MATCHDAY_UNLOCK_HOUR = 23        # Har kuni soat 23:30 (Toshkent) da yangi turlar ochiladi / deadline o'tadi
 MATCHDAY_UNLOCK_MINUTE = 30      # Tur ochilishi/deadline daqiqasi (23:30)
-MATCHDAYS_PER_UNLOCK = 2         # Har kuni nechta tur ochiladi (turnir tezroq o'tishi uchun)
+MATCHDAYS_PER_UNLOCK = 2         # Har kuni nechta tur ochiladi (Liga/ChL — turnir tezroq o'tishi uchun)
+# 2026-07-25: WC guruh bosqichi uchun ALOHIDA — kuniga BITTA tur ochiladi.
+# (Liga/ChL 2 turda qoladi; faqat WC 1 tur.)
+WC_MATCHDAYS_PER_UNLOCK = 1
 
 # Tur ochilgandan (01:00) so'ng hisob kiritish uchun kutish vaqti (daqiqa).
 # O'yinchilar o'ynashga ulgurishi va o'ynalmagan o'yinga darrov yolg'on natija

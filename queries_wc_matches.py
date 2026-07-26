@@ -10,7 +10,7 @@ from models import get_connection
 from config import (
     MATCHDAY_UNLOCK_HOUR,
     MATCHDAY_UNLOCK_MINUTE,
-    MATCHDAYS_PER_UNLOCK,
+    WC_MATCHDAYS_PER_UNLOCK,
 )
 from queries_leagues import _parse_draw_date, _tournament_now
 from queries_wc import wc_get_group
@@ -45,7 +45,7 @@ def wc_get_open_matchday(group_letter: str) -> int:
         return shifted.date()
 
     days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
-    open_count = (1 + days_passed) * MATCHDAYS_PER_UNLOCK
+    open_count = (1 + days_passed) * WC_MATCHDAYS_PER_UNLOCK
 
     if open_count < 1:
         return 0
@@ -234,7 +234,7 @@ def wc_get_deadline_passed_matchday(group_letter: str) -> int:
     Liga get_deadline_passed_matchday mantig'i, lekin guruh draw_date bo'yicha.
 
     days_passed=0 (start kuni): ochiq turlar deadline'i hali o'tmagan → 0.
-    days_passed=N: N*MATCHDAYS_PER_UNLOCK tur deadline o'tdi (WC_TOTAL bilan cheklangan).
+    days_passed=N: N*WC_MATCHDAYS_PER_UNLOCK tur deadline o'tdi (WC_TOTAL bilan cheklangan).
     """
     grp = wc_get_group(group_letter)
     if grp is None:
@@ -252,7 +252,7 @@ def wc_get_deadline_passed_matchday(group_letter: str) -> int:
     days_passed = (unlock_day(now) - unlock_day(draw_dt)).days
     if days_passed < 1:
         return 0
-    passed = days_passed * MATCHDAYS_PER_UNLOCK
+    passed = days_passed * WC_MATCHDAYS_PER_UNLOCK
     if passed > WC_TOTAL_MATCHDAYS:
         passed = WC_TOTAL_MATCHDAYS
     return passed

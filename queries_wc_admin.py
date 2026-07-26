@@ -215,8 +215,8 @@ def wc_start_all_today() -> dict:
     """
     Admin uchun: o'yinlari yaratilgan barcha WC guruhlarning draw_date'ini
     HOZIRGI vaqtga qo'yadi — ya'ni bugundan start beradi. Shunda matchday-lock
-    bugundan boshlanadi: bugun matchday 1..MATCHDAYS_PER_UNLOCK ochiq, keyingi
-    turlar har kun 23:30 (Toshkent) da ochiladi (liga kabi).
+    bugundan boshlanadi: bugun matchday 1 ochiq (WC — kuniga BITTA tur), keyingi
+    turlar har kun 23:30 (Toshkent) da bittadan ochiladi.
 
     Faqat o'yinlari bor (to'lgan) guruhlarga ta'sir qiladi.
     Qaytaradi: {started: [guruh harflari]}
