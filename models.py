@@ -756,43 +756,43 @@ def init_db():
         logger.error("ChL mavsum tuzatish xatosi: %s", exc)
         raise
 
-    # 2026-07-25: BIR MARTALIK — deadline 16:00 ga o'zgargach, BUGUNGI o'yinlar
+    # 2026-07-25: BIR MARTALIK — deadline 16:00 ga o'zgargach, 25-SANADAGI o'yinlar
     # xato ravishda o'sha kuniyoq avto 0:0 durang qilib yopilib qolган edi (scheduler
-    # 16:00 dan keyin bugungi qur'ani darhol yopardi). Bugungi FAQAT avto-yopilgan
-    # (submitted_by IS NULL, 0:0, player2 bor) o'yinlarni pending'ga qaytaramiz va
-    # o'sha kunning resolved_at belgisini tozalaymiz (ertaga 16:00 da to'g'ri yopiladi).
+    # 16:00 dan keyin o'sha kungi qur'ani darhol yopardi). 25-sanadagi FAQAT avto-
+    # yopilgan (submitted_by IS NULL, 0:0, player2 bor) o'yinlarni pending'ga qaytaramiz
+    # va o'sha kun resolved_at belgisini tozalaymiz (ertaga 16:00 da to'g'ri yopiladi).
     # Haqiqiy o'ynalган (submitted_by bor) yoki bye (player2 NULL) o'yinlar TEGILMAYDI.
-    # Guard: div_deadline_fix_done = 1 — qayta ishlamaydi.
+    #
+    # DIQQAT: sana QATTIQ '2026-07-25' — chunki restart 26-sanada bo'lishi mumkin
+    # va _tournament_now() 26 qaytarardi (eski guard div_deadline_fix_done shu sabab
+    # bo'sh ishlab, 1 bo'lib qolган edi). Yangi guard: div_deadline_fix25_done.
+    _DIV_FIX_DAY = "2026-07-25"
     try:
-        cursor.execute("ALTER TABLE season_state ADD COLUMN div_deadline_fix_done INTEGER NOT NULL DEFAULT 0")
+        cursor.execute("ALTER TABLE season_state ADD COLUMN div_deadline_fix25_done INTEGER NOT NULL DEFAULT 0")
         conn.commit()
     except sqlite3.OperationalError as exc:
         if "duplicate column" not in str(exc).lower():
-            logger.error("div_deadline_fix_done ustun xatosi: %s", exc)
+            logger.error("div_deadline_fix25_done ustun xatosi: %s", exc)
             raise
     try:
-        cursor.execute("SELECT div_deadline_fix_done FROM season_state WHERE id = 1")
+        cursor.execute("SELECT div_deadline_fix25_done FROM season_state WHERE id = 1")
         row = cursor.fetchone()
-        if row is not None and not row["div_deadline_fix_done"]:
-            from queries_leagues import _tournament_now
-            today = _tournament_now().date().isoformat()
-            # Bugungi avto-yopilgan o'yinlarni pending'ga qaytaramiz
+        if row is not None and not row["div_deadline_fix25_done"]:
             cursor.execute(
                 "UPDATE div_matches SET status = 'pending', score1 = NULL, score2 = NULL "
                 "WHERE day = ? AND status = 'confirmed' AND submitted_by IS NULL "
                 "AND player2_id IS NOT NULL AND score1 = 0 AND score2 = 0",
-                (today,),
+                (_DIV_FIX_DAY,),
             )
             reopened = cursor.rowcount
             # O'sha kun yana yopilishi mumkin bo'lishi uchun resolved_at tozalanadi
-            cursor.execute("UPDATE div_state SET resolved_at = NULL WHERE day = ?", (today,))
+            cursor.execute("UPDATE div_state SET resolved_at = NULL WHERE day = ?", (_DIV_FIX_DAY,))
             cursor.execute(
-                "UPDATE season_state SET div_deadline_fix_done = 1 WHERE id = 1"
+                "UPDATE season_state SET div_deadline_fix25_done = 1 WHERE id = 1"
             )
             conn.commit()
-            if reopened:
-                logger.info("Divizion deadline tuzatildi: %s kuni %d ta xato yopilgan o'yin qayta ochildi.",
-                            today, reopened)
+            logger.info("Divizion deadline tuzatildi: %s kuni %d ta xato yopilgan o'yin qayta ochildi.",
+                        _DIV_FIX_DAY, reopened)
     except sqlite3.OperationalError as exc:
         logger.error("Divizion deadline tuzatish xatosi: %s", exc)
         raise
