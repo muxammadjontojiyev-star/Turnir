@@ -262,25 +262,52 @@ def div_pair_day(day: str | None = None) -> dict | None:
 
 def div_get_my_match(user_id: int, day: str | None = None) -> dict | None:
     """
-    Foydalanuvchining bugungi o'yini (raqib useri/username bilan — profil sahifasi).
+    Foydalanuvchining AKTIV o'yini (raqib useri/username bilan — asosiy/profil sahifa).
     bye bo'lsa opponent maydonlari None, status 'confirmed' (avto g'alaba).
+
+    2026-07-25: o'yin kun X, 20:00 da qur'a qilinadi va X+1 kuni 16:00 gacha
+    o'ynaladi. Shuning uchun "bugungi o'yin" deb faqat _today() ni qidirsak,
+    kecha berilgan (hali ochiq) o'yin asosiy sahifada ko'rinmasди. Endi:
+      1) avval bugungi o'yin (agar bo'lsa),
+      2) bo'lmasa — oxirgi HALI OCHIQ (pending/awaiting) o'yin (deadline o'tmagan).
+    day argumenti berilса — faqat o'sha kun (eski xatti-harakat, aniq so'rov uchun).
     """
-    day = day or _today()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT m.*, u1.nickname AS player1_name, u1.username AS player1_username,
-               u2.nickname AS player2_name, u2.username AS player2_username,
-               u1.telegram_id AS player1_tg, u2.telegram_id AS player2_tg
-        FROM div_matches m
-        JOIN users u1 ON u1.id = m.player1_id
-        LEFT JOIN users u2 ON u2.id = m.player2_id
-        WHERE m.day = ? AND (m.player1_id = ? OR m.player2_id = ?)
-        """,
-        (day, user_id, user_id),
+    _sel = (
+        "SELECT m.*, u1.nickname AS player1_name, u1.username AS player1_username, "
+        "u2.nickname AS player2_name, u2.username AS player2_username, "
+        "u1.telegram_id AS player1_tg, u2.telegram_id AS player2_tg "
+        "FROM div_matches m "
+        "JOIN users u1 ON u1.id = m.player1_id "
+        "LEFT JOIN users u2 ON u2.id = m.player2_id "
     )
-    row = cursor.fetchone()
+    row = None
+    if day is not None:
+        # Aniq kun so'ralган — faqat o'sha kun
+        cursor.execute(
+            _sel + "WHERE m.day = ? AND (m.player1_id = ? OR m.player2_id = ?)",
+            (day, user_id, user_id),
+        )
+        row = cursor.fetchone()
+    else:
+        # 1) Bugungi o'yin
+        today = _today()
+        cursor.execute(
+            _sel + "WHERE m.day = ? AND (m.player1_id = ? OR m.player2_id = ?)",
+            (today, user_id, user_id),
+        )
+        row = cursor.fetchone()
+        # 2) Bugun yo'q bo'lsa — oxirgi HALI OCHIQ o'yin (deadline o'tmagan, ertaga
+        #    16:00 gacha o'ynaladi). Faqat pending/awaiting (yopilган o'yin ko'rsatilmaydi).
+        if row is None:
+            cursor.execute(
+                _sel + "WHERE (m.player1_id = ? OR m.player2_id = ?) "
+                "AND m.status IN ('pending', 'awaiting_confirmation') "
+                "ORDER BY m.day DESC LIMIT 1",
+                (user_id, user_id),
+            )
+            row = cursor.fetchone()
     conn.close()
     if not row:
         return None

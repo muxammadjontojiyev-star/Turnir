@@ -1995,7 +1995,9 @@ def div_status(user: dict = Depends(get_authenticated_user)):
     from division import div_registration_window, div_day_registrations, div_get_my_match
     win = div_registration_window()
     regs = div_day_registrations(win["day"])
-    my_match = div_get_my_match(user["id"], win["day"])
+    # 2026-07-25: day BERILMAYDI — div_get_my_match "aktiv o'yin"ni topadi (bugungi,
+    # yoki bo'lmasa oxirgi hali ochiq o'yin — kecha berilib bugun o'ynaladigan).
+    my_match = div_get_my_match(user["id"])
     from division import div_my_stats, div_my_matches
     from division_season import div_current_season
     return {
