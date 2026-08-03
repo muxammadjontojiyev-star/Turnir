@@ -101,21 +101,33 @@ def calculate_league_prizes() -> dict:
                     "username": p.get("username"),
                     "points": 0,
                     "goals_for": 0,
+                    "goal_difference": 0,
                 }
             all_players[uid]["points"] += p.get("points", 0)
             all_players[uid]["goals_for"] += p.get("goals_for", 0)
+            all_players[uid]["goal_difference"] += p.get("goal_difference", 0)
 
     players_list = list(all_players.values())
 
+    # Oltin to'p — eng ko'p ochko yig'gan. Ochko TENG bo'lsa: gol farqi, keyin
+    # urilgan gol (reyting saralash standarti — qoida #26). Ilgari faqat max(points)
+    # edi, tenglikda birinchi uchragan olinardi (noto'g'ri g'olib).
     golden_ball = None
     if players_list:
-        golden_ball = max(players_list, key=lambda p: p["points"])
+        golden_ball = max(
+            players_list,
+            key=lambda p: (p["points"], p["goal_difference"], p["goals_for"]),
+        )
         if golden_ball["points"] <= 0:
             golden_ball = None
 
+    # Oltin butsa — eng ko'p gol urgan. Gol TENG bo'lsa: gol farqi, keyin ochko.
     golden_boot = None
     if players_list:
-        golden_boot = max(players_list, key=lambda p: p["goals_for"])
+        golden_boot = max(
+            players_list,
+            key=lambda p: (p["goals_for"], p["goal_difference"], p["points"]),
+        )
         if golden_boot["goals_for"] <= 0:
             golden_boot = None
 
