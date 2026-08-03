@@ -257,6 +257,19 @@
             <div class="admin-player-league" id="season-current-hint" style="margin:0 2px 8px">—</div>
             <button class="btn btn--danger" id="btn-finalize-season" style="width:100%" data-i18n="season_finalize_btn">Liga mavsumini yakunlash</button>
             <div class="admin-player-league" style="margin:6px 2px 0" data-i18n="season_finalize_hint">Liga sovrinlari hisoblanadi, liga mavsumi oshadi</div>
+
+            <!-- 2026-08: Oltin to'p/butsa sovrinini to'g'ri egaga ko'chirish (bosh
+                 admin). Liga sovrinlari liga yakunidan chiqqani uchun shu bo'limda. -->
+            <div class="section-label">SOVRINNI KO'CHIRISH</div>
+            <div class="admin-fix-form">
+              <div id="league-prize-transfer-list" style="margin-bottom:8px">
+                <div class="wc-loading-row">Yuklanmoqda...</div>
+              </div>
+              <input id="league-prize-new-tg" class="modal-input" type="text"
+                     placeholder="Yangi ega: Telegram ID yoki @username" style="margin-bottom:8px" />
+              <button class="btn" id="btn-league-prize-transfer">🏆 Sovrinni ko'chirish</button>
+              <div class="admin-player-league" style="margin:6px 2px 0">Faqat Oltin to'p va Oltin butsa. Sovrinni tanlang, yangi egani Telegram ID yoki @username bilan kiriting.</div>
+            </div>
           </div>
 
           <div class="section-label" data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</div>
@@ -534,7 +547,7 @@
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
   <script src="app.js?v=20260725a"></script>
-  <script src="api.js?v=20260723b"></script>
+  <script src="api.js?v=20260803b"></script>
   <!-- 2026-07-21: Divizion tarjimalari (uz/ru/en) — app.js dagi TEXTS ga qo'shiladi -->
   <script src="texts_division.js?v=20260725a"></script>
   <!-- 2026-07-21: ChL tarjimalari (uz/ru/en) — cl*.js dan OLDIN -->
@@ -555,7 +568,7 @@
   <script src="division.js?v=20260723a"></script>
   <script src="worldcup.js?v=20260720a"></script>
   <script src="worldcup_matches.js?v=20260719a"></script>
-  <script src="worldcup_admin.js?v=20260803a"></script>
+  <script src="worldcup_admin.js?v=20260803b"></script>
   <script src="worldcup_chat.js?v=20260716a"></script>
   <script src="worldcup_playoff.js?v=20260719a"></script>
 </body>

@@ -1337,6 +1337,14 @@ async function loadAdminPanel() {
       swapBtn._bound = true;
       swapBtn.addEventListener("click", () => void submitLeagueSwap(swapBtn, reloadSwapLists));
     }
+
+    // 2026-08: sovrinni to'g'ri egaga ko'chirish (Oltin to'p/butsa)
+    void leagueLoadPrizeTransfer();
+    const prizeBtn = document.getElementById("btn-league-prize-transfer");
+    if (prizeBtn && !prizeBtn._bound) {
+      prizeBtn._bound = true;
+      prizeBtn.addEventListener("click", () => void leaguePrizeTransferSubmit(prizeBtn));
+    }
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
     superOnly?.classList.add("hidden");
@@ -1374,6 +1382,87 @@ async function finalizeSeason() {
       already_finalized: t.season_already_finalized || "Bu mavsum allaqachon yakunlangan",
     };
     showToast("❌ " + (errMap[e.message] || e.message));
+  }
+}
+
+// ---- Sovrinni ko'chirish (Oltin to'p/butsa) — bosh admin liga panelida (2026-08) ----
+// Nickname/username escHtml bilan tozalanadi (qoida #35 XSS).
+const LEAGUE_PRIZE_LABELS = { golden_ball: "Oltin to'p", golden_boot: "Oltin butsa" };
+
+async function leagueLoadPrizeTransfer() {
+  const box = document.getElementById("league-prize-transfer-list");
+  if (!box) return;
+  let data;
+  try {
+    data = await apiFetch("/admin/prizes/transferable");
+  } catch (_) {
+    box.innerHTML = `<div class="admin-player-league">Sovrinlar yuklanmadi.</div>`;
+    return;
+  }
+  const prizes = (data && data.prizes) || [];
+  if (!prizes.length) {
+    box.innerHTML = `<div class="admin-player-league">Ko'chiriladigan sovrin yo'q.</div>`;
+    return;
+  }
+  box.innerHTML = prizes.map(p => {
+    const who = p.username ? "@" + escHtml(p.username)
+              : (p.nickname ? escHtml(p.nickname) : "#" + p.user_id);
+    const label = LEAGUE_PRIZE_LABELS[p.prize_type] || escHtml(p.prize_type);
+    return `
+      <label class="admin-radio-row" style="display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer">
+        <input type="radio" name="league-prize-pick" value="${p.prize_id}">
+        <span>🏆 <b>${label}</b> · ${p.season_number}-mavsum · ${who}</span>
+      </label>`;
+  }).join("");
+}
+
+async function leaguePrizeTransferSubmit(btn) {
+  const picked = document.querySelector('input[name="league-prize-pick"]:checked');
+  const tgInput = document.getElementById("league-prize-new-tg");
+  if (!picked) {
+    window.alert("Avval ko'chiriladigan sovrinni tanlang.");
+    return;
+  }
+  const q = (tgInput?.value || "").trim();
+  if (!q) {
+    window.alert("Yangi egani Telegram ID yoki @username bilan kiriting.");
+    return;
+  }
+  // Telegram ID YOKI username bo'yicha yangi egani topamiz
+  let userResp;
+  try {
+    userResp = await apiFetch(`/admin/users/find?q=${encodeURIComponent(q)}`);
+  } catch (_) {
+    window.alert("Bu Telegram ID / @username bo'yicha o'yinchi topilmadi.");
+    return;
+  }
+  const newUserId = userResp && userResp.user_id;
+  if (!newUserId) {
+    window.alert("Bu Telegram ID / @username bo'yicha o'yinchi topilmadi.");
+    return;
+  }
+  if (btn) btn.disabled = true;
+  try {
+    const r = await apiFetch("/admin/prizes/transfer", {
+      method: "POST",
+      body: JSON.stringify({ prize_id: Number(picked.value), new_owner_user_id: newUserId }),
+    });
+    const label = LEAGUE_PRIZE_LABELS[r.prize_type] || r.prize_type;
+    const who = r.new_username ? "@" + r.new_username : (r.new_nickname || ("#" + r.new_user_id));
+    window.alert(`✅ ${label} (${r.season_number}-mavsum) endi ${who} ga tegishli.`);
+    if (tgInput) tgInput.value = "";
+    void leagueLoadPrizeTransfer();
+  } catch (err) {
+    const reason = (err && err.message) || "";
+    const msg = {
+      already_owner: "Bu sovrin allaqachon shu odamga tegishli.",
+      user_not_found: "Yangi ega topilmadi (Telegram ID noto'g'ri).",
+      prize_not_found: "Sovrin topilmadi.",
+      not_transferable: "Bu sovrin turini ko'chirib bo'lmaydi.",
+    }[reason] || "Ko'chirishda xatolik.";
+    window.alert("❌ " + msg);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 

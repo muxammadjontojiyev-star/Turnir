@@ -126,20 +126,6 @@ function wcRenderAdminPanel() {
         </div>
       </div>
 
-      <!-- 2026-08: Oltin to'p/butsa sovrinini to'g'ri egaga ko'chirish (faqat bosh
-           admin). Tenglik xatosi yoki noto'g'ri yakunlanish natijasini tuzatadi.
-           Ro'yxatdan sovrin tanlanadi + yangi ega Telegram ID kiritiladi. -->
-      <div class="section-label">SOVRINNI KO'CHIRISH</div>
-      <div class="admin-fix-form">
-        <div id="wc-prize-transfer-list" style="margin-bottom:8px">
-          <div class="wc-loading-row">${escHtml(t.loading || "Yuklanmoqda...")}</div>
-        </div>
-        <input id="wc-prize-new-tg" class="modal-input" type="number" inputmode="numeric"
-               placeholder="Yangi ega Telegram ID" style="margin-bottom:8px" />
-        <button class="btn" id="wc-btn-prize-transfer">🏆 Sovrinni ko'chirish</button>
-        <div class="admin-player-league" style="margin:6px 2px 0">Faqat Oltin to'p va Oltin butsa. Sovrinni tanlang, yangi ega Telegram ID sini kiriting.</div>
-      </div>
-
       <div class="section-label">${escHtml(t.admin_manage_title || "ADMIN TAYINLASH")}</div>
       <div class="admin-fix-form">
         <input id="wc-admin-new-id" class="modal-input" type="number" min="1"
@@ -197,97 +183,9 @@ function wcBindAdminPanel() {
 
     // 2026-07-22: play-off setka o'rinlarini almashtirish
     void wcLoadPlayoffSwap();
-
-    // 2026-08: sovrinni to'g'ri egaga ko'chirish (Oltin to'p/butsa)
-    void wcLoadPrizeTransfer();
-    document.getElementById("wc-btn-prize-transfer")
-      ?.addEventListener("click", wcPrizeTransferSubmit);
   }
   // Katta hisob ro'yxati — barcha WC adminlariga (bosh + oddiy)
   void wcLoadPendingMatches();
-}
-
-// ---- Sovrinni ko'chirish (Oltin to'p/butsa) — faqat bosh admin (2026-08) ----
-// prize_id ni state'da saqlaymiz (radio tanlovi). Nickname/username escHtml bilan
-// tozalanadi (qoida #35 XSS).
-const WC_PRIZE_LABELS = { golden_ball: "Oltin to'p", golden_boot: "Oltin butsa" };
-
-async function wcLoadPrizeTransfer() {
-  const box = document.getElementById("wc-prize-transfer-list");
-  if (!box) return;
-  let data;
-  try {
-    data = await apiFetch("/admin/prizes/transferable");
-  } catch (_) {
-    box.innerHTML = `<div class="admin-player-league">Sovrinlar yuklanmadi.</div>`;
-    return;
-  }
-  const prizes = (data && data.prizes) || [];
-  if (!prizes.length) {
-    box.innerHTML = `<div class="admin-player-league">Ko'chiriladigan sovrin yo'q.</div>`;
-    return;
-  }
-  box.innerHTML = prizes.map(p => {
-    const who = p.username ? "@" + escHtml(p.username)
-              : (p.nickname ? escHtml(p.nickname) : "#" + p.user_id);
-    const label = WC_PRIZE_LABELS[p.prize_type] || escHtml(p.prize_type);
-    return `
-      <label class="admin-radio-row" style="display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer">
-        <input type="radio" name="wc-prize-pick" value="${p.prize_id}">
-        <span>🏆 <b>${label}</b> · ${p.season_number}-mavsum · ${who}</span>
-      </label>`;
-  }).join("");
-}
-
-async function wcPrizeTransferSubmit() {
-  const picked = document.querySelector('input[name="wc-prize-pick"]:checked');
-  const tgInput = document.getElementById("wc-prize-new-tg");
-  const btn = document.getElementById("wc-btn-prize-transfer");
-  if (!picked) {
-    window.alert("Avval ko'chiriladigan sovrinni tanlang.");
-    return;
-  }
-  const newTg = parseInt((tgInput?.value || "").trim(), 10);
-  if (!newTg) {
-    window.alert("Yangi ega Telegram ID sini kiriting.");
-    return;
-  }
-  // Telegram ID -> user_id (mavjud yordamchi endpoint orqali)
-  let userResp;
-  try {
-    userResp = await apiFetch(`/users/by-telegram/${newTg}`);
-  } catch (_) {
-    window.alert("Bu Telegram ID bo'yicha o'yinchi topilmadi.");
-    return;
-  }
-  const newUserId = userResp && userResp.user_id;
-  if (!newUserId) {
-    window.alert("Bu Telegram ID bo'yicha o'yinchi topilmadi.");
-    return;
-  }
-  if (btn) btn.disabled = true;
-  try {
-    const r = await apiFetch("/admin/prizes/transfer", {
-      method: "POST",
-      body: JSON.stringify({ prize_id: Number(picked.value), new_owner_user_id: newUserId }),
-    });
-    const label = WC_PRIZE_LABELS[r.prize_type] || r.prize_type;
-    const who = r.new_username ? "@" + r.new_username : (r.new_nickname || ("#" + r.new_user_id));
-    window.alert(`✅ ${label} (${r.season_number}-mavsum) endi ${who} ga tegishli.`);
-    if (tgInput) tgInput.value = "";
-    void wcLoadPrizeTransfer();  // ro'yxatni yangilaymiz
-  } catch (err) {
-    const reason = (err && err.message) || "";
-    const msg = {
-      already_owner: "Bu sovrin allaqachon shu odamga tegishli.",
-      user_not_found: "Yangi ega topilmadi (Telegram ID noto'g'ri).",
-      prize_not_found: "Sovrin topilmadi.",
-      not_transferable: "Bu sovrin turini ko'chirib bo'lmaydi.",
-    }[reason] || "Ko'chirishda xatolik.";
-    window.alert("❌ " + msg);
-  } finally {
-    if (btn) btn.disabled = false;
-  }
 }
 
 // ---- Katta hisob (admin_pending) — WC admin tasdig'ini kutayotgan o'yinlar ----
