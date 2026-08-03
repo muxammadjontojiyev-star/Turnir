@@ -11,7 +11,9 @@ function escCel(s) {
   }[c]));
 }
 
-// Sovrin turi → rasm va nom (mavjud static rasmlar; liga kubogi uchun wc-trophy.png)
+// Sovrin turi → rasm va nom (mavjud static rasmlar). Liga kubogi rasmi
+// celPrizeLabel'da har liga uchun alohida tanlanadi (LEAGUE_TROPHIES);
+// bu yerdagi wc-trophy.png faqat FALLBACK (liga topilmasa).
 const CEL_PRIZE_META = {
   golden_ball: { img: "golden-ball.png", label: "Oltin to'p" },
   golden_boot: { img: "golden-boot.png", label: "Oltin butsa" },
@@ -22,7 +24,14 @@ function celPrizeLabel(w) {
   const meta = CEL_PRIZE_META[w.prize_type] || { img: "wc-trophy.png", label: w.prize_type };
   const league = w.prize_type === "league_cup" && w.league_name
     ? ` — ${escCel(w.league_name)}` : "";
-  return { img: meta.img, text: meta.label + league };
+  // Liga kubogi — har liganing O'Z kubogi rasmi (api.js LEAGUE_TROPHIES, DRY).
+  // Topilmasa meta.img (wc-trophy.png) fallback bo'lib qoladi.
+  let img = meta.img;
+  if (w.prize_type === "league_cup" && w.league_name
+      && typeof LEAGUE_TROPHIES !== "undefined" && LEAGUE_TROPHIES[w.league_name]) {
+    img = LEAGUE_TROPHIES[w.league_name];
+  }
+  return { img: img, text: meta.label + league };
 }
 
 // Salyut: 60 ta konfetti bo'lagi (CSS animatsiya .cel-piece)
