@@ -1325,6 +1325,53 @@ def user_prizes(user_id: int):
     return {"prizes": get_user_prizes(user_id)}
 
 
+@app.get("/users/by-telegram/{telegram_id}")
+def user_by_telegram(telegram_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin: Telegram ID bo'yicha o'yinchini topadi (sovrin ko'chirishda yangi
+    egani aniqlash uchun). Faqat bosh admin (telegram_id qidirish maxfiy).
+    Xato: user_not_found → 404
+    """
+    from models import get_user_by_telegram_id
+    u = get_user_by_telegram_id(telegram_id)
+    if not u:
+        raise HTTPException(status_code=404, detail="user_not_found")
+    return {
+        "user_id": u["id"],
+        "telegram_id": u["telegram_id"],
+        "nickname": u.get("nickname"),
+        "username": u.get("username"),
+    }
+
+
+@app.get("/admin/prizes/transferable")
+def admin_prizes_transferable(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin: ko'chirish mumkin bo'lgan sovrinlar ro'yxati (golden_ball/
+    golden_boot) hozirgi egasi bilan. Admin ro'yxatdan tanlab ko'chiradi.
+    """
+    from prize_admin import list_transferable_prizes
+    return {"prizes": list_transferable_prizes()}
+
+
+@app.post("/admin/prizes/transfer")
+def admin_prizes_transfer(
+    prize_id: int = Body(..., embed=True),
+    new_owner_user_id: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    Bosh admin: sovrinni (prize_id) yangi egaga (new_owner_user_id) ko'chiradi.
+    Faqat golden_ball/golden_boot. Xato sabablari (400): prize_not_found,
+    not_transferable, user_not_found, already_owner, transfer_failed.
+    """
+    from prize_admin import transfer_prize
+    ok, reason, info = transfer_prize(prize_id, new_owner_user_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", **info}
+
+
 
 @app.get("/season/celebration")
 def season_celebration(user: dict = Depends(get_authenticated_user)):
