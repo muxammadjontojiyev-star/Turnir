@@ -47,6 +47,18 @@ def get_wc_season() -> int:
     return row["wc_season"] if row else 1
 
 
+def get_cl_season() -> int:
+    """Joriy ChL mavsum raqami (season_state.cl_season). ChL liga/WC dan mustaqil
+    yakunlanadi (finalize_cl_season'da oshadi). Ko'rsatish va to'purarlar uchun
+    ISHONCHLI manba — cl_participants distinct count'dan farqli (reset'da o'zgarmaydi)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT cl_season FROM season_state WHERE id = 1")
+    row = cursor.fetchone()
+    conn.close()
+    return row["cl_season"] if row else 1
+
+
 def get_current_season() -> int:
     """
     Orqaga moslik uchun — LIGA mavsumini qaytaradi (eski nom).

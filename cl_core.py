@@ -242,14 +242,11 @@ def cl_get_groups(season: int | None = None) -> dict:
         )
         rows = [dict(r) for r in cursor.fetchall()]
         drawn = any(r["group_number"] for r in rows)
-        # ChL mavsum raqami = shu ChL nechanchi marta o'tkazilayotgani (liga
-        # current_season'dan farqli). cl_participants'dagi tartibi bilan aniqlanadi.
-        cursor.execute(
-            "SELECT COUNT(DISTINCT season) AS n FROM cl_participants WHERE season <= ?",
-            (season,),
-        )
-        cl_row = cursor.fetchone()
-        cl_season = (cl_row["n"] if cl_row and cl_row["n"] else 1)
+        # ChL mavsum raqami — RASMIY manba (season_state.cl_season), liga/WC dan
+        # mustaqil. Ilgari cl_participants distinct count edi — reset'da eski season
+        # o'chsa noto'g'ri (kam) chiqardi (qoida #13 — ishonchli shared state).
+        from season_prizes import get_cl_season
+        cl_season = get_cl_season()
         return {"season": season, "cl_season": cl_season,
                 "drawn": drawn, "participants": rows}
     finally:

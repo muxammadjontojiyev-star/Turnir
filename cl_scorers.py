@@ -2,22 +2,26 @@
 cl_scorers.py — ChL "To'purarlar" ro'yxati.
 
 Bitta vazifa (qoida #25): tasdiqlangan (confirmed) ChL o'yinlari bo'yicha har bir
-ishtirokchining URILGAN GOLLARI yig'indisi. Barcha 8 guruh bo'yicha umumiy.
+ishtirokchining URILGAN GOLLARI yig'indisi. Yangi format: guruh yo'q — barcha 36
+ishtirokchi yagona liga bosqichida.
 
 Saralash: gollar (kamayish) → o'yinlar soni (kamayish teskari: kam o'yinda ko'p gol
-yuqorida) → nickname. Guruh bosqichida hammaning o'yin soni teng bo'lgani uchun bu
-faqat yarim o'ynalgan holatlar uchun ahamiyatli.
+yuqorida) → nickname.
 """
 
 from models import get_connection
 from config import MATCH_STATUS_CONFIRMED
+from cl_qualification import CL_TOTAL
 
 
-def cl_top_scorers(season: int | None = None, limit: int = 32) -> list[dict]:
+def cl_top_scorers(season: int | None = None, limit: int | None = None) -> list[dict]:
     """
     [{user_id, nickname, username, club_name, group_number, goals, played}, ...]
     Faqat kerakli ustunlar olinadi (qoida #32 — SELECT * yo'q).
+    limit=None bo'lsa CL_TOTAL (36) — yangi Swiss formatda barcha ishtirokchi.
     """
+    if limit is None:
+        limit = CL_TOTAL
     conn = get_connection()
     cursor = conn.cursor()
     try:
