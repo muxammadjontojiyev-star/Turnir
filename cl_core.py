@@ -1,14 +1,21 @@
 """
-Chempionlar ligasi (ChL) yadrosi: a'zolik sinxroni, 8 guruh qur'asi, reyting.
+Chempionlar ligasi (ChL) yadrosi: a'zolik sinxroni, Swiss qur'asi, reyting.
+
+Yangi format (2026-08, "yangi ChL"): guruhlar YO'Q. 36 klub yagona liga
+bosqichida — har biri 8 ta TURLI raqib bilan mehmon o'yinisiz (1 martadan)
+o'ynaydi. Yagona umumiy reyting: 8 tur tugagach top-8 to'g'ridan setkaga,
+9-24 o'rin pley-in (uy+mehmon) — bular play-off bosqichida (cl_playoff).
 
 Oqim:
-  1. Liga mavsumi yakunlanadi -> cl_qualifiers'da 32 telegram_id (cl_qualification).
+  1. Liga mavsumi yakunlanadi -> cl_qualifiers'da 36 telegram_id (cl_qualification).
   2. Yangi mavsumda kvalifikant liga ro'yxatidan o'tadi (istalgan YANGI klub bilan)
      -> cl_sync_participants() uni cl_participants'ga qo'shadi (asosiy e'tibor
      odamda: telegram_id; klub — faqat ko'rsatish uchun snapshot).
-  3. Admin qur'a o'tkazadi (cl_draw) -> 8 guruh × 4, har guruhga round-robin
-     kalendar (3 tur × 2 o'yin = 6) cl_matches'ga yoziladi.
-  4. Guruh reytingi: g'alaba=3, durang=1 (real ChL standarti), saralash
+  3. Admin qur'a o'tkazadi (cl_draw) -> barcha ishtirokchi bitta liga bosqichida
+     (group_number=1 — yagona reyting), tasodifiy juftlash bilan CL_ROUNDS(8)
+     tur cl_matches'ga yoziladi (har turda har kim 1 marta, hech kim bir raqib
+     bilan 2 marta emas).
+  4. Umumiy reyting: g'alaba=3, durang=1 (real ChL standarti), saralash
      ball > gol farqi > urilgan gol.
 """
 
@@ -21,8 +28,12 @@ from schedule import _generate_round_robin_pairs
 
 logger = logging.getLogger(__name__)
 
-CL_GROUPS = 8
-CL_GROUP_SIZE = 4
+# Yangi ChL formati: guruhlar yo'q — barcha ishtirokchi yagona liga bosqichida.
+# group_number mavjud sxemada saqlanadi, lekin hammaga bir xil (CL_LEAGUE_GROUP)
+# beriladi => cl_group_rating(CL_LEAGUE_GROUP) yagona umumiy reyting bo'ladi
+# (qoida #19: ustunni o'chirmay, mavjud so'rovlarni buzmasdan yangi mantiqqa o'tamiz).
+CL_LEAGUE_GROUP = 1      # barcha ishtirokchining group_number qiymati
+CL_ROUNDS = 8            # liga bosqichida har ishtirokchi o'ynaydigan o'yinlar soni
 
 
 def _current_league_season(cursor) -> int:
@@ -154,7 +165,7 @@ def cl_draw(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, "already_drawn"
 
-        # Kvalifikantlarni (32 ta) shu tranzaksiya ichida ishtirokchiga aylantiramiz
+        # Kvalifikantlarni (36 ta) shu tranzaksiya ichida ishtirokchiga aylantiramiz
         _seed_participants_from_qualifiers(cursor, season)
 
         cursor.execute(
@@ -167,36 +178,33 @@ def cl_draw(season: int | None = None) -> tuple[bool, str | dict]:
 
         random.shuffle(parts)
 
+        # Yangi format: guruh yo'q — barcha ishtirokchi bitta liga bosqichida
+        # (group_number = CL_LEAGUE_GROUP => yagona umumiy reyting).
+        for p in parts:
+            cursor.execute(
+                "UPDATE cl_participants SET group_number = ? WHERE id = ?",
+                (CL_LEAGUE_GROUP, p["id"]),
+            )
+
+        # Swiss juftlash: shuffle qilingan ro'yxatdan circle method (qoida #26 DRY).
+        # Circle method har turda takrorlanmas juftlar beradi; birinchi CL_ROUNDS
+        # turini olamiz => har ishtirokchi 8 ta TURLI raqib bilan 1 martadan,
+        # mehmon o'yinisiz. Shuffle tufayli juftlik tasodifiy.
+        player_ids = [p["user_id"] for p in parts]
         created_matches = 0
-        groups_used = 0
-        for g in range(CL_GROUPS):
-            chunk = parts[g * CL_GROUP_SIZE:(g + 1) * CL_GROUP_SIZE]
-            if not chunk:
-                break
-            groups_used += 1
-            group_number = g + 1
-            for p in chunk:
-                cursor.execute(
-                    "UPDATE cl_participants SET group_number = ? WHERE id = ?",
-                    (group_number, p["id"]),
-                )
-            # Round-robin faqat 2+ o'yinchida ma'noga ega
-            player_ids = [p["user_id"] for p in chunk]
-            if len(player_ids) < 2:
-                continue
-            # Ikki doira: birinchi doira (uy) + qaytish doirasi (juftlik teskari)
-            first_leg = _generate_round_robin_pairs(player_ids)
-            second_leg = [[(away, home) for (home, away) in rnd] for rnd in first_leg]
-            rounds = first_leg + second_leg   # 4 o'yinchi → 6 tur, guruhda 12 o'yin
+        if len(player_ids) >= 2:
+            all_rounds = _generate_round_robin_pairs(player_ids)
+            rounds = all_rounds[:CL_ROUNDS]   # faqat dastlabki 8 tur
             for matchday, pairs in enumerate(rounds, start=1):
                 for (p1, p2) in pairs:
                     cursor.execute(
                         "INSERT INTO cl_matches "
                         "(season, group_number, matchday, player1_id, player2_id, status) "
                         "VALUES (?, ?, ?, ?, ?, ?)",
-                        (season, group_number, matchday, p1, p2, MATCH_STATUS_PENDING),
+                        (season, CL_LEAGUE_GROUP, matchday, p1, p2, MATCH_STATUS_PENDING),
                     )
                     created_matches += 1
+        groups_used = 1 if player_ids else 0
 
         cursor.execute("COMMIT")
         logger.info("ChL qur'a: %s guruh, %s o'yin (mavsum %s)",
@@ -214,7 +222,11 @@ def cl_draw(season: int | None = None) -> tuple[bool, str | dict]:
 
 
 def cl_get_groups(season: int | None = None) -> dict:
-    """Guruhlar va a'zolari (qur'adan keyin). Qur'agacha — participants ro'yxati."""
+    """
+    Liga bosqichi ishtirokchilari (qur'adan keyin). Qur'agacha — kvalifikantlar
+    ro'yxati. Yangi formatda guruh yo'q: barcha ishtirokchi group_number=1 bilan
+    yagona ro'yxatda qaytadi (frontend uni umumiy jadval sifatida ko'rsatadi).
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -246,8 +258,12 @@ def cl_get_groups(season: int | None = None) -> dict:
 
 def cl_group_rating(group_number: int, season: int | None = None) -> list[dict]:
     """
-    Guruh reyting jadvali (faqat confirmed cl_matches):
+    Liga bosqichi reyting jadvali (faqat confirmed cl_matches):
     g'alaba=3, durang=1; saralash ball > gol farqi > urilgan gol.
+
+    Yangi formatda barcha ishtirokchi group_number=CL_LEAGUE_GROUP(1) da bo'lgani
+    uchun cl_group_rating(1) YAGONA UMUMIY reyting (36 klub) bo'ladi. Funksiya nomi
+    va imzosi mavjud chaqiruvlar (cl_profile, cl_playoff, api) bilan mos qoladi.
     """
     conn = get_connection()
     cursor = conn.cursor()

@@ -1,57 +1,38 @@
 """
-cl_playoff.py — ChL play-off (2026-07-20).
+cl_playoff.py — ChL play-off (2026-08, yangi format).
 
-Guruh bosqichidan keyin: har guruhdan top-2 → 16 o'yinchi → 1/8 (r16) →
-1/4 (r8) → 1/2 (r4) → final. Har juftlik UY+MEHMON (2 o'yin), final — 1 o'yin.
+Yangi ChL formati (guruhsiz liga bosqichidan keyin, yagona umumiy reyting):
+  - TOP-8 → to'g'ridan-to'g'ri asosiy setkaga (seed 1..8).
+  - 9-24 o'rin (16 ta) → PLEY-IN: reyting bo'yicha juftlik (9-24, 10-23, ...,
+    16-17), uy+mehmon (2 o'yin). 8 g'olib asosiy setkaga qo'shiladi.
+  - Asosiy setka: 16 o'yinchi (8 seed + 8 pley-in g'olibi) → r16 → r8 (1/4) →
+    r4 (1/2) → final. Har juftlik UY+MEHMON, final — 1 o'yin.
+  - Real ChL uslubi: seed-1 eng PAST pley-in juftligi g'olibi bilan tushadi
+    (seed_k ↔ (8-k)-chi pley-in g'olibi; pley-in juftliklari kuch tartibida).
 
 Konventsiya (models.py cl_playoff_matches izohiga mos):
-  - Juftlik tomonlari: sideA (yuqori urug' — guruh g'olibi / toq feeder g'olibi),
-    sideB (quyi urug'). Real ChL kabi: 1-o'yinda sideB UYDA, 2-o'yinda sideA UYDA.
-  - Demak leg1: player1=sideB, player2=sideA;  leg2: player1=sideA, player2=sideB.
-  - Final: leg=1, player1=sideA (yarim final pos0 g'olibi), player2=sideB.
-  - 2-o'yin 1-o'yin TASDIQLANGACH yaratiladi (cl_playoff_results.py).
+  - Juftlik tomonlari: sideA (yuqori urug'), sideB (quyi urug').
+  - leg1: player1=sideB (uyda), player2=sideA;  leg2: player1=sideA, player2=sideB.
+  - Final: leg=1, player1=sideA, player2=sideB.
+  - 2-o'yin start paytida birga yaratiladi (uy+mehmon bir vaqtda ko'rinadi).
   - Agregat teng bo'lishi mumkin emas (o'yin ichida penalti/qo'shimcha vaqt).
 
-1/8 juftlash — TASODIFIY QUR'A (2026-07-21, real ChL kabi):
-  har guruh G'OLIBI tasodifiy BOSHQA guruh IKKINCHISI bilan tushadi;
-  bir guruhdoshlar 1/8 da uchrasha olmaydi (keyingi bosqichlarda — mumkin,
-  real ChL dagidek). Setkadagi juftlik o'rinlari (pos 0..7) ham tasodifiy.
-G'olib oqimi: (pos 2k, 2k+1) g'oliblari keyingi bosqich pos k'da uchrashadi.
+G'olib oqimi (asosiy setka): (pos 2k, 2k+1) g'oliblari keyingi bosqich pos k'da.
+Pley-in g'olibi esa r16'ning O'SHA pozitsiyasiga (sideB) boradi (cl_playoff_results
+._advance_winner playin uchun maxsus qoida).
 """
 
 import logging
-import random
 
 from models import get_connection
 from config import MATCH_STATUS_PENDING, MATCH_STATUS_CONFIRMED
 
 logger = logging.getLogger(__name__)
 
+# Play-off bosqichlari zanjiri. "playin" — 9-24 o'rin (16 ta) uchun kirish raundi;
+# g'oliblari r16'ga qo'shiladi. Undan keyingi zanjir avvalgidek (g'olib oqimi pos//2).
 CL_PO_ROUNDS = ["r16", "r8", "r4", "final"]
-
-
-def _draw_r16_pairs(q: dict) -> list[tuple[int, int]]:
-    """
-    Real ChL uslubidagi TASODIFIY qur'a: har g'olibga tasodifiy BOSHQA guruh
-    ikkinchisi tushadi (o'z guruhdoshi taqiqlanadi), juftliklarning setkadagi
-    o'rni ham tasodifiy. Qaytaradi: [(sideA=g'olib user_id, sideB=ikkinchi user_id), ...]
-    pos 0..7 tartibida.
-    """
-    winners = [(g, q["winners"][g]) for g in range(1, 9)]
-    runners = [(g, q["runners"][g]) for g in range(1, 9)]
-
-    pairing = None
-    for _ in range(200):  # 8 tadan tasodifiy taqsimotda deyarli darhol topiladi
-        random.shuffle(runners)
-        if all(w[0] != r[0] for w, r in zip(winners, runners)):
-            pairing = list(zip(winners, runners))
-            break
-    if pairing is None:  # deterministik zaxira: ikkinchilarni bir pog'ona surish
-        rs = sorted(runners)
-        pairing = list(zip(sorted(winners), rs[1:] + rs[:1]))
-
-    random.shuffle(pairing)  # setkadagi pozitsiyalar ham qur'a bilan
-    return [(w_id, r_id) for (_wg, w_id), (_rg, r_id) in pairing]
+CL_PO_PLAYIN = "playin"
 
 
 def _current_season(cursor) -> int:
@@ -76,10 +57,10 @@ def cl_po_is_started(season: int | None = None) -> bool:
 
 def cl_po_qualified(season: int) -> tuple[bool, str, dict]:
     """
-    Har guruhdan top-2 ni aniqlaydi. Shartlar:
-      - Barcha guruh o'yinlari tasdiqlangan (pending/awaiting qolmagan)
-      - Har 8 guruhda kamida 2 o'yinchi reytingda bor
-    Qaytaradi: (ready, reason, {"winners": {g: user_id}, "runners": {g: user_id}})
+    Yagona umumiy reytingdan play-off ishtirokchilarini aniqlaydi. Shartlar:
+      - Barcha liga bosqichi o'yinlari tasdiqlangan (pending/awaiting qolmagan)
+      - Reytingda kamida CL_QUALIFY_TOTAL (24) o'yinchi bor
+    Qaytaradi: (ready, reason, {"seeds": [top-8 user_id], "playin": [(hi,lo), ...]})
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -99,22 +80,26 @@ def cl_po_qualified(season: int) -> tuple[bool, str, dict]:
     finally:
         conn.close()
 
-    from cl_core import cl_group_rating
-    winners, runners = {}, {}
-    for g in range(1, 9):
-        rating = cl_group_rating(g, season)
-        if len(rating) < 2:
-            return False, f"group_{g}_incomplete", {}
-        winners[g] = rating[0]["user_id"]
-        runners[g] = rating[1]["user_id"]
-    return True, "ok", {"winners": winners, "runners": runners}
+    from cl_core import cl_group_rating, CL_LEAGUE_GROUP
+    from cl_playin import build_playin_draw, CL_QUALIFY_TOTAL
+    rating = cl_group_rating(CL_LEAGUE_GROUP, season)
+    if len(rating) < CL_QUALIFY_TOTAL:
+        return False, "not_enough_players", {}
+    ranking_ids = [r["user_id"] for r in rating]
+    draw = build_playin_draw(ranking_ids)
+    return True, "ok", draw
 
 
 def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
     """
-    Bosh admin play-off'ni boshlaydi: 1/8 ning 8 ta 1-o'yinini yaratadi.
+    Bosh admin play-off'ni boshlaydi. Yangi format:
+      - r16 (asosiy setka): 8 pos, sideA = top-8 seed (o'z joyida), sideB bo'sh
+        (pley-in g'olibi kelib to'ldiradi). Ikkala leg (uy+mehmon) yaratiladi.
+      - playin: 8 juft (9-24 o'rin), ikkala leg. G'olib r16 sideB'ga boradi.
+    Seed_k (r16 pos p) eng past pley-in juftligi bilan tushadi
+    (r16_slot_for_playin_position). Idempotent (qoida #38): started tekshiriladi.
     Xato sabablari: already_started, not_drawn, groups_not_finished,
-    group_N_incomplete. Idempotent (qoida #38): started tekshiriladi.
+    not_enough_players.
     """
     conn = get_connection()
     conn.isolation_level = None
@@ -135,24 +120,42 @@ def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, reason
 
-        created = 0
-        for pos, (side_a, side_b) in enumerate(_draw_r16_pairs(q)):
-            # side_a = guruh g'olibi (2-o'yinda uyda), side_b = ikkinchi (1-o'yinda uyda)
-            # 2026-07-22: IKKALA o'yin (uy+mehmon) bir vaqtda yaratiladi — o'yinchilar
-            # 1-o'yin tasdig'ini kutmasdan har ikkovini ko'radi/kiritadi.
-            #   leg1: player1=sideB (uyda), player2=sideA (mehmon)
-            #   leg2: player1=sideA (uyda), player2=sideB (mehmon)
+        from cl_playin import r16_slot_for_playin_position
+        seeds = q["seeds"]          # top-8, pos tartibida (0=seed1)
+        playin = q["playin"]        # 8 juft (hi, lo), kuch tartibida
+
+        # 1) r16 setkasi: sideA=seed (joyida), sideB=NULL. Ikkala leg.
+        #    leg1: player1=sideB(NULL, uyda), player2=sideA ; leg2 teskari.
+        for pos, seed_id in enumerate(seeds):
             cursor.execute(
                 "INSERT INTO cl_playoff_matches "
                 "(season, round, position, leg, player1_id, player2_id, status) "
-                "VALUES (?, 'r16', ?, 1, ?, ?, ?)",
-                (season, pos, side_b, side_a, MATCH_STATUS_PENDING),
+                "VALUES (?, 'r16', ?, 1, NULL, ?, ?)",
+                (season, pos, seed_id, MATCH_STATUS_PENDING),
             )
             cursor.execute(
                 "INSERT INTO cl_playoff_matches "
                 "(season, round, position, leg, player1_id, player2_id, status) "
-                "VALUES (?, 'r16', ?, 2, ?, ?, ?)",
-                (season, pos, side_a, side_b, MATCH_STATUS_PENDING),
+                "VALUES (?, 'r16', ?, 2, ?, NULL, ?)",
+                (season, pos, seed_id, MATCH_STATUS_PENDING),
+            )
+
+        # 2) playin juftlari: 8 ta (uy+mehmon). Konventsiya: yuqori o'rin (hi) =
+        #    sideA, quyi (lo) = sideB. leg1: player1=sideB(lo, uyda), player2=hi;
+        #    leg2 teskari.
+        created = 0
+        for pos, (hi_id, lo_id) in enumerate(playin):
+            cursor.execute(
+                "INSERT INTO cl_playoff_matches "
+                "(season, round, position, leg, player1_id, player2_id, status) "
+                "VALUES (?, ?, ?, 1, ?, ?, ?)",
+                (season, CL_PO_PLAYIN, pos, lo_id, hi_id, MATCH_STATUS_PENDING),
+            )
+            cursor.execute(
+                "INSERT INTO cl_playoff_matches "
+                "(season, round, position, leg, player1_id, player2_id, status) "
+                "VALUES (?, ?, ?, 2, ?, ?, ?)",
+                (season, CL_PO_PLAYIN, pos, hi_id, lo_id, MATCH_STATUS_PENDING),
             )
             created += 1
 
@@ -164,8 +167,9 @@ def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
             (season,),
         )
         cursor.execute("COMMIT")
-        logger.info("ChL play-off boshlandi: mavsum %s, %s ta 1/8 o'yin", season, created)
-        return True, {"season": season, "created": created}
+        logger.info("ChL play-off boshlandi: mavsum %s, %s pley-in juftligi + 8 seed r16'da",
+                    season, created)
+        return True, {"season": season, "playin_pairs": created, "seeds": len(seeds)}
     except Exception:
         try:
             cursor.execute("ROLLBACK")
@@ -375,7 +379,10 @@ def _po_user_matches(user_id: int, season: int | None = None
     # 2026-07-23: profil sahifasida BOSQICH TARTIBIDA ko'rinsin (1/8 → 1/4 → 1/2 → Final),
     # har bosqich ichida 1-o'yin → 2-o'yin. _po_rows faqat position/leg bo'yicha
     # saralaydi (setka uchun kerak), shuning uchun bosqichlar aralashib ketardi.
-    _round_idx = {r: i for i, r in enumerate(CL_PO_ROUNDS)}
+    # 2026-08: pley-in eng oldinga, so'ng CL_PO_ROUNDS tartibida. playin CL_PO_ROUNDS'da
+    # yo'q, shuning uchun uni -1 indeks bilan birinchi qo'yamiz.
+    _round_idx = {CL_PO_PLAYIN: -1}
+    _round_idx.update({r: i for i, r in enumerate(CL_PO_ROUNDS)})
     matches.sort(key=lambda m: (_round_idx.get(m["round"], 99), m["leg"]))
     return True, matches
 

@@ -1374,22 +1374,23 @@ def cl_groups(user: dict = Depends(get_authenticated_user)):
 
 @app.get("/cl/rating/{group_number}")
 def cl_rating(group_number: int, user: dict = Depends(get_authenticated_user)):
-    """ChL guruh reyting jadvali (ball > gol farqi > urilgan gol)."""
-    if not 1 <= group_number <= 8:
+    """ChL liga bosqichi reyting jadvali (ball > gol farqi > urilgan gol).
+    Yangi formatda yagona umumiy reyting — faqat CL_LEAGUE_GROUP yaroqli."""
+    from cl_core import cl_group_rating, CL_LEAGUE_GROUP
+    if group_number != CL_LEAGUE_GROUP:
         raise HTTPException(status_code=400, detail="invalid_group")
-    from cl_core import cl_group_rating
     return {"group_number": group_number, "rating": cl_group_rating(group_number)}
 
 
 @app.get("/cl/rating-all")
 def cl_rating_all(user: dict = Depends(get_authenticated_user)):
-    """Barcha 8 guruh reytingi birdaniga (Reyting 'Guruhlar' tabi — hammasi ketma-ket)."""
-    from cl_core import cl_group_rating
+    """ChL yagona umumiy reyting (yangi format: guruh yo'q, 36 klub bitta jadvalda).
+    Javob shakli o'zgarmaydi (groups ro'yxati) — frontend mos qoladi."""
+    from cl_core import cl_group_rating, CL_LEAGUE_GROUP
     groups = []
-    for n in range(1, 9):
-        rows = cl_group_rating(n)
-        if rows:
-            groups.append({"group_number": n, "rating": rows})
+    rows = cl_group_rating(CL_LEAGUE_GROUP)
+    if rows:
+        groups.append({"group_number": CL_LEAGUE_GROUP, "rating": rows})
     return {"groups": groups}
 
 
@@ -1903,8 +1904,9 @@ def cl_playoff_status(user: dict = Depends(get_authenticated_user)):
 @app.post("/cl/admin/playoff/start")
 def cl_admin_playoff_start(admin: dict = Depends(get_authenticated_super_admin)):
     """
-    Bosh admin play-off'ni boshlaydi: har guruhdan top-2 → 1/8 (8 juftlik, 1-o'yinlar).
-    Xato: already_started, not_drawn, groups_not_finished, group_N_incomplete → 400
+    Bosh admin play-off'ni boshlaydi: top-8 to'g'ridan r16 setkaga, 9-24 o'rin
+    pley-in (uy+mehmon). Xato: already_started, not_drawn, groups_not_finished,
+    not_enough_players → 400
     """
     from cl_playoff import cl_po_start
     success, result = cl_po_start()

@@ -2,10 +2,10 @@
 Chempionlar ligasi (ChL) kvalifikatsiyasi.
 
 Qoida (loyiha egasi): liga mavsumi yakunlanganda 5 ta liga reytingidan:
-  - har ligadan TOP-6 (5 × 6 = 30 ta), qualified_via='top6'
-  - qolgan 7-o'rin egalaridan ENG YAXSHI 2 tasi (achko > gol farqi > urilgan gol),
-    qualified_via='best7'
-Jami 32 ishtirokchi. Ular telegram_id orqali eslab qolinadi — keyingi mavsumda
+  - har ligadan TOP-7 (5 × 7 = 35 ta), qualified_via='top7'
+  - qolgan 8-o'rin egalaridan ENG YAXSHI 1 tasi (achko > gol farqi > urilgan gol),
+    qualified_via='best8'
+Jami 36 ishtirokchi. Ular telegram_id orqali eslab qolinadi — keyingi mavsumda
 boshqa klub tanlasalar ham ChL'da qatnashish huquqi SHU odamda qoladi.
 
 MUHIM: hisoblash reset'dan OLDIN bo'lishi shart (registrations/matches o'chadi),
@@ -20,9 +20,9 @@ from rating import calculate_league_rating
 
 logger = logging.getLogger(__name__)
 
-CL_TOP_N = 6          # har ligadan to'g'ridan-to'g'ri o'tadiganlar
-CL_BEST_SEVENTH = 2   # eng yaxshi 7-o'rinlar soni
-CL_TOTAL = 32
+CL_TOP_N = 7          # har ligadan to'g'ridan-to'g'ri o'tadiganlar
+CL_BEST_EIGHTH = 1    # eng yaxshi 8-o'rinlar soni
+CL_TOTAL = 36
 
 
 def compute_cl_qualifiers() -> list[dict]:
@@ -45,7 +45,7 @@ def compute_cl_qualifiers() -> list[dict]:
     conn.close()
 
     qualifiers: list[dict] = []
-    sevenths: list[dict] = []
+    eighths: list[dict] = []
 
     for lg in leagues:
         table = calculate_league_rating(lg["id"])
@@ -67,18 +67,18 @@ def compute_cl_qualifiers() -> list[dict]:
                 logger.warning("ChL: user_id=%s uchun telegram_id topilmadi, tashlab ketildi", p["user_id"])
                 continue
             if pos <= CL_TOP_N:
-                entry["qualified_via"] = "top6"
+                entry["qualified_via"] = "top7"
                 qualifiers.append(entry)
-            else:  # pos == 7
-                entry["qualified_via"] = "best7"
-                sevenths.append(entry)
+            else:  # pos == 8
+                entry["qualified_via"] = "best8"
+                eighths.append(entry)
 
-    # Eng yaxshi 7-o'rinlar: achko > gol farqi > urilgan gol
-    sevenths.sort(
+    # Eng yaxshi 8-o'rinlar: achko > gol farqi > urilgan gol
+    eighths.sort(
         key=lambda e: (e["points"], e["goal_difference"], e["goals_for"]),
         reverse=True,
     )
-    qualifiers.extend(sevenths[:CL_BEST_SEVENTH])
+    qualifiers.extend(eighths[:CL_BEST_EIGHTH])
 
     # telegram_id bo'yicha dedupe (nazariy: bitta odam 2 ligada) — birinchisi qoladi
     seen: set[int] = set()
@@ -132,7 +132,7 @@ def get_cl_qualifiers(from_season: int | None = None) -> dict:
             "SELECT telegram_id, nickname, league_id, league_name, position, "
             "points, goal_difference, goals_for, qualified_via "
             "FROM cl_qualifiers WHERE from_season = ? "
-            "ORDER BY qualified_via = 'best7', league_id, position",
+            "ORDER BY qualified_via = 'best8', league_id, position",
             (from_season,),
         )
         return {"from_season": from_season,

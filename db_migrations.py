@@ -205,13 +205,18 @@ def run_migrations() -> None:
 
 def _fix_cl_schedule_matchdays(conn) -> None:
     """
-    Bir martalik tuzatish: eski qur'a mantiqi ChL guruh o'yinlariga noto'g'ri
-    matchday bergan (masalan 1,2,3,4,5,7 — 6-tur yo'q). Agar guruhda tur raqamlari
-    ketma-ket bo'lmasa (MAX(matchday) != kutilgan tur soni) VA hech qanday natija
-    kiritilmagan bo'lsa — kalendar ikki doira (uy+mehmon) qilib qayta quriladi.
+    NO-OP (2026-08, yangi ChL formati). Ilgari: eski GURUH qur'asi noto'g'ri
+    matchday bergan holatlarni "ikki doira uy+mehmon" qilib qayta qurardi.
 
-    Natija kiritilgan bo'lsa TEGILMAYDI (o'ynalgan o'yin o'chmaydi).
+    Yangi formatda ChL guruhsiz — 36 klub yagona liga bosqichida 8 tur (bir doira,
+    mehmon o'yinisiz). Eski mantiq bu kalendarni "buzuq" deb 2*(n-1) turga qayta
+    yozib feature'ni BUZADI (qoida #07). Shuning uchun bu tuzatish o'chirildi.
+    Chaqiruv joyi (init_db) va eski kod tarixi saqlandi — kelajakda Swiss'ga xos
+    tuzatish kerak bo'lsa shu yerga yoziladi.
     """
+    return
+
+    # --- ESKI GURUH-FORMAT MANTIG'I (ishlatilmaydi) ---
     cursor = conn.cursor()
     try:
         cursor.execute("BEGIN IMMEDIATE")

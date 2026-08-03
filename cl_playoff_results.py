@@ -24,7 +24,7 @@ from config import (
     MATCH_STATUS_AWAITING_CONFIRMATION,
     MATCH_STATUS_CONFIRMED,
 )
-from cl_playoff import CL_PO_ROUNDS
+from cl_playoff import CL_PO_ROUNDS, CL_PO_PLAYIN
 
 logger = logging.getLogger(__name__)
 
@@ -140,13 +140,38 @@ def _ensure_next_tie(cursor, season: int, next_round: str, position: int) -> Non
 def _advance_winner(cursor, m: dict, winner_id: int) -> None:
     """
     Juftlik hal bo'lgach g'olibni keyingi bosqichga yozadi.
-    pos 2k → sideA, pos 2k+1 → sideB. Keyingi bosqich pos = m.position // 2.
 
-    2026-07-22: keyingi bosqichda IKKALA leg mavjud (uy+mehmon bir vaqtda), shuning
-    uchun g'olib har ikkovida to'g'ri slotga yoziladi:
+    PLEY-IN maxsus: playin g'olibi r16'ning MOS pozitsiyasiga sideB sifatida
+    boradi (r16_slot_for_playin_position — real ChL uslubi: eng kuchli pley-in
+    juftligi eng past seed bilan). Bu yerda pos//2 EMAS.
+
+    Boshqa bosqichlar (r16→r8→r4→final): pos 2k → sideA, pos 2k+1 → sideB,
+    keyingi bosqich pos = m.position // 2.
+
+    Keyingi bosqichda IKKALA leg mavjud (uy+mehmon bir vaqtda):
       - final (bitta o'yin): sideA=player1, sideB=player2.
       - oddiy bosqich: leg1 → player1=sideB, player2=sideA ; leg2 teskari.
     """
+    # --- PLEY-IN → r16 (maxsus): g'olib r16 sideB, o'sha "kuch" pozitsiyasiga ---
+    if m["round"] == CL_PO_PLAYIN:
+        from cl_playin import r16_slot_for_playin_position
+        next_pos = r16_slot_for_playin_position(m["position"])
+        _ensure_next_tie(cursor, m["season"], "r16", next_pos)
+        # r16 sideB = leg1.player1 va leg2.player2 (sideA=seed allaqachon yozilgan)
+        cursor.execute(
+            "UPDATE cl_playoff_matches SET player1_id = ? "
+            "WHERE season = ? AND round = 'r16' AND position = ? AND leg = 1",
+            (winner_id, m["season"], next_pos),
+        )
+        cursor.execute(
+            "UPDATE cl_playoff_matches SET player2_id = ? "
+            "WHERE season = ? AND round = 'r16' AND position = ? AND leg = 2",
+            (winner_id, m["season"], next_pos),
+        )
+        logger.info("ChL PO: playin pos%s g'olibi (user %s) → r16 pos%s (sideB)",
+                    m["position"], winner_id, next_pos)
+        return
+
     idx = CL_PO_ROUNDS.index(m["round"])
     next_round = CL_PO_ROUNDS[idx + 1]
     next_pos = m["position"] // 2
