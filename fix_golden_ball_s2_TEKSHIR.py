@@ -29,8 +29,8 @@ import sqlite3
 SEASON_NUMBER = 2            # qaysi mavsum golden_ball'i tuzatiladi
 
 # Yangi egani BITTA usul bilan bering (qolganini None qoldiring):
-NEW_OWNER_NICKNAME = "Raxmonberdiyev"    # to'ldirildi (Serie A g'olibi, Torino)
-NEW_OWNER_USERNAME = None    # masalan: "TorinoUser"  (@ SIZ)
+NEW_OWNER_NICKNAME = None    # nickname emas — username ishlatamiz (aniqroq)
+NEW_OWNER_USERNAME = "thefootrix8"    # to'ldirildi (Serie A g'olibi Cadiz, @ SIZ)
 NEW_OWNER_TELEGRAM_ID = None # masalan: 123456789
 
 CONFIRM = False              # TEKSHIRISH: faqat ko'rsatadi, O'ZGARTIRMAYDI
