@@ -1344,6 +1344,46 @@ def user_by_telegram(telegram_id: int, admin: dict = Depends(get_authenticated_s
     }
 
 
+@app.get("/admin/users/find")
+def admin_users_find(q: str, admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin: o'yinchini Telegram ID YOKI username (@ bilan yoki @siz) bo'yicha
+    topadi. Sovrin ko'chirishda yangi egani aniqlash uchun (username qulayroq —
+    admin uni ro'yxatda ko'radi). Xato: user_not_found → 404
+    """
+    from models import get_connection
+    val = (q or "").strip().lstrip("@")
+    if not val:
+        raise HTTPException(status_code=404, detail="user_not_found")
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        row = None
+        if val.isdigit():  # Telegram ID
+            cursor.execute(
+                "SELECT id, telegram_id, nickname, username FROM users WHERE telegram_id = ?",
+                (int(val),),
+            )
+            row = cursor.fetchone()
+        if row is None:    # username (katta-kichik harfga sezgir emas)
+            cursor.execute(
+                "SELECT id, telegram_id, nickname, username FROM users "
+                "WHERE username = ? COLLATE NOCASE",
+                (val,),
+            )
+            row = cursor.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="user_not_found")
+        return {
+            "user_id": row["id"],
+            "telegram_id": row["telegram_id"],
+            "nickname": row["nickname"],
+            "username": row["username"],
+        }
+    finally:
+        conn.close()
+
+
 @app.get("/admin/prizes/transferable")
 def admin_prizes_transferable(admin: dict = Depends(get_authenticated_super_admin)):
     """
