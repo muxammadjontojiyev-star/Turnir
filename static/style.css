@@ -608,6 +608,21 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--cyan);
   opacity: 0.85;
 }
+/* ChL reyting playoff chegaralari (2026-08):
+   YASHIL = 8/9 orasi (top-8 to'g'ridan setkaga),
+   QIZIL  = 24/25 orasi (9-24 pley-in; 24 dan pastda ChL tugaydi).
+   Qatorning pastki chegarasi rangli va qalin — chiziq shu ikki o'rin orasida ko'rinadi. */
+.rating-table tbody tr.cl-cut-green {
+  border-bottom: 3px solid #22c55e;
+  box-shadow: 0 2px 6px -1px rgba(34, 197, 94, 0.5);
+}
+.rating-table tbody tr.cl-cut-red {
+  border-bottom: 3px solid #ef4444;
+  box-shadow: 0 2px 6px -1px rgba(239, 68, 68, 0.5);
+}
+/* Chegara qatoridan keyingi hover chiziqni yashirmasin */
+.rating-table tbody tr.cl-cut-green:last-child,
+.rating-table tbody tr.cl-cut-red:last-child { border-bottom-width: 3px; }
 .rating-table td {
   padding: 7px 10px;
   font-size: 13px;

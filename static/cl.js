@@ -13,6 +13,9 @@
 const CL_ROUNDS = 8;    // Liga bosqichi turlari (backend: cl_core.CL_ROUNDS)
 const CL_TOTAL  = 36;   // Ishtirokchilar soni (backend: cl_qualification.CL_TOTAL)
 const CL_LEAGUE_GROUP = 1;  // Yagona reyting guruh raqami (backend: cl_core.CL_LEAGUE_GROUP)
+// Reyting chegaralari (backend: cl_playin.CL_SEED_COUNT / CL_QUALIFY_TOTAL):
+const CL_SEED_COUNT = 8;      // top-8 to'g'ridan setkaga (8/9 orasida YASHIL chiziq)
+const CL_QUALIFY_TOTAL = 24;  // 9-24 pley-in (24/25 orasida QIZIL chiziq)
 
 const CL = {
   section: "home",     // home | rating | profile | prizes
@@ -292,14 +295,21 @@ function clRenderRating() {
   if (!groups.length) return `${tabs}<div class="card">${CT("cl_no_groups")}</div>`;
 
   // Yangi format: yagona umumiy reyting (bitta "guruh"). Guruh sarlavhasi ko'rsatilmaydi.
+  // 8/9 orasida YASHIL chiziq (top-8 to'g'ridan setkaga), 24/25 orasida QIZIL chiziq
+  // (9-24 pley-in; 24 dan pastda ChL tugaydi) — qoida #17: konstantalar yuqorida.
   const blocks = groups.map(g => {
-    const rows = g.rating.map((p, i) => `
-      <tr>
+    const rows = g.rating.map((p, i) => {
+      const pos = i + 1;
+      const cut = pos === CL_SEED_COUNT ? " cl-cut-green"
+                : pos === CL_QUALIFY_TOTAL ? " cl-cut-red" : "";
+      return `
+      <tr class="cl-rating-row${cut}">
         <td class="rank-${i + 1}">${i + 1}</td>
         <td><div class="cl-rating-player" data-cl-player="${p.user_id}">${clClubBadge(p.club_name, 22)}<span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}${prizeStarsHtml(p)}</span></div></td>
         <td>${p.played}</td><td>${p.goal_difference > 0 ? "+" : ""}${p.goal_difference}</td>
         <td><b>${p.points}</b></td>
-      </tr>`).join("");
+      </tr>`;
+    }).join("");
     return `
       <div class="card card--table" style="margin-bottom:14px">
         <table class="rating-table">
