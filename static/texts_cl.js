@@ -15,6 +15,16 @@ const CL_TEXTS = {
     cl_load_failed:       "Ma'lumot yuklanmadi. Qayta urinib ko'ring.",
     cl_nav_admin:         "Admin",
 
+    // --- Yangi format (Swiss liga bosqichi) ---
+    cl_league_phase:      "LIGA BOSQICHI",
+    cl_profile_phase:     "Liga bosqichi",
+    cl_stat_clubs:        "KLUBLAR",
+    cl_stat_rounds:       "TURLAR",
+    cl_stat_season:       "MAVSUM",
+    cl_stat_qualifiers:   "KVALIFIKANT",
+    cl_participants_label: "ISHTIROKCHILAR",
+    cl_qualifiers_label:  "KVALIFIKANTLAR",
+
     // --- Reyting / jadval ---
     cl_tab_groups:        "Guruhlar",
     cl_tab_scorers:       "To'purarlar",
@@ -63,8 +73,9 @@ const CL_TEXTS = {
 
     // --- Play-off ---
     clpo_final:           "Final",
-    clpo_not_started:     "Play-off hali boshlanmagan. Guruh bosqichi tugagach, setka shu yerda paydo bo'ladi.",
-    clpo_start_ask:       "Play-off boshlansinmi? Har guruhdan top-2 (16 o'yinchi) 1/8 setkasiga joylanadi.",
+    clpo_playin_label:    "PLEY-IN (9-24 o'rin)",
+    clpo_not_started:     "Play-off hali boshlanmagan. Liga bosqichi tugagach, setka shu yerda paydo bo'ladi.",
+    clpo_start_ask:       "Play-off boshlansinmi? Top-8 to'g'ridan setkaga, 9-24 o'rin pley-in (uy+mehmon) o'ynaydi.",
     clpo_started:         "Play-off boshlandi",
     clpo_confirmed:       "✅ Tasdiqlandi",
     clpo_rejected:        "Rad etildi — natija qayta kiritilsin",
@@ -80,7 +91,7 @@ const CL_TEXTS = {
 
     // --- Admin ---
     cla_draw_done:        "Qur'a o'tkazilgan. Guruhlar va kalendar tayyor.",
-    cla_draw_hint:        "Qur'a: 32 kvalifikant tasodifiy 8 guruhga (4 tadan) bo'linadi va kalendar tuziladi. Bu amalni ortga qaytarib bo'lmaydi.",
+    cla_draw_hint:        "Qur'a: 36 ishtirokchi yagona liga bosqichida — har biri 8 ta turli raqib bilan 1 martadan (mehmon o'yinisiz) o'ynaydigan kalendar tuziladi. Bu amalni ortga qaytarib bo'lmaydi.",
     cla_start_hint:       "O'yinlarni boshlash: 1-tur ochiladi. Keyingi turlar har kuni 23:30 da avtomatik ochiladi.",
     cla_playoff:          "Play-off:",
     cla_started_hint:     "O'yinlar boshlangan. Joriy tur: <b>{cur}</b> / {total}. Har kuni 23:30 (Toshkent) da joriy tur yopiladi (kiritilmagan o'yinlar 0:0) va keyingisi ochiladi.",
@@ -116,6 +127,16 @@ const CL_TEXTS = {
     cl_not_participant:   "Вы не участник Лиги чемпионов.",
     cl_load_failed:       "Не удалось загрузить данные. Попробуйте ещё раз.",
     cl_nav_admin:         "Админ",
+
+    // --- Новый формат (швейцарский этап лиги) ---
+    cl_league_phase:      "ЭТАП ЛИГИ",
+    cl_profile_phase:     "Этап лиги",
+    cl_stat_clubs:        "КЛУБЫ",
+    cl_stat_rounds:       "ТУРЫ",
+    cl_stat_season:       "СЕЗОН",
+    cl_stat_qualifiers:   "КВАЛИФИЦ.",
+    cl_participants_label: "УЧАСТНИКИ",
+    cl_qualifiers_label:  "КВАЛИФИЦИРОВАННЫЕ",
 
     cl_tab_groups:        "Группы",
     cl_tab_scorers:       "Бомбардиры",
@@ -160,8 +181,9 @@ const CL_TEXTS = {
     cl_no_matches_short:  "Матчей нет.",
 
     clpo_final:           "Финал",
-    clpo_not_started:     "Плей-офф ещё не начался. Сетка появится здесь после группового этапа.",
-    clpo_start_ask:       "Начать плей-офф? Топ-2 из каждой группы (16 игроков) попадут в сетку 1/8.",
+    clpo_playin_label:    "ПЛЕЙ-ИН (места 9-24)",
+    clpo_not_started:     "Плей-офф ещё не начался. Сетка появится здесь после этапа лиги.",
+    clpo_start_ask:       "Начать плей-офф? Топ-8 напрямую в сетку, места 9-24 играют плей-ин (дома+в гостях).",
     clpo_started:         "Плей-офф начался",
     clpo_confirmed:       "✅ Подтверждено",
     clpo_rejected:        "Отклонено — введите результат заново",
@@ -176,7 +198,7 @@ const CL_TEXTS = {
     clpo_enter_score:     "Введите счёт",
 
     cla_draw_done:        "Жеребьёвка проведена. Группы и календарь готовы.",
-    cla_draw_hint:        "Жеребьёвка: 32 квалифицированных случайно делятся на 8 групп (по 4) и составляется календарь. Действие необратимо.",
+    cla_draw_hint:        "Жеребьёвка: 36 участников в едином этапе лиги — для каждого составляется календарь из 8 матчей с разными соперниками по 1 разу (без ответных игр). Действие необратимо.",
     cla_start_hint:       "Старт матчей: откроется 1-й тур. Следующие туры открываются автоматически каждый день в 23:30.",
     cla_playoff:          "Плей-офф:",
     cla_started_hint:     "Матчи начались. Текущий тур: <b>{cur}</b> / {total}. Каждый день в 23:30 (Ташкент) текущий тур закрывается (невведённые матчи 0:0) и открывается следующий.",
@@ -212,6 +234,16 @@ const CL_TEXTS = {
     cl_not_participant:   "You are not a Champions League player.",
     cl_load_failed:       "Failed to load data. Please try again.",
     cl_nav_admin:         "Admin",
+
+    // --- New format (Swiss league phase) ---
+    cl_league_phase:      "LEAGUE PHASE",
+    cl_profile_phase:     "League phase",
+    cl_stat_clubs:        "CLUBS",
+    cl_stat_rounds:       "ROUNDS",
+    cl_stat_season:       "SEASON",
+    cl_stat_qualifiers:   "QUALIFIED",
+    cl_participants_label: "PARTICIPANTS",
+    cl_qualifiers_label:  "QUALIFIERS",
 
     cl_tab_groups:        "Groups",
     cl_tab_scorers:       "Top scorers",
@@ -256,8 +288,9 @@ const CL_TEXTS = {
     cl_no_matches_short:  "No matches.",
 
     clpo_final:           "Final",
-    clpo_not_started:     "The play-off hasn't started yet. The bracket will appear here after the group stage.",
-    clpo_start_ask:       "Start the play-off? The top 2 from each group (16 players) go into the round of 16.",
+    clpo_playin_label:    "PLAY-IN (places 9-24)",
+    clpo_not_started:     "The play-off hasn't started yet. The bracket will appear here after the league phase.",
+    clpo_start_ask:       "Start the play-off? Top 8 go straight to the bracket; places 9-24 play a play-in (home+away).",
     clpo_started:         "Play-off started",
     clpo_confirmed:       "✅ Confirmed",
     clpo_rejected:        "Rejected — submit the result again",
@@ -272,7 +305,7 @@ const CL_TEXTS = {
     clpo_enter_score:     "Enter the score",
 
     cla_draw_done:        "The draw is done. Groups and calendar are ready.",
-    cla_draw_hint:        "Draw: 32 qualifiers are split at random into 8 groups (4 each) and a calendar is built. This cannot be undone.",
+    cla_draw_hint:        "Draw: 36 participants in a single league phase — each gets a calendar of 8 matches against 8 different opponents once (no return legs). This cannot be undone.",
     cla_start_hint:       "Start matches: matchday 1 opens. Later matchdays open automatically every day at 23:30.",
     cla_playoff:          "Play-off:",
     cla_started_hint:     "Matches have started. Current matchday: <b>{cur}</b> / {total}. Every day at 23:30 (Tashkent) the current matchday closes (unsubmitted matches 0:0) and the next one opens.",

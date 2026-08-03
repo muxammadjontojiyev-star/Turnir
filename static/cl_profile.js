@@ -28,7 +28,9 @@ function clRenderProfile() {
   }
 
   const letter = (p.nickname || "?")[0].toUpperCase();
-  const groupLabel = p.group_number ? `Guruh ${p.group_number}` : CT("cl_draw_pending");
+  const groupLabel = p.group_number
+    ? (p.position ? `${CT("cl_profile_phase")} · #${p.position}` : CT("cl_profile_phase"))
+    : CT("cl_draw_pending");
   const pos = p.position ? `#${p.position}` : "—";
 
   return `

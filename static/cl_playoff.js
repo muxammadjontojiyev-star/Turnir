@@ -11,7 +11,7 @@ const CLPO = {
   _lastMyJson: null,  // 2026-07-21: pir-pirashga qarshi — o'zgarmagan bo'lsa DOM yozilmaydi
 };
 
-const CLPO_ROUND_NAMES = { r16: "1/8 final", r8: "1/4 final", r4: "1/2 final", final: CT("clpo_final") };
+const CLPO_ROUND_NAMES = { playin: "Pley-in", r16: "1/8 final", r8: "1/4 final", r4: "1/2 final", final: CT("clpo_final") };
 const CLPO_SIDE_ROUNDS = ["r16", "r8", "r4"];
 
 // 2026-07-21: kubok — Sovrinlar sahifasidagi RASM (cl-trophy.png, clRenderPrizes
@@ -143,7 +143,21 @@ function clpoRenderBracket(data) {
     ${finals.map(t => clpoTieCard(t, "center")).join("")}
     ${champHtml}
   </div>`;
+  // Pley-in bloki (yangi format): 9-24 o'rin juftliklari setka ustida alohida
+  // ro'yxat. Faqat playin bosqichi mavjud bo'lsa ko'rsatiladi (clpoTieCard — DRY).
+  const playinTies = rounds.playin || [];
+  const playinHtml = playinTies.length ? `
+    <div class="section-label">${CT("clpo_playin_label")}</div>
+    <div class="cl-po-playin-list">
+      ${playinTies
+        .slice()
+        .sort((a, b) => a.position - b.position)
+        .map(t => clpoTieCard({ ...t, round: "playin" }, "left"))
+        .join("")}
+    </div>` : "";
+
   return `
+    ${playinHtml}
     <div class="section-label">PLAY-OFF SETKASI</div>
     <div class="wc-bracket-scroll">
       <div class="wc-bracket-inner">

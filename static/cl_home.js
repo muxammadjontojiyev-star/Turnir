@@ -1,35 +1,24 @@
 // ============================================================
 //  cl_home.js — ChL "Asosiy" sahifasi (World Cup bosh sahifasi naqshi)
-//  cl.js dan ajratildi (qoida 21). Global: CL, CL_GROUP_COUNT, CL_GROUP_SIZE,
+//  cl.js dan ajratildi (qoida 21). Global: CL, CL_ROUNDS, CL_TOTAL,
 //  escHtml, clClubBadge (cl.js), renderChampionsLeague.
 // ============================================================
 
-// ---- HOME: WC naqshi (hero + guruh tanlash + guruh a'zolari) ----
+// ---- HOME: WC naqshi (hero + liga bosqichi ishtirokchilari) ----
+// Yangi format: guruh yo'q — barcha 36 ishtirokchi yagona ro'yxatda.
 function clRenderHome() {
   const g = CL.groups;
   if (!g) return `<div class="card">${CT("cl_load_failed")}</div>`;
 
   if (!g.drawn) return clRenderHomeBeforeDraw();
 
-  const byGroup = {};
-  for (const p of g.participants) {
-    if (!p.group_number) continue;
-    (byGroup[p.group_number] ||= []).push(p);
-  }
-  const sel = CL.homeGroup;
-  const members = byGroup[sel] || [];
+  const members = g.participants.filter(p => p.group_number);
 
-  const hero = clRenderHero(`GURUH ${sel}`, [
-    { v: members.length, l: "ISHTIROKCHI" },
-    { v: CL_GROUP_COUNT, l: "GURUHLAR" },
-    { v: g.cl_season ?? 1, l: "MAVSUM" },
+  const hero = clRenderHero(CT("cl_league_phase"), [
+    { v: members.length, l: CT("cl_stat_clubs") },
+    { v: CL_ROUNDS, l: CT("cl_stat_rounds") },
+    { v: g.cl_season ?? 1, l: CT("cl_stat_season") },
   ], CL.meParticipant ? CT("cl_you_in") : CT("cl_you_out"));
-
-  let chips = `<div class="section-label">GURUH TANLASH</div><div class="cl-group-grid">`;
-  for (let n = 1; n <= CL_GROUP_COUNT; n++) {
-    chips += `<button class="cl-group-chip${sel === n ? " active" : ""}" data-cl-home-group="${n}">G${n}</button>`;
-  }
-  chips += `</div>`;
 
   const list = members.length
     ? members.map(p => `
@@ -39,8 +28,8 @@ function clRenderHome() {
         </div>`).join("")
     : `<div class="wc-loading-row">${CT("cl_group_empty")}</div>`;
 
-  return `${hero}${chips}
-    <div class="section-label">GURUHDAGI ISHTIROKCHILAR</div>
+  return `${hero}
+    <div class="section-label">${CT("cl_participants_label")}</div>
     <div class="matches-list">${list}</div>
     ${clRenderRules()}`;
 }
@@ -66,10 +55,10 @@ function clRenderHero(title, stats, statusText) {
 // Qur'agacha: hero + kvalifikantlar ro'yxati
 function clRenderHomeBeforeDraw() {
   const qs = (CL.qualifiers && CL.qualifiers.qualifiers) || [];
-  const hero = clRenderHero("QUR'A KUTILMOQDA", [
-    { v: qs.length, l: "KVALIFIKANT" },
-    { v: CL_GROUP_COUNT, l: "GURUHLAR" },
-    { v: CL_GROUP_SIZE, l: "HAR GURUHDA" },
+  const hero = clRenderHero(CT("cl_draw_pending"), [
+    { v: qs.length, l: CT("cl_stat_qualifiers") },
+    { v: CL_TOTAL, l: CT("cl_stat_clubs") },
+    { v: CL_ROUNDS, l: CT("cl_stat_rounds") },
   ], CL.meParticipant ? CT("cl_you_in") : CT("cl_you_out"));
 
   if (!qs.length) {
@@ -81,7 +70,7 @@ function clRenderHomeBeforeDraw() {
       <span class="cl-qual-meta">${escHtml(q.league_name || "")} · ${q.position}-o'rin · ${q.points} ochko</span>
     </div>`).join("");
   return `${hero}
-    <div class="section-label">KVALIFIKANTLAR (${qs.length}/32)</div>
+    <div class="section-label">${CT("cl_qualifiers_label")} (${qs.length}/${CL_TOTAL})</div>
     <div class="matches-list">${rows}</div>
     ${clRenderRules()}`;
 }
@@ -100,13 +89,14 @@ function clRenderRules() {
   ].map(x => `<li>${x}</li>`).join("");
 
   const general = [
-    `Liga mavsumi bo'yicha eng ko'p ochko to'plagan ${key("32 ta")} ishtirokchi qatnashadi.`,
-    `Qur'a orqali ${key(CL_GROUP_COUNT + " ta guruh")}, har biriga ${key(CL_GROUP_SIZE + " tadan")} tasodifiy taqsimlanadi.`,
-    `Har raqib bilan ${key("2 marta")}: bir marta uy, bir marta mehmon — jami ${key("6 o'yin")}.`,
+    `Liga mavsumi bo'yicha eng ko'p ochko to'plagan ${key(CL_TOTAL + " ta")} ishtirokchi qatnashadi.`,
+    `Guruhlar ${key("yo'q")}: barcha ishtirokchi yagona liga bosqichida.`,
+    `Har ishtirokchi ${key(CL_ROUNDS + " ta turli raqib")} bilan ${key("1 martadan")} (mehmon o'yinisiz) o'ynaydi.`,
     `Kuniga ${key("bitta tur")} o'ynaladi. Turlar admin ruxsatidan keyin ochiladi.`,
     `Bir tomon kiritgan, ikkinchisi tasdiqlamagan natija deadline'da ${key("avtomatik tasdiqlanadi")}.`,
     `Ochko: g'alaba ${key("3")} · durang ${key("1")} · mag'lubiyat ${key("0")}.`,
     `Saralash: ochko → gol farqi → urilgan gollar.`,
+    `${CL_ROUNDS} tur tugagach: ${key("top-8")} to'g'ridan setkaga, ${key("9-24 o'rin")} pley-in (uy+mehmon) o'ynab 8 tasi setkaga qo'shiladi.`,
   ].map(x => `<li>${x}</li>`).join("");
 
   return `

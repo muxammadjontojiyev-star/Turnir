@@ -78,7 +78,7 @@ function clRenderPlayer() {
         <h2 class="profile-nickname">${escHtml(p.nickname || "Ishtirokchi")}</h2>
         <div class="cl-rating-user${p.username ? " cl-user-link" : ""}"
              ${p.username ? `data-cl-tg="${escHtml(p.username)}"` : ""}>${p.username ? "@" + escHtml(p.username) : "—"}${prizeStarsHtml(p)}</div>
-        <span class="profile-league">Guruh ${p.group_number} · ${p.position}-o'rin</span>
+        <span class="profile-league">${p.group_number ? `${CT("cl_profile_phase")} · ${p.position}-o'rin` : CT("cl_draw_pending")}</span>
       </div>
       <div class="profile-club-badge">${clClubBadge(p.club_name, 44)}</div>
     </div>

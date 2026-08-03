@@ -6,7 +6,7 @@
 //    - Boshqa hamma → panel yashirin
 //  Rol serverdan aniqlanadi: GET /admin/whoami (is_super). Kodda ID yo'q.
 //
-//  Amallar: Qur'a o'tkazish → POST /cl/draw (32 kvalifikant → 8 guruh × 4)
+//  Amallar: Qur'a o'tkazish → POST /cl/draw (36 ishtirokchi → Swiss, 8 tur)
 //  Global: apiFetch, showToast, escHtml, CL, clLoadThenRender
 // ============================================================
 
@@ -97,8 +97,8 @@ async function clLoadAdminPanel() {
       </button>` : ""}
 
       <div class="admin-hint" style="margin-top:14px">
-        <b>${CT("cla_playoff")}</b> barcha guruh o'yinlari tugagach, har guruhdan top-2
-        (16 o'yinchi) 1/8 setkasiga joylanadi. Har juftlik uy+mehmon, final — 1 o'yin.
+        <b>${CT("cla_playoff")}</b> liga bosqichi (8 tur) tugagach, top-8 to'g'ridan
+        setkaga, 9-24 o'rin pley-in (uy+mehmon) o'ynaydi. Har juftlik uy+mehmon, final — 1 o'yin.
       </div>
       <button class="btn btn--primary" id="cl-admin-po-start">${CT("cla_playoff_start")}</button>
 
@@ -240,7 +240,7 @@ function clAdminFixForm() {
     // 2026-07-22 (talab 1): play-off o'yinida bosqich+leg, guruhda tur ko'rsatiladi
     const meta = info.is_playoff
       ? `#${info.id} · ${escHtml(info.round_label || info.round || "Play-off")}${info.round !== "final" ? " · " + info.leg + "-o'yin" : ""}`
-      : `#${info.id} · Guruh ${info.group_number} · ${info.matchday}-tur`;
+      : `#${info.id} · ${info.matchday}-tur`;
     preview = `
       <div class="card" style="margin:8px 0;padding:10px 12px">
         <div style="opacity:.65;font-size:11.5px">${meta}</div>

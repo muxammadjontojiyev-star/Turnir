@@ -9,8 +9,10 @@
 //           POST /cl/match/submit-result, /cl/match/confirm
 // ============================================================
 
-const CL_GROUP_COUNT = 8;   // Guruhlar soni (backend: cl_core.CL_GROUPS)
-const CL_GROUP_SIZE  = 4;   // Har guruhdagi ishtirokchi (backend: cl_core.CL_GROUP_SIZE)
+// Yangi format (2026-08): guruh yo'q — yagona liga bosqichi.
+const CL_ROUNDS = 8;    // Liga bosqichi turlari (backend: cl_core.CL_ROUNDS)
+const CL_TOTAL  = 36;   // Ishtirokchilar soni (backend: cl_qualification.CL_TOTAL)
+const CL_LEAGUE_GROUP = 1;  // Yagona reyting guruh raqami (backend: cl_core.CL_LEAGUE_GROUP)
 
 const CL = {
   section: "home",     // home | rating | profile | prizes
@@ -20,8 +22,6 @@ const CL = {
   scorers: null,
   ratingAll: null,
   viewPlayer: null,     // Reytingdan ochilgan ishtirokchi (cl_player.js)
-  ratingGroup: 1,      // Reytingda tanlangan guruh (1..8)
-  homeGroup: 1,        // Asosiy sahifada tanlangan guruh (1..8)
   rating: [],
   myMatches: [],
   meParticipant: false,
@@ -262,14 +262,13 @@ function clRenderScorers() {
         ${clClubBadge(p.club_name, 22)}
         <span class="cl-rating-user">${escHtml(p.username ? "@" + p.username : (p.nickname || ""))}${prizeStarsHtml(p)}</span>
       </div></td>
-      <td>G${p.group_number}</td>
       <td>${p.played}</td>
       <td><b>${p.goals}</b></td>
     </tr>`).join("");
 
   return `
     <table class="rating-table">
-      <thead><tr><th>#</th><th>${CT("cl_player_col")}</th><th>${CT("cl_col_group")}</th><th>${CT("cl_played_col")}</th><th>${CT("cl_col_goals")}</th></tr></thead>
+      <thead><tr><th>#</th><th>${CT("cl_player_col")}</th><th>${CT("cl_played_col")}</th><th>${CT("cl_col_goals")}</th></tr></thead>
       <tbody>${body}</tbody>
     </table>`;
 }
@@ -292,6 +291,7 @@ function clRenderRating() {
   if (groups === null || groups === undefined) return `${tabs}<div class="wc-loading-row">${CT("cl_loading")}</div>`;
   if (!groups.length) return `${tabs}<div class="card">${CT("cl_no_groups")}</div>`;
 
+  // Yangi format: yagona umumiy reyting (bitta "guruh"). Guruh sarlavhasi ko'rsatilmaydi.
   const blocks = groups.map(g => {
     const rows = g.rating.map((p, i) => `
       <tr>
@@ -301,7 +301,6 @@ function clRenderRating() {
         <td><b>${p.points}</b></td>
       </tr>`).join("");
     return `
-      <div class="cl-rating-group-title">${ICON.get("ucl", 15)} ${CT("cl_col_group")} ${g.group_number}</div>
       <div class="card card--table" style="margin-bottom:14px">
         <table class="rating-table">
           <thead><tr><th>#</th><th>${CT("cl_player_col")}</th><th>${CT("cl_played_col")}</th><th>GF</th><th>${CT("cl_col_points")}</th></tr></thead>
@@ -417,12 +416,6 @@ function clBindSectionEvents(root) {
     root.addEventListener("click", (e) => clHandleClick(e, root));
   }
 
-  root.querySelectorAll("[data-cl-group]").forEach(b =>
-    b.addEventListener("click", () => {
-      CL.ratingGroup = Number(b.dataset.clGroup);
-      void clLoadRating();
-    }));
-
 }
 
 // Barcha ChL bosishlarini bitta joyda ushlaydi (delegation — qayta render'ga chidamli)
@@ -447,9 +440,6 @@ function clHandleClick(e, root) {
   }
   if ((el = hit("[data-cl-player]"))) {
     clOpenPlayerModal(Number(el.dataset.clPlayer)); return;
-  }
-  if ((el = hit("[data-cl-home-group]"))) {
-    CL.homeGroup = Number(el.dataset.clHomeGroup); renderChampionsLeague(); return;
   }
   if ((el = hit("[data-cl-rtab]"))) {
     CL.ratingTab = el.dataset.clRtab;
