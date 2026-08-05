@@ -2712,13 +2712,16 @@ def admin_list_players(admin: dict = Depends(get_authenticated_admin)):
 @app.delete("/admin/players/{user_id}")
 def admin_remove_player(user_id: int, admin: dict = Depends(get_authenticated_admin)):
     """
-    Foydalanuvchini butunlay o'chiradi: user, registration va barcha matchlari (faqat admin).
+    Foydalanuvchini butunlay o'chiradi: barcha bog'liq jadvallardan (liga, ChL, WC,
+    divizion, sovrinlar, chatlar) va userning o'zi (faqat admin).
 
-    Xato holatlari: user_not_found → 404
+    Xato holatlari: user_not_found → 404, remove_failed → 500
     """
     success, reason = remove_user_completely(user_id)
     if not success:
-        raise HTTPException(status_code=404, detail=reason)
+        if reason == "user_not_found":
+            raise HTTPException(status_code=404, detail=reason)
+        raise HTTPException(status_code=500, detail=reason)
     return {"status": "ok", "removed_user_id": user_id}
 
 

@@ -5,10 +5,14 @@ queries.py'dan ajratildi (2026-07-03, audit C1 — fayl hajmi qoidasi #21).
 Barcha funksiyalar VERBATIM ko'chirilgan, mantiq o'zgartirilmagan.
 """
 
+import logging
+
 from models import get_connection
 from config import (
     DEFAULT_LANGUAGE,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ============ USERS ============
@@ -111,30 +115,89 @@ def get_all_users_with_registration() -> list[dict]:
 
 def remove_user_completely(user_id: int) -> tuple[bool, str]:
     """
-    Foydalanuvchini butunlay o'chiradi: uning matchlari, ro'yxatdan
-    o'tgan yozuvi va user qatorining o'zi (admin uchun).
+    Foydalanuvchini butunlay o'chiradi: BARCHA bog'liq jadvallardan (liga, ChL, WC,
+    divizion, sovrinlar, chatlar) va user qatorining o'zi (admin uchun).
 
-    Qaytaradi: (muvaffaqiyat: bool, sabab: str)
-    Sabablar: "ok", "user_not_found"
+    Nega barchasi (qoida #07): users ga FOREIGN KEY bilan bog'langan jadvallar bor
+    (cl_matches, cl_participants, wc_matches, div_matches, season_prizes, chatlar...).
+    Ular o'chirilmasa users DELETE'da "FOREIGN KEY constraint failed" (500) beradi —
+    aynan qur'adan oldin ChL kvalifikatsiyasidan o'tgan o'yinchini chiqarishda.
+
+    Hammasi BITTA tranzaksiyada (atomiklik) — yarim o'chirilib qolmaydi.
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str). Sabablar: "ok", "user_not_found",
+    "remove_failed".
     """
     conn = get_connection()
+    conn.isolation_level = None
     cursor = conn.cursor()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
 
-    cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-    if cursor.fetchone() is None:
+        cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        if row is None:
+            cursor.execute("ROLLBACK")
+            return False, "user_not_found"
+        telegram_id = row["telegram_id"]
+
+        # user_id ustuni bo'yicha o'chiriladigan jadvallar
+        by_user_id = [
+            "registrations", "chat_typing", "wc_chat_typing",
+            "cl_qualifiers", "cl_participants", "div_registrations",
+            "div_bans", "wc_registrations",
+        ]
+        for t in by_user_id:
+            cursor.execute(f"DELETE FROM {t} WHERE user_id = ?", (user_id,))
+
+        # telegram_id ustuni bo'yicha (user_id ham bo'lishi mumkin — ikkovi ham tozalanadi)
+        by_telegram = [
+            "season_celebration_seen", "admins", "admin_leagues",
+        ]
+        for t in by_telegram:
+            cursor.execute(f"DELETE FROM {t} WHERE telegram_id = ?", (telegram_id,))
+
+        # season_prizes: user_id VA telegram_id ikkovi ham bog'langan
+        cursor.execute(
+            "DELETE FROM season_prizes WHERE user_id = ? OR telegram_id = ?",
+            (user_id, telegram_id),
+        )
+
+        # Matchlar (player1/player2/submitted_by) — barcha turdagi o'yinlar
+        match_tables = [
+            "matches", "cl_matches", "div_matches", "wc_matches",
+            "wc_playoff_matches", "cl_playoff_matches",
+        ]
+        for t in match_tables:
+            cursor.execute(
+                f"DELETE FROM {t} WHERE player1_id = ? OR player2_id = ?",
+                (user_id, user_id),
+            )
+
+        # Chat xabarlari (sender_id)
+        for t in ["messages", "cl_messages", "div_messages", "wc_messages",
+                  "cl_po_messages"]:
+            cursor.execute(f"DELETE FROM {t} WHERE sender_id = ?", (user_id,))
+
+        # prizes (eski jadval): top_scorer_user_id / winner_user_id
+        cursor.execute(
+            "DELETE FROM prizes WHERE top_scorer_user_id = ? OR winner_user_id = ?",
+            (user_id, user_id),
+        )
+
+        # Nihoyat, userning o'zi
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+        cursor.execute("COMMIT")
+        return True, "ok"
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        logger.exception("remove_user_completely xatosi (user_id=%s)", user_id)
+        return False, "remove_failed"
+    finally:
         conn.close()
-        return False, "user_not_found"
-
-    cursor.execute(
-        "DELETE FROM matches WHERE player1_id = ? OR player2_id = ?",
-        (user_id, user_id),
-    )
-    cursor.execute("DELETE FROM registrations WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
-
-    conn.commit()
-    conn.close()
-    return True, "ok"
 
 
 # ============ REGISTRATIONS ============
