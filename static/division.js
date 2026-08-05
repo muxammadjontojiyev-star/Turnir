@@ -786,11 +786,26 @@ function divOpenResultModal() {
 
 // ---- SOVRINLAR: hozircha bo'sh (rasm keyin qo'shiladi) ----
 function divRenderPrizes() {
-  return `<div class="card" style="text-align:center;padding:26px 16px">
-    <div style="font-size:34px">🎁</div>
-    <div style="font-weight:700;margin-top:6px">Divizion sovrinlari</div>
-    <div style="font-size:13px;opacity:.7;margin-top:4px">Tez orada e'lon qilinadi.</div>
-  </div>`;
+  // Divizion sovrinlari (shaffof PNG, fon yo'q). Kubok — mavsum 1-o'rni,
+  // butsa — to'purarlar 1-o'rni.
+  return `
+    <div class="section-label">DIVIZION SOVRINLARI</div>
+    <div class="div-prizes-grid">
+      <div class="div-prize-card">
+        <div class="div-prize-img">
+          <img src="images/division-cup.png" alt="Divizion kubogi" loading="lazy">
+        </div>
+        <div class="div-prize-name">Divizion kubogi</div>
+        <div class="div-prize-desc">Mavsum yakunida 1-o'rinni egallagan ishtirokchiga</div>
+      </div>
+      <div class="div-prize-card">
+        <div class="div-prize-img">
+          <img src="images/division-boot.png" alt="Oltin butsa" loading="lazy">
+        </div>
+        <div class="div-prize-name">Oltin butsa</div>
+        <div class="div-prize-desc">To'purarlar reytingida 1-o'rinni egallagan ishtirokchiga</div>
+      </div>
+    </div>`;
 }
 
 // ---- ISHTIROKCHI PROFILI (to'liq sahifa, liga uslubi) ----

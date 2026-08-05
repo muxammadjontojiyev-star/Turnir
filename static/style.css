@@ -623,6 +623,47 @@ table { border-collapse: collapse; width: 100%; }
 /* Chegara qatoridan keyingi hover chiziqni yashirmasin */
 .rating-table tbody tr.cl-cut-green:last-child,
 .rating-table tbody tr.cl-cut-red:last-child { border-bottom-width: 3px; }
+
+/* Divizion sovrinlar sahifasi (2026-08) — shaffof PNG, ikki karta */
+.div-prizes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.div-prize-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 12px;
+  text-align: center;
+}
+.div-prize-img {
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.div-prize-img img {
+  max-height: 130px;
+  max-width: 100%;
+  object-fit: contain;
+  /* shaffof PNG — fon yo'q; oltin sovringa yengik yorug'lik */
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45));
+}
+.div-prize-name {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.div-prize-desc {
+  font-size: 11.5px;
+  opacity: 0.65;
+  line-height: 1.35;
+}
+@media (max-width: 360px) {
+  .div-prizes-grid { grid-template-columns: 1fr; }
+}
 .rating-table td {
   padding: 7px 10px;
   font-size: 13px;
