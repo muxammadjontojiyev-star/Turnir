@@ -799,7 +799,7 @@ function divRenderPrizes() {
         <div class="div-prize-desc">Mavsum yakunida 1-o'rinni egallagan ishtirokchiga</div>
       </div>
       <div class="div-prize-card">
-        <div class="div-prize-img">
+        <div class="div-prize-img div-prize-img--boot">
           <img src="images/division-boot.png" alt="Oltin butsa" loading="lazy">
         </div>
         <div class="div-prize-name">Oltin butsa</div>
