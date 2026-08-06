@@ -1387,7 +1387,13 @@ async function finalizeSeason() {
 
 // ---- Sovrinni ko'chirish (Oltin to'p/butsa) — bosh admin liga panelida (2026-08) ----
 // Nickname/username escHtml bilan tozalanadi (qoida #35 XSS).
-const LEAGUE_PRIZE_LABELS = { golden_ball: "Oltin to'p", golden_boot: "Oltin butsa" };
+// Sovrin nomi backenddan (prize_admin.PRIZE_LABELS_UZ) keladi — bitta manba (DRY).
+// Zaxira: eski javoblar uchun mahalliy jadval.
+const LEAGUE_PRIZE_LABELS = {
+  league_cup: "Liga kubogi", wc_cup: "JCh kubogi", cl_cup: "ChL kubogi",
+  div_cup: "Divizion kubogi", golden_ball: "Oltin to'p", golden_boot: "Oltin butsa",
+  wc_golden_boot: "JCh oltin butsa", div_boot: "Divizion oltin butsa",
+};
 
 async function leagueLoadPrizeTransfer() {
   const box = document.getElementById("league-prize-transfer-list");
@@ -1407,11 +1413,17 @@ async function leagueLoadPrizeTransfer() {
   box.innerHTML = prizes.map(p => {
     const who = p.username ? "@" + escHtml(p.username)
               : (p.nickname ? escHtml(p.nickname) : "#" + p.user_id);
-    const label = LEAGUE_PRIZE_LABELS[p.prize_type] || escHtml(p.prize_type);
+    // Nom backenddan (prize_label), zaxira — mahalliy jadval
+    const label = escHtml(p.prize_label || LEAGUE_PRIZE_LABELS[p.prize_type] || p.prize_type);
+    // Liga kubogi qaysi liga ekani (bir necha liga bo'lishi mumkin)
+    const lg = p.league_name ? " (" + escHtml(p.league_name) + ")" : "";
+    // Kubok yulduzcha beradi — vizual farqlaymiz
+    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup"].includes(p.prize_type);
+    const icon = isCup ? "🏆" : "👟";
     return `
       <label class="admin-radio-row" style="display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer">
         <input type="radio" name="league-prize-pick" value="${p.prize_id}">
-        <span>🏆 <b>${label}</b> · ${p.season_number}-mavsum · ${who}</span>
+        <span>${icon} <b>${label}</b>${lg} · ${p.season_number}-mavsum · ${who}</span>
       </label>`;
   }).join("");
 }
@@ -1449,7 +1461,9 @@ async function leaguePrizeTransferSubmit(btn) {
     });
     const label = LEAGUE_PRIZE_LABELS[r.prize_type] || r.prize_type;
     const who = r.new_username ? "@" + r.new_username : (r.new_nickname || ("#" + r.new_user_id));
-    window.alert(`✅ ${label} (${r.season_number}-mavsum) endi ${who} ga tegishli.`);
+    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup"].includes(r.prize_type);
+    const starNote = isCup ? "\n\n⭐ Yulduzcha ham yangi akkauntga o'tdi." : "";
+    window.alert(`✅ ${label} (${r.season_number}-mavsum) endi ${who} ga tegishli.${starNote}`);
     if (tgInput) tgInput.value = "";
     void leagueLoadPrizeTransfer();
   } catch (err) {
