@@ -689,12 +689,18 @@ def div_my_stats(user_id: int) -> dict:
             "goals_for": 0, "goals_against": 0}
 
 
-def div_my_matches(user_id: int, limit: int = 50) -> list[dict]:
+def div_my_matches(user_id: int, limit: int = 50, day: str | None = None) -> list[dict]:
     """
-    Foydalanuvchining barcha Divizion o'yinlari tarixi (profil "O'yinlarim").
+    Foydalanuvchining MAVSUMDAGI Divizion o'yinlari tarixi (profil "O'yinlarim").
     Har o'yin: {id, day, is_bye, my_score, opp_score, opp_name, status}.
     Yangi kun birinchi (day DESC, id DESC).
+
+    2026-08: MAVSUM bo'yicha filtrlanadi (ilgari barcha mavsumlar aralash edi) —
+    div_my_stats/div_rating bilan izchil (qoida #26 DRY). day=None -> joriy mavsum,
+    day berilsa — o'sha sana tegishli mavsum.
     """
+    from division_season import div_season_range
+    start, end = div_season_range(day)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -705,11 +711,12 @@ def div_my_matches(user_id: int, limit: int = 50) -> list[dict]:
         FROM div_matches m
         JOIN users u1 ON u1.id = m.player1_id
         LEFT JOIN users u2 ON u2.id = m.player2_id
-        WHERE m.player1_id = ? OR m.player2_id = ?
+        WHERE (m.player1_id = ? OR m.player2_id = ?)
+          AND m.day >= ? AND m.day < ?
         ORDER BY m.day DESC, m.id DESC
         LIMIT ?
         """,
-        (user_id, user_id, limit),
+        (user_id, user_id, start, end, limit),
     )
     out = []
     for r in cursor.fetchall():
