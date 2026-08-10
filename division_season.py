@@ -88,3 +88,22 @@ def div_season_range(day: str | None = None) -> tuple[str, str]:
     """
     season = div_season_for(day) if day else div_current_season()
     return season["start"], season["end"]
+
+
+def div_prev_season() -> dict | None:
+    """
+    O'TGAN mavsum ma'lumoti (div_season_for bilan bir xil shakl) + so'rov uchun
+    `query_day` kaliti. Joriy mavsum 1-mavsum bo'lsa (oldingisi yo'q) — None.
+
+    Mantiq: joriy mavsum boshlanish sanasidan BIR KUN oldingi sana avtomatik
+    oldingi mavsumga tegishli (div_season_for shuni aniqlaydi) — qoida #26 DRY,
+    alohida hisob kerak emas.
+    """
+    cur = div_current_season()
+    if cur["number"] <= 1:
+        return None
+    from datetime import timedelta
+    prev_day = (date.fromisoformat(cur["start"]) - timedelta(days=1)).isoformat()
+    prev = div_season_for(prev_day)
+    prev["query_day"] = prev_day
+    return prev

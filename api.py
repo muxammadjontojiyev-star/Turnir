@@ -2118,18 +2118,47 @@ def div_register_endpoint(user: dict = Depends(get_authenticated_user)):
     return {"status": "ok"}
 
 
+def _div_season_query_day(season: str | None) -> tuple[str | None, dict | None]:
+    """
+    'season' parametrini so'rov sanasiga aylantiradi (qoida #26 DRY — rating va
+    scorers ikkalasi ishlatadi). Qaytaradi: (query_day, season_info)
+      season='prev' -> o'tgan mavsum (yo'q bo'lsa 404)
+      aks holda     -> joriy mavsum (None = div_rating standarti)
+    """
+    from division_season import div_prev_season, div_current_season
+    if season == "prev":
+        prev = div_prev_season()
+        if prev is None:
+            raise HTTPException(status_code=404, detail="no_previous_season")
+        return prev["query_day"], prev
+    return None, div_current_season()
+
+
 @app.get("/div/rating")
-def div_rating_endpoint(user: dict = Depends(get_authenticated_user)):
-    """Umumiy Divizion reytingi (+15/+10/-10 achko yig'indisi)."""
+def div_rating_endpoint(season: str | None = None,
+                        user: dict = Depends(get_authenticated_user)):
+    """
+    Divizion reytingi (+15/+10/-10 achko yig'indisi).
+    season='prev' -> o'tgan mavsum reytingi (yo'q bo'lsa 404 no_previous_season).
+    """
     from division import div_rating
-    return {"rating": div_rating(), "me_id": user["id"]}
+    day, info = _div_season_query_day(season)
+    return {"rating": div_rating(day), "me_id": user["id"],
+            "season_number": info["number"],
+            "season_start": info["start"], "season_end": info["end"]}
 
 
 @app.get("/div/scorers")
-def div_scorers_endpoint(user: dict = Depends(get_authenticated_user)):
-    """Divizion 'To'p urarlar' tabi: eng ko'p gol urgan ishtirokchilar."""
+def div_scorers_endpoint(season: str | None = None,
+                         user: dict = Depends(get_authenticated_user)):
+    """
+    Divizion 'To'p urarlar' tabi: eng ko'p gol urgan ishtirokchilar.
+    season='prev' -> o'tgan mavsum.
+    """
     from division import div_scorers
-    return {"scorers": div_scorers(), "me_id": user["id"]}
+    day, info = _div_season_query_day(season)
+    return {"scorers": div_scorers(day), "me_id": user["id"],
+            "season_number": info["number"]}
 
 
 @app.get("/div/calendar")
@@ -2279,6 +2308,30 @@ def div_admin_matches(day: str | None = None,
     """
     from division import div_admin_list_matches
     return {"matches": div_admin_list_matches(day), "day": day or "today"}
+
+
+@app.get("/div/admin/finalize/preview")
+def div_finalize_preview(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin: divizion mavsumini yakunlashda kim qaysi sovrinni olishini
+    KO'RSATADI (saqlamaydi). Admin tasdiqlashdan oldin ko'radi.
+    """
+    from division_finalize import preview_division_prizes
+    return preview_division_prizes()
+
+
+@app.post("/div/admin/finalize")
+def div_finalize(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Bosh admin: divizion mavsumini yakunlaydi — 1-o'rin (kubok) va to'purar
+    1-o'rin (butsa) sovrinlarini season_prizes'ga saqlaydi (idempotent).
+    Xato: no_participants, already_finalized, finalize_failed → 400
+    """
+    from division_finalize import finalize_division_season
+    ok, reason, info = finalize_division_season()
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", **info}
 
 
 @app.post("/div/admin/match/set-result")

@@ -535,17 +535,20 @@ def div_rating(day: str | None = None) -> list[dict]:
     return table
 
 
-def div_scorers() -> list[dict]:
+def div_scorers(day: str | None = None) -> list[dict]:
     """
     "To'p urarlar" tabi: eng ko'p gol urgan ishtirokchilar.
 
-    Gol = JORIY MAVSUM confirmed o'yinlarida ishtirokchining O'Z hisobidagi gollar yig'indisi
+    Gol = MAVSUM confirmed o'yinlarida ishtirokchining O'Z hisobidagi gollar yig'indisi
     (masalan 3:0 va 1:2 o'ynasa -> 3+1 = 4 gol). Manba div_rating() bilan bir xil
     (DRY, qoida #26) — bir xil o'yinlardan hisoblanadi.
 
+    day=None -> joriy mavsum. day berilsa — o'sha sana tegishli mavsum
+    (o'tgan mavsum reytingi uchun, div_rating bilan bir xil qoida).
+
     Saralash: gollar (ko'p) -> gol farqi -> o'yin soni (kam) -> achko.
     """
-    rows = [p for p in div_rating() if p["goals_for"] > 0 or p["played"] > 0]
+    rows = [p for p in div_rating(day) if p["goals_for"] > 0 or p["played"] > 0]
     rows.sort(key=lambda p: (-p["goals_for"], -p["goal_diff"],
                              p["played"], -p["points"]))
     return rows
