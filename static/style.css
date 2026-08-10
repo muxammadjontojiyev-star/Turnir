@@ -675,11 +675,8 @@ table { border-collapse: collapse; width: 100%; }
   /* shaffof PNG — fon yo'q; oltin sovringa yengik yorug'lik */
   filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45));
 }
-/* Butsa rasmi atrofida bo'sh joy ko'p (uzun-vertikal) — kubokka nisbatan kichik
-   ko'rinadi. Konteyner o'lchamini o'zgartirmasdan scale bilan kattalashtiramiz. */
-.div-prize-img--boot img {
-  transform: scale(1.45);
-}
+/* Butsa rasmi 2026-08-10 da kesildi (bo'sh joy olib tashlandi) — endi kubok bilan
+   teng ko'rinadi, qo'shimcha scale kerak emas. */
 .div-prize-name {
   font-weight: 700;
   font-size: 14px;

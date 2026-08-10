@@ -838,14 +838,14 @@ function divRenderPrizes() {
     <div class="div-prizes-grid">
       <div class="div-prize-card">
         <div class="div-prize-img">
-          <img src="images/division-cup.png" alt="Divizion kubogi" loading="lazy">
+          <img src="images/division-cup.png?v=20260810b" alt="Divizion kubogi" loading="lazy">
         </div>
         <div class="div-prize-name">Divizion kubogi</div>
         <div class="div-prize-desc">Mavsum yakunida 1-o'rinni egallagan ishtirokchiga</div>
       </div>
       <div class="div-prize-card">
         <div class="div-prize-img div-prize-img--boot">
-          <img src="images/division-boot.png" alt="Oltin butsa" loading="lazy">
+          <img src="images/division-boot.png?v=20260810b" alt="Oltin butsa" loading="lazy">
         </div>
         <div class="div-prize-name">Oltin butsa</div>
         <div class="div-prize-desc">To'purarlar reytingida 1-o'rinni egallagan ishtirokchiga</div>

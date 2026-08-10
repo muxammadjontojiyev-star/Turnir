@@ -884,7 +884,7 @@ function renderMyPrizes(prizes) {
     const p = g.first;
     const v = prizeVisual(p);
     const imgHtml = v.img
-      ? `<img src="${v.img}?v=20260628y" alt="" class="my-prize-img" onerror="this.style.display='none'" />`
+      ? `<img src="${v.img}?v=20260810b" alt="" class="my-prize-img" onerror="this.style.display='none'" />`
       : `<span class="my-prize-emoji">🏆</span>`;
     const countBadge = g.count > 1
       ? `<span class="my-prize-count">×${g.count}</span>`
