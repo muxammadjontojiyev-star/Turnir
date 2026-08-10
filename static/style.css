@@ -624,6 +624,30 @@ table { border-collapse: collapse; width: 100%; }
 .rating-table tbody tr.cl-cut-green:last-child,
 .rating-table tbody tr.cl-cut-red:last-child { border-bottom-width: 3px; }
 
+/* Divizion mavsum tanlash chip'lari (2026-08): Joriy | O'tgan mavsum */
+.div-season-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.div-season-chip {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.div-season-chip.active {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
 /* Divizion sovrinlar sahifasi (2026-08) — shaffof PNG, ikki karta */
 .div-prizes-grid {
   display: grid;

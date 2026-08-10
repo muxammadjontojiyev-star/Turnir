@@ -17,11 +17,14 @@ const DIV = {
   adminDay: null,    // null = bugun, "all" = barcha kunlar
   adminFixId: "",    // "Match ID orqali tuzatish" formasidagi ID
   adminFixInfo: null,// o'sha ID bo'yicha o'yin ma'lumoti | "notfound" | null
+  finalizePreview: undefined, // divizion yakunlash preview (undefined=yuklanmagan, null=xato)
   player: null,      // ochilgan ishtirokchi profili (/div/player/{id}/profile)
   playerBackTo: "rating",  // profildan ortga qaysi bo'limga qaytamiz
   calendar: null,    // /div/calendar javobi {month, today, days[]}
   calMonth: null,    // ko'rilayotgan oy "YYYY-MM" (null = joriy)
   ratingTab: "points",  // "points" (ball) | "scorers" (to'p urarlar)
+  ratingSeason: "current", // "current" | "prev" (o'tgan mavsum reytingi)
+  prevSeasonInfo: null,    // o'tgan mavsum raqami (sarlavha uchun)
   playerCalMonth: null, // boshqa ishtirokchi profilidagi kalendar oyi
   scorers: [],
   unread: { total: 0, by_match: {} }, // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka)
@@ -57,12 +60,15 @@ function divNavigate(section) {
   // 2026-07-19: har sahifada o'qilmagan rozetkani yangilab turamiz (liga naqshi)
   void divRefreshUnreadBadge();
   if (section === "rating") {
+    // Mavsum chip'i DIV.status.season.number ga bog'liq — status yuklanmagan
+    // bo'lsa chip ko'rinmaydi, shuning uchun bu yerda ham yuklaymiz (qoida #11).
+    if (!DIV.status) void divLoadStatus();
     if (DIV.ratingTab === "scorers") void divLoadScorers();
     else void divLoadRating();
   }
   if (section === "home" || section === "profile") void divLoadStatus();
   if (section === "profile") void divLoadCalendar(DIV.calMonth);   // ro'yxat kalendari
-  if (section === "admin") void divLoadAdminMatches();
+  if (section === "admin") { void divLoadAdminMatches(); void divLoadFinalizePreview(); }
 }
 
 async function divLoadStatus() {
@@ -97,20 +103,28 @@ function divUpdateNavBadge() {
   );
 }
 
+// season parametri: DIV.ratingSeason ("current" | "prev") — o'tgan mavsum
+// so'ralganda backend ?season=prev bilan chaqiriladi (qoida #26 DRY).
+function divSeasonQuery() {
+  return DIV.ratingSeason === "prev" ? "?season=prev" : "";
+}
+
 async function divLoadScorers() {
   try {
-    const d = await apiFetch("/div/scorers");
+    const d = await apiFetch("/div/scorers" + divSeasonQuery());
     DIV.scorers = d.scorers || [];
     DIV.ratingMeId = d.me_id;
+    if (DIV.ratingSeason === "prev") DIV.prevSeasonInfo = { number: d.season_number };
   } catch (_) { DIV.scorers = []; }
   renderDivision();
 }
 
 async function divLoadRating() {
   try {
-    const d = await apiFetch("/div/rating");
+    const d = await apiFetch("/div/rating" + divSeasonQuery());
     DIV.rating = d.rating || [];
     DIV.ratingMeId = d.me_id;
+    if (DIV.ratingSeason === "prev") DIV.prevSeasonInfo = { number: d.season_number };
   } catch (_) { DIV.rating = []; }
   renderDivision();
 }
@@ -339,6 +353,23 @@ function divRenderHome() {
   return `${todayCard}${noMatchHint}${divRulesCard()}`;
 }
 
+// 2026-08: mavsum tanlash — Joriy | O'tgan mavsum. Ikkala reyting tabiga (ball va
+// to'purarlar) ta'sir qiladi. 1-mavsumda o'tgan mavsum YO'Q — chip ko'rsatilmaydi
+// (qoida #40: ishlamaydigan tugma bo'lmasin).
+function divRenderSeasonTabs() {
+  const curNum = DIV.status?.season?.number;
+  if (curNum !== undefined && curNum <= 1) return "";
+  const prevNum = (curNum !== undefined) ? curNum - 1 : null;
+  const isPrev = DIV.ratingSeason === "prev";
+  const prevLabel = prevNum ? `${prevNum}-mavsum` : "O'tgan mavsum";
+  const curLabel = curNum ? `${curNum}-mavsum` : "Joriy";
+  return `
+    <div class="div-season-tabs">
+      <button class="div-season-chip ${!isPrev ? "active" : ""}" data-div-season="current">${escHtml(curLabel)}</button>
+      <button class="div-season-chip ${isPrev ? "active" : ""}" data-div-season="prev">${escHtml(prevLabel)}</button>
+    </div>`;
+}
+
 // ---- REYTING: umumiy achko jadvali (+15/+10/-10) ----
 function divRenderRating() {
   const list = DIV.rating || [];
@@ -382,7 +413,7 @@ function divRenderRating() {
     <div class="div-rating-tabs">
       <button class="tab-btn ${DIV.ratingTab !== "scorers" ? "active" : ""}" data-div-rtab="points">${DT("div_tab_rating")}</button>
       <button class="tab-btn ${DIV.ratingTab === "scorers" ? "active" : ""}" data-div-rtab="scorers">${DT("div_tab_scorers")}</button>
-    </div>`;
+    </div>` + divRenderSeasonTabs();
 
   if (DIV.ratingTab === "scorers") return tabs + divRenderScorers();
 
@@ -949,6 +980,17 @@ function divBindSectionEvents(root) {
       else void divLoadRating();
     }));
 
+  // 2026-08: mavsum tanlash (Joriy | O'tgan) — joriy tabni qayta yuklaydi
+  root.querySelectorAll("[data-div-season]").forEach(b =>
+    b.addEventListener("click", () => {
+      const val = b.dataset.divSeason;
+      if (DIV.ratingSeason === val) return;   // o'zgarmasa qayta so'ramaymiz
+      DIV.ratingSeason = val;
+      renderDivision();
+      if (DIV.ratingTab === "scorers") void divLoadScorers();
+      else void divLoadRating();
+    }));
+
   // To'p urarlar: "Sizning o'rningiz" -> qatorga scroll
   root.querySelector("#div-myscorer-card")?.addEventListener("click", () => {
     const row = root.querySelector("tr.is-me");
@@ -1049,6 +1091,10 @@ function divBindSectionEvents(root) {
     const banBtn = document.getElementById("div-btn-ban");
     banBtn?.addEventListener("click", () => void divAdminBanSubmit(banBtn));
   }
+
+  // 2026-08: divizion mavsumini yakunlash (bosh admin)
+  const finalizeBtn = document.getElementById("div-btn-finalize");
+  finalizeBtn?.addEventListener("click", () => void divFinalizeSubmit(finalizeBtn));
 
   // "MATCH ID ORQALI TUZATISH" formasi
   root.querySelector("#div-fix-match-id")?.addEventListener("input", (e) =>
@@ -1224,6 +1270,42 @@ function divAdminReassignForm() {
 }
 
 // 2026-07-17: Admin ishtirokchiga kunlik ban beradi (tasdiq + POST /div/admin/ban)
+// 2026-08: divizion yakunlash preview + submit
+async function divLoadFinalizePreview() {
+  if (!DIV.status?.is_super) return;
+  try {
+    DIV.finalizePreview = await apiFetch("/div/admin/finalize/preview");
+  } catch (_) {
+    DIV.finalizePreview = null;
+  }
+  if (DIV.section === "admin") renderDivision();
+}
+
+async function divFinalizeSubmit(btn) {
+  const pv = DIV.finalizePreview;
+  if (!pv || (!pv.cup && !pv.boot)) {
+    showToast("Hali sovrindor yo'q (o'yinlar o'ynalmagan).");
+    return;
+  }
+  if (!confirm(`${pv.season_number}-mavsum yakunlansinmi?\n\nKubok va oltin butsa sovrindorlarga beriladi. Bu amalni ortga qaytarib bo'lmaydi.`)) return;
+  btn.disabled = true;
+  try {
+    const r = await apiFetch("/div/admin/finalize", { method: "POST" });
+    showToast(`🏁 ${r.season_number}-mavsum yakunlandi. Sovrinlar berildi.`);
+    DIV.finalizePreview = undefined;
+    void divLoadFinalizePreview();
+  } catch (e) {
+    const msg = {
+      no_participants: "Hali sovrindor yo'q (o'yinlar o'ynalmagan).",
+      already_finalized: "Bu mavsum allaqachon yakunlangan.",
+      finalize_failed: "Yakunlashda xatolik.",
+    }[e.message] || e.message;
+    showToast(DT("div_toast_error") + msg);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 async function divAdminBanSubmit(btn) {
   const sel = document.getElementById("div-ban-box-select");
   const uid = sel ? Number(sel.value || 0) : 0;
@@ -1254,6 +1336,38 @@ async function divAdminBanSubmit(btn) {
 
 // 2026-07-17: Kunlik ban formasi ("Bugungi/Barcha kunlar" tablari o'rniga).
 // Admin ishtirokchini tanlab, istalgancha kunlik ban beradi (faqat bosh admin).
+// 2026-08: divizion mavsumini yakunlash (faqat bosh admin). Preview ko'rsatadi
+// (kim kubok/butsa oladi), so'ng tasdiqlab yakunlaydi.
+function divAdminFinalizeForm() {
+  if (!DIV.status?.is_super) return "";
+  const pv = DIV.finalizePreview;
+  let inner;
+  if (pv === undefined) {
+    inner = `<div class="wc-loading-row">${DT("div_loading") || "Yuklanmoqda..."}</div>`;
+  } else if (pv === null) {
+    inner = `<div style="font-size:12px;opacity:.7">Ma'lumot yuklanmadi.</div>`;
+  } else {
+    const cup = pv.cup
+      ? `🏆 <b>Kubok:</b> ${escHtml(pv.cup.username ? "@" + pv.cup.username : (pv.cup.nickname || "#" + pv.cup.user_id))} (${pv.cup.points} ochko)`
+      : `🏆 <b>Kubok:</b> <i>hali yo'q</i>`;
+    const boot = pv.boot
+      ? `👟 <b>Butsa:</b> ${escHtml(pv.boot.username ? "@" + pv.boot.username : (pv.boot.nickname || "#" + pv.boot.user_id))} (${pv.boot.goals_for} gol)`
+      : `👟 <b>Butsa:</b> <i>hali yo'q</i>`;
+    inner = `
+      <div style="font-size:12.5px;opacity:.85;line-height:1.7;margin-bottom:8px">
+        <div style="opacity:.6;margin-bottom:2px">${pv.season_number}-mavsum sovrindorlari:</div>
+        ${cup}<br>${boot}
+      </div>`;
+  }
+  return `
+    <div class="section-label">MAVSUMNI YAKUNLASH</div>
+    <div class="admin-fix-form">
+      ${inner}
+      <button class="btn btn--danger" id="div-btn-finalize">🏁 Divizion mavsumini yakunlash</button>
+      <div style="font-size:11.5px;opacity:.65;margin-top:6px">1-o'rin kubok, to'purarlar 1-o'rni oltin butsa oladi. Bu amalni ortga qaytarib bo'lmaydi.</div>
+    </div>`;
+}
+
 function divAdminBanForm() {
   // 2026-07-22: ban berish — backend super_admin talab qiladi (bosh admin ishi)
   if (!DIV.status?.is_super) return "";
@@ -1285,10 +1399,10 @@ function divAdminRolesForm() {
 function divRenderAdmin() {
   const ms = DIV.adminMatches || [];
   if (!ms.length) {
-    return divAdminFixForm() + divAdminReassignForm() + divAdminRolesForm() + divAdminBanForm()
+    return divAdminFinalizeForm() + divAdminFixForm() + divAdminReassignForm() + divAdminRolesForm() + divAdminBanForm()
       + `<div class="card">${DT("div_admin_no_matches")}</div>`;
   }
-  return divAdminFixForm() + divAdminReassignForm() + divAdminRolesForm() + divAdminBanForm() +
+  return divAdminFinalizeForm() + divAdminFixForm() + divAdminReassignForm() + divAdminRolesForm() + divAdminBanForm() +
     `<div class="card" style="font-size:12.5px;opacity:.75">${DT("div_admin_hint")}</div>` +
     ms.map(m => {
       const p2 = m.player2_id ? escHtml(m.player2_name || "") : `<i>${DT("div_admin_bye")}</i>`;
