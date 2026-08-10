@@ -182,6 +182,17 @@ function renderDivision() {
   root.querySelectorAll("[data-div-tab]").forEach(b =>
     b.addEventListener("click", () => divNavigate(b.dataset.divTab)));
   divBindSectionEvents(root);
+
+  // 2026-08: profil sovrinlari (kubok/butsa/medalyonlar) — statistika ostida.
+  // loadPrizesInto (api.js) universal: /users/{id}/prizes -> renderMyPrizes (DRY).
+  if (DIV.section === "profile" && typeof loadPrizesInto === "function") {
+    const meId = DIV.status?.me_id || DIV.ratingMeId;
+    if (meId) void loadPrizesInto(meId, "div-my-prizes-section");
+  }
+  if (DIV.section === "player" && typeof loadPrizesInto === "function") {
+    const pid = DIV.player?.user_id;
+    if (pid) void loadPrizesInto(pid, "div-player-prizes-section");
+  }
 }
 
 
@@ -664,7 +675,9 @@ function divRenderProfile() {
     ${hist.length ? `<div class="card">${histRows}</div>`
                   : `<div class="card" style="opacity:.7;font-size:13px">${DT("div_no_matches")}</div>`}`;
 
-  return meCard + statsGrid + divCalendarHtml(DIV.calendar, "me") + historyBlock;
+  return meCard + statsGrid
+       + `<div id="div-my-prizes-section"></div>`
+       + divCalendarHtml(DIV.calendar, "me") + historyBlock;
 }
 
 // Liga uslubidagi raqib VS-oynasi: "Chatni ochish" (webapp chat) + "Raqib chatiga yozish" (t.me)
@@ -951,7 +964,9 @@ function divRenderPlayer() {
     ${hist ? `<div class="card">${hist}</div>`
            : `<div class="card" style="opacity:.7;font-size:13px">${DT("div_no_matches")}</div>`}`;
 
-  return back + headCard + statsGrid + calBlock + historyBlock;
+  return back + headCard + statsGrid
+       + `<div id="div-player-prizes-section"></div>`
+       + calBlock + historyBlock;
 }
 
 // ---- Eventlar ----
