@@ -842,6 +842,23 @@ function prizeVisual(p) {
     const trophyFile = LEAGUE_TROPHIES[p.league_name] || null;
     return { img: trophyFile, name: (p.league_name || "") + " " + (t.league_trophy || "Kubogi") };
   }
+  // 2026-08: Divizion sovrinlari — kubok (★ beradi), butsa va 1/2/3-o'rin
+  // medalyonlari (shaffof PNG, images/ papkasida)
+  if (p.prize_type === "div_cup") {
+    return { img: "images/division-cup.png", name: "Divizion Kubogi" };
+  }
+  if (p.prize_type === "div_boot") {
+    return { img: "images/division-boot.png", name: "Divizion Oltin Butsa" };
+  }
+  if (p.prize_type === "div_medal_1") {
+    return { img: "images/medal-1.png", name: "Divizion 1-o'rin" };
+  }
+  if (p.prize_type === "div_medal_2") {
+    return { img: "images/medal-2.png", name: "Divizion 2-o'rin" };
+  }
+  if (p.prize_type === "div_medal_3") {
+    return { img: "images/medal-3.png", name: "Divizion 3-o'rin" };
+  }
   return { img: null, name: p.prize_type };
 }
 

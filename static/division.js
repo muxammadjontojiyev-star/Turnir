@@ -18,6 +18,7 @@ const DIV = {
   adminFixId: "",    // "Match ID orqali tuzatish" formasidagi ID
   adminFixInfo: null,// o'sha ID bo'yicha o'yin ma'lumoti | "notfound" | null
   finalizePreview: undefined, // divizion yakunlash preview (undefined=yuklanmagan, null=xato)
+  finalizeSeason: "prev",     // yakunlanadigan mavsum: "prev" (default, xavfsiz) | "current"
   player: null,      // ochilgan ishtirokchi profili (/div/player/{id}/profile)
   playerBackTo: "rating",  // profildan ortga qaysi bo'limga qaytamiz
   calendar: null,    // /div/calendar javobi {month, today, days[]}
@@ -1096,6 +1097,17 @@ function divBindSectionEvents(root) {
   const finalizeBtn = document.getElementById("div-btn-finalize");
   finalizeBtn?.addEventListener("click", () => void divFinalizeSubmit(finalizeBtn));
 
+  // Yakunlanadigan mavsumni tanlash (o'tgan / joriy) — preview qayta yuklanadi
+  root.querySelectorAll("[data-div-fin-season]").forEach(b =>
+    b.addEventListener("click", () => {
+      const val = b.dataset.divFinSeason;
+      if (DIV.finalizeSeason === val) return;
+      DIV.finalizeSeason = val;
+      DIV.finalizePreview = undefined;
+      renderDivision();
+      void divLoadFinalizePreview();
+    }));
+
   // "MATCH ID ORQALI TUZATISH" formasi
   root.querySelector("#div-fix-match-id")?.addEventListener("input", (e) =>
     divAdminFixIdChanged(e.target.value));
@@ -1270,11 +1282,12 @@ function divAdminReassignForm() {
 }
 
 // 2026-07-17: Admin ishtirokchiga kunlik ban beradi (tasdiq + POST /div/admin/ban)
-// 2026-08: divizion yakunlash preview + submit
+// 2026-08: divizion yakunlash preview + submit (tanlangan mavsum bo'yicha)
 async function divLoadFinalizePreview() {
   if (!DIV.status?.is_super) return;
+  const q = DIV.finalizeSeason === "current" ? "" : "?season=prev";
   try {
-    DIV.finalizePreview = await apiFetch("/div/admin/finalize/preview");
+    DIV.finalizePreview = await apiFetch("/div/admin/finalize/preview" + q);
   } catch (_) {
     DIV.finalizePreview = null;
   }
@@ -1283,14 +1296,23 @@ async function divLoadFinalizePreview() {
 
 async function divFinalizeSubmit(btn) {
   const pv = DIV.finalizePreview;
-  if (!pv || (!pv.cup && !pv.boot)) {
+  if (!pv) return;
+  if (pv.already_finalized) {
+    showToast(`${pv.season_number}-mavsum allaqachon yakunlangan.`);
+    return;
+  }
+  if (!pv.cup && !pv.boot && !(pv.medals || []).length) {
     showToast("Hali sovrindor yo'q (o'yinlar o'ynalmagan).");
     return;
   }
-  if (!confirm(`${pv.season_number}-mavsum yakunlansinmi?\n\nKubok va oltin butsa sovrindorlarga beriladi. Bu amalni ortga qaytarib bo'lmaydi.`)) return;
+  // Aniq mavsum raqami bilan tasdiq — noto'g'ri mavsumni yakunlab qo'ymaslik uchun
+  if (!confirm(`${pv.season_number}-MAVSUM yakunlansinmi?\n\nKubok, oltin butsa va 1/2/3-o'rin medalyonlari sovrindorlarga beriladi. Bu amalni ortga qaytarib bo'lmaydi.`)) return;
   btn.disabled = true;
   try {
-    const r = await apiFetch("/div/admin/finalize", { method: "POST" });
+    const r = await apiFetch("/div/admin/finalize", {
+      method: "POST",
+      body: JSON.stringify({ season: DIV.finalizeSeason === "current" ? "current" : "prev" }),
+    });
     showToast(`🏁 ${r.season_number}-mavsum yakunlandi. Sovrinlar berildi.`);
     DIV.finalizePreview = undefined;
     void divLoadFinalizePreview();
@@ -1337,10 +1359,25 @@ async function divAdminBanSubmit(btn) {
 // 2026-07-17: Kunlik ban formasi ("Bugungi/Barcha kunlar" tablari o'rniga).
 // Admin ishtirokchini tanlab, istalgancha kunlik ban beradi (faqat bosh admin).
 // 2026-08: divizion mavsumini yakunlash (faqat bosh admin). Preview ko'rsatadi
-// (kim kubok/butsa oladi), so'ng tasdiqlab yakunlaydi.
+// (kim kubok/butsa/medal oladi), so'ng tasdiqlab yakunlaydi.
+// MUHIM: admin QAYSI mavsumni yakunlashini o'zi tanlaydi (joriy yoki o'tgan) —
+// 2-mavsum boshlangach 1-mavsumni yakunlash kerak bo'ladi (xato bo'lmasin).
 function divAdminFinalizeForm() {
   if (!DIV.status?.is_super) return "";
   const pv = DIV.finalizePreview;
+  const curNum = DIV.status?.season?.number;
+  const sel = DIV.finalizeSeason || "prev";   // xavfsiz default: O'TGAN mavsum
+
+  // Mavsum tanlash chip'lari (1-mavsumda faqat joriy)
+  let picker = "";
+  if (curNum && curNum > 1) {
+    picker = `
+      <div class="div-season-tabs" style="margin-bottom:8px">
+        <button class="div-season-chip ${sel === "prev" ? "active" : ""}" data-div-fin-season="prev">${curNum - 1}-mavsum (tugagan)</button>
+        <button class="div-season-chip ${sel === "current" ? "active" : ""}" data-div-fin-season="current">${curNum}-mavsum (joriy)</button>
+      </div>`;
+  }
+
   let inner;
   if (pv === undefined) {
     inner = `<div class="wc-loading-row">${DT("div_loading") || "Yuklanmoqda..."}</div>`;
@@ -1348,23 +1385,35 @@ function divAdminFinalizeForm() {
     inner = `<div style="font-size:12px;opacity:.7">Ma'lumot yuklanmadi.</div>`;
   } else {
     const cup = pv.cup
-      ? `🏆 <b>Kubok:</b> ${escHtml(pv.cup.username ? "@" + pv.cup.username : (pv.cup.nickname || "#" + pv.cup.user_id))} (${pv.cup.points} ochko)`
+      ? `🏆 <b>Kubok:</b> ${escHtml(pv.cup.username ? "@" + pv.cup.username : (pv.cup.nickname || "#" + pv.cup.user_id))} (${pv.cup.points} ochko) <span style="opacity:.6">+★</span>`
       : `🏆 <b>Kubok:</b> <i>hali yo'q</i>`;
     const boot = pv.boot
       ? `👟 <b>Butsa:</b> ${escHtml(pv.boot.username ? "@" + pv.boot.username : (pv.boot.nickname || "#" + pv.boot.user_id))} (${pv.boot.goals_for} gol)`
       : `👟 <b>Butsa:</b> <i>hali yo'q</i>`;
+    const medalIcon = { 1: "🥇", 2: "🥈", 3: "🥉" };
+    const medals = (pv.medals || []).length
+      ? (pv.medals || []).map(m =>
+          `${medalIcon[m.place]} <b>${m.place}-o'rin:</b> ${escHtml(m.username ? "@" + m.username : (m.nickname || "#" + m.user_id))}`
+        ).join("<br>")
+      : `<i>medal egalari yo'q</i>`;
+    const doneNote = pv.already_finalized
+      ? `<div style="color:#22c55e;font-weight:600;margin-top:6px">✅ Bu mavsum allaqachon yakunlangan</div>`
+      : "";
     inner = `
       <div style="font-size:12.5px;opacity:.85;line-height:1.7;margin-bottom:8px">
         <div style="opacity:.6;margin-bottom:2px">${pv.season_number}-mavsum sovrindorlari:</div>
-        ${cup}<br>${boot}
+        ${cup}<br>${boot}<br>${medals}${doneNote}
       </div>`;
   }
+
+  const disabled = (pv && pv.already_finalized) ? " disabled" : "";
   return `
     <div class="section-label">MAVSUMNI YAKUNLASH</div>
     <div class="admin-fix-form">
+      ${picker}
       ${inner}
-      <button class="btn btn--danger" id="div-btn-finalize">🏁 Divizion mavsumini yakunlash</button>
-      <div style="font-size:11.5px;opacity:.65;margin-top:6px">1-o'rin kubok, to'purarlar 1-o'rni oltin butsa oladi. Bu amalni ortga qaytarib bo'lmaydi.</div>
+      <button class="btn btn--danger" id="div-btn-finalize"${disabled}>🏁 ${pv ? pv.season_number : ""}-mavsumni yakunlash</button>
+      <div style="font-size:11.5px;opacity:.65;margin-top:6px">1-o'rin kubok (+★ yulduzcha), to'purarlar 1-o'rni oltin butsa, 1/2/3-o'rin medalyon oladi. Sovrinlar profilda ko'rinadi. Bu amalni ortga qaytarib bo'lmaydi.</div>
     </div>`;
 }
 
