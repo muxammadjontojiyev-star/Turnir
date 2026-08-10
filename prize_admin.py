@@ -35,6 +35,8 @@ TRANSFERABLE_PRIZE_TYPES = (
     "league_cup", "wc_cup", "cl_cup", "div_cup",
     # Individual sovrinlar (yulduzcha bermaydi)
     "golden_ball", "golden_boot", "wc_golden_boot", "div_boot",
+    # Divizion medalyonlari (1/2/3-o'rin)
+    "div_medal_1", "div_medal_2", "div_medal_3",
 )
 
 # Ko'rsatish uchun nomlar (frontend ham shu nomlarni ishlatadi)
@@ -47,6 +49,9 @@ PRIZE_LABELS_UZ = {
     "golden_boot": "Oltin butsa",
     "wc_golden_boot": "JCh oltin butsa",
     "div_boot": "Divizion oltin butsa",
+    "div_medal_1": "Divizion 1-o'rin medali",
+    "div_medal_2": "Divizion 2-o'rin medali",
+    "div_medal_3": "Divizion 3-o'rin medali",
 }
 
 

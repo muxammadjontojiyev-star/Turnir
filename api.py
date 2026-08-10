@@ -2311,24 +2311,27 @@ def div_admin_matches(day: str | None = None,
 
 
 @app.get("/div/admin/finalize/preview")
-def div_finalize_preview(admin: dict = Depends(get_authenticated_super_admin)):
+def div_finalize_preview(season: str | None = None,
+                         admin: dict = Depends(get_authenticated_super_admin)):
     """
     Bosh admin: divizion mavsumini yakunlashda kim qaysi sovrinni olishini
-    KO'RSATADI (saqlamaydi). Admin tasdiqlashdan oldin ko'radi.
+    KO'RSATADI (saqlamaydi). season='prev' -> o'tgan mavsum.
     """
     from division_finalize import preview_division_prizes
-    return preview_division_prizes()
+    return preview_division_prizes(season)
 
 
 @app.post("/div/admin/finalize")
-def div_finalize(admin: dict = Depends(get_authenticated_super_admin)):
+def div_finalize(season: str | None = Body(None, embed=True),
+                 admin: dict = Depends(get_authenticated_super_admin)):
     """
-    Bosh admin: divizion mavsumini yakunlaydi — 1-o'rin (kubok) va to'purar
-    1-o'rin (butsa) sovrinlarini season_prizes'ga saqlaydi (idempotent).
+    Bosh admin: divizion mavsumini yakunlaydi — 1-o'rin (kubok + ★), to'purar
+    1-o'rin (butsa) va 1/2/3-o'rin medalyonlarini saqlaydi (idempotent).
+    season='prev' -> O'TGAN mavsum yakunlanadi (joriy tegilmaydi).
     Xato: no_participants, already_finalized, finalize_failed → 400
     """
     from division_finalize import finalize_division_season
-    ok, reason, info = finalize_division_season()
+    ok, reason, info = finalize_division_season(season)
     if not ok:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", **info}
