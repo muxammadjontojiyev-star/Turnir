@@ -97,10 +97,16 @@ async function clLoadAdminPanel() {
       </button>` : ""}
 
       <div class="admin-hint" style="margin-top:14px">
-        <b>${CT("cla_playoff")}</b> liga bosqichi (8 tur) tugagach, top-8 to'g'ridan
-        setkaga, 9-24 o'rin pley-in (uy+mehmon) o'ynaydi. Har juftlik uy+mehmon, final — 1 o'yin.
+        <b>1-bosqich — Qayta tasnif:</b> liga bosqichi (8 tur) tugagach 9-24 o'rin
+        egalari 8 juftlikda uy+mehmon o'ynaydi. Setka hali ochilmaydi.
       </div>
       <button class="btn btn--primary" id="cl-admin-po-start">${CT("cla_playoff_start")}</button>
+
+      <div class="admin-hint" style="margin-top:14px">
+        <b>2-bosqich — Setka:</b> qayta tasnif tugagach bosiladi. 8 g'olib top-8
+        bilan juftlanadi (1/8 final). Har juftlik uy+mehmon, final — 1 o'yin.
+      </div>
+      <button class="btn" id="cl-admin-po-bracket">🏟️ Setkani ochish (1/8 final)</button>
 
       <div class="admin-hint" style="margin-top:14px">
         <b>Mavsumni yakunlash:</b> final g'olibi ChL kubogini oladi — kubok
@@ -146,6 +152,11 @@ async function clLoadAdminPanel() {
   const pobtn = document.getElementById("cl-admin-po-start");
   if (pobtn && typeof clpoAdminStart === "function")
     pobtn.addEventListener("click", () => void clpoAdminStart(pobtn));
+
+  // 2026-08: 2-bosqich — asosiy setkani ochish (qayta tasnif tugagach)
+  const brbtn = document.getElementById("cl-admin-po-bracket");
+  if (brbtn && typeof clpoAdminStartBracket === "function")
+    brbtn.addEventListener("click", () => void clpoAdminStartBracket(brbtn));
 
   // Match ID orqali tuzatish (liga naqshi)
   const fixId = document.getElementById("cl-fix-match-id");

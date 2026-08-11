@@ -171,6 +171,73 @@ function clpoRenderBracket(data) {
     </div>`;
 }
 
+// ---- QAYTA TASNIF (pley-in, 9-24 o'rin) — alohida tab (2026-08) ----
+// Ro'yxat ko'rinishi: chap klub | ikki leg hisobi | o'ng klub. G'olib ajratiladi.
+// Ma'lumot manbai setka bilan bir xil (/cl/playoff/bracket) — qoida #26 DRY.
+async function clpoLoadPlayin() {
+  const box = document.getElementById("cl-po-playin-box");
+  if (!box) return;
+  if (!CLPO.bracket) {
+    try { CLPO.bracket = await apiFetch("/cl/playoff/bracket"); }
+    catch (_) { CLPO.bracket = null; }
+  }
+  const br = CLPO.bracket;
+  if (!br || !br.started) {
+    box.innerHTML = `<div class="card">${CT("clpo_not_started")}</div>`;
+    return;
+  }
+  const ties = (br.rounds && br.rounds.playin) || [];
+  if (!ties.length) {
+    box.innerHTML = `<div class="card">Qayta tasnif juftliklari hali yaratilmagan.</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="section-label">${CT("clpo_playin_label")}</div>
+    <div class="clpo-playin-list">
+      ${ties.slice().sort((x, y) => x.position - y.position).map(clpoPlayinRow).join("")}
+    </div>`;
+  if (typeof clpoBindBracketSides === "function") clpoBindBracketSides(box);
+}
+
+// Bitta pley-in juftligi qatori (ikki o'yin hisobi bilan)
+function clpoPlayinRow(tie) {
+  const l1 = tie.leg1, l2 = tie.leg2;
+  // sideA = yuqori o'rin: leg1'da MEHMON (score2), leg2'da UYDA (score1)
+  const a1 = (l1 && l1.score1 != null) ? l1.score2 : null;
+  const b1 = (l1 && l1.score1 != null) ? l1.score1 : null;
+  const a2 = (l2 && l2.score1 != null) ? l2.score1 : null;
+  const b2 = (l2 && l2.score1 != null) ? l2.score2 : null;
+  const line = (x, y) => (x == null || y == null)
+    ? `<div class="clpo-pi-score clpo-pi-score--pending">—<span class="clpo-pi-dash">:</span>—</div>`
+    : `<div class="clpo-pi-score">${x}<span class="clpo-pi-dash">:</span>${y}</div>`;
+
+  const sideHtml = (p, won, align) => {
+    if (!p || !p.user_id) {
+      return `<div class="clpo-pi-side clpo-pi-side--${align}"><span class="clpo-pi-name">—</span></div>`;
+    }
+    const nm = escHtml(p.username ? "@" + p.username : (p.nickname || ""));
+    return `
+      <div class="clpo-pi-side clpo-pi-side--${align}${won ? " winner" : ""} clpo-side--clickable"
+           data-clpo-player="${p.user_id}"
+           data-clpo-nick="${escHtml(p.nickname || "")}"
+           data-clpo-user="${escHtml(p.username || "")}"
+           data-clpo-club="${escHtml(p.club_name || "")}">
+        ${clClubBadge(p.club_name, 26)}
+        <span class="clpo-pi-name">${nm}</span>
+      </div>`;
+  };
+
+  const aWon = tie.winner_id && tie.a && tie.a.user_id === tie.winner_id;
+  const bWon = tie.winner_id && tie.b && tie.b.user_id === tie.winner_id;
+
+  return `
+    <div class="clpo-pi-row">
+      ${sideHtml(tie.a, aWon, "left")}
+      <div class="clpo-pi-scores">${line(a1, b1)}${line(a2, b2)}</div>
+      ${sideHtml(tie.b, bWon, "right")}
+    </div>`;
+}
+
 // ---- PROFIL: PLAY-OFF O'YINLARIM ----
 // 2026-07-21: dizayn va natija oqimi guruh o'yinlari ("MENING O'YINLARIM",
 // clRenderMatchItem) bilan BIR XIL: .cl-match-wrap karta, umumiy #modal-result
@@ -398,6 +465,12 @@ const CLPO_ERRORS = {
   already_started: CT("clpo_err_started"),
   groups_not_finished: CT("clpo_err_groups"),
   not_drawn: CT("clpo_err_not_drawn"),
+  // 2026-08: setka bosqichi (2-bosqich) xatolari
+  playin_not_started: "Avval qayta tasnifni boshlang.",
+  playin_not_finished: "Qayta tasnif hali tugamagan — barcha 16 o'yin tasdiqlanishi kerak.",
+  bracket_already_started: "Setka allaqachon ochilgan.",
+  not_enough_players: "Reytingda yetarli ishtirokchi yo'q (24 ta kerak).",
+  bracket_failed: "Setkani ochishda xatolik.",
 };
 
 // Umumiy modaldagi "Yuborish" shu funksiyaga yo'naltiriladi (api.js submitMatchResult)
@@ -488,7 +561,22 @@ async function clpoAdminStart(btn) {
   btn.disabled = true;
   try {
     const r = await apiFetch("/cl/admin/playoff/start", { method: "POST" });
-    showToast(`✅ ${CT("clpo_started")} (${r.created})`);
+    showToast(`✅ Qayta tasnif boshlandi (${r.playin_pairs} juftlik)`);
+    if (typeof clRenderAdminPage === "function") void clRenderAdminPage();
+  } catch (e) {
+    showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
+    btn.disabled = false;
+  }
+}
+
+// 2026-08: 2-BOSQICH — asosiy setkani ochish (qayta tasnif tugagach)
+async function clpoAdminStartBracket(btn) {
+  if (!confirm("Asosiy setka (1/8 final) ochilsinmi?\n\nQayta tasnif g'oliblari top-8 bilan juftlanadi. Bu amalni ortga qaytarib bo'lmaydi.")) return;
+  btn.disabled = true;
+  try {
+    const r = await apiFetch("/cl/admin/playoff/start-bracket", { method: "POST" });
+    showToast(`✅ Setka ochildi (${r.r16_pairs} juftlik)`);
+    CLPO.bracket = null;   // keshni tozalaymiz — yangi setka yuklansin
     if (typeof clRenderAdminPage === "function") void clRenderAdminPage();
   } catch (e) {
     showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
