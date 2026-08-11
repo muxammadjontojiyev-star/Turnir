@@ -1991,12 +1991,27 @@ def cl_playoff_status(user: dict = Depends(get_authenticated_user)):
 @app.post("/cl/admin/playoff/start")
 def cl_admin_playoff_start(admin: dict = Depends(get_authenticated_super_admin)):
     """
-    Bosh admin play-off'ni boshlaydi: top-8 to'g'ridan r16 setkaga, 9-24 o'rin
-    pley-in (uy+mehmon). Xato: already_started, not_drawn, groups_not_finished,
-    not_enough_players → 400
+    1-BOSQICH — Bosh admin QAYTA TASNIF (pley-in) ni boshlaydi: 9-24 o'rin uchun
+    8 juftlik (uy+mehmon). Asosiy setka hali ochilmaydi.
+    Xato: already_started, not_drawn, groups_not_finished, not_enough_players → 400
     """
     from cl_playoff import cl_po_start
     success, result = cl_po_start()
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
+@app.post("/cl/admin/playoff/start-bracket")
+def cl_admin_playoff_start_bracket(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2-BOSQICH — Bosh admin ASOSIY SETKA (r16) ni ochadi. Qayta tasnif tugagan
+    bo'lishi shart: 8 g'olib top-8 seed'lar bilan juftlanadi.
+    Xato: playin_not_started, playin_not_finished, bracket_already_started,
+    not_enough_players, bracket_failed → 400
+    """
+    from cl_playoff import cl_po_start_bracket
+    success, result = cl_po_start_bracket()
     if not success:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}

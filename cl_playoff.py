@@ -92,12 +92,11 @@ def cl_po_qualified(season: int) -> tuple[bool, str, dict]:
 
 def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
     """
-    Bosh admin play-off'ni boshlaydi. Yangi format:
-      - r16 (asosiy setka): 8 pos, sideA = top-8 seed (o'z joyida), sideB bo'sh
-        (pley-in g'olibi kelib to'ldiradi). Ikkala leg (uy+mehmon) yaratiladi.
-      - playin: 8 juft (9-24 o'rin), ikkala leg. G'olib r16 sideB'ga boradi.
-    Seed_k (r16 pos p) eng past pley-in juftligi bilan tushadi
-    (r16_slot_for_playin_position). Idempotent (qoida #38): started tekshiriladi.
+    1-BOSQICH: QAYTA TASNIF (pley-in) ni boshlaydi — 9-24 o'rin uchun 8 juftlik
+    (uy+mehmon). Asosiy SETKA hali YARATILMAYDI (2026-08: admin avval qayta
+    tasnifni o'tkazadi, u tugagach cl_po_start_bracket bilan setka ochiladi).
+
+    Idempotent (qoida #38): started tekshiriladi.
     Xato sabablari: already_started, not_drawn, groups_not_finished,
     not_enough_players.
     """
@@ -120,29 +119,11 @@ def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, reason
 
-        from cl_playin import r16_slot_for_playin_position
-        seeds = q["seeds"]          # top-8, pos tartibida (0=seed1)
         playin = q["playin"]        # 8 juft (hi, lo), kuch tartibida
 
-        # 1) r16 setkasi: sideA=seed (joyida), sideB=NULL. Ikkala leg.
-        #    leg1: player1=sideB(NULL, uyda), player2=sideA ; leg2 teskari.
-        for pos, seed_id in enumerate(seeds):
-            cursor.execute(
-                "INSERT INTO cl_playoff_matches "
-                "(season, round, position, leg, player1_id, player2_id, status) "
-                "VALUES (?, 'r16', ?, 1, NULL, ?, ?)",
-                (season, pos, seed_id, MATCH_STATUS_PENDING),
-            )
-            cursor.execute(
-                "INSERT INTO cl_playoff_matches "
-                "(season, round, position, leg, player1_id, player2_id, status) "
-                "VALUES (?, 'r16', ?, 2, ?, NULL, ?)",
-                (season, pos, seed_id, MATCH_STATUS_PENDING),
-            )
-
-        # 2) playin juftlari: 8 ta (uy+mehmon). Konventsiya: yuqori o'rin (hi) =
-        #    sideA, quyi (lo) = sideB. leg1: player1=sideB(lo, uyda), player2=hi;
-        #    leg2 teskari.
+        # Pley-in juftlari: 8 ta (uy+mehmon). Konventsiya: yuqori o'rin (hi) =
+        # sideA, quyi (lo) = sideB. leg1: player1=sideB(lo, uyda), player2=hi;
+        # leg2 teskari. TOP-8 seed'lar setka bosqichida joylashtiriladi.
         created = 0
         for pos, (hi_id, lo_id) in enumerate(playin):
             cursor.execute(
@@ -167,15 +148,126 @@ def cl_po_start(season: int | None = None) -> tuple[bool, str | dict]:
             (season,),
         )
         cursor.execute("COMMIT")
-        logger.info("ChL play-off boshlandi: mavsum %s, %s pley-in juftligi + 8 seed r16'da",
-                    season, created)
-        return True, {"season": season, "playin_pairs": created, "seeds": len(seeds)}
+        logger.info("ChL qayta tasnif boshlandi: mavsum %s, %s juftlik", season, created)
+        return True, {"season": season, "playin_pairs": created}
     except Exception:
         try:
             cursor.execute("ROLLBACK")
         except Exception:
             pass
         raise
+    finally:
+        conn.close()
+
+
+def cl_po_start_bracket(season: int | None = None) -> tuple[bool, str | dict]:
+    """
+    2-BOSQICH: ASOSIY SETKA (r16) ni ochadi. Shartlar:
+      - Qayta tasnif boshlangan (cl_po_start) va BARCHA 8 juftlik hal bo'lgan
+      - Setka hali ochilmagan (idempotent)
+
+    Joylashuv (real ChL uslubi): r16 pos p da sideA = seed[p] (top-8),
+    sideB = pley-in g'olibi[7-p] (r16_slot_for_playin_position teskarisi) —
+    ya'ni seed-1 eng ZAIF pley-in juftligi g'olibi bilan tushadi.
+
+    Xato sabablari: playin_not_started, playin_not_finished, bracket_already_started,
+    not_enough_players.
+    """
+    from cl_playin import r16_slot_for_playin_position
+
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        if season is None:
+            season = _current_season(cursor)
+
+        # Qayta tasnif boshlanganmi?
+        cursor.execute(
+            "SELECT COUNT(*) AS n FROM cl_playoff_matches "
+            "WHERE season = ? AND round = ?", (season, CL_PO_PLAYIN))
+        if cursor.fetchone()["n"] == 0:
+            cursor.execute("ROLLBACK")
+            return False, "playin_not_started"
+
+        # Setka allaqachon ochilganmi?
+        cursor.execute(
+            "SELECT COUNT(*) AS n FROM cl_playoff_matches "
+            "WHERE season = ? AND round = 'r16'", (season,))
+        if cursor.fetchone()["n"] > 0:
+            cursor.execute("ROLLBACK")
+            return False, "bracket_already_started"
+
+        # Barcha pley-in o'yinlari tasdiqlanganmi?
+        cursor.execute(
+            "SELECT COUNT(*) AS n FROM cl_playoff_matches "
+            "WHERE season = ? AND round = ? AND status != ?",
+            (season, CL_PO_PLAYIN, MATCH_STATUS_CONFIRMED))
+        if cursor.fetchone()["n"] > 0:
+            cursor.execute("ROLLBACK")
+            return False, "playin_not_finished"
+
+        # Har pozitsiya bo'yicha g'olibni agregat bilan aniqlaymiz
+        cursor.execute(
+            "SELECT position, leg, player1_id, player2_id, score1, score2 "
+            "FROM cl_playoff_matches WHERE season = ? AND round = ? "
+            "ORDER BY position, leg", (season, CL_PO_PLAYIN))
+        legs_by_pos: dict[int, dict] = {}
+        for r in cursor.fetchall():
+            legs_by_pos.setdefault(r["position"], {})[r["leg"]] = dict(r)
+
+        winners: dict[int, int] = {}
+        for pos, legs in legs_by_pos.items():
+            l1, l2 = legs.get(1), legs.get(2)
+            if not l1 or not l2:
+                cursor.execute("ROLLBACK")
+                return False, "playin_not_finished"
+            side_a = l1["player2_id"]   # yuqori o'rin (leg1'da mehmon)
+            side_b = l1["player1_id"]   # quyi o'rin (leg1'da uyda)
+            agg_a = (l1["score2"] or 0) + (l2["score1"] or 0)
+            agg_b = (l1["score1"] or 0) + (l2["score2"] or 0)
+            winners[pos] = side_a if agg_a > agg_b else side_b
+
+        # Top-8 seed'lar (liga bosqichi reytingidan)
+        ready, reason, q = cl_po_qualified(season)
+        if not ready:
+            cursor.execute("ROLLBACK")
+            return False, reason
+        seeds = q["seeds"]
+
+        # r16: sideA = seed[p], sideB = pley-in g'olibi (mos pozitsiyadan)
+        created = 0
+        for pos, seed_id in enumerate(seeds):
+            # qaysi pley-in pozitsiyasi shu r16 pos ga tushadi (teskari moslik)
+            playin_pos = next(
+                (pp for pp in winners if r16_slot_for_playin_position(pp) == pos), None)
+            opp_id = winners.get(playin_pos) if playin_pos is not None else None
+            # leg1: player1=sideB (uyda), player2=sideA ; leg2 teskari
+            cursor.execute(
+                "INSERT INTO cl_playoff_matches "
+                "(season, round, position, leg, player1_id, player2_id, status) "
+                "VALUES (?, 'r16', ?, 1, ?, ?, ?)",
+                (season, pos, opp_id, seed_id, MATCH_STATUS_PENDING),
+            )
+            cursor.execute(
+                "INSERT INTO cl_playoff_matches "
+                "(season, round, position, leg, player1_id, player2_id, status) "
+                "VALUES (?, 'r16', ?, 2, ?, ?, ?)",
+                (season, pos, seed_id, opp_id, MATCH_STATUS_PENDING),
+            )
+            created += 1
+
+        cursor.execute("COMMIT")
+        logger.info("ChL setka ochildi: mavsum %s, %s r16 juftligi", season, created)
+        return True, {"season": season, "r16_pairs": created}
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            pass
+        logger.exception("cl_po_start_bracket xatosi")
+        return False, "bracket_failed"
     finally:
         conn.close()
 

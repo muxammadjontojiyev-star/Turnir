@@ -155,6 +155,16 @@ def _advance_winner(cursor, m: dict, winner_id: int) -> None:
     # --- PLEY-IN → r16 (maxsus): g'olib r16 sideB, o'sha "kuch" pozitsiyasiga ---
     if m["round"] == CL_PO_PLAYIN:
         from cl_playin import r16_slot_for_playin_position
+        # 2026-08: setka ALOHIDA bosqichda ochiladi (cl_po_start_bracket). Agar r16
+        # hali yaratilmagan bo'lsa — hech narsa qilmaymiz (setka o'z-o'zidan
+        # ochilib ketmasin). G'olib keyin agregatdan hisoblanadi.
+        cursor.execute(
+            "SELECT COUNT(*) AS n FROM cl_playoff_matches "
+            "WHERE season = ? AND round = 'r16'", (m["season"],))
+        if cursor.fetchone()["n"] == 0:
+            logger.info("ChL PO: playin pos%s g'olibi (user %s) — setka hali ochilmagan",
+                        m["position"], winner_id)
+            return
         next_pos = r16_slot_for_playin_position(m["position"])
         _ensure_next_tie(cursor, m["season"], "r16", next_pos)
         # r16 sideB = leg1.player1 va leg2.player2 (sideA=seed allaqachon yozilgan)
