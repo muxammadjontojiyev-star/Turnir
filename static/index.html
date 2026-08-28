@@ -270,6 +270,17 @@
               <button class="btn" id="btn-league-prize-transfer">🏆 Sovrinni ko'chirish</button>
               <div class="admin-player-league" style="margin:6px 2px 0">Kubok va individual sovrinlar. Sovrinni tanlang, yangi egani Telegram ID yoki @username bilan kiriting. Kubok ko'chirilsa ⭐ yulduzcha ham avtomatik o'tadi.</div>
             </div>
+
+            <!-- 2026-08: ChL 2-mavsum kubogini QO'LDA berish (bosh admin).
+                 Final o'ynalgan, lekin mavsum yakunlanmasdan yangi mavsum
+                 boshlangani uchun kubok yozilmay qolgan holat uchun. -->
+            <div class="section-label">CHL 2-MAVSUM KUBOGINI BERISH</div>
+            <div class="admin-fix-form">
+              <input id="cl-cup-award-tg" class="modal-input" type="number" inputmode="numeric"
+                     placeholder="G'olibning Telegram ID raqami" style="margin-bottom:8px" />
+              <button class="btn" id="btn-cl-cup-award">🏆 ChL 2-mavsum kubogini berish</button>
+              <div class="admin-player-league" style="margin:6px 2px 0">Faqat 2-mavsum uchun. Kubok berilishi bilan ⭐ yulduzcha ham avtomatik paydo bo'ladi. Bir marta beriladi — 2-mavsumda kubok bo'lsa xato chiqadi.</div>
+            </div>
           </div>
 
           <div class="section-label" data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</div>
@@ -547,7 +558,7 @@
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
   <script src="app.js?v=20260725a"></script>
-  <script src="api.js?v=20260810b"></script>
+  <script src="api.js?v=20260828a"></script>
   <!-- 2026-07-21: Divizion tarjimalari (uz/ru/en) — app.js dagi TEXTS ga qo'shiladi -->
   <script src="texts_division.js?v=20260810d"></script>
   <!-- 2026-07-21: ChL tarjimalari (uz/ru/en) — cl*.js dan OLDIN -->

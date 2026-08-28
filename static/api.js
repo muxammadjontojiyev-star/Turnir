@@ -1362,6 +1362,13 @@ async function loadAdminPanel() {
       prizeBtn._bound = true;
       prizeBtn.addEventListener("click", () => void leaguePrizeTransferSubmit(prizeBtn));
     }
+
+    // 2026-08: ChL 2-mavsum kubogini qo'lda berish
+    const clCupBtn = document.getElementById("btn-cl-cup-award");
+    if (clCupBtn && !clCupBtn._bound) {
+      clCupBtn._bound = true;
+      clCupBtn.addEventListener("click", () => void clCupAwardSubmit(clCupBtn));
+    }
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
     superOnly?.classList.add("hidden");
@@ -1491,6 +1498,43 @@ async function leaguePrizeTransferSubmit(btn) {
       prize_not_found: "Sovrin topilmadi.",
       not_transferable: "Bu sovrin turini ko'chirib bo'lmaydi.",
     }[reason] || "Ko'chirishda xatolik.";
+    window.alert("❌ " + msg);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ---- ChL 2-mavsum kubogini QO'LDA berish — bosh admin liga panelida (2026-08) ----
+// Sabab: final o'ynalgan, lekin "ChL mavsumini yakunlash" bosilmasdan yangi
+// mavsum boshlangan — kubok va ★ yozilmay qolgan. Mavsum raqami backendda
+// qat'iy (prize_award.CL_CUP_SEASON = 2), frontenddan yuborilmaydi.
+async function clCupAwardSubmit(btn) {
+  const input = document.getElementById("cl-cup-award-tg");
+  const tg = (input?.value || "").trim();
+  if (!tg) {
+    window.alert("G'olibning Telegram ID raqamini kiriting.");
+    return;
+  }
+  if (!window.confirm(`ChL 2-mavsum kubogi ${tg} egasiga berilsinmi? Bu amal bir martalik.`)) return;
+  if (btn) btn.disabled = true;
+  try {
+    const r = await apiFetch("/admin/prizes/cl-cup/award", {
+      method: "POST",
+      body: JSON.stringify({ telegram_id: Number(tg) }),
+    });
+    const who = r.username ? "@" + r.username : (r.nickname || ("#" + r.user_id));
+    window.alert(`✅ ChL ${r.season_number}-mavsum kubogi ${who} ga berildi.\n\n⭐ Yulduzcha ham paydo bo'ldi.`);
+    if (input) input.value = "";
+    // Yangi kubok ko'chirish ro'yxatida ham ko'rinsin + ★ keshi yangilansin
+    void leagueLoadPrizeTransfer();
+    if (typeof loadPrizeStars === "function") { try { await loadPrizeStars(); } catch (_) {} }
+  } catch (err) {
+    const reason = (err && err.message) || "";
+    const msg = {
+      user_not_found: "Bu Telegram ID bo'yicha o'yinchi topilmadi.",
+      season_already_has_cup: "2-mavsum kubogi allaqachon berilgan.",
+      invalid_telegram_id: "Telegram ID noto'g'ri.",
+    }[reason] || "Kubok berishda xatolik.";
     window.alert("❌ " + msg);
   } finally {
     if (btn) btn.disabled = false;
