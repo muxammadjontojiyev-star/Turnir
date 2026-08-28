@@ -1412,6 +1412,29 @@ def admin_prizes_transfer(
     return {"status": "ok", **info}
 
 
+@app.post("/admin/prizes/cl-cup/award")
+def admin_prizes_cl_cup_award(
+    telegram_id: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """
+    2026-08: Bosh admin ChL 2-mavsum kubogini Telegram ID egasiga QO'LDA beradi.
+    Kerak bo'lgan sabab: final o'ynalgan, lekin "ChL mavsumini yakunlash"
+    bosilmasdan yangi mavsum boshlangan — kubok va ★ yulduzcha yozilmay qolgan.
+
+    Yulduzcha AVTOMATIK chiqadi (prize_stars telegram_id bo'yicha hisoblaydi).
+    season_state.cl_season BU YERDA o'zgartirilmaydi.
+
+    Xato sabablari (400): invalid_telegram_id, user_not_found,
+    season_already_has_cup, award_failed.
+    """
+    from prize_award import award_cl_cup_season2
+    ok, reason, info = award_cl_cup_season2(telegram_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", **info}
+
+
 
 @app.get("/season/celebration")
 def season_celebration(user: dict = Depends(get_authenticated_user)):
