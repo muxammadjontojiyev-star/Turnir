@@ -140,3 +140,19 @@ DIV_START_RATING = 1500      # Har bir ishtirokchining boshlang'ich umumiy balli
 # Reyting har mavsumda noldan (o'yin tarixi saqlanadi — day oralig'i bo'yicha filtr).
 DIV_SEASON_FIRST_DAY = "2026-07-10"
                              # (o'yin achkolari shunga qo'shiladi/ayriladi)
+
+# ============================================================
+#  TARJIMA (2026-08-28) — chat xabarlarini boshqa tilga o'girish
+# ============================================================
+# Chet ellik ishtirokchilar bilan muloqot uchun. Barcha qiymatlar environment
+# variable orqali sozlanadi (qoida #46: muhitga xos qiymat kodga yozilmaydi).
+# TRANSLATE_URL almashtirilsa boshqa xizmatga (LibreTranslate va h.k.) o'tish
+# mumkin — chat kodiga tegilmaydi.
+TRANSLATE_ENABLED = os.getenv("TRANSLATE_ENABLED", "true").lower() == "true"
+TRANSLATE_URL = os.getenv("TRANSLATE_URL", "https://translate.googleapis.com/translate_a/single")
+TRANSLATE_TIMEOUT_SECONDS = float(os.getenv("TRANSLATE_TIMEOUT_SECONDS", "6"))
+# Chat inputidagi maxlength=2000 bilan mos
+TRANSLATE_MAX_CHARS = int(os.getenv("TRANSLATE_MAX_CHARS", "2000"))
+# Suiiste'moldan himoya (qoida #39): har user 60 sekundda 20 ta tarjima
+TRANSLATE_RATE_LIMIT_MAX = int(os.getenv("TRANSLATE_RATE_LIMIT_MAX", "20"))
+TRANSLATE_RATE_LIMIT_WINDOW = int(os.getenv("TRANSLATE_RATE_LIMIT_WINDOW", "60"))

@@ -29,6 +29,7 @@ from config import (
     MATCHDAYS_PER_UNLOCK, WEBAPP_URL, MAX_SCORE,
     IP_RATE_LIMIT_MAX, IP_RATE_LIMIT_WINDOW,
     PHOTO_CACHE_TTL_SECONDS, PHOTO_CACHE_NEGATIVE_TTL_SECONDS, PHOTO_CACHE_MAX_ENTRIES,
+    TRANSLATE_RATE_LIMIT_MAX, TRANSLATE_RATE_LIMIT_WINDOW,
 )
 
 # XAVFSIZLIK GUARD (audit B7): BOT_TOKEN bo'sh bo'lsa initData HMAC kaliti
@@ -216,6 +217,17 @@ def _bucket_hit(buckets: dict, key, max_count: int, window: int) -> bool:
 
 def _check_rate_limit(telegram_id: int):
     if _bucket_hit(_rate_buckets, telegram_id, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW):
+        raise HTTPException(status_code=429, detail="too_many_requests")
+
+
+# 2026-08-28: tarjima uchun ALOHIDA, torroq limit (qoida #39) — tashqi xizmatga
+# so'rov yuborilgani uchun oddiy so'rovlardan qat'iyroq cheklanadi.
+_translate_buckets: dict = {}
+
+
+def _check_translate_rate_limit(telegram_id: int):
+    if _bucket_hit(_translate_buckets, telegram_id,
+                   TRANSLATE_RATE_LIMIT_MAX, TRANSLATE_RATE_LIMIT_WINDOW):
         raise HTTPException(status_code=429, detail="too_many_requests")
 
 
@@ -1432,6 +1444,33 @@ def admin_prizes_cl_cup_award(
     ok, reason, info = award_cl_cup_season2(telegram_id)
     if not ok:
         raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", **info}
+
+
+@app.post("/chat/translate")
+def chat_translate(
+    text: str = Body(..., embed=True),
+    target_lang: str = Body(..., embed=True),
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    2026-08-28: Chat xabarini foydalanuvchining tiliga (uz/ru/en) o'giradi.
+    Chet ellik ishtirokchilar bilan muloqot uchun.
+
+    UMUMIY endpoint — BARCHA chatlar (liga, ChL, ChL play-off, Divizion, WC)
+    shu bittasidan foydalanadi, chunki tarjima MATN ustida ishlaydi, chat
+    jadvallariga bog'liq emas (qoida #26 DRY).
+
+    Limit: har user 60 sekundda 20 ta tarjima (TRANSLATE_RATE_LIMIT_*).
+    Xato sabablari: 429 too_many_requests; 400 invalid_target/empty_text/
+    text_too_long; 503 disabled/provider_error (xizmat vaqtincha ishlamayapti).
+    """
+    _check_translate_rate_limit(user["telegram_id"])
+    from translate_service import translate_text
+    ok, reason, info = translate_text(text, target_lang)
+    if not ok:
+        code = 503 if reason in ("disabled", "provider_error") else 400
+        raise HTTPException(status_code=code, detail=reason)
     return {"status": "ok", **info}
 
 

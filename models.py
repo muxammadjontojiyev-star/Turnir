@@ -610,6 +610,22 @@ def init_db():
         )
     """)
 
+    # === chat_translations (2026-08-28) — tarjima keshi ===
+    # Bir xil matn qayta-qayta tarjima qilinmasin (tashqi xizmatga so'rov
+    # kamayadi, javob tez qaytadi). cache_key = sha256(target_lang + matn) —
+    # PRIMARY KEY sifatida avtomatik indeksli (qoida #30).
+    # Chat rejimiga bog'lanmagan: liga/ChL/Divizion/WC — hammasi shu keshdan
+    # foydalanadi (qoida #26 DRY).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_translations (
+            cache_key TEXT PRIMARY KEY,
+            target_lang TEXT NOT NULL,
+            detected_lang TEXT,
+            translated_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
 
     # === MIGRATSIYALAR ===
