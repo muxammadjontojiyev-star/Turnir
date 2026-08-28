@@ -4953,3 +4953,43 @@ select.modal-input:focus {
 .cl-po-champion-name { font-weight: 800; font-size: 14px; margin-top: 4px; }
 .cl-po-champion-label { font-size: 10.5px; letter-spacing: 2px; color: var(--cyan); }
 svg.wc-bracket-trophy { display: block; margin: 0 auto; }
+
+/* ============================================================
+   2026-08-28: CHAT TARJIMASI (2-bosqich)
+   Tarjima qatori puffak ICHIDA, vaqt/✓✓ dan KEYIN alohida satrda.
+   .webchat-bubble inline-flex (nowrap) — shu sabab faqat raqib
+   puffagiga .has-tr qo'shiladi va unga flex-wrap beriladi; o'z
+   xabarlarim ko'rinishi mutlaqo o'zgarmaydi.
+   ============================================================ */
+.webchat-bubble.has-tr { flex-wrap: wrap; }
+
+.webchat-tr-btn,
+.webchat-tr-text {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 5px;
+}
+
+.webchat-tr-btn {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  padding: 5px 0 0;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.webchat-tr-btn:active { opacity: .6; }
+.webchat-tr-btn:disabled { cursor: default; opacity: .6; }
+
+.webchat-tr-text {
+  display: block;
+  border-top: 1px solid var(--border);
+  padding-top: 5px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}

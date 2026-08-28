@@ -2593,6 +2593,10 @@ function openWebChat(matchId, opponentLabel, urlPrefix) {
   APP.chatUrlPrefix = urlPrefix || "/matches";
   APP.chatOppLabel = opponentLabel || (t.webchat_opponent || "Raqib");
   APP.lastTypingSent = 0;
+  // Tarjima keshi har chatda toza boshlanadi (msg id'lar rejimlar bo'yicha
+  // takrorlanishi mumkin — qoida #13)
+  APP.chatTr = {};
+  APP.chatLastMessages = [];
 
   let modal = document.getElementById("modal-webchat");
   if (!modal) {
@@ -2801,6 +2805,8 @@ function renderWebChatMessages(messages) {
   const box = document.getElementById("webchat-messages");
   if (!box) return;
   const t = APP.t;
+  // Tarjima tugmasi asl matnni shu ro'yxatdan oladi (DOM'dan emas)
+  APP.chatLastMessages = messages;
 
   if (!messages.length) {
     box.innerHTML = `<div class="webchat-empty">${escHtml(t.webchat_empty || "Hali xabar yo'q. Birinchi bo'lib yozing!")}</div>`;
@@ -2822,18 +2828,88 @@ function renderWebChatMessages(messages) {
     return `
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${clubLogo}
-        <div class="webchat-bubble">
+        <div class="webchat-bubble${mine ? "" : " has-tr"}">
           <span class="webchat-text">${chatTextWithCopyableIds(escHtml(msg.text))}</span>
           <span class="webchat-meta">
             ${time ? `<span class="webchat-time">${time}</span>` : ""}
             ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
           </span>
+          ${webChatTranslateHtml(msg)}
         </div>
       </div>
     `;
   }).join("");
 
   if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+// ============================================================
+//  2026-08-28: CHAT TARJIMASI (2-BOSQICH — UI)
+//  Chet ellik ishtirokchilar bilan muloqot uchun: raqib xabari ostidagi
+//  "Tarjima" tugmasi matnni foydalanuvchi tiliga (APP.lang) o'giradi.
+//  Backend: POST /chat/translate (translate_service.py, 1-bosqich).
+//
+//  NIMA UCHUN AVTOMATIK EMAS: chat har 3 sekundda polling qiladi va
+//  renderWebChatMessages har safar butun ro'yxatni qayta chizadi — avtomatik
+//  rejimda har xabar qayta-qayta xizmatga yuborilardi. Shuning uchun tarjima
+//  faqat bosilganda so'raladi va natija APP.chatTr keshida saqlanadi:
+//  qayta chizilganda tarjima joyida qoladi, yangi so'rov ketmaydi.
+// ============================================================
+
+// Kesh: { "<msg_id>:<lang>": {text} }. Chat ochilganda tozalanadi
+// (msg id'lar rejimlar bo'yicha takrorlanishi mumkin — qoida #13).
+APP.chatTr = APP.chatTr || {};
+
+function webChatTrKey(msgId) {
+  return `${msgId}:${APP.lang}`;
+}
+
+// Xabar ostidagi tarjima qatori. FAQAT raqib xabarlariga (o'z xabaringni
+// tarjima qilish kerak emas). Tarjima matni escHtml bilan tozalanadi (#35 XSS).
+function webChatTranslateHtml(msg) {
+  if (msg.mine) return "";
+  const t = APP.t;
+  const done = APP.chatTr[webChatTrKey(msg.id)];
+  if (done) {
+    return `<span class="webchat-tr-text">🌐 ${escHtml(done.text)}</span>`;
+  }
+  return `<button class="webchat-tr-btn" data-tr-id="${msg.id}">🌐 ${escHtml(t.chat_translate || "Tarjima")}</button>`;
+}
+
+// Tugma bosilganda: xabar matnini backendga yuboradi va keshga yozadi.
+// Matn DOM'dan emas, xabar ro'yxatidan olinadi (APP.chatLastMessages) —
+// chatTextWithCopyableIds qo'shgan span'lar matnni buzmasin.
+async function webChatTranslate(msgId, btn) {
+  const list = APP.chatLastMessages || [];
+  const msg = list.find(m => String(m.id) === String(msgId));
+  if (!msg) return;
+  const t = APP.t;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ " + (t.chat_translating || "Tarjima qilinmoqda...");
+  }
+  try {
+    const r = await apiFetch("/chat/translate", {
+      method: "POST",
+      body: JSON.stringify({ text: msg.text, target_lang: APP.lang }),
+    });
+    APP.chatTr[webChatTrKey(msgId)] = { text: r.translated };
+    renderWebChatMessages(list);
+  } catch (err) {
+    const reason = (err && err.message) || "";
+    const msgTxt = {
+      too_many_requests: t.chat_tr_limit || "Juda ko'p so'rov. Biroz kuting.",
+      provider_error: t.chat_tr_failed || "Tarjima xizmati javob bermadi.",
+      disabled: t.chat_tr_off || "Tarjima o'chirilgan.",
+      text_too_long: t.chat_tr_long || "Xabar juda uzun.",
+    }[reason] || (t.chat_tr_failed || "Tarjima qilinmadi.");
+    showToast("❌ " + msgTxt);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🌐 " + (t.chat_translate || "Tarjima");
+    }
+  }
 }
 
 // ============================================================
@@ -2887,6 +2963,16 @@ if (!window._chatCopyIdBound) {
   document.addEventListener("click", (e) => {
     const el = e.target && e.target.closest ? e.target.closest(".chat-copy-id") : null;
     if (el) copyChatId(el.dataset.copyId);
+  });
+}
+
+// 2026-08-28: tarjima tugmasi ham global delegatsiya orqali (xabarlar har
+// poll'da qayta chiziladi — tugmaga to'g'ridan-to'g'ri listener qo'yib bo'lmaydi)
+if (!window._chatTranslateBound) {
+  window._chatTranslateBound = true;
+  document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest(".webchat-tr-btn") : null;
+    if (btn) void webChatTranslate(btn.dataset.trId, btn);
   });
 }
 
