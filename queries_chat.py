@@ -7,11 +7,20 @@ Barcha funksiyalar VERBATIM ko'chirilgan, mantiq o'zgartirilmagan.
 
 from models import get_connection
 from queries_users import get_user_by_telegram_id
+from queries_matchdays import get_open_matchday
 
 # (2026-07-03 hotfix: bo'lishda queries_matches.py'ga tushib qolgan edi — o'z joyiga qaytarildi.
 #  wc_chat.py bularni `from queries import ...` orqali oladi — facade eksporti saqlanadi.)
 # WebApp chat faqat AKTIV (o'ynalmagan / tasdiq kutilayotgan) o'yinlarda ishlaydi.
 CHAT_ACTIVE_MATCH_STATUSES = ("pending", "awaiting_confirmation")
+
+# 2026-08-28: chat o'tgan turlarda ham OCHIQ qoladi.
+# Muammo (qoida #52): o'yin tasdiqlangach chat yopilardi va yozishmalar
+# yo'qolardi — ishtirokchilar kelishuvni qayta o'qiy olmasdi.
+# Yechim: oxirgi CHAT_OPEN_MATCHDAYS ta tur chat uchun ochiq. Hozir ochiq
+# 2 tur (MATCHDAYS_PER_UNLOCK) + o'tgan 2 tur = 4. Deadline o'tib yangi tur
+# ochilganda oyna avtomatik suriladi (eng eskisi yopiladi).
+CHAT_OPEN_MATCHDAYS = 4
 
 # Bot bildirishnomasi anti-spam: shu (match, raqib) uchun ketma-ket bot xabarlari
 # orasidagi minimal vaqt (soniya). 60s = 1 daqiqada bir martadan ko'p emas.
@@ -21,6 +30,28 @@ CHAT_NOTIFY_THROTTLE_SECONDS = 60
 ONLINE_THRESHOLD_SECONDS = 35
 # "Yozmoqda" signali shuncha soniyagacha amal qiladi (yangilanmasa o'chadi).
 TYPING_THRESHOLD_SECONDS = 6
+
+
+def is_chat_open(status: str, matchday: int, open_matchday: int) -> bool:
+    """
+    Shu match uchun chat ochiqmi? (2026-08-28)
+
+    BITTA MANBA (qoida #26): backend access tekshiruvi, o'qilmagan xabarlar
+    hisobi va WebApp tugmasi — hammasi shu funksiyaga tayanadi.
+
+    Ochiq bo'lish sharti (YOKI):
+      1. Match hali AKTIV (pending / awaiting_confirmation) — eski xatti-harakat
+         saqlanadi (o'ynalmagan eski yoki hali ochilmagan tur).
+      2. Match oxirgi CHAT_OPEN_MATCHDAYS ta tur ichida — o'ynab bo'lingan
+         (confirmed) bo'lsa ham chat ochiq va yozishmalar saqlanadi.
+
+    open_matchday = 0 (qur'a o'tkazilmagan) bo'lsa 2-shart tekshirilmaydi.
+    """
+    if status in CHAT_ACTIVE_MATCH_STATUSES:
+        return True
+    if not matchday or not open_matchday:
+        return False
+    return matchday > open_matchday - CHAT_OPEN_MATCHDAYS
 
 
 def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None:
@@ -36,6 +67,7 @@ def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None
     cursor.execute(
         """
         SELECT m.id AS match_id, m.status AS status,
+               m.league_id AS league_id, m.matchday AS matchday,
                m.player1_id AS p1, m.player2_id AS p2,
                u1.telegram_id AS p1_tg, u2.telegram_id AS p2_tg
         FROM matches m
@@ -51,7 +83,9 @@ def _chat_match_access(match_id: int, requester_telegram_id: int) -> dict | None
     if row is None:
         return None
     m = dict(row)
-    if m["status"] not in CHAT_ACTIVE_MATCH_STATUSES:
+    # 2026-08-28: faqat status emas — oxirgi 4 tur ichidagi o'ynab bo'lingan
+    # o'yinlarda ham chat ochiq (is_chat_open — bitta manba, qoida #26)
+    if not is_chat_open(m["status"], m["matchday"], get_open_matchday(m["league_id"])):
         return None
 
     if m["p1_tg"] == requester_telegram_id:
@@ -158,13 +192,13 @@ def count_unread_messages(requester_telegram_id: int) -> dict:
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT msg.match_id AS match_id, COUNT(*) AS cnt
+        SELECT msg.match_id AS match_id, COUNT(*) AS cnt,
+               m.status AS status, m.league_id AS league_id, m.matchday AS matchday
         FROM messages msg
         JOIN matches m ON m.id = msg.match_id
         WHERE msg.is_read = 0
           AND msg.sender_id != ?
           AND (m.player1_id = ? OR m.player2_id = ?)
-          AND m.status IN ('pending', 'awaiting_confirmation')
         GROUP BY msg.match_id
         """,
         (my_id, my_id, my_id),
@@ -172,10 +206,20 @@ def count_unread_messages(requester_telegram_id: int) -> dict:
     rows = cursor.fetchall()
     conn.close()
 
+    # 2026-08-28: status filtri SQL'dan olib tashlandi — chat oynasi endi tur
+    # bo'yicha aniqlanadi (is_chat_open). Filtr Python'da, chunki open_matchday
+    # liga bo'yicha hisoblanadi. Qatorlar soni kam (faqat o'qilmagan xabarli
+    # matchlar), liga bo'yicha keshlanadi (qoida #24).
+    open_cache: dict[int, int] = {}
     by_match = {}
     total = 0
     for r in rows:
         d = dict(r)
+        league_id = d["league_id"]
+        if league_id not in open_cache:
+            open_cache[league_id] = get_open_matchday(league_id)
+        if not is_chat_open(d["status"], d["matchday"], open_cache[league_id]):
+            continue
         by_match[d["match_id"]] = d["cnt"]
         total += d["cnt"]
     return {"total": total, "by_match": by_match}

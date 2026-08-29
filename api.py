@@ -57,7 +57,7 @@ from queries import (
     get_played_results, restore_results_to_schedule,
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
     get_matchday_entry_locked, reopen_matchday_range, reset_awaiting_in_range,
-    is_near_deadline,
+    is_near_deadline, is_chat_open,
     send_chat_message, get_chat_messages, count_unread_messages,
     touch_last_seen, set_typing, get_chat_state,
     wc_register_user, wc_get_user_registration, wc_get_taken_teams,
@@ -384,6 +384,10 @@ def _annotate_matches_locked(matches: list[dict]) -> list[dict]:
             m["entry_locked"] = get_matchday_entry_locked(league_id, matchday)
         else:
             m["entry_locked"] = False
+        # 2026-08-28: chat oxirgi 4 turda ochiq (o'ynab bo'lingan bo'lsa ham).
+        # Mantiq queries_chat.is_chat_open'da — backend access bilan BIR XIL
+        # manba (qoida #26), frontend faqat shu bayroqqa qaraydi.
+        m["chat_open"] = is_chat_open(m.get("status"), matchday, open_cache[league_id])
     return matches
 
 
