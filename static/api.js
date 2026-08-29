@@ -2505,8 +2505,14 @@ function openOpponentModal(matchId) {
     ? `<button class="opp-chat-btn" id="opp-chat-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
 
-  // WebApp chat tugmasi: faqat AKTIV match'da (pending / awaiting_confirmation)
-  const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
+  // WebApp chat tugmasi: backend bergan chat_open bayrog'iga qarab (2026-08-28).
+  // Ilgari faqat status tekshirilardi (pending/awaiting) — o'yin tasdiqlangach
+  // chat yopilardi. Endi oxirgi 4 tur ochiq: mantiq FAQAT backendda
+  // (queries_chat.is_chat_open), bu yerda takrorlanmaydi (qoida #26).
+  // Eski javob keshda qolsa (chat_open yo'q) — eski shartga qaytamiz.
+  const chatActive = (m.chat_open !== undefined)
+    ? !!m.chat_open
+    : (m.status === "pending" || m.status === "awaiting_confirmation");
   const webChatBtn = chatActive
     ? `<button class="opp-chat-btn opp-webchat-btn" id="opp-webchat-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
     : "";
