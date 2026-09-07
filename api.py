@@ -2054,6 +2054,31 @@ def cl_playoff_status(user: dict = Depends(get_authenticated_user)):
     return {"started": cl_po_is_started()}
 
 
+@app.get("/cl/admin/group-blocking")
+def cl_admin_group_blocking(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-08-28: "Guruh o'yinlari hali tugamagan" xatosi chiqqanda QAYSI o'yin
+    bloklayotganini ko'rsatadi. FAQAT O'QIYDI — hech narsa o'zgartirmaydi.
+    """
+    from cl_diagnostics import cl_group_blocking
+    return cl_group_blocking()
+
+
+@app.post("/cl/admin/group/force-close")
+def cl_admin_group_force_close(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-08-28: Bosh admin guruh o'yinlarini DARHOL yopadi (23:30 kutmasdan).
+    awaiting → confirmed (hisob saqlanadi), pending → 0:0 confirmed.
+    Faqat guruh bosqichi tugagan bo'lsa ishlaydi.
+    Xato: not_started, not_drawn, group_not_over, force_close_failed → 400
+    """
+    from cl_rounds import cl_force_close_group
+    ok, reason, info = cl_force_close_group()
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", **info}
+
+
 @app.post("/cl/admin/playoff/start")
 def cl_admin_playoff_start(admin: dict = Depends(get_authenticated_super_admin)):
     """

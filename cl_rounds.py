@@ -115,18 +115,35 @@ def cl_start_rounds(season: int | None = None) -> tuple[bool, str | dict]:
         conn.close()
 
 
-def _resolve_matchday(cursor, season: int, matchday: int) -> dict:
-    """Deadline yopilishi (variant A): awaiting -> confirmed; pending -> 0:0 confirmed."""
+def _resolve_matchdays_upto(cursor, season: int, up_to_matchday: int) -> dict:
+    """
+    Deadline yopilishi (variant A): awaiting -> confirmed; pending -> 0:0 confirmed.
+
+    2026-08-28: ilgari FAQAT joriy tur (matchday = ?) yopilardi. Endi
+    "matchday <= ?" — Liga (auto_resolve_matches) va WC (wc_auto_resolve_group)
+    bilan bir xil naqsh (qoida #26).
+
+    NIMA UCHUN (qoida #19): faqat joriy tur yopilganda, biror sabab bilan
+    chetda qolgan o'yin (masalan scheduler 23:30-23:59 oynasini o'tkazib
+    yuborsa yoki tur diapazondan tashqarida bo'lsa) ABADIY 'pending' qolardi.
+    Bitta shunday o'yin cl_po_qualified() ni bloklab, "Guruh o'yinlari hali
+    tugamagan" xatosini keltirib chiqarardi. "<=" bilan har deadline o'zini
+    o'zi tuzatadi (self-healing).
+
+    Idempotent (qoida #38): 'confirmed' va 'rejected' o'yinlarga TEGILMAYDI —
+    qayta chaqirilsa 0 qator o'zgaradi.
+    """
     cursor.execute(
         "UPDATE cl_matches SET status = ? "
-        "WHERE season = ? AND matchday = ? AND status = ?",
-        (MATCH_STATUS_CONFIRMED, season, matchday, MATCH_STATUS_AWAITING_CONFIRMATION),
+        "WHERE season = ? AND matchday <= ? AND status = ?",
+        (MATCH_STATUS_CONFIRMED, season, up_to_matchday,
+         MATCH_STATUS_AWAITING_CONFIRMATION),
     )
     awaiting = cursor.rowcount or 0
     cursor.execute(
         "UPDATE cl_matches SET score1 = 0, score2 = 0, status = ? "
-        "WHERE season = ? AND matchday = ? AND status = ?",
-        (MATCH_STATUS_CONFIRMED, season, matchday, MATCH_STATUS_PENDING),
+        "WHERE season = ? AND matchday <= ? AND status = ?",
+        (MATCH_STATUS_CONFIRMED, season, up_to_matchday, MATCH_STATUS_PENDING),
     )
     pending = cursor.rowcount or 0
     return {"awaiting_resolved": awaiting, "pending_resolved": pending}
@@ -166,10 +183,25 @@ def cl_tick(season: int | None = None) -> dict | None:
         total = _total_matchdays(cursor, season)
         current = row["current_matchday"]
         if current > total:                            # guruh bosqichi tugagan
+            # 2026-08-28: tugagan bo'lsa ham qolib ketgan o'yinlarni yopamiz.
+            # Ilgari bu yerda shunchaki ROLLBACK/None bo'lardi — natijada
+            # chetda qolgan bitta 'pending' o'yin play-off'ni ABADIY bloklardi
+            # ("Guruh o'yinlari hali tugamagan"). current_matchday oshirilmaydi,
+            # last_advance_date ham o'zgarmaydi — faqat tozalash.
+            healed = _resolve_matchdays_upto(cursor, season, total)
+            if healed["awaiting_resolved"] or healed["pending_resolved"]:
+                cursor.execute("COMMIT")
+                logger.warning(
+                    "ChL: guruh bosqichi tugagan, chetda qolgan o'yinlar yopildi "
+                    "(awaiting: %s, 0:0: %s)",
+                    healed["awaiting_resolved"], healed["pending_resolved"],
+                )
+                return {"season": season, "closed_matchday": total,
+                        "opened_matchday": current, **healed}
             cursor.execute("ROLLBACK")
             return None
 
-        resolved = _resolve_matchday(cursor, season, current)
+        resolved = _resolve_matchdays_upto(cursor, season, current)
         cursor.execute(
             "UPDATE cl_state SET current_matchday = ?, last_advance_date = ?, "
             "updated_at = CURRENT_TIMESTAMP WHERE season = ?",
@@ -195,3 +227,67 @@ def cl_matchday_open(matchday: int, season: int | None = None) -> bool:
     """Shu tur natija kiritish uchun ochiqmi? (server tomonida tekshiruv — qoida #41)"""
     st = cl_get_state(season)
     return bool(st["started"]) and matchday == st["current_matchday"]
+
+
+def cl_force_close_group(season: int | None = None) -> tuple[bool, str, dict]:
+    """
+    ADMIN: guruh bosqichidagi hal qilinmagan o'yinlarni DARHOL yopadi —
+    23:30 deadline'ni kutmasdan (2026-08-28).
+
+    Kerak bo'lgan sabab (qoida #52): chetda qolgan bitta o'yin play-off'ni
+    bloklab qo'yadi, admin esa qayta tasnifni HOZIR boshlashi kerak.
+
+    Xuddi deadline kabi: awaiting -> confirmed (kiritilgan hisob SAQLANADI),
+    pending -> 0:0 confirmed. cl_state (current_matchday, last_advance_date)
+    TEGILMAYDI — turlar tartibi buzilmaydi.
+
+    XAVFSIZLIK GUARD (qoida #07): faqat guruh bosqichi TUGAGAN bo'lsa
+    (current_matchday > total_matchdays) ishlaydi. Aks holda o'ynalmagan
+    kelajak turlar ham 0:0 bo'lib, turnir buzilardi.
+
+    Qaytaradi: (ok, reason, info)
+      reason: ok | not_started | not_drawn | group_not_over
+      info: {season, total_matchdays, awaiting_resolved, pending_resolved}
+    """
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        if season is None:
+            season = _current_season(cursor)
+
+        cursor.execute(
+            "SELECT started, current_matchday FROM cl_state WHERE season = ?", (season,))
+        row = cursor.fetchone()
+        if not row or not row["started"]:
+            cursor.execute("ROLLBACK")
+            return False, "not_started", {}
+
+        total = _total_matchdays(cursor, season)
+        if total == 0:
+            cursor.execute("ROLLBACK")
+            return False, "not_drawn", {}
+        if row["current_matchday"] <= total:
+            cursor.execute("ROLLBACK")
+            return False, "group_not_over", {
+                "current_matchday": row["current_matchday"],
+                "total_matchdays": total,
+            }
+
+        resolved = _resolve_matchdays_upto(cursor, season, total)
+        cursor.execute("COMMIT")
+        logger.warning(
+            "ChL: ADMIN guruh o'yinlarini majburiy yopdi (awaiting: %s, 0:0: %s)",
+            resolved["awaiting_resolved"], resolved["pending_resolved"],
+        )
+        return True, "ok", {"season": season, "total_matchdays": total, **resolved}
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            logger.exception("cl_force_close_group: ROLLBACK xatosi")
+        logger.exception("cl_force_close_group xatosi (mavsum %s)", season)
+        return False, "force_close_failed", {}
+    finally:
+        conn.close()
