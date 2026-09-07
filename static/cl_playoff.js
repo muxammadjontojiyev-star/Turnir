@@ -564,8 +564,71 @@ async function clpoAdminStart(btn) {
     showToast(`✅ Qayta tasnif boshlandi (${r.playin_pairs} juftlik)`);
     if (typeof clRenderAdminPage === "function") void clRenderAdminPage();
   } catch (e) {
-    showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
+    // 2026-08-28: "Guruh o'yinlari hali tugamagan" xabari qaysi o'yin
+    // bloklayotganini aytmaydi — diagnostikani so'rab, adminga ro'yxatni
+    // ko'rsatamiz (faqat o'qish, hech narsa o'zgarmaydi).
+    if (e.message === "groups_not_finished") {
+      await clpoShowGroupBlocking(btn);
+      return;   // btn holati clpoShowGroupBlocking ichida boshqariladi
+    } else {
+      showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
+    }
     btn.disabled = false;
+  }
+}
+
+// Bloklayotgan o'yinlarni ko'rsatadi va majburiy yopishni taklif qiladi.
+// 2026-08-28: admin 23:30 deadline'ni kutmasin — ro'yxatni ko'rib, tasdiqlasa
+// o'yinlar darhol yopiladi va qayta tasnif AVTOMATIK boshlanadi (bitta oqim).
+async function clpoShowGroupBlocking(btn) {
+  let d;
+  try {
+    d = await apiFetch("/cl/admin/group-blocking");
+  } catch (_) {
+    showToast("❌ " + CT("clpo_err_groups"));
+    return;
+  }
+
+  const lines = (d.matches || []).slice(0, 15).map(m =>
+    `${m.matchday}-tur · #${m.id} · ${m.p1 || "?"} vs ${m.p2 || "?"} — ${m.status}`
+  );
+  const more = d.blocking_count > lines.length
+    ? `\n... va yana ${d.blocking_count - lines.length} ta`
+    : "";
+
+  const ok = confirm(
+    `Guruh bosqichida ${d.blocking_count} ta o'yin tasdiqlanmagan.\n` +
+    `Mavsum: ${d.season} · Joriy tur: ${d.current_matchday} / ${d.total_matchdays}\n\n` +
+    lines.join("\n") + more +
+    `\n\nShu o'yinlar HOZIR yopilsinmi?\n` +
+    `• Hisob kiritilgan o'yinlar — kiritilgan natija bilan tasdiqlanadi\n` +
+    `• Hech kim kiritmagan o'yinlar — 0:0 durang\n\n` +
+    `Keyin qayta tasnif avtomatik boshlanadi. Bu amalni ortga qaytarib bo'lmaydi.`
+  );
+  if (!ok) return;
+
+  try {
+    const r = await apiFetch("/cl/admin/group/force-close", { method: "POST" });
+    showToast(`✅ ${r.awaiting_resolved + r.pending_resolved} o'yin yopildi (0:0: ${r.pending_resolved})`);
+  } catch (e) {
+    const msg = {
+      group_not_over: "Guruh bosqichi hali tugamagan — majburiy yopib bo'lmaydi.",
+      not_started: "ChL turlari boshlanmagan.",
+      not_drawn: "ChL qur'asi o'tkazilmagan.",
+      force_close_failed: "Yopishda xatolik.",
+    }[e.message] || e.message;
+    showToast("❌ " + msg);
+    return;
+  }
+
+  // O'yinlar yopildi — endi qayta tasnifni qayta urinamiz
+  try {
+    const r = await apiFetch("/cl/admin/playoff/start", { method: "POST" });
+    showToast(`✅ Qayta tasnif boshlandi (${r.playin_pairs} juftlik)`);
+    if (typeof clRenderAdminPage === "function") void clRenderAdminPage();
+  } catch (e) {
+    showToast("❌ " + (CLPO_ERRORS[e.message] || e.message));
+    if (btn) btn.disabled = false;
   }
 }
 
