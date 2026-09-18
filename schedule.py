@@ -6,6 +6,8 @@ Liga 20 kishiga to'lganda, har bir o'yinchi qolgan 19 tasi bilan
 taqsimlangan holda.
 """
 
+import random
+
 from models import get_connection
 from config import MATCH_STATUS_PENDING
 
@@ -49,7 +51,18 @@ def generate_league_schedule(league_id: int, player_ids: list[int]) -> int:
 
     Qaytaradi: yaratilgan matchlar soni.
     """
-    first_leg = _generate_round_robin_pairs(player_ids)
+    # 2026-08-28: QUR'A TASODIFIY BO'LISHI UCHUN SHUFFLE.
+    # Muammo (qoida #52): circle method to'liq DETERMINISTIK — bir xil tartibdagi
+    # o'yinchilar ro'yxati har doim AYNAN bir xil jadval beradi. player_ids esa
+    # registrations jadvalidan yozilish tartibida keladi, ya'ni o'sha ishtirokchilar
+    # qayta ro'yxatdan o'tsa har mavsum bir xil qur'a chiqardi.
+    # Yechim: circle method'ga berishdan OLDIN ro'yxatni aralashtiramiz — ChL
+    # (cl_core.py:179) va Divizion allaqachon shunday qiladi (qoida #26 DRY).
+    # Nusxa olamiz — chaqiruvchining ro'yxati o'zgarmasin (qoida #13).
+    players = list(player_ids)
+    random.shuffle(players)
+
+    first_leg = _generate_round_robin_pairs(players)
     second_leg = [
         [(away, home) for (home, away) in round_pairs] for round_pairs in first_leg
     ]
