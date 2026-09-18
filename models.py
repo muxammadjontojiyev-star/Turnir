@@ -813,6 +813,47 @@ def init_db():
         logger.error("Divizion deadline tuzatish xatosi: %s", exc)
         raise
 
+    # 2026-08-28: ChL 2-mavsum kubogi bosh admin paneli orqali QO'LDA berilgan
+    # (prize_award.award_cl_cup_season2) — u season_prizes'ga yozadi, lekin
+    # season_state.cl_season ni OSHIRMAYDI. Natijada cl_season = 2 bo'lib qoldi:
+    #   1) ChL bosh sahifasida "MAVSUM 2" ko'rinardi (3 bo'lishi kerak);
+    #   2) "ChL mavsumini yakunlash" → already_finalized, chunki guard 2-mavsum
+    #      uchun kubok yozuvini topardi.
+    # Invariant (2026-07-23 migratsiyasi bilan bir xil): cl_season = cl_cup
+    # yozuvlari soni + 1. Mos kelmasa tuzatamiz.
+    # Guard: cl_season_sync_done = 1 — bir marta ishlaydi (idempotent).
+    try:
+        cursor.execute("ALTER TABLE season_state ADD COLUMN cl_season_sync_done INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+    except sqlite3.OperationalError as exc:
+        if "duplicate column" not in str(exc).lower():
+            logger.error("cl_season_sync_done ustun xatosi: %s", exc)
+            raise
+    try:
+        cursor.execute("SELECT cl_season, cl_season_sync_done FROM season_state WHERE id = 1")
+        row = cursor.fetchone()
+        if row is not None and not row["cl_season_sync_done"]:
+            cursor.execute(
+                "SELECT COUNT(*) AS cnt FROM season_prizes "
+                "WHERE prize_type = 'cl_cup' AND season_kind = 'cl'"
+            )
+            cups = cursor.fetchone()["cnt"]
+            expected = cups + 1
+            if row["cl_season"] != expected:
+                cursor.execute(
+                    "UPDATE season_state SET cl_season = ?, cl_season_sync_done = 1 WHERE id = 1",
+                    (expected,),
+                )
+                conn.commit()
+                logger.info("ChL mavsum raqami moslandi: %s -> %s (%s ta kubok)",
+                            row["cl_season"], expected, cups)
+            else:
+                cursor.execute("UPDATE season_state SET cl_season_sync_done = 1 WHERE id = 1")
+                conn.commit()
+    except sqlite3.OperationalError as exc:
+        logger.error("ChL mavsum moslash xatosi: %s", exc)
+        raise
+
     conn.close()
     # db_migrations.py'da, oddiy ALTER'lardan KEYIN ishlashi shart
     # (is_playoff ustuni allaqachon qo'shilgan bo'ladi).
