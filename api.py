@@ -76,7 +76,7 @@ from membership import is_user_subscribed
 from admin_roles import (
     is_super_admin, is_scope_admin, add_admin, remove_admin, list_admins,
     assign_league, unassign_league, get_admin_league_ids, can_manage_league,
-    SCOPE_LEAGUE, SCOPE_WC, VALID_SCOPES,
+    SCOPE_LEAGUE, SCOPE_WC, SCOPE_CL, SCOPE_DIVISION, VALID_SCOPES,
 )
 from wc_chat import (
     wc_send_chat_message, wc_get_chat_messages, wc_count_unread_messages,
@@ -2790,11 +2790,22 @@ async def post_match_room_code(
     return {"ok": True, "code": info["code"]}
 
 
+# 2026-09-22: hisobot rejimi -> qaysi admin scope'i ko'ra oladi.
+# Har rejimning admini FAQAT o'z rejimidagi yozishmalarni ko'radi
+# (bosh admin hammasini — is_scope_admin bosh adminni har doim o'tkazadi).
+CHAT_REPORT_SCOPES = {
+    "league": SCOPE_LEAGUE,
+    "cl": SCOPE_CL, "cl_po": SCOPE_CL,
+    "div": SCOPE_DIVISION,
+    "wc": SCOPE_WC, "wc_po": SCOPE_WC,
+}
+
+
 @app.get("/admin/matches/{match_id}/chat-report")
 def admin_match_chat_report(
     match_id: int,
     mode: str = "league",
-    admin: dict = Depends(get_authenticated_league_admin),
+    x_telegram_init_data: str = Header(...),
 ):
     """
     2026-08-28: O'yin yozishmalari hisoboti — nizolarni skrinshotsiz hal qilish.
@@ -2812,6 +2823,9 @@ def admin_match_chat_report(
     from chat_report import match_chat_report, MODES
     if mode not in MODES:
         raise HTTPException(status_code=400, detail="bad_mode")
+    # Ruxsat rejimga qarab tekshiriladi — WC admini liga dependency'si bilan
+    # 403 olib qolmasin (qoida #34: har kim faqat o'z doirasida)
+    _authenticated_scope_admin(x_telegram_init_data, CHAT_REPORT_SCOPES[mode])
     report = match_chat_report(match_id, mode)
     if report is None:
         raise HTTPException(status_code=404, detail="match_not_found")
