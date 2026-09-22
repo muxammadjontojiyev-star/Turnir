@@ -291,11 +291,43 @@ function wcRenderHome() {
       `).join("")}
     </div>`).join("");
 
+  // 2026-09-22: OCHIQ RO'YXATDAN O'TISH YO'Q — faqat Divizion mavsumi
+  // yakunlanganda top-48 ga kirganlar o'ta oladi (backend wc_eligibility).
+  // elig.total === 0 → ro'yxat hali shakllanmagan (Divizion yakunlanmagan).
+  const elig = (WC.profile && WC.profile.eligibility) || null;
+  const eligible = !!(elig && elig.eligible);
+  const listReady = !!(elig && elig.total > 0);
+
   // Register tugmasi: ro'yxatdan o'tgan bo'lsa — matn o'zgaradi, disabled
-  const canRegister = !alreadyRegistered && teamSelected;
-  const regLabel = alreadyRegistered
-    ? (t.wc_registered_label || "Ro'yxatdan o'tgansiz")
-    : (t.register || "Ro'yxatdan o'tish");
+  const canRegister = !alreadyRegistered && teamSelected && eligible;
+  let regLabel;
+  if (alreadyRegistered) {
+    regLabel = t.wc_registered_label || "Ro'yxatdan o'tgansiz";
+  } else if (!listReady) {
+    regLabel = t.wc_elig_not_ready || "Divizion mavsumi hali yakunlanmagan";
+  } else if (!eligible) {
+    regLabel = t.wc_elig_no_right || "Divizion top-48 ga kirmagansiz";
+  } else {
+    regLabel = t.register || "Ro'yxatdan o'tish";
+  }
+
+  // Tugma ostidagi tushuntirish — foydalanuvchi NIMA UCHUN o'ta olmasligini
+  // bilsin (qoida #40: jim qolmaslik)
+  let eligHint = "";
+  if (!alreadyRegistered) {
+    if (!listReady) {
+      eligHint = (t.wc_elig_hint_wait ||
+        "JCh'ga faqat Divizion reytingida top-{n} ga kirganlar o'ta oladi. Ro'yxat Divizion mavsumi yakunlanganda shakllanadi.")
+        .replace("{n}", elig ? elig.slots : 48);
+    } else if (!eligible) {
+      eligHint = (t.wc_elig_hint_no ||
+        "JCh'ga faqat Divizion reytingida top-{n} ga kirganlar o'ta oladi. Keyingi mavsumda urinib ko'ring.")
+        .replace("{n}", elig.slots);
+    } else {
+      eligHint = (t.wc_elig_hint_yes || "Divizionda {p}-o'rin — JCh'da o'ynash huquqiga egasiz.")
+        .replace("{p}", elig.place);
+    }
+  }
 
   return `
     <div class="card card--hero">
@@ -320,6 +352,7 @@ function wcRenderHome() {
       <button id="wc-btn-register" class="btn btn--primary btn--glow" ${canRegister ? "" : "disabled"} style="opacity:${canRegister ? "1" : "0.45"}">
         ${escHtml(regLabel)}
       </button>
+      ${eligHint ? `<div class="wc-elig-hint">${escHtml(eligHint)}</div>` : ""}
     </div>
 
     <div class="section-label">${escHtml(t.wc_choose_group || "GURUH TANLASH")}</div>
@@ -421,6 +454,7 @@ async function wcRegister() {
       wc_team_taken:         t.wc_team_taken || "Bu jamoa allaqachon band qilingan",
       wc_invalid_group:      t.wc_invalid || "Noto'g'ri guruh",
       wc_invalid_team:       t.wc_invalid || "Noto'g'ri jamoa",
+      wc_not_eligible:       t.wc_not_eligible_err || "Sizda JCh'da ro'yxatdan o'tish huquqi yo'q.",
     }[e.message] || e.message;
     showToast("❌ " + msg);
     if (btn) btn.disabled = false;
