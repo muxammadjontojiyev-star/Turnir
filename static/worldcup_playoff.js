@@ -182,8 +182,8 @@ async function wcOpenPlayoffChat(matchId) {
     ? `<button class="opp-chat-btn" id="wc-po-opp-tg-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
 
-  // Ichki webchat — faqat aktiv match (pending / awaiting_confirmation)
-  const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
+  // 2026-09-22: chat tasdiqlangach ham ochiq (backend bilan mos)
+  const chatActive = true;
   const webChatBtn = chatActive
     ? `${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(matchId, "wc_po") : ""}<button class="opp-chat-btn opp-webchat-btn" id="wc-po-opp-web-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
     : "";

@@ -35,8 +35,10 @@ function wcOpenOpponentModal(matchId) {
     ? `<button class="opp-chat-btn" id="wc-opp-chat-btn">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
 
-  // WebApp ichki chat — faqat aktiv match (pending / awaiting_confirmation)
-  const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
+  // 2026-09-22: chat o'yin tasdiqlangach ham ochiq qoladi (backend
+  // _wc_chat_access'da ham status guard olib tashlandi) — yozishmalar
+  // nizolarda dalil bo'lib qoladi.
+  const chatActive = true;
   const webChatBtn = chatActive
     ? `${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(m.id, "wc") : ""}<button class="opp-chat-btn opp-webchat-btn" id="wc-opp-webchat-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
     : "";
