@@ -2747,11 +2747,13 @@ async def post_match_message(
 async def post_match_room_code(
     match_id: int,
     code: str = Body(..., embed=True),
+    mode: str = Body("league", embed=True),
     user: dict = Depends(get_authenticated_user),
 ):
     """
     2026-08-28: eFootball xona ID sini raqibga yuboradi.
-    Body: {"code": "8472913"}
+    2026-09-22: barcha rejimlar — Body: {"code": "8472913", "mode": "cl"}
+    mode: league | cl | cl_po | div | wc | wc_po (sukut: league).
 
     Kod chat xabari sifatida saqlanadi (dalil izi qoladi) va raqibga bot
     bildirishnomasi yuboriladi — KOD BILDIRISHNOMANING O'ZIDA ko'rinadi,
@@ -2760,15 +2762,18 @@ async def post_match_room_code(
     Oddiy chat xabaridan FARQI: anti-spam throttle QO'LLANILMAYDI — xona ID
     vaqtga bog'liq, raqib uni darhol olishi shart.
 
-    Xatolar: invalid_code → 400, no_access → 403, send_failed → 500.
+    Xatolar: invalid_code / bad_mode → 400, not_participant → 403,
+    match_not_found → 404, send_failed → 500.
     """
-    from room_code import send_room_code
-    ok, reason, info = send_room_code(match_id, user["telegram_id"], code)
+    from room_code import send_room_code, MODE_NAME_KEYS
+    ok, reason, info = send_room_code(match_id, user["id"], code, mode)
     if not ok:
-        if reason == "invalid_code":
-            raise HTTPException(status_code=400, detail="invalid_code")
-        if reason == "no_access":
+        if reason in ("invalid_code", "bad_mode"):
+            raise HTTPException(status_code=400, detail=reason)
+        if reason == "not_participant":
             raise HTTPException(status_code=403, detail="chat_no_access")
+        if reason == "match_not_found":
+            raise HTTPException(status_code=404, detail="match_not_found")
         raise HTTPException(status_code=500, detail="send_failed")
 
     if info["recipient_telegram_id"] is not None:
@@ -2780,7 +2785,7 @@ async def post_match_room_code(
                 "notify_room_code",
                 lang,
                 open_button_key="btn_open_app",
-                mode=t("mode_name_league", lang),
+                mode=t(MODE_NAME_KEYS.get(info["mode"], "mode_name_league"), lang),
                 code=info["code"],
             )
         except Exception as exc:
