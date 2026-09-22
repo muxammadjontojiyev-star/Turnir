@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eFootball Turnir</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <link rel="stylesheet" href="style.css?v=20260922a" />
+</head>
+<body>
+
+  <!-- ========== LOADING SCREEN ========== -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-logo">
+      <span class="loading-icon">⚽</span>
+      <span class="loading-title">eFOOTBALL</span>
+    </div>
+    <div class="loading-bar">
+      <div class="loading-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- ========== MAIN APP ========== -->
+  <div id="app" class="app hidden">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-brand">
+        <span class="header-icon">⚽</span>
+        <span class="header-title">eFOOTBALL</span>
+      </div>
+      <div class="header-user">
+        <span id="header-nickname" class="header-nickname">—</span>
+        <span id="header-lang" class="header-lang">UZ</span>
+      </div>
+    </header>
+
+    <!-- SECTIONS -->
+    <main class="main">
+
+      <!-- Ligalar rejimi: rejim tanlash oynasiga qaytish (WC/ChL/Divizion'dagi wc-back naqshi) -->
+      <button class="wc-back league-back hidden" id="league-back-btn">
+        <span class="back-btn-arrow" data-icon="back"></span>
+        <span data-i18n="back">Ortga</span>
+      </button>
+
+      <!-- ===== ASOSIY ===== -->
+      <section id="section-home" class="section active">
+
+        <!-- Turnir kartasi -->
+        <div class="card card--hero">
+          <span class="hero-badge badge--full" id="home-status-badge">YUKLANMOQDA...</span>
+          <h2 class="card-title" id="home-league-name">—</h2>
+          <div class="card-stats">
+            <div class="stat">
+              <span class="stat-value" id="home-players">—</span>
+              <span class="stat-label" data-i18n="players">O'yinchilar</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+              <span class="stat-value" id="home-max">20</span>
+              <span class="stat-label" data-i18n="max_players">Maksimal</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+              <span class="stat-value" id="home-matchday">1</span>
+              <span class="stat-label" data-i18n="season">Mavsum</span>
+            </div>
+          </div>
+          <button id="btn-register" class="btn btn--primary btn--glow" data-i18n="register">
+            Ro'yxatdan o'tish
+          </button>
+        </div>
+
+        <!-- Liga tanlash -->
+        <div class="section-label" data-i18n="choose_league">LIGA TANLASH</div>
+        <div id="leagues-list" class="leagues-list">
+          <!-- JS tomonidan to'ldiriladi -->
+        </div>
+
+        <!-- Ligadagi klublar -->
+        <div id="clubs-section" class="hidden">
+          <div class="section-label" data-i18n="clubs_in_league">LIGADAGI KLUBLAR</div>
+          <div id="clubs-list" class="clubs-list">
+            <!-- JS tomonidan to'ldiriladi -->
+          </div>
+        </div>
+
+        <!-- Qoidalar -->
+        <div class="card card--flat">
+          <div class="card-header">
+            <span class="card-header-icon" data-icon="clipboard"></span>
+            <span class="card-header-text" data-i18n="rules">Qoidalar</span>
+          </div>
+          <ul class="rules-list" id="rules-list">
+            <!-- JS tomonidan to'ldiriladi -->
+          </ul>
+          <div class="rules-detail" id="rules-detail">
+            <!-- JS tomonidan to'ldiriladi (batafsil ma'lumot) -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ===== REYTING ===== -->
+      <section id="section-rating" class="section">
+
+        <div class="section-label" data-i18n="rating_title">REYTING JADVALI</div>
+
+        <!-- Liga filter -->
+        <div id="rating-filter" class="tab-filter">
+          <!-- JS tomonidan to'ldiriladi -->
+        </div>
+
+        <!-- Jadval: Reyting -->
+        <div class="card card--flat card--table" id="rating-card">
+          <table class="rating-table" id="rating-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-i18n="th_player">O'yinchi</th>
+                <th data-i18n="th_pts">B</th>
+                <th data-i18n="th_w">G</th>
+                <th data-i18n="th_d">D</th>
+                <th data-i18n="th_l">M</th>
+                <th data-i18n="th_gf">GF</th>
+                <th data-i18n="th_ga">GA</th>
+                <th data-i18n="th_gd">GD</th>
+              </tr>
+            </thead>
+            <tbody id="rating-tbody">
+              <!-- JS tomonidan to'ldiriladi -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Jadval: To'p urarlar (barcha ligalar bo'yicha umumiy) -->
+        <div class="card card--flat card--table hidden" id="top-scorers-card">
+          <table class="rating-table" id="top-scorers-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-i18n="th_player">O'yinchi</th>
+                <th data-i18n="th_league">Liga</th>
+                <th data-i18n="th_goals_col">Gol</th>
+              </tr>
+            </thead>
+            <tbody id="top-scorers-tbody">
+              <!-- JS tomonidan to'ldiriladi -->
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+      <!-- ===== PROFIL ===== -->
+      <section id="section-profile" class="section">
+
+        <!-- Avatar + ism -->
+        <div class="card card--profile">
+          <div class="profile-avatar">
+            <div id="profile-avatar-letter">?</div>
+          </div>
+          <div class="profile-info">
+            <h2 class="profile-nickname" id="profile-nickname">—</h2>
+            <span class="profile-league" id="profile-league" data-i18n="not_registered">Ro'yxatdan o'tilmagan</span>
+          </div>
+          <div class="profile-club-badge" id="profile-club-badge"></div>
+        </div>
+
+        <!-- Sovrinlarim (async to'ldiriladi — rasm bilan statistika orasida) -->
+        <div id="my-prizes-section"></div>
+
+        <!-- Statistika -->
+        <div class="section-label" data-i18n="my_stats">STATISTIKA</div>
+        <div class="stats-grid" id="profile-stats-grid">
+          <div class="stat-card stat-card--primary">
+            <span class="stat-card-value neon-cyan" id="stat-position">—</span>
+            <span class="stat-card-label" data-i18n="stat_pos">O'rin</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-value neon-cyan" id="stat-wins">—</span>
+            <span class="stat-card-label" data-i18n="stat_w">G'alaba</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-value" id="stat-draws">—</span>
+            <span class="stat-card-label" data-i18n="stat_d">Durang</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-value neon-red" id="stat-losses">—</span>
+            <span class="stat-card-label" data-i18n="stat_l">Mag'lubiyat</span>
+          </div>
+        </div>
+
+        <!-- O'yinlar tarixi -->
+        <div class="section-label" data-i18n="my_matches">MENING O'YINLARIM</div>
+        <div id="matches-list" class="matches-list">
+          <!-- JS tomonidan to'ldiriladi -->
+        </div>
+
+        <!-- Admin panel (faqat adminga ko'rinadi, JS orqali boshqariladi) -->
+        <div id="admin-panel" class="admin-panel hidden">
+          <div class="section-label" data-i18n="admin_panel_title">ADMIN PANEL</div>
+
+          <!-- Katta hisob (admin_pending) — barcha liga adminlariga ko'rinadi -->
+          <div class="section-label" data-i18n="admin_pending_title">ADMIN TASDIG'INI KUTAYOTGAN (KATTA HISOB)</div>
+          <div id="admin-pending-list" class="admin-players-list">
+            <!-- JS tomonidan to'ldiriladi -->
+          </div>
+
+          <!-- Faqat bosh adminga: qur'a, o'yinchilar, rad etilgan natijalar -->
+          <div id="admin-super-only" class="hidden">
+            <div class="section-label" data-i18n="admin_draw_title">QUR'A</div>
+            <div id="admin-draw-list" class="admin-players-list">
+              <!-- JS tomonidan to'ldiriladi -->
+            </div>
+
+            <div id="admin-players-list" class="admin-players-list">
+              <!-- JS tomonidan to'ldiriladi -->
+            </div>
+
+            <div class="section-label" data-i18n="admin_rejected_title">RAD ETILGAN NATIJALAR</div>
+            <div id="admin-rejected-list" class="admin-players-list">
+              <!-- JS tomonidan to'ldiriladi -->
+            </div>
+
+            <!-- 2026-07-16: ishtirokchini yangi akkountga almashtirish (faqat bosh admin).
+                 Qur'a natijasiga ta'sir qilmaydi — jadval joyida qoladi. -->
+            <div class="section-label">ISHTIROKCHINI ALMASHTIRISH</div>
+            <div class="admin-fix-form">
+              <div id="league-reassign-box" style="margin-bottom:6px"></div>
+              <input id="league-reassign-new-tg" class="modal-input" type="number" inputmode="numeric"
+                     placeholder="Yangi Telegram ID" style="margin-bottom:8px" />
+              <button class="btn" id="btn-league-reassign">👤 Akkountni almashtirish</button>
+            </div>
+
+            <!-- 2026-07-16: ikki liga ishtirokchisini O'ZARO almashtirish
+                 (masalan LaLiga <-> Bundesliga). Qur'aga ta'sir qilmaydi:
+                 o'rin (liga, klub, jadval, natijalar) joyida — odamlar almashadi. -->
+            <div class="section-label">ISHTIROKCHILARNI O'ZARO ALMASHTIRISH</div>
+            <div class="admin-fix-form">
+              <div id="league-swap-a-box" style="margin-bottom:6px"></div>
+              <div style="text-align:center;font-size:14px;opacity:.6;margin-bottom:6px">⇅</div>
+              <div id="league-swap-b-box" style="margin-bottom:8px"></div>
+              <button class="btn" id="btn-league-swap">🔄 O'zaro almashtirish</button>
+            </div>
+
+            <div class="section-label" data-i18n="season_title">LIGA MAVSUMI</div>
+            <div class="admin-player-league" id="season-current-hint" style="margin:0 2px 8px">—</div>
+            <button class="btn btn--danger" id="btn-finalize-season" style="width:100%" data-i18n="season_finalize_btn">Liga mavsumini yakunlash</button>
+            <div class="admin-player-league" style="margin:6px 2px 0" data-i18n="season_finalize_hint">Liga sovrinlari hisoblanadi, liga mavsumi oshadi</div>
+
+            <!-- 2026-08: Oltin to'p/butsa sovrinini to'g'ri egaga ko'chirish (bosh
+                 admin). Liga sovrinlari liga yakunidan chiqqani uchun shu bo'limda. -->
+            <div class="section-label">SOVRINNI KO'CHIRISH</div>
+            <div class="admin-fix-form">
+              <div id="league-prize-transfer-list" style="margin-bottom:8px">
+                <div class="wc-loading-row">Yuklanmoqda...</div>
+              </div>
+              <input id="league-prize-new-tg" class="modal-input" type="text"
+                     placeholder="Yangi ega: Telegram ID yoki @username" style="margin-bottom:8px" />
+              <button class="btn" id="btn-league-prize-transfer">🏆 Sovrinni ko'chirish</button>
+              <div class="admin-player-league" style="margin:6px 2px 0">Kubok va individual sovrinlar. Sovrinni tanlang, yangi egani Telegram ID yoki @username bilan kiriting. Kubok ko'chirilsa ⭐ yulduzcha ham avtomatik o'tadi.</div>
+            </div>
+
+            <!-- 2026-08: ChL 2-mavsum kubogini QO'LDA berish (bosh admin).
+                 Final o'ynalgan, lekin mavsum yakunlanmasdan yangi mavsum
+                 boshlangani uchun kubok yozilmay qolgan holat uchun. -->
+            <div class="section-label">CHL 2-MAVSUM KUBOGINI BERISH</div>
+            <div class="admin-fix-form">
+              <input id="cl-cup-award-tg" class="modal-input" type="number" inputmode="numeric"
+                     placeholder="G'olibning Telegram ID raqami" style="margin-bottom:8px" />
+              <button class="btn" id="btn-cl-cup-award">🏆 ChL 2-mavsum kubogini berish</button>
+              <div class="admin-player-league" style="margin:6px 2px 0">Faqat 2-mavsum uchun. Kubok berilishi bilan ⭐ yulduzcha ham avtomatik paydo bo'ladi. Bir marta beriladi — 2-mavsumda kubok bo'lsa xato chiqadi.</div>
+            </div>
+          </div>
+
+          <!-- 2026-08-28: nizolarni skrinshotsiz hal qilish uchun.
+               Bot chatidagi yozishmani hech kim o'chira olmaydi. -->
+          <div class="section-label">O'YIN YOZISHMALARI (NIZO UCHUN)</div>
+          <div class="admin-fix-form">
+            <input id="chat-report-match-id" class="modal-input" type="number" min="1"
+                   placeholder="Match ID" style="margin-bottom:8px" />
+            <button class="btn" id="btn-chat-report">🔎 Yozishmalarni ko'rish</button>
+            <div id="chat-report-out" class="chat-report-out"></div>
+          </div>
+
+          <div class="section-label" data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</div>
+          <div class="admin-fix-form">
+            <input
+              id="admin-fix-match-id"
+              class="modal-input"
+              type="number"
+              min="1"
+              data-i18n-placeholder="admin_fix_match_id_placeholder"
+              placeholder="Match ID"
+            />
+            <div class="score-input-row">
+              <span class="admin-fix-logo-slot" id="admin-fix-logo1"></span>
+              <div class="score-input-group">
+                <span class="score-input-label">P1</span>
+                <input id="admin-fix-score1" class="score-input" type="number" min="0" max="99" value="0" />
+              </div>
+              <span class="score-separator">:</span>
+              <div class="score-input-group">
+                <span class="score-input-label">P2</span>
+                <input id="admin-fix-score2" class="score-input" type="number" min="0" max="99" value="0" />
+              </div>
+              <span class="admin-fix-logo-slot" id="admin-fix-logo2"></span>
+            </div>
+            <button class="btn btn--primary btn--glow" id="btn-admin-fix-submit" data-i18n="admin_fix_submit">Tuzatish</button>
+            <!-- 2026-07-16: natijani bekor qilish — o'yin natija kiritilmagan holatga qaytadi -->
+            <button class="btn btn--ghost" id="btn-admin-cancel-result"
+                    style="color:var(--red-neon);border-color:rgba(255,69,96,.3)"
+                    data-i18n="admin_reset_btn">Natijani bekor qilish</button>
+          </div>
+
+          <!-- Admin tayinlash (faqat bosh adminga ko'rinadi, JS boshqaradi) -->
+          <div id="admin-manage-section" class="hidden">
+            <div class="section-label" data-i18n="admin_manage_title">ADMIN TAYINLASH</div>
+            <div class="admin-fix-form">
+              <input
+                id="admin-new-id"
+                class="modal-input"
+                type="number"
+                min="1"
+                data-i18n-placeholder="admin_new_id_placeholder"
+                placeholder="Telegram ID"
+              />
+              <button class="btn btn--primary btn--glow" id="btn-admin-add" data-i18n="admin_add_btn">Admin qo'shish</button>
+            </div>
+            <div id="admin-roles-list" class="admin-players-list"></div>
+          </div>
+        </div>
+
+
+        <!-- Admin: rad etilgan natijani qo'lda belgilash modali -->
+        <div id="modal-admin-resolve" class="modal hidden">
+          <div class="modal-box">
+            <div class="modal-title" data-i18n="admin_set_result_title">Natijani belgilash</div>
+            <div class="score-input-row">
+              <div class="score-input-group">
+                <span class="score-input-label" id="admin-resolve-player1-name">P1</span>
+                <input id="admin-resolve-score1" class="score-input" type="number" min="0" max="99" value="0" />
+              </div>
+              <span class="score-separator">:</span>
+              <div class="score-input-group">
+                <span class="score-input-label" id="admin-resolve-player2-name">P2</span>
+                <input id="admin-resolve-score2" class="score-input" type="number" min="0" max="99" value="0" />
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn--ghost" id="btn-admin-resolve-cancel" data-i18n="cancel">Bekor</button>
+              <button class="btn btn--primary btn--glow" id="btn-admin-resolve-submit" data-i18n="submit">Yuborish</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nickname tahrirlash modali -->
+        <div id="modal-nickname" class="modal hidden">
+          <div class="modal-box">
+            <div class="modal-title" data-i18n="edit_nickname">Nickname tahrirlash</div>
+            <input
+              id="input-nickname"
+              class="modal-input"
+              type="text"
+              maxlength="20"
+              placeholder="2–20 belgi"
+            />
+            <div class="modal-actions">
+              <button class="btn btn--ghost" id="btn-nickname-cancel" data-i18n="cancel">Bekor</button>
+              <button class="btn btn--primary" id="btn-nickname-save" data-i18n="save">Saqlash</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Katta hisob (admin_pending) — foydalanuvchiga to'liq xabar + adminga yozish -->
+        <div id="modal-big-score" class="modal hidden">
+          <div class="modal-box">
+            <div class="modal-title" data-i18n="big_score_title">Katta hisob kiritildi</div>
+            <p id="big-score-text" class="confirm-claim" data-i18n="big_score_body">
+              Natija yuborildi. Katta hisob (5 dan ortiq) bosh admin tasdig'ini talab qiladi. Isbot uchun adminga o'yin skrinshotini yuboring — admin tasdiqlagach natija hisobga o'tadi.
+            </p>
+            <div class="modal-actions">
+              <button class="btn btn--primary" id="btn-big-score-contact" data-i18n="big_score_contact">Adminga yozish</button>
+              <button class="btn btn--ghost" id="btn-big-score-close" data-i18n="close">Yopish</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Natija tasdiqlash modali (yolg'on natijaning oldini olish) -->
+        <div id="modal-confirm" class="modal hidden">
+          <div class="modal-box">
+            <div class="modal-title" data-i18n="confirm_result_title">Natijani tasdiqlaysizmi?</div>
+            <p id="confirm-modal-claim" class="confirm-claim"></p>
+            <div id="confirm-modal-score" class="confirm-score"></div>
+            <p class="confirm-warning" data-i18n="confirm_warning">Faqat haqiqatan o'ynagan va natija to'g'ri bo'lsa tasdiqlang. Bunday o'yin bo'lmagan bo'lsa — rad eting.</p>
+            <div class="modal-actions modal-actions--stacked">
+              <button class="btn btn--primary" id="btn-confirm-yes" data-i18n="confirm_yes">Ha, o'ynadik va to'g'ri</button>
+              <button class="btn btn--danger" id="btn-confirm-no" data-i18n="confirm_no">Yo'q, bunday o'yin bo'lmagan</button>
+              <button class="btn btn--ghost" id="btn-confirm-cancel" data-i18n="cancel">Bekor</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Natija kiritish modali -->
+        <div id="modal-result" class="modal hidden">
+          <div class="modal-box">
+            <div class="modal-title" data-i18n="submit_result">Natija kiritish</div>
+            <div class="score-input-row">
+              <div class="score-input-group">
+                <div class="score-logo-input">
+                  <img id="result-logo1" class="result-club-logo" alt="" />
+                  <input id="input-score1" class="score-input" type="number" min="0" max="99" value="0" />
+                </div>
+              </div>
+              <span class="score-separator">:</span>
+              <div class="score-input-group">
+                <div class="score-logo-input">
+                  <input id="input-score2" class="score-input" type="number" min="0" max="99" value="0" />
+                  <img id="result-logo2" class="result-club-logo" alt="" />
+                </div>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn--ghost" id="btn-result-cancel" data-i18n="cancel">Bekor</button>
+              <button class="btn btn--primary btn--glow" id="btn-result-submit" data-i18n="submit">Yuborish</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ===== SOVRINLAR ===== -->
+      <section id="section-prizes" class="section">
+
+        <div class="section-label" data-i18n="prizes_title">SOVRINLAR</div>
+
+        <!-- Oltin Butsa -->
+        <div class="card card--prize card--prize--gold">
+          <div class="prize-icon"><img src="golden-boot.png?v=20260628c20" alt="Oltin Butsa" class="prize-icon-img" /></div>
+          <div class="prize-info">
+            <div class="prize-name" data-i18n="golden_boot">Oltin Butsa</div>
+            <div class="prize-desc" data-i18n="golden_boot_desc">Eng ko'p gol urgan o'yinchi</div>
+            <div class="prize-holder" id="prize-top-scorer">—</div>
+            <div class="prize-club" id="prize-top-scorer-club"></div>
+          </div>
+        </div>
+
+        <!-- Oltin To'p -->
+        <div class="card card--prize card--prize--gold">
+          <div class="prize-icon"><img src="golden-ball.png?v=20260628c20" alt="Oltin To'p" class="prize-icon-img" /></div>
+          <div class="prize-info">
+            <div class="prize-name" data-i18n="golden_ball">Oltin To'p</div>
+            <div class="prize-desc" data-i18n="golden_ball_desc">Turnir g'olibi</div>
+            <div class="prize-holder" id="prize-winner">—</div>
+            <div class="prize-club" id="prize-winner-club"></div>
+          </div>
+        </div>
+
+        <!-- Liga Kubogi (filterga qarab o'zgaradi) -->
+        <div class="card card--prize card--prize--cyan" id="league-trophy-card" style="display:none;">
+          <div class="prize-icon"><img src="" alt="Liga Kubogi" class="prize-icon-img" id="league-trophy-img" /></div>
+          <div class="prize-info">
+            <div class="prize-name" data-i18n="league_trophy">Liga Kubogi</div>
+            <div class="prize-desc" data-i18n="league_trophy_desc">Liga chempioni</div>
+            <div class="prize-holder" id="prize-league-champion">—</div>
+            <div class="prize-club" id="prize-league-champion-club"></div>
+          </div>
+        </div>
+
+        <!-- Liga filter -->
+        <div class="section-label" data-i18n="by_league">LIGA BO'YICHA</div>
+        <div id="prizes-filter" class="tab-filter">
+          <!-- JS tomonidan to'ldiriladi -->
+        </div>
+
+      </section>
+
+      <!-- ===== BOSHQA O'YINCHI PROFILI (reyting qatoridan ochiladi) ===== -->
+      <section id="section-player" class="section">
+
+        <!-- Ortga tugmasi -->
+        <button class="back-btn" id="btn-player-back">
+          <span class="back-btn-arrow" data-icon="back"></span>
+          <span data-i18n="back">Ortga</span>
+        </button>
+
+        <!-- Avatar + ism -->
+        <div class="card card--profile">
+          <div class="profile-avatar">
+            <div id="player-avatar-letter">?</div>
+          </div>
+          <div class="profile-info">
+            <h2 class="profile-nickname" id="player-nickname">—</h2>
+            <span class="profile-league" id="player-league">—</span>
+          </div>
+          <div class="profile-club-badge" id="player-club-badge"></div>
+        </div>
+
+        <!-- Statistika -->
+        <div class="section-label" data-i18n="my_stats">STATISTIKA</div>
+        <div class="stats-grid">
+          <div class="stat-card stat-card--primary">
+            <span class="stat-card-value neon-cyan" id="player-stat-position">—</span>
+            <span class="stat-card-label" data-i18n="stat_pos">O'rin</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-value neon-cyan" id="player-stat-wins">—</span>
+            <span class="stat-card-label" data-i18n="stat_w">G'alaba</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-value" id="player-stat-draws">—</span>
+            <span class="stat-card-label" data-i18n="stat_d">Durang</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-value neon-red" id="player-stat-losses">—</span>
+            <span class="stat-card-label" data-i18n="stat_l">Mag'lubiyat</span>
+          </div>
+        </div>
+
+        <!-- Sovrinlar (JS tomonidan to'ldiriladi) -->
+        <div id="player-prizes-section"></div>
+
+        <!-- O'yinlar tarixi -->
+        <div class="section-label" data-i18n="player_matches">O'YINLARI</div>
+        <div id="player-matches-list" class="matches-list">
+          <!-- JS tomonidan to'ldiriladi -->
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ========== BOTTOM NAV ========== -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-section="home">
+        <span class="nav-icon" data-icon="home"></span>
+        <span class="nav-label" data-i18n="nav_home">Asosiy</span>
+        <span class="nav-glow"></span>
+      </button>
+      <button class="nav-item" data-section="rating">
+        <span class="nav-icon" data-icon="trophy"></span>
+        <span class="nav-label" data-i18n="nav_rating">Reyting</span>
+        <span class="nav-glow"></span>
+      </button>
+      <button class="nav-item" data-section="profile">
+        <span class="nav-icon" data-icon="user"></span>
+        <span class="nav-label" data-i18n="nav_profile">Profil</span>
+        <span class="nav-glow"></span>
+      </button>
+      <button class="nav-item" data-section="prizes">
+        <span class="nav-icon" data-icon="gift"></span>
+        <span class="nav-label" data-i18n="nav_prizes">Sovrinlar</span>
+        <span class="nav-glow"></span>
+      </button>
+    </nav>
+
+  </div><!-- /#app -->
+
+  <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
+  <script src="app.js?v=20260922b"></script>
+  <script src="api.js?v=20260922b"></script>
+  <!-- 2026-07-21: Divizion tarjimalari (uz/ru/en) — app.js dagi TEXTS ga qo'shiladi -->
+  <script src="texts_division.js?v=20260810d"></script>
+  <!-- 2026-07-21: ChL tarjimalari (uz/ru/en) — cl*.js dan OLDIN -->
+  <script src="texts_cl.js?v=20260811a"></script>
+  <!-- 2026-07-21: WC tarjimalari (yetishmagan kalitlar) — worldcup*.js dan OLDIN -->
+  <script src="texts_wc.js?v=20260721a"></script>
+  <!-- Mavsum yakuni tabrik oynasi (bir martalik) -->
+  <script src="celebration.js?v=20260803a"></script>
+  <!-- Chempionlar ligasi rejimi -->
+  <script src="cl.js?v=20260811a"></script>
+  <script src="cl_home.js?v=20260803b"></script>
+  <script src="cl_chat.js?v=20260716a"></script>
+  <script src="cl_player.js?v=20260803b"></script>
+  <script src="cl_profile.js?v=20260803b"></script>
+  <script src="cl_admin.js?v=20260811a"></script>
+  <script src="cl_playoff.js?v=20260828b"></script>
+  <!-- Divizion rejimi -->
+  <script src="division.js?v=20260810d"></script>
+  <script src="worldcup.js?v=20260720a"></script>
+  <script src="worldcup_matches.js?v=20260719a"></script>
+  <script src="worldcup_admin.js?v=20260803b"></script>
+  <script src="worldcup_chat.js?v=20260922a"></script>
+  <script src="worldcup_playoff.js?v=20260719a"></script>
+</body>
+</html>

@@ -327,10 +327,14 @@ async function wcSendWebChatMessage() {
 
   input.value = "";
   try {
-    await apiFetch(`/wc/matches/${matchId}/messages?is_playoff=${WC_CHAT.isPlayoff}`, {
+    const r = await apiFetch(`/wc/matches/${matchId}/messages?is_playoff=${WC_CHAT.isPlayoff}`, {
       method: "POST",
       body: JSON.stringify({ text }),
     });
+    // 2026-09-22: so'kinish aniqlansa yozuvchiga ogohlantirish (liga naqshi)
+    if (r && r.profanity) {
+      showToast(APP.t.chat_profanity_warn || "⚠️ So'kinmang. Haqoratli so'z yashirildi (***).");
+    }
     await wcLoadWebChatMessages();
   } catch (e) {
     showToast("❌ " + (e.message || "Xato"));
