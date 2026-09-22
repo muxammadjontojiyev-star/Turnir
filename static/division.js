@@ -82,6 +82,8 @@ async function divLoadStatus() {
   } catch (_) {
     DIV.unread = { total: 0, by_match: {} };
   }
+  // 2026-09-22: baraban holati (raqib yetmagan bo'lsa bosh sahifada chiqadi)
+  if (typeof divLoadByeState === "function") await divLoadByeState();
   renderDivision();
 }
 
@@ -362,7 +364,10 @@ function divRenderHome() {
          <div class="div-hero-text">${DT("div_reg_closed")}<br>${DT("div_now")}: ${escHtml(win.now || "")}.</div>
        </div>`
     : "";
-  return `${todayCard}${noMatchHint}${divRulesCard()}`;
+  // 2026-09-22: raqib yetmagan bo'lsa baraban kartasi (division_bye.js).
+  // Bye bo'lmasa bo'sh satr qaytadi — hech narsa ko'rinmaydi.
+  const byeCard = (typeof divByeCard === "function") ? divByeCard() : "";
+  return `${byeCard}${todayCard}${noMatchHint}${divRulesCard()}`;
 }
 
 // 2026-08: mavsum tanlash — Joriy | O'tgan mavsum. Ikkala reyting tabiga (ball va
@@ -971,6 +976,11 @@ function divRenderPlayer() {
 
 // ---- Eventlar ----
 function divBindSectionEvents(root) {
+  // 2026-09-22: baraban tugmasi (division_bye.js)
+  root.querySelector("#div-bye-spin")?.addEventListener("click", (e) => {
+    if (typeof divByeSpin === "function") void divByeSpin(e.currentTarget);
+  });
+
   root.querySelector("#div-btn-register")?.addEventListener("click", async (e) => {
     e.target.disabled = true; // ikki marta bosishdan himoya (qoida #38/#40)
     try {
