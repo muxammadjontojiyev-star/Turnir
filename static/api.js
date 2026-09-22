@@ -2488,6 +2488,44 @@ function openMatchChat(matchId) {
   loadMyMatches();
 }
 
+// 2026-08-28: eFootball xona ID sini raqibga yuborish.
+// Kod chat xabari sifatida saqlanadi (dalil izi qoladi) va raqibga Telegram
+// bildirishnomasi ketadi — kod bildirishnomaning O'ZIDA, raqib ilovani
+// ochmasdan nusxa oladi. Backend: POST /matches/{id}/room-code.
+async function sendRoomCode(matchId, btn) {
+  const t = APP.t;
+  const raw = window.prompt(t.room_code_ask || "eFootball xona ID sini kiriting:");
+  if (raw === null) return;
+  const code = raw.trim();
+  if (!code) return;
+
+  const label = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ " + (t.room_code_sending || "Yuborilmoqda...");
+  }
+  try {
+    const r = await apiFetch(`/matches/${matchId}/room-code`, {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+    showToast(`✅ ${t.room_code_sent || "Xona ID yuborildi"}: ${r.code}`);
+    closeOpponentModal();
+  } catch (e) {
+    const msg = {
+      invalid_code: t.room_code_invalid || "Xona ID noto'g'ri (4-16 belgi).",
+      chat_no_access: t.room_code_no_access || "Bu o'yinda xabar yuborib bo'lmaydi.",
+      send_failed: t.room_code_failed || "Yuborishda xatolik.",
+    }[e.message] || (t.room_code_failed || "Yuborishda xatolik.");
+    showToast("❌ " + msg);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = label;
+    }
+  }
+}
+
 function openOpponentModal(matchId) {
   const t = APP.t;
   const m = (APP.myMatches || []).find(x => x.id === matchId);
@@ -2517,6 +2555,13 @@ function openOpponentModal(matchId) {
     ? `<button class="opp-chat-btn opp-webchat-btn" id="opp-webchat-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
     : "";
 
+  // 2026-08-28: eFootball xona ID sini bitta bosishda yuborish. Chatni ochib,
+  // yozib o'tirish shart emas — kod raqibga Telegram xabari bilan yetadi.
+  // Chat ochiq bo'lgan o'yinlarda ko'rinadi (xuddi chat tugmasi kabi).
+  const roomBtn = chatActive
+    ? `<button class="opp-chat-btn opp-room-btn" id="opp-room-btn">🎮 ${escHtml(t.room_code_send || "Xona ID yuborish")}</button>`
+    : "";
+
   let modal = document.getElementById("modal-opponent");
   if (!modal) {
     modal = document.createElement("div");
@@ -2532,6 +2577,7 @@ function openOpponentModal(matchId) {
         <div class="opp-vs-sep">VS</div>
         ${renderOpponentSide(m.player2_club, m.player2_username, m.player2_nickname)}
       </div>
+      ${roomBtn}
       ${webChatBtn}
       ${chatBtn}
     </div>
@@ -2540,6 +2586,11 @@ function openOpponentModal(matchId) {
 
   document.getElementById("opp-modal-close").addEventListener("click", closeOpponentModal);
   modal.addEventListener("click", (e) => { if (e.target === modal) closeOpponentModal(); });
+
+  const roomBtnEl = document.getElementById("opp-room-btn");
+  if (roomBtnEl) {
+    roomBtnEl.addEventListener("click", () => void sendRoomCode(matchId, roomBtnEl));
+  }
 
   const btn = document.getElementById("opp-chat-btn");
   if (btn && (opp.username || opp.tg)) {

@@ -4993,3 +4993,14 @@ svg.wc-bracket-trophy { display: block; margin: 0 auto; }
   color: var(--text-secondary);
   white-space: pre-wrap;
 }
+
+/* 2026-08-28: "Xona ID yuborish" tugmasi — chat tugmasidan ajralib tursin,
+   lekin asosiy gradient (opp-webchat-btn) bilan raqobatlashmasin */
+.opp-room-btn {
+  background: var(--cyan-dim);
+  border: 1px solid var(--border-accent);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.opp-room-btn:active { opacity: .75; }
+.opp-room-btn:disabled { opacity: .6; }

@@ -182,6 +182,14 @@ const TEXTS = {
     webchat_placeholder: "Xabar yozing...",
     // 2026-08-28: chat tarjimasi
     chat_translate: "Tarjima",
+    // 2026-08-28: xona ID
+    room_code_send: "Xona ID yuborish",
+    room_code_ask: "eFootball xona ID sini kiriting:",
+    room_code_sending: "Yuborilmoqda...",
+    room_code_sent: "Xona ID yuborildi",
+    room_code_invalid: "Xona ID noto'g'ri (4-16 belgi).",
+    room_code_no_access: "Bu o'yinda xabar yuborib bo'lmaydi.",
+    room_code_failed: "Yuborishda xatolik.",
     chat_translating: "Tarjima qilinmoqda...",
     chat_tr_failed: "Tarjima qilinmadi.",
     chat_tr_limit: "Juda ko'p so'rov. Biroz kuting.",
@@ -490,6 +498,14 @@ const TEXTS = {
     webchat_placeholder: "Напишите сообщение...",
     // 2026-08-28: перевод в чате
     chat_translate: "Перевод",
+    // 2026-08-28: ID комнаты
+    room_code_send: "Отправить ID комнаты",
+    room_code_ask: "Введите ID комнаты eFootball:",
+    room_code_sending: "Отправка...",
+    room_code_sent: "ID комнаты отправлен",
+    room_code_invalid: "Неверный ID комнаты (4-16 символов).",
+    room_code_no_access: "В этом матче нельзя отправить сообщение.",
+    room_code_failed: "Ошибка отправки.",
     chat_translating: "Переводим...",
     chat_tr_failed: "Не удалось перевести.",
     chat_tr_limit: "Слишком много запросов. Подождите.",
@@ -795,6 +811,14 @@ const TEXTS = {
     webchat_placeholder: "Type a message...",
     // 2026-08-28: chat translation
     chat_translate: "Translate",
+    // 2026-08-28: room code
+    room_code_send: "Send room ID",
+    room_code_ask: "Enter the eFootball room ID:",
+    room_code_sending: "Sending...",
+    room_code_sent: "Room ID sent",
+    room_code_invalid: "Invalid room ID (4-16 characters).",
+    room_code_no_access: "You cannot send a message in this match.",
+    room_code_failed: "Failed to send.",
     chat_translating: "Translating...",
     chat_tr_failed: "Translation failed.",
     chat_tr_limit: "Too many requests. Please wait.",
