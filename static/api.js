@@ -762,7 +762,8 @@ async function loadProfile() {
     renderProfile(data);
     await loadMyPrizes(data.user_id);
     await loadMyMatches();
-    await loadAdminPanel();
+    // 2026-09-22: admin paneli endi ALOHIDA sahifada — profil ochilganda uni
+    // yuklash shart emas (SECTION_LOADERS.admin chaqiradi).
   } catch (e) {
     showToast("❌ " + e.message);
   }
@@ -1292,9 +1293,17 @@ async function submitLeagueSwap(btn, onDone) {
 //  ADMIN PANEL
 // ============================================================
 
+// 2026-09-22: Admin endi ALOHIDA sahifa (#section-admin). Nav tugmasi faqat
+// adminlarga ko'rinadi — tugmani shu funksiya boshqaradi.
+function setAdminNavVisible(visible) {
+  const navBtn = document.getElementById("nav-admin");
+  if (navBtn) navBtn.classList.toggle("hidden", !visible);
+}
+
 async function loadAdminPanel() {
   const panel = document.getElementById("admin-panel");
   const superOnly = document.getElementById("admin-super-only");
+  if (!panel) return;
 
   // Rolni aniqlaymiz
   let who;
@@ -1302,10 +1311,12 @@ async function loadAdminPanel() {
     who = await apiFetch("/admin/whoami");
   } catch (_) {
     panel.classList.add("hidden");
+    setAdminNavVisible(false);
     return;
   }
 
   const isLeagueAdmin = !!who.is_super || !!who.is_league_admin;
+  setAdminNavVisible(isLeagueAdmin);
   if (!isLeagueAdmin) {
     // Liga admin emas (na bosh, na liga oddiy admin) — panel yashirin
     panel.classList.add("hidden");

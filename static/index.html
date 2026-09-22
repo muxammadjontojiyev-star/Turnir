@@ -206,6 +206,12 @@
           <!-- JS tomonidan to'ldiriladi -->
         </div>
 
+      </section>
+
+      <!-- ===== ADMIN (2026-09-22: alohida sahifa — ChL/Divizion naqshi) =====
+           Ilgari Profil bo'limining ichida edi; adminlar hisob tuzatish uchun
+           profil sahifasini aylanib o'tishga majbur bo'lardi. -->
+      <section id="section-admin" class="section">
         <!-- Admin panel (faqat adminga ko'rinadi, JS orqali boshqariladi) -->
         <div id="admin-panel" class="admin-panel hidden">
           <div class="section-label" data-i18n="admin_panel_title">ADMIN PANEL</div>
@@ -563,13 +569,20 @@
         <span class="nav-label" data-i18n="nav_prizes">Sovrinlar</span>
         <span class="nav-glow"></span>
       </button>
+      <!-- 2026-09-22: Admin tugmasi — FAQAT adminlarga (api.js loadAdminPanel
+           ko'rsatadi/yashiradi). ChL/Divizion naqshi. -->
+      <button class="nav-item hidden" id="nav-admin" data-section="admin">
+        <span class="nav-icon" data-icon="clipboard"></span>
+        <span class="nav-label">Admin</span>
+        <span class="nav-glow"></span>
+      </button>
     </nav>
 
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20260922b"></script>
-  <script src="api.js?v=20260922f"></script>
+  <script src="app.js?v=20260922c"></script>
+  <script src="api.js?v=20260922g"></script>
   <!-- 2026-07-21: Divizion tarjimalari (uz/ru/en) — app.js dagi TEXTS ga qo'shiladi -->
   <script src="texts_division.js?v=20260922b"></script>
   <!-- 2026-07-21: ChL tarjimalari (uz/ru/en) — cl*.js dan OLDIN -->
@@ -588,8 +601,8 @@
   <script src="cl_playoff.js?v=20260922b"></script>
   <!-- Divizion rejimi -->
   <script src="division.js?v=20260922b"></script>
-  <script src="worldcup.js?v=20260720a"></script>
-  <script src="worldcup_matches.js?v=20260719a"></script>
+  <script src="worldcup.js?v=20260922a"></script>
+  <script src="worldcup_matches.js?v=20260922a"></script>
   <script src="worldcup_admin.js?v=20260922a"></script>
   <script src="worldcup_chat.js?v=20260922d"></script>
   <script src="worldcup_playoff.js?v=20260922c"></script>

@@ -1089,6 +1089,8 @@ const SECTION_LOADERS = {
   rating:  () => loadRating(),
   profile: () => loadProfile(),
   prizes:  () => loadPrizes(),
+  // 2026-09-22: admin alohida sahifa (ChL/Divizion naqshi)
+  admin:   () => loadAdminPanel(),
 };
 
 function navigateTo(sectionName) {
@@ -1236,6 +1238,11 @@ async function init() {
   // Kubok yulduzchalari (2026-07-16) — bir marta yuklanadi, barcha rejimlar
   // reyting/profil renderlari APP.prizeStars'dan o'qiydi (bloklamaydi)
   void loadPrizeStars();
+
+  // 2026-09-22: Admin alohida sahifa bo'lgani uchun nav tugmasi ishga
+  // tushishdayoq aniqlanishi kerak — aks holda admin uni ko'rmaydi
+  // (tugma loadAdminPanel'dan chiqadi, u esa sahifa ochilganda ishlaydi).
+  void loadAdminPanel();
 
   // Mavsum yakuni tabrigi — bir martalik oyna (bloklamaydi, xato bo'lsa jim davom etadi)
   checkSeasonCelebration();

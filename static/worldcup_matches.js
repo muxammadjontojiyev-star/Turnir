@@ -21,7 +21,7 @@ function wcRenderProfile() {
         <span class="wc-placeholder-icon" data-icon="user"></span>
         <div class="wc-placeholder-text">${escHtml(t.wc_not_registered || "Siz hali World Cup'ga ro'yxatdan o'tmagansiz")}</div>
       </div>
-      <div id="wc-admin-panel" class="admin-panel hidden"></div>`;
+`;
   }
 
   const flag = wcTeamFlag(reg.team_name);
@@ -121,8 +121,6 @@ function wcRenderProfile() {
       </div>
     </div>
 
-    <!-- WC admin paneli (rolga qarab JS ko'rsatadi) -->
-    <div id="wc-admin-panel" class="admin-panel hidden"></div>
 
     <!-- Natija kiritish modali -->
     <div id="wc-modal-result" class="modal hidden">
@@ -175,7 +173,7 @@ function wcBindProfile() {
   document.getElementById("wc-btn-confirm-no")?.addEventListener("click", () => wcConfirmAction("reject"));
 
   void wcLoadMatches();
-  if (typeof wcLoadAdminPanel === "function") void wcLoadAdminPanel();
+  // 2026-09-22: admin paneli endi ALOHIDA sahifada (wcNavigate("admin"))
 
   // Sovrinlarim (liga renderMyPrizes'ni qayta ishlatamiz)
   void wcLoadMyPrizes();

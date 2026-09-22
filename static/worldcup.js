@@ -23,6 +23,7 @@ const WC = {
   viewedProfile: null,   // Reytingdan bosilgan boshqa o'yinchi profili (faqat ko'rish)
   chatOpened:    null,    // Set: chat ochilgan WC matchlar (Natija tugmasi ochiladi)
   unread:        { total: 0, by_match: {} }, // 2026-07-19: o'qilmagan chat xabarlari (qizil rozetka; play-off kaliti "p{id}")
+  isAdmin:       false,  // 2026-09-22: Admin nav tugmasi uchun (bosh yoki wc admin)
 };
 
 // ---- 48 terma jamoa, 12 guruh (rasmga muvofiq) ----
@@ -80,6 +81,24 @@ function showWorldCup() {
   void wcLoadProfileThenRender();
   // 2026-07-20: rejimga kirishdayoq rozetkani yuklaymiz — Profilga kirmasdan ham ko'rinsin
   void wcRefreshUnreadBadge();
+  // 2026-09-22: Admin nav tugmasi uchun rolni aniqlaymiz. Kirishdayoq kerak,
+  // chunki tugma navigatsiyada chiziladi (admin panelini ochishdan OLDIN).
+  void wcCheckAdminRole();
+}
+
+// Admin rolini aniqlaydi va nav'ni yangilaydi (faqat o'zgargan bo'lsa qayta chizadi)
+async function wcCheckAdminRole() {
+  let isAdmin = false;
+  try {
+    const who = await apiFetch("/admin/whoami");
+    isAdmin = !!who.is_super || !!who.is_wc_admin;
+  } catch (_) {
+    isAdmin = false;
+  }
+  if (WC.isAdmin !== isAdmin) {
+    WC.isAdmin = isAdmin;
+    renderWorldCup();   // nav'da Admin tugmasi paydo bo'lsin
+  }
 }
 
 // WC profilini yuklaydi (ro'yxat holati), so'ng ekranni chizadi
@@ -160,6 +179,10 @@ function renderWorldCup() {
   else if (WC.section === "profile") body = wcRenderProfile();
   else if (WC.section === "viewplayer") body = wcRenderViewProfile();
   else if (WC.section === "prizes") body = wcRenderPrizes();
+  // 2026-09-22: admin ALOHIDA sahifa (ChL/Divizion naqshi). Ilgari profil
+  // sahifasining ichida edi — adminlar hisob tuzatish uchun profilni
+  // aylanib o'tishga majbur bo'lardi.
+  else if (WC.section === "admin")  body = `<div id="wc-admin-panel" class="admin-panel hidden"></div>`;
   else                              body = wcRenderPlaceholder();
 
   root.innerHTML = `
@@ -191,7 +214,11 @@ function renderWorldCup() {
       <button class="wc-nav-item ${WC.section === "prizes" ? "active" : ""}" data-wc="prizes">
         <span class="nav-icon" data-icon="gift"></span>
         <span class="nav-label">${escHtml(t.nav_prizes || "Sovrinlar")}</span>
-      </button>
+      </button>${WC.isAdmin ? `
+      <button class="wc-nav-item ${WC.section === "admin" ? "active" : ""}" data-wc="admin">
+        <span class="nav-icon" data-icon="clipboard"></span>
+        <span class="nav-label">Admin</span>
+      </button>` : ""}
     </nav>
   `;
 
@@ -216,6 +243,7 @@ function renderWorldCup() {
   else if (WC.section === "profile") wcBindProfile();
   else if (WC.section === "viewplayer") wcBindViewProfile();
   else if (WC.section === "prizes") wcBindPrizes();
+  else if (WC.section === "admin" && typeof wcLoadAdminPanel === "function") void wcLoadAdminPanel();
 }
 
 // ============================================================
