@@ -9,6 +9,7 @@ Liga chat kodiga UMUMAN tegmaydi — to'liq parallel.
 """
 
 from models import get_connection
+from profanity import mask_text
 from queries import (
     get_user_by_telegram_id,
     CHAT_ACTIVE_MATCH_STATUSES, CHAT_NOTIFY_THROTTLE_SECONDS,
@@ -111,7 +112,9 @@ def wc_send_chat_message(match_id: int, sender_telegram_id: int, text: str, is_p
                 (match_id, access["opponent_user_id"], is_playoff),
             )
             conn.commit()
-            preview = text if len(text) <= 50 else text[:50] + "..."
+            # Bildirishnoma preview'i ham yashiriladi (qoida #11)
+            safe, _ = mask_text(text)
+            preview = safe if len(safe) <= 50 else safe[:50] + "..."
             notify = {"recipient_telegram_id": recipient_tg, "text_preview": preview}
 
     conn.close()
@@ -275,9 +278,11 @@ def wc_get_chat_messages(match_id: int, requester_telegram_id: int, is_playoff: 
     result = []
     for r in rows:
         d = dict(r)
+        # 2026-09-22: haqoratli so'z "***" bilan yashiriladi (liga naqshi)
+        masked_text, _ = mask_text(d["text"])
         result.append({
             "id": d["id"],
-            "text": d["text"],
+            "text": masked_text,
             "created_at": d["created_at"],
             "is_read": bool(d["is_read"]),
             "mine": d["sender_id"] == my_id,

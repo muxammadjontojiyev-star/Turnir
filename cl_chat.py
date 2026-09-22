@@ -7,6 +7,7 @@ saqlanadi (liga chat bilan bir xil yondashuv).
 """
 
 from models import get_connection
+from profanity import mask_text
 
 MAX_MESSAGE_LEN = 500
 
@@ -94,7 +95,9 @@ def cl_send_message(match_id: int, sender_id: int,
                 if prow and prow["telegram_id"]:
                     recipient_tg = prow["telegram_id"]
             if recipient_tg is not None:
-                preview = text if len(text) <= 80 else text[:77] + "…"
+                # Bildirishnoma preview'i ham yashiriladi (qoida #11)
+                safe, _ = mask_text(text)
+                preview = safe if len(safe) <= 80 else safe[:77] + "…"
                 notify = {"recipient_telegram_id": recipient_tg,
                           "text_preview": preview}
         return True, "ok", notify
@@ -135,6 +138,9 @@ def cl_get_messages(match_id: int, requester_id: int) -> list[dict] | None:
             d["mine"] = d["sender_id"] == requester_id
             d["is_read"] = bool(d["is_read"])  # haqiqiy o'qilganlik (✓ / ✓✓)
             d["club_name"] = None  # ChL: klub logosi frontendda
+            # 2026-09-22: haqoratli so'z "***" bilan yashiriladi. Asl matn bazada
+            # o'zgarishsiz qoladi (liga naqshi — queries_chat.get_chat_messages).
+            d["text"], _ = mask_text(d["text"])
             out.append(d)
         return out
     finally:

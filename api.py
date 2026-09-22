@@ -83,6 +83,8 @@ from wc_chat import (
     wc_set_typing, wc_get_chat_state,
 )
 from config import REQUIRED_CHANNEL_USERNAME, REQUIRED_CHANNEL_URL, ADMIN_CONTACT_USERNAME
+# 2026-09-22: chatda so'kinish aniqlash (yozuvchiga ogohlantirish uchun)
+from profanity import contains_profanity
 
 app = FastAPI(title="eFootball Turnir Bot API")
 
@@ -960,7 +962,7 @@ async def wc_post_match_message(
             # lekin log qoldiramiz (qoida #44)
             logger.warning("Chat bot bildirishnomasi yuborilmadi: %s", exc)
 
-    return {"ok": True}
+    return {"ok": True, "profanity": contains_profanity(text)}
 
 
 @app.get("/wc/matches/unread")
@@ -1952,7 +1954,7 @@ async def cl_chat_send(match_id: int, text: str = Body(..., embed=True),
         except Exception as exc:
             logger.warning("ChL chat bildirishnomasi yuborilmadi: %s", exc)
 
-    return {"status": "ok"}
+    return {"status": "ok", "profanity": contains_profanity(text)}
 
 
 @app.post("/cl/matches/{match_id}/typing")
@@ -2023,7 +2025,7 @@ async def cl_po_chat_send(match_id: int, text: str = Body(..., embed=True),
         except Exception as exc:
             logger.warning("ChL play-off chat bildirishnomasi yuborilmadi: %s", exc)
 
-    return {"status": "ok"}
+    return {"status": "ok", "profanity": contains_profanity(text)}
 
 
 @app.post("/cl/playoff/matches/{match_id}/typing")
@@ -2373,7 +2375,7 @@ async def div_chat_send(match_id: int, text: str = Body(..., embed=True),
         except Exception as exc:
             logger.warning("Divizion chat bildirishnomasi yuborilmadi: %s", exc)
 
-    return {"status": "ok"}
+    return {"status": "ok", "profanity": contains_profanity(text)}
 
 
 @app.post("/div/matches/{match_id}/typing")
