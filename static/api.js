@@ -3049,8 +3049,11 @@ function renderWebChatMessages(messages) {
   const box = document.getElementById("webchat-messages");
   if (!box) return;
   const t = APP.t;
-  // Tarjima tugmasi asl matnni shu ro'yxatdan oladi (DOM'dan emas)
+  // Tarjima tugmasi asl matnni shu ro'yxatdan oladi (DOM'dan emas).
+  // chatRerender — tarjima kelgach qaysi funksiya qayta chizishini bildiradi
+  // (JCh chati o'z renderer'iga ega — qoida #26).
   APP.chatLastMessages = messages;
+  APP.chatRerender = renderWebChatMessages;
 
   if (!messages.length) {
     box.innerHTML = `<div class="webchat-empty">${escHtml(t.webchat_empty || "Hali xabar yo'q. Birinchi bo'lib yozing!")}</div>`;
@@ -3139,7 +3142,7 @@ async function webChatTranslate(msgId, btn) {
       body: JSON.stringify({ text: msg.text, target_lang: APP.lang }),
     });
     APP.chatTr[webChatTrKey(msgId)] = { text: r.translated };
-    renderWebChatMessages(list);
+    (APP.chatRerender || renderWebChatMessages)(list);
   } catch (err) {
     const reason = (err && err.message) || "";
     const msgTxt = {

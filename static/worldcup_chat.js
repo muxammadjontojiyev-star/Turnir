@@ -150,6 +150,10 @@ function wcOpenWebChat(matchId, opponentLabel, isPlayoff = 0) {
   WC_CHAT.oppLabel = opponentLabel || (t.webchat_opponent || "Raqib");
   WC_CHAT.lastTypingSent = 0;
   WC_CHAT.isPlayoff = isPlayoff ? 1 : 0;
+  // Tarjima keshi har chatda toza boshlanadi (msg id'lar rejimlar bo'yicha
+  // takrorlanishi mumkin — qoida #13)
+  APP.chatTr = {};
+  APP.chatLastMessages = [];
 
   // Chat ochildi — Natija tugmasi ochiladi
   if (!WC.chatOpened) WC.chatOpened = new Set();
@@ -297,6 +301,11 @@ function wcRenderWebChatMessages(messages) {
 
   const atBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 60;
 
+  // 2026-09-22: tarjima uchun — asl matn shu ro'yxatdan olinadi va tarjima
+  // kelgach aynan SHU renderer qayta chaqiriladi (api.js webChatTranslate)
+  APP.chatLastMessages = messages;
+  APP.chatRerender = wcRenderWebChatMessages;
+
   box.innerHTML = messages.map(msg => {
     const mine = msg.mine;
     const ticks = mine ? (msg.is_read ? "✓✓" : "✓") : "";
@@ -307,12 +316,13 @@ function wcRenderWebChatMessages(messages) {
     return `
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${flagSpan}
-        <div class="webchat-bubble">
+        <div class="webchat-bubble${mine ? "" : " has-tr"}">
           <span class="webchat-text">${(typeof chatTextWithCopyableIds === "function") ? chatTextWithCopyableIds(escHtml(msg.text)) : escHtml(msg.text)}</span>
           <span class="webchat-meta">
             ${time ? `<span class="webchat-time">${time}</span>` : ""}
             ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
           </span>
+          ${(typeof webChatTranslateHtml === "function") ? webChatTranslateHtml(msg) : ""}
         </div>
       </div>`;
   }).join("");
