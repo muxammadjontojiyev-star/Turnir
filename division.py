@@ -23,6 +23,7 @@ from config import (
     DIV_REG_START_HOUR, DIV_REG_END_HOUR,
     DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE,
     DIV_POINTS_WIN, DIV_POINTS_DRAW, DIV_POINTS_LOSS, DIV_START_RATING,
+    DIV_BYE_MIN,
 )
 from queries_leagues import _tournament_now
 from queries_matches import _result_status_for
@@ -231,11 +232,13 @@ def div_pair_day(day: str | None = None) -> dict | None:
             pairs.append((a["telegram_id"], b["telegram_id"]))
             created += 1
             i += 2
-        if i < len(regs):  # toq qolgan — avtomatik g'alaba
+        if i < len(regs):  # toq qolgan — raqib yo'q
+            # 2026-09-22: avtomatik +15 O'RNIGA baraban (division_bye.py).
+            # bye_wheel=1 — yangi tizim; bye_points NULL — hali aylantirilmagan.
             bye = regs[i]
             cursor.execute(
-                "INSERT INTO div_matches (day, player1_id, player2_id, status) "
-                "VALUES (?, ?, NULL, 'confirmed')",
+                "INSERT INTO div_matches (day, player1_id, player2_id, status, bye_wheel) "
+                "VALUES (?, ?, NULL, 'confirmed', 1)",
                 (day, bye["user_id"],),
             )
             pairs.append((bye["telegram_id"], None))
@@ -469,7 +472,9 @@ def div_rating(day: str | None = None) -> list[dict]:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT m.player1_id, m.player2_id, m.score1, m.score2 "
+        # 2026-09-22: bye_wheel/bye_points ham kerak (baraban achkosi)
+        "SELECT m.player1_id, m.player2_id, m.score1, m.score2, "
+        "       m.bye_wheel, m.bye_points "
         "FROM div_matches m "
         "WHERE m.status = 'confirmed' AND m.day >= ? AND m.day < ?",
         (start, end),
@@ -489,8 +494,16 @@ def div_rating(day: str | None = None) -> list[dict]:
     for m in matches:
         p1, p2 = m["player1_id"], m["player2_id"]
         a = ensure(p1)
-        if p2 is None:  # bye — avtomatik g'alaba
-            a["points"] += DIV_POINTS_WIN
+        if p2 is None:  # bye — raqib yetmagan
+            # 2026-09-22: bye_wheel=1 bo'lsa baraban achkosi.
+            # bye_points NULL — hali aylantirilmagan: KAFOLATLANGAN MINIMUM
+            # ko'rsatiladi (aylantirgach faqat oshadi).
+            # bye_wheel=0 — ESKI yozuv, avvalgidek +15 (admin qarori).
+            if m["bye_wheel"]:
+                a["points"] += (m["bye_points"] if m["bye_points"] is not None
+                                else DIV_BYE_MIN)
+            else:
+                a["points"] += DIV_POINTS_WIN
             a["played"] += 1
             a["wins"] += 1
             continue

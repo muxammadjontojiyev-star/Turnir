@@ -686,6 +686,12 @@ def init_db():
         "ALTER TABLE cl_po_messages ADD COLUMN read_at TIMESTAMP",
         "ALTER TABLE div_messages ADD COLUMN read_at TIMESTAMP",
         "ALTER TABLE wc_messages ADD COLUMN read_at TIMESTAMP",
+        # 2026-09-22: Divizion "baraban" — toq qolgan ishtirokchi achkosi.
+        # bye_wheel=0 -> ESKI yozuv (avtomatik +15, tegilmaydi).
+        # bye_wheel=1 -> baraban tizimi; bye_points NULL = hali aylantirilmagan
+        # (reytingda kafolatlangan minimum DIV_BYE_MIN ko'rinadi).
+        "ALTER TABLE div_matches ADD COLUMN bye_points INTEGER",
+        "ALTER TABLE div_matches ADD COLUMN bye_wheel INTEGER NOT NULL DEFAULT 0",
     ]
     for sql in migrations:
         try:

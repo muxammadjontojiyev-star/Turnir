@@ -2249,6 +2249,37 @@ def _div_season_query_day(season: str | None) -> tuple[str | None, dict | None]:
     return None, div_current_season()
 
 
+@app.get("/div/bye")
+def div_bye_state(user: dict = Depends(get_authenticated_user)):
+    """
+    2026-09-22: Divizion "baraban" holati — toq qolgan (raqibsiz) ishtirokchi
+    uchun. Frontend shu javobga qarab barabanni ko'rsatadi.
+    has_bye=False bo'lsa — hech narsa ko'rsatilmaydi.
+    """
+    from division_bye import get_bye_state
+    return get_bye_state(user["id"])
+
+
+@app.post("/div/bye/spin")
+def div_bye_spin(user: dict = Depends(get_authenticated_user)):
+    """
+    2026-09-22: Barabanni aylantiradi. Natija SERVERDA aniqlanadi (qoida #41) —
+    klient faqat animatsiyani ko'rsatadi.
+
+    Javob: {points, index, day, segments}
+    Xatolar: no_bye → 404; already_spun / expired → 409; spin_failed → 500.
+    """
+    from division_bye import spin_bye_wheel
+    ok, reason, info = spin_bye_wheel(user["id"])
+    if not ok:
+        if reason == "no_bye":
+            raise HTTPException(status_code=404, detail="no_bye")
+        if reason in ("already_spun", "expired"):
+            raise HTTPException(status_code=409, detail=reason)
+        raise HTTPException(status_code=500, detail="spin_failed")
+    return {"status": "ok", **info}
+
+
 @app.get("/div/rating")
 def div_rating_endpoint(season: str | None = None,
                         user: dict = Depends(get_authenticated_user)):

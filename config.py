@@ -134,6 +134,14 @@ DIV_DEADLINE_MINUTE = 0
 DIV_POINTS_WIN = 15          # G'alaba achkosi
 DIV_POINTS_DRAW = 10         # Durang achkosi
 DIV_POINTS_LOSS = -10        # Mag'lubiyat achkosi
+
+# 2026-09-22: toq qolgan (raqibsiz) ishtirokchi uchun BARABAN.
+# Ilgari avtomatik +15 (g'alaba) berilardi — endi omadga bog'liq.
+# 6 ta qism: bitta 15, ikkita 10, uchta 5. Ehtimollik teng (har qism 1/6),
+# ya'ni 15 -> 1/6, 10 -> 2/6, 5 -> 3/6.
+DIV_BYE_WHEEL = [15, 10, 5, 10, 5, 5]
+# Baraban aylantirilmasa (deadline o'tdi) beriladigan kafolatlangan minimum
+DIV_BYE_MIN = 5
 DIV_START_RATING = 1500      # Har bir ishtirokchining boshlang'ich umumiy balli
 # 2026-07-21: Divizion mavsumi — 1 mavsum = 1 oy, chegara har oyning shu SANASIDA.
 # 1-mavsum shu kundan boshlanadi; keyingi oyning 10-sanasida 2-mavsum boshlanadi.
