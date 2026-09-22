@@ -349,102 +349,7 @@
         </div>
 
 
-        <!-- Admin: rad etilgan natijani qo'lda belgilash modali -->
-        <div id="modal-admin-resolve" class="modal hidden">
-          <div class="modal-box">
-            <div class="modal-title" data-i18n="admin_set_result_title">Natijani belgilash</div>
-            <div class="score-input-row">
-              <div class="score-input-group">
-                <span class="score-input-label" id="admin-resolve-player1-name">P1</span>
-                <input id="admin-resolve-score1" class="score-input" type="number" min="0" max="99" value="0" />
-              </div>
-              <span class="score-separator">:</span>
-              <div class="score-input-group">
-                <span class="score-input-label" id="admin-resolve-player2-name">P2</span>
-                <input id="admin-resolve-score2" class="score-input" type="number" min="0" max="99" value="0" />
-              </div>
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn--ghost" id="btn-admin-resolve-cancel" data-i18n="cancel">Bekor</button>
-              <button class="btn btn--primary btn--glow" id="btn-admin-resolve-submit" data-i18n="submit">Yuborish</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Nickname tahrirlash modali -->
-        <div id="modal-nickname" class="modal hidden">
-          <div class="modal-box">
-            <div class="modal-title" data-i18n="edit_nickname">Nickname tahrirlash</div>
-            <input
-              id="input-nickname"
-              class="modal-input"
-              type="text"
-              maxlength="20"
-              placeholder="2–20 belgi"
-            />
-            <div class="modal-actions">
-              <button class="btn btn--ghost" id="btn-nickname-cancel" data-i18n="cancel">Bekor</button>
-              <button class="btn btn--primary" id="btn-nickname-save" data-i18n="save">Saqlash</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Katta hisob (admin_pending) — foydalanuvchiga to'liq xabar + adminga yozish -->
-        <div id="modal-big-score" class="modal hidden">
-          <div class="modal-box">
-            <div class="modal-title" data-i18n="big_score_title">Katta hisob kiritildi</div>
-            <p id="big-score-text" class="confirm-claim" data-i18n="big_score_body">
-              Natija yuborildi. Katta hisob (5 dan ortiq) bosh admin tasdig'ini talab qiladi. Isbot uchun adminga o'yin skrinshotini yuboring — admin tasdiqlagach natija hisobga o'tadi.
-            </p>
-            <div class="modal-actions">
-              <button class="btn btn--primary" id="btn-big-score-contact" data-i18n="big_score_contact">Adminga yozish</button>
-              <button class="btn btn--ghost" id="btn-big-score-close" data-i18n="close">Yopish</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Natija tasdiqlash modali (yolg'on natijaning oldini olish) -->
-        <div id="modal-confirm" class="modal hidden">
-          <div class="modal-box">
-            <div class="modal-title" data-i18n="confirm_result_title">Natijani tasdiqlaysizmi?</div>
-            <p id="confirm-modal-claim" class="confirm-claim"></p>
-            <div id="confirm-modal-score" class="confirm-score"></div>
-            <p class="confirm-warning" data-i18n="confirm_warning">Faqat haqiqatan o'ynagan va natija to'g'ri bo'lsa tasdiqlang. Bunday o'yin bo'lmagan bo'lsa — rad eting.</p>
-            <div class="modal-actions modal-actions--stacked">
-              <button class="btn btn--primary" id="btn-confirm-yes" data-i18n="confirm_yes">Ha, o'ynadik va to'g'ri</button>
-              <button class="btn btn--danger" id="btn-confirm-no" data-i18n="confirm_no">Yo'q, bunday o'yin bo'lmagan</button>
-              <button class="btn btn--ghost" id="btn-confirm-cancel" data-i18n="cancel">Bekor</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Natija kiritish modali -->
-        <div id="modal-result" class="modal hidden">
-          <div class="modal-box">
-            <div class="modal-title" data-i18n="submit_result">Natija kiritish</div>
-            <div class="score-input-row">
-              <div class="score-input-group">
-                <div class="score-logo-input">
-                  <img id="result-logo1" class="result-club-logo" alt="" />
-                  <input id="input-score1" class="score-input" type="number" min="0" max="99" value="0" />
-                </div>
-              </div>
-              <span class="score-separator">:</span>
-              <div class="score-input-group">
-                <div class="score-logo-input">
-                  <input id="input-score2" class="score-input" type="number" min="0" max="99" value="0" />
-                  <img id="result-logo2" class="result-club-logo" alt="" />
-                </div>
-              </div>
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn--ghost" id="btn-result-cancel" data-i18n="cancel">Bekor</button>
-              <button class="btn btn--primary btn--glow" id="btn-result-submit" data-i18n="submit">Yuborish</button>
-            </div>
-          </div>
-        </div>
-
-      </section>
+</section>
 
       <!-- ===== SOVRINLAR ===== -->
       <section id="section-prizes" class="section">
@@ -546,6 +451,108 @@
       </section>
 
     </main>
+
+    <!-- ========== MODAL OYNALAR (2026-09-22: bo'limlardan TASHQARIDA) ==========
+         Modal — ustki qatlam. Bo'lim ichida tursa, o'sha bo'lim faol
+         bo'lmaganda .section:not(.active){display:none} uni ham yashiradi.
+         Shuning uchun barcha modallar main blokidan keyin, hamma sahifa
+         uchun umumiy joyda turadi. -->
+<!-- Admin: rad etilgan natijani qo'lda belgilash modali -->
+    <div id="modal-admin-resolve" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title" data-i18n="admin_set_result_title">Natijani belgilash</div>
+        <div class="score-input-row">
+          <div class="score-input-group">
+            <span class="score-input-label" id="admin-resolve-player1-name">P1</span>
+            <input id="admin-resolve-score1" class="score-input" type="number" min="0" max="99" value="0" />
+          </div>
+          <span class="score-separator">:</span>
+          <div class="score-input-group">
+            <span class="score-input-label" id="admin-resolve-player2-name">P2</span>
+            <input id="admin-resolve-score2" class="score-input" type="number" min="0" max="99" value="0" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn--ghost" id="btn-admin-resolve-cancel" data-i18n="cancel">Bekor</button>
+          <button class="btn btn--primary btn--glow" id="btn-admin-resolve-submit" data-i18n="submit">Yuborish</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nickname tahrirlash modali -->
+    <div id="modal-nickname" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title" data-i18n="edit_nickname">Nickname tahrirlash</div>
+        <input
+          id="input-nickname"
+          class="modal-input"
+          type="text"
+          maxlength="20"
+          placeholder="2–20 belgi"
+        />
+        <div class="modal-actions">
+          <button class="btn btn--ghost" id="btn-nickname-cancel" data-i18n="cancel">Bekor</button>
+          <button class="btn btn--primary" id="btn-nickname-save" data-i18n="save">Saqlash</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Katta hisob (admin_pending) — foydalanuvchiga to'liq xabar + adminga yozish -->
+    <div id="modal-big-score" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title" data-i18n="big_score_title">Katta hisob kiritildi</div>
+        <p id="big-score-text" class="confirm-claim" data-i18n="big_score_body">
+          Natija yuborildi. Katta hisob (5 dan ortiq) bosh admin tasdig'ini talab qiladi. Isbot uchun adminga o'yin skrinshotini yuboring — admin tasdiqlagach natija hisobga o'tadi.
+        </p>
+        <div class="modal-actions">
+          <button class="btn btn--primary" id="btn-big-score-contact" data-i18n="big_score_contact">Adminga yozish</button>
+          <button class="btn btn--ghost" id="btn-big-score-close" data-i18n="close">Yopish</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Natija tasdiqlash modali (yolg'on natijaning oldini olish) -->
+    <div id="modal-confirm" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title" data-i18n="confirm_result_title">Natijani tasdiqlaysizmi?</div>
+        <p id="confirm-modal-claim" class="confirm-claim"></p>
+        <div id="confirm-modal-score" class="confirm-score"></div>
+        <p class="confirm-warning" data-i18n="confirm_warning">Faqat haqiqatan o'ynagan va natija to'g'ri bo'lsa tasdiqlang. Bunday o'yin bo'lmagan bo'lsa — rad eting.</p>
+        <div class="modal-actions modal-actions--stacked">
+          <button class="btn btn--primary" id="btn-confirm-yes" data-i18n="confirm_yes">Ha, o'ynadik va to'g'ri</button>
+          <button class="btn btn--danger" id="btn-confirm-no" data-i18n="confirm_no">Yo'q, bunday o'yin bo'lmagan</button>
+          <button class="btn btn--ghost" id="btn-confirm-cancel" data-i18n="cancel">Bekor</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Natija kiritish modali -->
+    <div id="modal-result" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-title" data-i18n="submit_result">Natija kiritish</div>
+        <div class="score-input-row">
+          <div class="score-input-group">
+            <div class="score-logo-input">
+              <img id="result-logo1" class="result-club-logo" alt="" />
+              <input id="input-score1" class="score-input" type="number" min="0" max="99" value="0" />
+            </div>
+          </div>
+          <span class="score-separator">:</span>
+          <div class="score-input-group">
+            <div class="score-logo-input">
+              <input id="input-score2" class="score-input" type="number" min="0" max="99" value="0" />
+              <img id="result-logo2" class="result-club-logo" alt="" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn--ghost" id="btn-result-cancel" data-i18n="cancel">Bekor</button>
+          <button class="btn btn--primary btn--glow" id="btn-result-submit" data-i18n="submit">Yuborish</button>
+        </div>
+      </div>
+    </div>
+
+      
 
     <!-- ========== BOTTOM NAV ========== -->
     <nav class="bottom-nav">
