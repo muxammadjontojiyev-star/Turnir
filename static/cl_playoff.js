@@ -400,6 +400,7 @@ function clpoOpenOpponentModal(matchId) {
         <div class="opp-vs-sep">VS</div>
         ${side(opp)}
       </div>
+      ${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(matchId, "cl_po") : ""}
       <button class="opp-chat-btn opp-webchat-btn" id="clpo-opp-webchat">
         ${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}
       </button>

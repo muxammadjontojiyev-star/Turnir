@@ -56,6 +56,7 @@ function clOpenOpponentModal(matchId) {
         <div class="opp-vs-sep">VS</div>
         ${side(opp)}
       </div>
+      ${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(matchId, "cl") : ""}
       <button class="opp-chat-btn opp-webchat-btn" id="cl-opp-webchat">
         ${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}
       </button>

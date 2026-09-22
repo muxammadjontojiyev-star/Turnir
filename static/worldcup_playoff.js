@@ -185,7 +185,7 @@ async function wcOpenPlayoffChat(matchId) {
   // Ichki webchat — faqat aktiv match (pending / awaiting_confirmation)
   const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
   const webChatBtn = chatActive
-    ? `<button class="opp-chat-btn opp-webchat-btn" id="wc-po-opp-web-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
+    ? `${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(matchId, "wc_po") : ""}<button class="opp-chat-btn opp-webchat-btn" id="wc-po-opp-web-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
     : "";
 
   let modal = document.getElementById("wc-modal-po-opponent");

@@ -38,7 +38,7 @@ function wcOpenOpponentModal(matchId) {
   // WebApp ichki chat — faqat aktiv match (pending / awaiting_confirmation)
   const chatActive = (m.status === "pending" || m.status === "awaiting_confirmation");
   const webChatBtn = chatActive
-    ? `<button class="opp-chat-btn opp-webchat-btn" id="wc-opp-webchat-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
+    ? `${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(m.id, "wc") : ""}<button class="opp-chat-btn opp-webchat-btn" id="wc-opp-webchat-btn">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`
     : "";
 
   let modal = document.getElementById("wc-modal-opponent");

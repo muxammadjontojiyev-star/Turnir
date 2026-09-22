@@ -2676,7 +2676,9 @@ function openMatchChat(matchId) {
 // Kod chat xabari sifatida saqlanadi (dalil izi qoladi) va raqibga Telegram
 // bildirishnomasi ketadi — kod bildirishnomaning O'ZIDA, raqib ilovani
 // ochmasdan nusxa oladi. Backend: POST /matches/{id}/room-code.
-async function sendRoomCode(matchId, btn) {
+// 2026-09-22: mode parametri qo'shildi — bitta funksiya barcha rejimga
+// xizmat qiladi (league / cl / cl_po / div / wc / wc_po), qoida #26.
+async function sendRoomCode(matchId, btn, mode) {
   const t = APP.t;
   const raw = window.prompt(t.room_code_ask || "eFootball xona ID sini kiriting:");
   if (raw === null) return;
@@ -2691,14 +2693,15 @@ async function sendRoomCode(matchId, btn) {
   try {
     const r = await apiFetch(`/matches/${matchId}/room-code`, {
       method: "POST",
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, mode: mode || "league" }),
     });
     showToast(`✅ ${t.room_code_sent || "Xona ID yuborildi"}: ${r.code}`);
-    closeOpponentModal();
+    if (typeof closeOpponentModal === "function") closeOpponentModal();
   } catch (e) {
     const msg = {
       invalid_code: t.room_code_invalid || "Xona ID noto'g'ri (4-16 belgi).",
       chat_no_access: t.room_code_no_access || "Bu o'yinda xabar yuborib bo'lmaydi.",
+      match_not_found: t.room_code_no_access || "Bu o'yinda xabar yuborib bo'lmaydi.",
       send_failed: t.room_code_failed || "Yuborishda xatolik.",
     }[e.message] || (t.room_code_failed || "Yuborishda xatolik.");
     showToast("❌ " + msg);
@@ -2773,7 +2776,7 @@ function openOpponentModal(matchId) {
 
   const roomBtnEl = document.getElementById("opp-room-btn");
   if (roomBtnEl) {
-    roomBtnEl.addEventListener("click", () => void sendRoomCode(matchId, roomBtnEl));
+    roomBtnEl.addEventListener("click", () => void sendRoomCode(matchId, roomBtnEl, "league"));
   }
 
   const btn = document.getElementById("opp-chat-btn");
@@ -3211,6 +3214,22 @@ if (!window._chatCopyIdBound) {
 // poll'da qayta chiziladi — tugmaga to'g'ridan-to'g'ri listener qo'yib bo'lmaydi)
 // 2026-09-22: yozishmalar hisoboti tugmasi — har rejimning admin tabida.
 // Panellar qayta chizilgani uchun bitta global delegatsiya (qoida #26).
+// 2026-09-22: "Xona ID yuborish" tugmasi — barcha rejimlarning VS-oynasida.
+// Oynalar JS'dan qayta chiziladi, shuning uchun global delegatsiya (qoida #26).
+function roomCodeBtnHtml(matchId, mode) {
+  const t = APP.t || {};
+  return `<button class="opp-chat-btn opp-room-btn" data-rc-id="${matchId}" data-rc-mode="${mode}">`
+       + `🎮 ${escHtml(t.room_code_send || "Xona ID yuborish")}</button>`;
+}
+
+if (!window._roomCodeBound) {
+  window._roomCodeBound = true;
+  document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest("[data-rc-id]") : null;
+    if (btn) void sendRoomCode(btn.dataset.rcId, btn, btn.dataset.rcMode);
+  });
+}
+
 if (!window._chatReportBound) {
   window._chatReportBound = true;
   document.addEventListener("click", (e) => {

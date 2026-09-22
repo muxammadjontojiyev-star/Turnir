@@ -696,7 +696,7 @@ function divOpenOpponentModal() {
     document.body.appendChild(modal);
   }
   // Bot chati doim mavjud (bye bo'lmasa) — foydalanuvchi so'roviga ko'ra
-  const webChatBtn = `<button class="opp-chat-btn opp-webchat-btn" id="div-opp-webchat">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`;
+  const webChatBtn = `${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(m.id, "div") : ""}<button class="opp-chat-btn opp-webchat-btn" id="div-opp-webchat">${ICON.get("chat", 18)} ${escHtml(t.webchat_open || "Chatni ochish")}</button>`;
   const tgBtn = (opp.username || opp.telegram_id)
     ? `<button class="opp-chat-btn" id="div-opp-tg">${ICON.get("chat", 18)} ${escHtml(t.opp_write_button || "Raqib chatiga yozish")}</button>`
     : `<div class="opp-no-contact">${escHtml(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi")}</div>`;
