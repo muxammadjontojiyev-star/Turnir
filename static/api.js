@@ -1317,6 +1317,15 @@ async function loadAdminPanel() {
   // Katta hisob (admin_pending) ro'yxati — barcha liga adminlariga
   await loadPendingMatches();
 
+  // 2026-08-28: o'yin yozishmalari hisoboti — BARCHA liga adminlariga.
+  // (Oldin xato bilan isSuper blokida edi: HTML bo'limi hammaga ko'rinardi,
+  //  lekin tugma faqat bosh adminda ishlardi.)
+  const crBtn = document.getElementById("btn-chat-report");
+  if (crBtn && !crBtn._bound) {
+    crBtn._bound = true;
+    crBtn.addEventListener("click", () => void loadChatReport(crBtn));
+  }
+
   if (who.is_super) {
     // Bosh admin — hamma narsa
     superOnly?.classList.remove("hidden");
@@ -1368,13 +1377,6 @@ async function loadAdminPanel() {
     if (clCupBtn && !clCupBtn._bound) {
       clCupBtn._bound = true;
       clCupBtn.addEventListener("click", () => void clCupAwardSubmit(clCupBtn));
-    }
-
-    // 2026-08-28: o'yin yozishmalari hisoboti (nizolar uchun)
-    const crBtn = document.getElementById("btn-chat-report");
-    if (crBtn && !crBtn._bound) {
-      crBtn._bound = true;
-      crBtn.addEventListener("click", () => void loadChatReport(crBtn));
     }
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
