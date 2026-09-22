@@ -2789,7 +2789,7 @@ async def post_match_room_code(
 @app.get("/admin/matches/{match_id}/chat-report")
 def admin_match_chat_report(
     match_id: int,
-    admin: dict = Depends(get_authenticated_admin),
+    admin: dict = Depends(get_authenticated_league_admin),
 ):
     """
     2026-08-28: O'yin yozishmalari hisoboti — nizolarni skrinshotsiz hal qilish.
