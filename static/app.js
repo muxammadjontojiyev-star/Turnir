@@ -183,6 +183,7 @@ const TEXTS = {
     // 2026-08-28: chat tarjimasi
     chat_translate: "Tarjima",
     // 2026-08-28: xona ID
+    chat_profanity_warn: "⚠️ So'kinmang. Haqoratli so'z yashirildi (***).",
     room_code_send: "Xona ID yuborish",
     room_code_ask: "eFootball xona ID sini kiriting:",
     room_code_sending: "Yuborilmoqda...",
@@ -499,6 +500,7 @@ const TEXTS = {
     // 2026-08-28: перевод в чате
     chat_translate: "Перевод",
     // 2026-08-28: ID комнаты
+    chat_profanity_warn: "⚠️ Не ругайтесь. Оскорбительное слово скрыто (***).",
     room_code_send: "Отправить ID комнаты",
     room_code_ask: "Введите ID комнаты eFootball:",
     room_code_sending: "Отправка...",
@@ -812,6 +814,7 @@ const TEXTS = {
     // 2026-08-28: chat translation
     chat_translate: "Translate",
     // 2026-08-28: room code
+    chat_profanity_warn: "⚠️ Please don't swear. The offensive word was hidden (***).",
     room_code_send: "Send room ID",
     room_code_ask: "Enter the eFootball room ID:",
     room_code_sending: "Sending...",
