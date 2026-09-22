@@ -2712,7 +2712,7 @@ async def post_match_message(
     bir marta), unga bot orqali "Raqib sizga ilovadan xabar yubordi" bildirishnomasi
     yuboriladi (xabar matnining qisqa ko'rinishi bilan).
     """
-    ok, reason, notify = send_chat_message(match_id, user["telegram_id"], text)
+    ok, reason, notify, has_profanity = send_chat_message(match_id, user["telegram_id"], text)
     if not ok:
         if reason == "empty":
             raise HTTPException(status_code=400, detail="empty")
@@ -2736,7 +2736,9 @@ async def post_match_message(
             # lekin log qoldiramiz (qoida #44)
             logger.warning("Chat bot bildirishnomasi yuborilmadi: %s", exc)
 
-    return {"ok": True}
+    # 2026-09-22: so'kinish aniqlansa yozuvchiga ogohlantirish ko'rsatiladi.
+    # Xabar YUBORILGAN (bazada asl holida), lekin raqib "***" ko'radi.
+    return {"ok": True, "profanity": has_profanity}
 
 
 @app.post("/matches/{match_id}/room-code")

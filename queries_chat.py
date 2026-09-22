@@ -8,6 +8,7 @@ Barcha funksiyalar VERBATIM ko'chirilgan, mantiq o'zgartirilmagan.
 from models import get_connection
 from queries_users import get_user_by_telegram_id
 from queries_matchdays import get_open_matchday
+from profanity import mask_text
 
 # (2026-07-03 hotfix: bo'lishda queries_matches.py'ga tushib qolgan edi — o'z joyiga qaytarildi.
 #  wc_chat.py bularni `from queries import ...` orqali oladi — facade eksporti saqlanadi.)
@@ -107,7 +108,8 @@ def send_chat_message(match_id: int, sender_telegram_id: int, text: str):
     """
     Chat xabarini yozadi. Faqat aktiv match ishtirokchisi yuborar oladi.
 
-    Qaytaradi: (muvaffaqiyat: bool, sabab: str, notify: dict | None)
+    Qaytaradi: (muvaffaqiyat: bool, sabab: str, notify: dict | None,
+                has_profanity: bool)   # 2026-09-22: 4-element qo'shildi
       - notify None bo'lmasa, chaqiruvchi raqibga bot xabari yuborishi kerak:
         {"recipient_telegram_id": int, "sender_label": None, "text_preview": str}
         (sender_label api tomonda to'ldiriladi). Anti-spam: oxirgi bot xabaridan
@@ -115,13 +117,17 @@ def send_chat_message(match_id: int, sender_telegram_id: int, text: str):
     """
     text = (text or "").strip()
     if not text:
-        return False, "empty", None
+        return False, "empty", None, False
     if len(text) > 2000:
         text = text[:2000]
 
     access = _chat_match_access(match_id, sender_telegram_id)
     if access is None:
-        return False, "no_access", None
+        return False, "no_access", None, False
+
+    # 2026-09-22: so'kinish bormi? Matn O'ZGARTIRILMAY yoziladi (dalil uchun),
+    # bu bayroq faqat yozuvchiga ogohlantirish ko'rsatish uchun.
+    _, has_profanity = mask_text(text)
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -165,14 +171,18 @@ def send_chat_message(match_id: int, sender_telegram_id: int, text: str):
                 (match_id, access["opponent_user_id"]),
             )
             conn.commit()
-            preview = text if len(text) <= 50 else text[:50] + "..."
+            # Bildirishnoma preview'i ham yashiriladi — aks holda so'kinish
+            # Telegram xabari orqali baribir yetib borardi (qoida #11)
+            safe_preview, _ = mask_text(text)
+            preview = safe_preview if len(safe_preview) <= 50 else safe_preview[:50] + "..."
             notify = {
                 "recipient_telegram_id": recipient_tg,
                 "text_preview": preview,
             }
 
     conn.close()
-    return True, "ok", notify
+    # has_profanity — API yozuvchiga ogohlantirish ko'rsatishi uchun
+    return True, "ok", notify, has_profanity
 
 
 def count_unread_messages(requester_telegram_id: int) -> dict:
@@ -364,9 +374,13 @@ def get_chat_messages(match_id: int, requester_telegram_id: int) -> list[dict] |
     result = []
     for r in rows:
         d = dict(r)
+        # 2026-09-22: haqoratli so'z "***" bilan yashiriladi. Asl matn bazada
+        # O'ZGARISHSIZ qoladi — admin nizoda aynan ko'rishi kerak (chat_report.py).
+        # Ikkala tomon ham yashirilgan holda ko'radi (yozgan odam ham).
+        masked_text, _ = mask_text(d["text"])
         result.append({
             "id": d["id"],
-            "text": d["text"],
+            "text": masked_text,
             "created_at": d["created_at"],
             "is_read": bool(d["is_read"]),
             "mine": d["sender_id"] == my_id,
