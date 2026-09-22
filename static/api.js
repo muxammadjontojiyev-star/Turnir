@@ -1317,14 +1317,6 @@ async function loadAdminPanel() {
   // Katta hisob (admin_pending) ro'yxati — barcha liga adminlariga
   await loadPendingMatches();
 
-  // 2026-08-28: o'yin yozishmalari hisoboti — BARCHA liga adminlariga.
-  // (Oldin xato bilan isSuper blokida edi: HTML bo'limi hammaga ko'rinardi,
-  //  lekin tugma faqat bosh adminda ishlardi.)
-  const crBtn = document.getElementById("btn-chat-report");
-  if (crBtn && !crBtn._bound) {
-    crBtn._bound = true;
-    crBtn.addEventListener("click", () => void loadChatReport(crBtn));
-  }
 
   if (who.is_super) {
     // Bosh admin — hamma narsa
@@ -1520,11 +1512,37 @@ async function leaguePrizeTransferSubmit(btn) {
 //  o'chirib bo'lmaydi. Admin skrinshot so'ramasdan haqiqatni ko'radi.
 //  Vaqtlar backendda Toshkent vaqtiga o'girilgan (chat_report.py).
 // ============================================================
+// 2026-09-22: hisobot bloki har rejimning O'Z admin tabida turadi.
+// Rejim blokning data-cr-mode atributidan olinadi — bitta funksiya hammasiga
+// xizmat qiladi (qoida #26). Play-off checkbox bo'lsa data-cr-mode-po ishlatiladi.
+function chatReportBoxHtml(mode, opts) {
+  const o = opts || {};
+  const poAttr = o.playoffMode ? ` data-cr-mode-po="${o.playoffMode}"` : "";
+  const poCheck = o.playoffMode
+    ? `<label class="admin-fix-playoff-check" style="display:block;margin:6px 0">
+         <input type="checkbox" class="cr-po" /> <span>Play-off o'yini</span>
+       </label>`
+    : "";
+  return `
+    <div class="section-label">O'YIN YOZISHMALARI (NIZO UCHUN)</div>
+    <div class="admin-fix-form chat-report-box" data-cr-mode="${mode}"${poAttr}>
+      <input class="modal-input cr-id" type="number" min="1"
+             placeholder="Match ID" style="margin-bottom:8px" />
+      ${poCheck}
+      <button class="btn cr-go">🔎 Yozishmalarni ko'rish</button>
+      <div class="chat-report-out"></div>
+    </div>`;
+}
+
 async function loadChatReport(btn) {
-  const out = document.getElementById("chat-report-out");
-  const idEl = document.getElementById("chat-report-match-id");
-  const modeEl = document.getElementById("chat-report-mode");
-  const mode = modeEl?.value || "league";
+  const box = btn?.closest(".chat-report-box");
+  if (!box) return;
+  const out = box.querySelector(".chat-report-out");
+  const idEl = box.querySelector(".cr-id");
+  const poEl = box.querySelector(".cr-po");
+  const mode = (poEl && poEl.checked && box.dataset.crModePo)
+    ? box.dataset.crModePo
+    : (box.dataset.crMode || "league");
   const matchId = (idEl?.value || "").trim();
   if (!matchId) {
     if (out) out.innerHTML = `<div class="chat-report-empty">Match ID kiriting.</div>`;
@@ -3191,6 +3209,16 @@ if (!window._chatCopyIdBound) {
 
 // 2026-08-28: tarjima tugmasi ham global delegatsiya orqali (xabarlar har
 // poll'da qayta chiziladi — tugmaga to'g'ridan-to'g'ri listener qo'yib bo'lmaydi)
+// 2026-09-22: yozishmalar hisoboti tugmasi — har rejimning admin tabida.
+// Panellar qayta chizilgani uchun bitta global delegatsiya (qoida #26).
+if (!window._chatReportBound) {
+  window._chatReportBound = true;
+  document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest(".cr-go") : null;
+    if (btn) void loadChatReport(btn);
+  });
+}
+
 if (!window._chatTranslateBound) {
   window._chatTranslateBound = true;
   document.addEventListener("click", (e) => {

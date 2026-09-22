@@ -1250,7 +1250,8 @@ function divAdminFixForm() {
       </div>
       <button class="btn btn--primary btn--glow" id="div-fix-submit" ${disabled ? "disabled" : ""}
               style="opacity:${disabled ? ".45" : "1"}">Tuzatish</button>
-    </div>`;
+    </div>
+    ${typeof chatReportBoxHtml === "function" ? chatReportBoxHtml("div") : ""}`;
 }
 
 // Match ID yozilganda o'yin ma'lumotini yuklaydi (350ms debounce, liga naqshi)

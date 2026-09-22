@@ -287,7 +287,10 @@ function clAdminFixForm() {
     <button class="btn btn--ghost" id="cl-fix-cancel-result" ${disabled ? "disabled" : ""}
             style="margin-top:8px;color:var(--red-neon);border-color:rgba(255,69,96,.3);opacity:${disabled ? ".45" : "1"}">
       ${escHtml((APP.t && APP.t.admin_reset_btn) || CT("cla_cancel_result"))}
-    </button>`;
+    </button>
+    ${typeof chatReportBoxHtml === "function"
+        ? chatReportBoxHtml("cl", { playoffMode: "cl_po" })
+        : ""}`;
 }
 
 let _clFixTimer = null;

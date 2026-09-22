@@ -82,7 +82,10 @@ function wcRenderAdminPanel() {
       </div>
       <button class="btn btn--primary btn--glow" id="wc-btn-admin-fix-submit">${escHtml(t.admin_fix_submit || "Tuzatish")}</button>
       <button class="btn btn--ghost" id="wc-btn-admin-reset" style="margin-top:8px;color:var(--red-neon);border-color:rgba(255,69,96,.3)">${escHtml(t.admin_reset_btn || "Natijani bekor qilish")}</button>
-    </div>`;
+    </div>
+    ${typeof chatReportBoxHtml === "function"
+        ? chatReportBoxHtml("wc", { playoffMode: "wc_po" })
+        : ""}`;
 
   // --- Faqat bosh admin: o'yinchi chiqarish + admin tayinlash ---
   if (WC_ADMIN.isSuper) {

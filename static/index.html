@@ -283,22 +283,15 @@
             </div>
           </div>
 
-          <!-- 2026-08-28: nizolarni skrinshotsiz hal qilish uchun.
-               Bot chatidagi yozishmani hech kim o'chira olmaydi. -->
+          <!-- 2026-09-22: nizolarni skrinshotsiz hal qilish. Rejim TANLANMAYDI —
+               bu liga tabi, shuning uchun data-cr-mode="league" qat'iy.
+               ChL/Divizion/JCh panellarida o'z bloklari bor (chatReportBoxHtml). -->
           <div class="section-label">O'YIN YOZISHMALARI (NIZO UCHUN)</div>
-          <div class="admin-fix-form">
-            <select id="chat-report-mode" class="modal-input" style="margin-bottom:8px">
-              <option value="league">Liga</option>
-              <option value="cl">ChL — guruh</option>
-              <option value="cl_po">ChL — play-off</option>
-              <option value="div">Divizion</option>
-              <option value="wc">JCh — guruh</option>
-              <option value="wc_po">JCh — play-off</option>
-            </select>
-            <input id="chat-report-match-id" class="modal-input" type="number" min="1"
+          <div class="admin-fix-form chat-report-box" data-cr-mode="league">
+            <input class="modal-input cr-id" type="number" min="1"
                    placeholder="Match ID" style="margin-bottom:8px" />
-            <button class="btn" id="btn-chat-report">🔎 Yozishmalarni ko'rish</button>
-            <div id="chat-report-out" class="chat-report-out"></div>
+            <button class="btn cr-go">🔎 Yozishmalarni ko'rish</button>
+            <div class="chat-report-out"></div>
           </div>
 
           <div class="section-label" data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</div>
@@ -576,9 +569,9 @@
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
   <script src="app.js?v=20260922b"></script>
-  <script src="api.js?v=20260922c"></script>
+  <script src="api.js?v=20260922d"></script>
   <!-- 2026-07-21: Divizion tarjimalari (uz/ru/en) — app.js dagi TEXTS ga qo'shiladi -->
-  <script src="texts_division.js?v=20260810d"></script>
+  <script src="texts_division.js?v=20260922a"></script>
   <!-- 2026-07-21: ChL tarjimalari (uz/ru/en) — cl*.js dan OLDIN -->
   <script src="texts_cl.js?v=20260811a"></script>
   <!-- 2026-07-21: WC tarjimalari (yetishmagan kalitlar) — worldcup*.js dan OLDIN -->
@@ -591,13 +584,13 @@
   <script src="cl_chat.js?v=20260716a"></script>
   <script src="cl_player.js?v=20260803b"></script>
   <script src="cl_profile.js?v=20260803b"></script>
-  <script src="cl_admin.js?v=20260811a"></script>
+  <script src="cl_admin.js?v=20260922a"></script>
   <script src="cl_playoff.js?v=20260828b"></script>
   <!-- Divizion rejimi -->
-  <script src="division.js?v=20260810d"></script>
+  <script src="division.js?v=20260922a"></script>
   <script src="worldcup.js?v=20260720a"></script>
   <script src="worldcup_matches.js?v=20260719a"></script>
-  <script src="worldcup_admin.js?v=20260803b"></script>
+  <script src="worldcup_admin.js?v=20260922a"></script>
   <script src="worldcup_chat.js?v=20260922a"></script>
   <script src="worldcup_playoff.js?v=20260719a"></script>
 </body>
