@@ -2786,6 +2786,28 @@ async def post_match_room_code(
     return {"ok": True, "code": info["code"]}
 
 
+@app.get("/admin/matches/{match_id}/chat-report")
+def admin_match_chat_report(
+    match_id: int,
+    admin: dict = Depends(get_authenticated_admin),
+):
+    """
+    2026-08-28: O'yin yozishmalari hisoboti — nizolarni skrinshotsiz hal qilish.
+
+    Ishtirokchi Telegramda raqibning xabarini o'chirib "javob bermadi" deb
+    ko'rsata oladi; bot chatidagi yozishmani esa hech kim o'chira olmaydi.
+
+    Qaytaradi: to'liq yozishma (Toshkent vaqtida), har xabar o'qilgan vaqti va
+    kutish tahlili (kim kimni necha daqiqa kutdirgan).
+    FAQAT O'QIYDI — hech narsa o'zgartirmaydi.
+    """
+    from chat_report import match_chat_report
+    report = match_chat_report(match_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="match_not_found")
+    return report
+
+
 @app.get("/matches/unread")
 def get_unread_counts(user: dict = Depends(get_authenticated_user)):
     """

@@ -339,7 +339,9 @@ def get_chat_messages(match_id: int, requester_telegram_id: int) -> list[dict] |
 
     # Raqib yuborgan o'qilmaganlarni o'qilgan deb belgilaymiz
     cursor.execute(
-        "UPDATE messages SET is_read = 1 WHERE match_id = ? AND sender_id != ? AND is_read = 0",
+        # 2026-08-28: read_at ham yoziladi — nizolarda "qachon ko'rdi" kerak bo'ladi
+        "UPDATE messages SET is_read = 1, read_at = datetime('now') "
+        "WHERE match_id = ? AND sender_id != ? AND is_read = 0",
         (match_id, my_id),
     )
     conn.commit()

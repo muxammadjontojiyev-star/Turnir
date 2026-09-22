@@ -657,6 +657,11 @@ def init_db():
         "ALTER TABLE season_prizes ADD COLUMN season_kind TEXT NOT NULL DEFAULT 'league'",
         # Sovrinni DOIMIY telegram_id ga bog'lash (users o'chsa ham tarix qoladi)
         "ALTER TABLE season_prizes ADD COLUMN telegram_id INTEGER",
+        # 2026-08-28: xabar QACHON o'qilgani. Ilgari faqat is_read (ha/yo'q) bor edi —
+        # nizolarda "raqib xabarni ko'rdi, lekin javob bermadi" degan xulosani
+        # chiqarib bo'lmasdi. read_at bo'sh (NULL) bo'lsa — hali o'qilmagan yoki
+        # bu ustun qo'shilishidan OLDIN o'qilgan eski xabar.
+        "ALTER TABLE messages ADD COLUMN read_at TIMESTAMP",
     ]
     for sql in migrations:
         try:
