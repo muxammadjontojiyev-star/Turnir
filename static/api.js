@@ -1369,6 +1369,13 @@ async function loadAdminPanel() {
       clCupBtn._bound = true;
       clCupBtn.addEventListener("click", () => void clCupAwardSubmit(clCupBtn));
     }
+
+    // 2026-08-28: o'yin yozishmalari hisoboti (nizolar uchun)
+    const crBtn = document.getElementById("btn-chat-report");
+    if (crBtn && !crBtn._bound) {
+      crBtn._bound = true;
+      crBtn.addEventListener("click", () => void loadChatReport(crBtn));
+    }
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
     superOnly?.classList.add("hidden");
@@ -1502,6 +1509,71 @@ async function leaguePrizeTransferSubmit(btn) {
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+// ============================================================
+//  2026-08-28: O'YIN YOZISHMALARI HISOBOTI (admin, nizolar uchun)
+//  Ishtirokchi Telegramda raqib xabarini o'chirib "javob bermadi" deya
+//  soxta skrinshot ko'rsatmoqda. Bot chatidagi yozishma esa serverda —
+//  o'chirib bo'lmaydi. Admin skrinshot so'ramasdan haqiqatni ko'radi.
+//  Vaqtlar backendda Toshkent vaqtiga o'girilgan (chat_report.py).
+// ============================================================
+async function loadChatReport(btn) {
+  const out = document.getElementById("chat-report-out");
+  const idEl = document.getElementById("chat-report-match-id");
+  const matchId = (idEl?.value || "").trim();
+  if (!matchId) {
+    if (out) out.innerHTML = `<div class="chat-report-empty">Match ID kiriting.</div>`;
+    return;
+  }
+  if (btn) btn.disabled = true;
+  if (out) out.innerHTML = `<div class="chat-report-empty">Yuklanmoqda...</div>`;
+  try {
+    const r = await apiFetch(`/admin/matches/${matchId}/chat-report`);
+    if (out) out.innerHTML = chatReportHtml(r);
+  } catch (e) {
+    const msg = e.message === "match_not_found"
+      ? "Bunday Match ID topilmadi."
+      : "Yuklashda xatolik.";
+    if (out) out.innerHTML = `<div class="chat-report-empty">${escHtml(msg)}</div>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function chatReportHtml(r) {
+  const m = r.match;
+  if (!r.message_count) {
+    return `<div class="chat-report-empty">#${m.id} · ${escHtml(m.p1.label || "?")} vs ${escHtml(m.p2.label || "?")}<br>Bu o'yinda hech kim yozmagan.</div>`;
+  }
+
+  // Kutish tahlili eng muhim qism — tepada turadi
+  const delays = (r.delays || []).map(d => {
+    const waited = d.wait_min === null
+      ? `<b class="cr-bad">javob kelmagan</b>`
+      : `<b${d.wait_min >= 60 ? ' class="cr-bad"' : ""}>${d.wait_min} daq</b> kutdi`;
+    const seen = d.seen_min === null
+      ? "o'qilmagan"
+      : `${d.seen_min} daq ichida o'qigan`;
+    return `<div class="cr-delay">${escHtml(d.waiting_label)} ${escHtml(d.asked_at || "")} da yozdi → ${escHtml(d.replier_label)} ${seen}, ${waited}</div>`;
+  }).join("");
+
+  const lines = r.messages.map(msg => `
+    <div class="cr-msg">
+      <span class="cr-time">${escHtml(msg.sent_at || "")}</span>
+      <span class="cr-who">${escHtml(msg.sender_label)}</span>
+      <span class="cr-text">${escHtml(msg.text)}</span>
+      <span class="cr-read">${msg.read_at ? "✓✓ " + escHtml(msg.read_at) : "o'qilmagan"}</span>
+    </div>`).join("");
+
+  return `
+    <div class="cr-head">#${m.id} · ${m.matchday}-tur · ${escHtml(m.p1.label || "?")} ${m.score1 ?? "-"}:${m.score2 ?? "-"} ${escHtml(m.p2.label || "?")} · ${escHtml(m.status)}</div>
+    ${r.max_wait_min !== null ? `<div class="cr-top">Eng uzun kutish: <b>${r.max_wait_min} daqiqa</b></div>` : ""}
+    ${delays}
+    <div class="cr-sep">Yozishmalar (Toshkent vaqti)</div>
+    ${lines}
+    ${r.truncated ? `<div class="chat-report-empty">... ro'yxat qisqartirildi</div>` : ""}
+  `;
 }
 
 // ---- ChL 2-mavsum kubogini QO'LDA berish — bosh admin liga panelida (2026-08) ----
