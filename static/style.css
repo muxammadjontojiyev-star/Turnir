@@ -5005,7 +5005,9 @@ svg.wc-bracket-trophy { display: block; margin: 0 auto; }
 .opp-room-btn:active { opacity: .75; }
 .opp-room-btn:disabled { opacity: .6; }
 
-/* 2026-08-28: admin — o'yin yozishmalari hisoboti (nizolar uchun) */
+/* 2026-08-28: admin — o'yin yozishmalari hisoboti (nizolar uchun).
+   Ikki tab: Chat (odatiy puffaklar) va Xulosa (sodda jumlalar) —
+   aralashib ketmasligi uchun alohida. */
 .chat-report-out { margin-top: 10px; }
 .chat-report-empty {
   color: var(--text-secondary);
@@ -5016,42 +5018,97 @@ svg.wc-bracket-trophy { display: block; margin: 0 auto; }
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 6px 0 8px;
 }
-.cr-top {
+
+/* --- Tab'lar --- */
+.cr-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.cr-tab {
+  flex: 1;
+  padding: 7px 4px;
+  font-family: inherit;
   font-size: 13px;
-  color: var(--text-primary);
-  padding: 6px 0 2px;
-}
-.cr-delay {
-  font-size: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
   color: var(--text-secondary);
-  line-height: 1.45;
-  padding: 3px 0;
+  cursor: pointer;
+}
+.cr-tab.active {
+  background: var(--cyan-dim);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.cr-pane.hidden { display: none; }
+
+/* --- Chat tab: puffaklar --- */
+.cr-date {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 8px 0 6px;
+}
+.cr-row { display: flex; margin-bottom: 7px; }
+.cr-row.left  { justify-content: flex-start; }
+.cr-row.right { justify-content: flex-end; }
+.cr-bubble {
+  max-width: 82%;
+  padding: 7px 11px;
+  border-radius: 14px;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+}
+.cr-row.right .cr-bubble {
+  background: var(--cyan-dim);
+  border-color: var(--border-accent);
+}
+.cr-b-who {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cyan);
+  margin-bottom: 2px;
+}
+.cr-b-text {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cr-b-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+.cr-b-read { margin-left: 4px; }
+.cr-b-unread { opacity: .55; }
+
+/* --- Xulosa tab --- */
+.cr-sum-top {
+  font-size: 14px;
+  color: var(--text-primary);
+  padding: 4px 0 10px;
+}
+.cr-sum-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 11px;
+  margin-bottom: 8px;
+}
+.cr-sum-line {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+.cr-sum-note {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.4;
 }
 .cr-bad { color: #ff6b6b; }
-.cr-sep {
-  font-size: 11px;
-  letter-spacing: .08em;
-  color: var(--text-secondary);
-  margin: 10px 0 4px;
-  text-transform: uppercase;
-}
-.cr-msg {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: 4px 8px;
-  font-size: 12px;
-  line-height: 1.4;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--border);
-}
-.cr-time { color: var(--text-secondary); white-space: nowrap; }
-.cr-who  { color: var(--cyan); font-weight: 600; white-space: nowrap; }
-.cr-text { color: var(--text-primary); word-break: break-word; }
-.cr-read {
-  grid-column: 1 / -1;
-  color: var(--text-secondary);
-  font-size: 11px;
-}

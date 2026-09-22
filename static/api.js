@@ -1532,7 +1532,10 @@ async function loadChatReport(btn) {
   if (out) out.innerHTML = `<div class="chat-report-empty">Yuklanmoqda...</div>`;
   try {
     const r = await apiFetch(`/admin/matches/${matchId}/chat-report`);
-    if (out) out.innerHTML = chatReportHtml(r);
+    if (out) {
+      out.innerHTML = chatReportHtml(r);
+      bindChatReportTabs(out);
+    }
   } catch (e) {
     const msg = e.message === "match_not_found"
       ? "Bunday Match ID topilmadi."
@@ -1543,39 +1546,103 @@ async function loadChatReport(btn) {
   }
 }
 
+// Daqiqani odam o'qiydigan shaklga: 315 -> "5 soat 15 daqiqa"
+function crFmtMin(min) {
+  if (min === null || min === undefined) return null;
+  if (min < 1) return "1 daqiqadan kam";
+  if (min < 60) return `${min} daqiqa`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h} soat ${m} daqiqa` : `${h} soat`;
+}
+
+// Faqat "HH:MM" (sana sarlavhada bir marta ko'rsatiladi)
+function crTimeOnly(s) {
+  if (!s) return "";
+  const parts = String(s).split(" ");
+  return parts.length > 1 ? parts[1] : s;
+}
+
 function chatReportHtml(r) {
   const m = r.match;
   if (!r.message_count) {
     return `<div class="chat-report-empty">#${m.id} · ${escHtml(m.p1.label || "?")} vs ${escHtml(m.p2.label || "?")}<br>Bu o'yinda hech kim yozmagan.</div>`;
   }
 
-  // Kutish tahlili eng muhim qism — tepada turadi
-  const delays = (r.delays || []).map(d => {
-    const waited = d.wait_min === null
-      ? `<b class="cr-bad">javob kelmagan</b>`
-      : `<b${d.wait_min >= 60 ? ' class="cr-bad"' : ""}>${d.wait_min} daq</b> kutdi`;
-    const seen = d.seen_min === null
-      ? "o'qilmagan"
-      : `${d.seen_min} daq ichida o'qigan`;
-    return `<div class="cr-delay">${escHtml(d.waiting_label)} ${escHtml(d.asked_at || "")} da yozdi → ${escHtml(d.replier_label)} ${seen}, ${waited}</div>`;
+  // --- CHAT TAB: odatiy puffaklar. P1 chapda, P2 o'ngda ---
+  let lastDate = "";
+  const bubbles = r.messages.map(msg => {
+    const mine = msg.sender_user_id === m.p2.user_id;   // P2 o'ngda
+    const date = (msg.sent_at || "").split(" ")[0];
+    let sep = "";
+    if (date && date !== lastDate) {
+      lastDate = date;
+      sep = `<div class="cr-date">${escHtml(date)}</div>`;
+    }
+    const read = msg.read_at
+      ? `<span class="cr-b-read" title="o'qilgan">✓✓ ${escHtml(crTimeOnly(msg.read_at))}</span>`
+      : `<span class="cr-b-read cr-b-unread">✓</span>`;
+    return `${sep}
+      <div class="cr-row ${mine ? "right" : "left"}">
+        <div class="cr-bubble">
+          <div class="cr-b-who">${escHtml(msg.sender_label)}</div>
+          <div class="cr-b-text">${escHtml(msg.text)}</div>
+          <div class="cr-b-meta">${escHtml(crTimeOnly(msg.sent_at))} ${read}</div>
+        </div>
+      </div>`;
   }).join("");
 
-  const lines = r.messages.map(msg => `
-    <div class="cr-msg">
-      <span class="cr-time">${escHtml(msg.sent_at || "")}</span>
-      <span class="cr-who">${escHtml(msg.sender_label)}</span>
-      <span class="cr-text">${escHtml(msg.text)}</span>
-      <span class="cr-read">${msg.read_at ? "✓✓ " + escHtml(msg.read_at) : "o'qilmagan"}</span>
-    </div>`).join("");
+  // --- XULOSA TAB: sodda jumlalar ---
+  const top = r.max_wait_min !== null
+    ? `<div class="cr-sum-top">Eng uzun javob kutish: <b>${escHtml(crFmtMin(r.max_wait_min))}</b></div>`
+    : "";
+
+  const sum = (r.delays || []).map(d => {
+    const seen = d.seen_min === null
+      ? `<span class="cr-bad">Xabarni o'qimagan.</span>`
+      : `Xabarni <b>${escHtml(crFmtMin(d.seen_min))}</b> ichida o'qigan.`;
+    const replied = d.wait_min === null
+      ? `<span class="cr-bad">Javob umuman kelmagan.</span>`
+      : `Javob <b${d.wait_min >= 60 ? ' class="cr-bad"' : ""}>${escHtml(crFmtMin(d.wait_min))}</b> o'tib keldi (${escHtml(crTimeOnly(d.replied_at))}).`;
+    return `
+      <div class="cr-sum-card">
+        <div class="cr-sum-line"><b>${escHtml(d.waiting_label)}</b> ${escHtml(crTimeOnly(d.asked_at))} da yozdi.</div>
+        <div class="cr-sum-line"><b>${escHtml(d.replier_label)}</b>: ${seen}</div>
+        <div class="cr-sum-line">${replied}</div>
+      </div>`;
+  }).join("");
 
   return `
     <div class="cr-head">#${m.id} · ${m.matchday}-tur · ${escHtml(m.p1.label || "?")} ${m.score1 ?? "-"}:${m.score2 ?? "-"} ${escHtml(m.p2.label || "?")} · ${escHtml(m.status)}</div>
-    ${r.max_wait_min !== null ? `<div class="cr-top">Eng uzun kutish: <b>${r.max_wait_min} daqiqa</b></div>` : ""}
-    ${delays}
-    <div class="cr-sep">Yozishmalar (Toshkent vaqti)</div>
-    ${lines}
-    ${r.truncated ? `<div class="chat-report-empty">... ro'yxat qisqartirildi</div>` : ""}
+    <div class="cr-tabs">
+      <button class="cr-tab active" data-cr-tab="chat">💬 Chat</button>
+      <button class="cr-tab" data-cr-tab="sum">📊 Xulosa</button>
+    </div>
+    <div class="cr-pane" data-cr-pane="chat">
+      ${bubbles}
+      ${r.truncated ? `<div class="chat-report-empty">... ro'yxat qisqartirildi</div>` : ""}
+    </div>
+    <div class="cr-pane hidden" data-cr-pane="sum">
+      ${top}
+      ${sum || `<div class="chat-report-empty">Tahlil uchun yetarli xabar yo'q.</div>`}
+      <div class="cr-sum-note">Vaqtlar Toshkent vaqtida. "O'qigan" — xabarni ilovada ochgan vaqti.</div>
+    </div>
   `;
+}
+
+// Tab almashtirish. innerHTML har safar qayta yoziladi, shuning uchun
+// bog'lanish hisobot chizilgandan KEYIN chaqiriladi.
+function bindChatReportTabs(root) {
+  if (!root) return;
+  root.querySelectorAll(".cr-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const name = tab.dataset.crTab;
+      root.querySelectorAll(".cr-tab").forEach(t => t.classList.toggle("active", t === tab));
+      root.querySelectorAll(".cr-pane").forEach(p => {
+        p.classList.toggle("hidden", p.dataset.crPane !== name);
+      });
+    });
+  });
 }
 
 // ---- ChL 2-mavsum kubogini QO'LDA berish — bosh admin liga panelida (2026-08) ----
