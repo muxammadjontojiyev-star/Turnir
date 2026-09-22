@@ -83,7 +83,7 @@ def div_get_messages(match_id: int, requester_id: int) -> list[dict] | None:
             return None
         # Raqib yozgan xabarlarni MEN o'qidim — belgilaymiz (✓✓ raqibda paydo bo'ladi)
         cursor.execute(
-            "UPDATE div_messages SET is_read = 1 "
+            "UPDATE div_messages SET is_read = 1, read_at = datetime('now') "
             "WHERE match_id = ? AND sender_id != ? AND is_read = 0",
             (match_id, requester_id),
         )

@@ -95,7 +95,7 @@ def cl_po_get_messages(match_id: int, requester_id: int) -> list[dict] | None:
         if parts is None or requester_id not in parts:
             return None
         cursor.execute(
-            "UPDATE cl_po_messages SET is_read = 1 "
+            "UPDATE cl_po_messages SET is_read = 1, read_at = datetime('now') "
             "WHERE match_id = ? AND sender_id != ? AND is_read = 0",
             (match_id, requester_id),
         )

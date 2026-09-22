@@ -255,7 +255,7 @@ def wc_get_chat_messages(match_id: int, requester_telegram_id: int, is_playoff: 
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE wc_messages SET is_read = 1 WHERE match_id = ? AND sender_id != ? AND is_read = 0 AND is_playoff = ?",
+        "UPDATE wc_messages SET is_read = 1, read_at = datetime('now') WHERE match_id = ? AND sender_id != ? AND is_read = 0 AND is_playoff = ?",
         (match_id, my_id, is_playoff),
     )
     conn.commit()

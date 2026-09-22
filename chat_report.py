@@ -33,6 +33,37 @@ TASHKENT_TZ = timezone(timedelta(hours=5))
 # Hisobotda ko'rsatiladigan maksimal xabar soni
 MAX_MESSAGES = 200
 
+# 2026-09-22: barcha rejimlar. Har rejimda o'z jadvallari va "tur" ustuni bor,
+# qolgan mantiq (vaqt, kutish tahlili) BIR XIL — shuning uchun so'rov
+# shakllantiriladi, funksiya takrorlanmaydi (qoida #26 DRY).
+#   msg_table   — xabarlar jadvali
+#   match_table — o'yinlar jadvali
+#   round_col   — "tur" ma'nosidagi ustun (yo'q bo'lsa None)
+#   round_label — admin ko'radigan nom
+#   playoff     — wc_messages'da is_playoff filtri kerakmi (None = kerak emas)
+#   has_club    — klub nomi registrations'dan olinadimi (faqat liga)
+MODES = {
+    "league": {"msg_table": "messages",        "match_table": "matches",
+               "round_col": "matchday", "round_label": "tur",
+               "playoff": None, "has_club": True,  "title": "Liga"},
+    "cl":     {"msg_table": "cl_messages",     "match_table": "cl_matches",
+               "round_col": "matchday", "round_label": "tur",
+               "playoff": None, "has_club": False, "title": "ChL guruh"},
+    "cl_po":  {"msg_table": "cl_po_messages",  "match_table": "cl_playoff_matches",
+               "round_col": "round",    "round_label": "bosqich",
+               "playoff": None, "has_club": False, "title": "ChL play-off"},
+    "div":    {"msg_table": "div_messages",    "match_table": "div_matches",
+               "round_col": "day",      "round_label": "kun",
+               "playoff": None, "has_club": False, "title": "Divizion"},
+    "wc":     {"msg_table": "wc_messages",     "match_table": "wc_matches",
+               "round_col": "matchday", "round_label": "tur",
+               "playoff": 0,    "has_club": False, "title": "JCh guruh"},
+    "wc_po":  {"msg_table": "wc_messages",     "match_table": "wc_playoff_matches",
+               "round_col": "round",    "round_label": "bosqich",
+               "playoff": 1,    "has_club": False, "title": "JCh play-off"},
+}
+DEFAULT_MODE = "league"
+
 
 def _to_tashkent(raw: str | None) -> str | None:
     """SQLite UTC vaqtini ('YYYY-MM-DD HH:MM:SS') Toshkent vaqtiga o'giradi."""
@@ -58,9 +89,11 @@ def _minutes_between(a: str | None, b: str | None) -> int | None:
         return None
 
 
-def match_chat_report(match_id: int) -> dict | None:
+def match_chat_report(match_id: int, mode: str = DEFAULT_MODE) -> dict | None:
     """
-    O'yin yozishmalari hisoboti. Match topilmasa None.
+    O'yin yozishmalari hisoboti. Match topilmasa (yoki rejim noto'g'ri) None.
+
+    mode: MODES kalitlaridan biri (league / cl / cl_po / div / wc / wc_po).
 
     Qaytaradi:
       {
@@ -79,21 +112,34 @@ def match_chat_report(match_id: int) -> dict | None:
       wait_min  — javob kutilgan daqiqa (javob kelmagan bo'lsa None)
       seen_min  — xabar yozilgandan o'qilgunicha (ko'rdimi va qachon)
     """
+    cfg = MODES.get(mode)
+    if cfg is None:
+        logger.warning("Noma'lum rejim: %r", mode)
+        return None
+
+    # Ustun nomlari MODES'dan keladi (foydalanuvchi kiritmaydi) — SQL injection
+    # xavfi yo'q (qoida #29: faqat qiymatlar parametrlashtiriladi).
+    round_sel = f"m.{cfg['round_col']} AS round_value" if cfg["round_col"] else "NULL AS round_value"
+    club_sel = ("r1.club_name AS p1_club, r2.club_name AS p2_club"
+                if cfg["has_club"] else "NULL AS p1_club, NULL AS p2_club")
+    club_join = ("LEFT JOIN registrations r1 ON r1.user_id = m.player1_id "
+                 "LEFT JOIN registrations r2 ON r2.user_id = m.player2_id"
+                 if cfg["has_club"] else "")
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            """
-            SELECT m.id, m.matchday, m.status, m.score1, m.score2,
+            f"""
+            SELECT m.id, {round_sel}, m.status, m.score1, m.score2,
                    m.player1_id, m.player2_id,
                    u1.username AS p1_username, u1.nickname AS p1_nickname,
                    u2.username AS p2_username, u2.nickname AS p2_nickname,
-                   r1.club_name AS p1_club, r2.club_name AS p2_club
-            FROM matches m
+                   {club_sel}
+            FROM {cfg['match_table']} m
             LEFT JOIN users u1 ON u1.id = m.player1_id
             LEFT JOIN users u2 ON u2.id = m.player2_id
-            LEFT JOIN registrations r1 ON r1.user_id = m.player1_id
-            LEFT JOIN registrations r2 ON r2.user_id = m.player2_id
+            {club_join}
             WHERE m.id = ?
             """,
             (match_id,),
@@ -115,10 +161,18 @@ def match_chat_report(match_id: int) -> dict | None:
             m["player2_id"]: m["p2_club"],
         }
 
+        # wc_messages guruh va play-off xabarlarini BIR jadvalda saqlaydi —
+        # is_playoff bilan ajratiladi (qoida #11)
+        playoff_where = " AND is_playoff = ?" if cfg["playoff"] is not None else ""
+        params = [match_id]
+        if cfg["playoff"] is not None:
+            params.append(cfg["playoff"])
+        params.append(MAX_MESSAGES + 1)
         cursor.execute(
-            "SELECT id, sender_id, text, is_read, created_at, read_at "
-            "FROM messages WHERE match_id = ? ORDER BY id LIMIT ?",
-            (match_id, MAX_MESSAGES + 1),
+            f"SELECT id, sender_id, text, is_read, created_at, read_at "
+            f"FROM {cfg['msg_table']} WHERE match_id = ?{playoff_where} "
+            f"ORDER BY id LIMIT ?",
+            tuple(params),
         )
         rows = [dict(r) for r in cursor.fetchall()]
     finally:
@@ -181,8 +235,11 @@ def match_chat_report(match_id: int) -> dict | None:
     waits = [d["wait_min"] for d in delays if d["wait_min"] is not None]
 
     return {
+        "mode": mode,
+        "mode_title": cfg["title"],
+        "round_label": cfg["round_label"],
         "match": {
-            "id": m["id"], "matchday": m["matchday"], "status": m["status"],
+            "id": m["id"], "matchday": m["round_value"], "status": m["status"],
             "score1": m["score1"], "score2": m["score2"],
             "p1": {"user_id": m["player1_id"], "label": labels.get(m["player1_id"]),
                    "club": m["p1_club"]},

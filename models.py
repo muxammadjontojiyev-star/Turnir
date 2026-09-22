@@ -662,6 +662,11 @@ def init_db():
         # chiqarib bo'lmasdi. read_at bo'sh (NULL) bo'lsa — hali o'qilmagan yoki
         # bu ustun qo'shilishidan OLDIN o'qilgan eski xabar.
         "ALTER TABLE messages ADD COLUMN read_at TIMESTAMP",
+        # 2026-09-22: read_at barcha rejimlarga (nizo hisoboti hamma yerda ishlashi uchun)
+        "ALTER TABLE cl_messages ADD COLUMN read_at TIMESTAMP",
+        "ALTER TABLE cl_po_messages ADD COLUMN read_at TIMESTAMP",
+        "ALTER TABLE div_messages ADD COLUMN read_at TIMESTAMP",
+        "ALTER TABLE wc_messages ADD COLUMN read_at TIMESTAMP",
     ]
     for sql in migrations:
         try:

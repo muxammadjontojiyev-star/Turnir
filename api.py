@@ -2793,6 +2793,7 @@ async def post_match_room_code(
 @app.get("/admin/matches/{match_id}/chat-report")
 def admin_match_chat_report(
     match_id: int,
+    mode: str = "league",
     admin: dict = Depends(get_authenticated_league_admin),
 ):
     """
@@ -2804,9 +2805,14 @@ def admin_match_chat_report(
     Qaytaradi: to'liq yozishma (Toshkent vaqtida), har xabar o'qilgan vaqti va
     kutish tahlili (kim kimni necha daqiqa kutdirgan).
     FAQAT O'QIYDI — hech narsa o'zgartirmaydi.
+
+    mode (2026-09-22): league | cl | cl_po | div | wc | wc_po.
+    Har rejimning o'z jadvallari bor (chat_report.MODES).
     """
-    from chat_report import match_chat_report
-    report = match_chat_report(match_id)
+    from chat_report import match_chat_report, MODES
+    if mode not in MODES:
+        raise HTTPException(status_code=400, detail="bad_mode")
+    report = match_chat_report(match_id, mode)
     if report is None:
         raise HTTPException(status_code=404, detail="match_not_found")
     return report
