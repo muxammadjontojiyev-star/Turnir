@@ -57,11 +57,19 @@ def wc_register_user(user_id: int, group_letter: str, team_name: str) -> tuple[b
 
     Qaytaradi: (muvaffaqiyat: bool, sabab: str)
     Sabablar: "ok", "wc_already_registered", "wc_group_full",
-              "wc_invalid_group", "wc_invalid_team", "wc_team_taken"
+              "wc_invalid_group", "wc_invalid_team", "wc_team_taken",
+              "wc_not_eligible" (2026-09-22)
     """
     # WC_TEAMS_PER_GROUP markazlashtirilgan (wc_data) — guruh to'lganini tekshirish uchun
     import sqlite3
     from wc_data import wc_is_valid_group, wc_team_in_group, WC_TEAMS_PER_GROUP
+
+    # 2026-09-22: OCHIQ RO'YXATDAN O'TISH YO'Q. Faqat Divizion mavsumi
+    # yakunlanganda top-48 ga kirgan ishtirokchi o'ta oladi (wc_eligibility).
+    # Server tomonida tekshiriladi — klient tekshiruvi yetarli emas (qoida #41).
+    from wc_eligibility import is_wc_eligible
+    if not is_wc_eligible(user_id):
+        return False, "wc_not_eligible"
 
     # Statik (DB'siz) validatsiyalar — tranzaksiyadan tashqarida tez fail
     if not wc_is_valid_group(group_letter):

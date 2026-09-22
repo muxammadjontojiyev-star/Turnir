@@ -168,6 +168,16 @@ def finalize_division_season(season: str | None = None) -> tuple[bool, str, dict
         if medals:
             saved["medals"] = medals
 
+        # 2026-09-22: JCh'da ro'yxatdan o'tish huquqi — reytingdagi TOP-48.
+        # Sovrinlar bilan BIR tranzaksiyada (yarim bajarilgan holat bo'lmasin).
+        # Eski ro'yxat o'chiriladi — huquq har mavsumda qaytadan qo'lga
+        # kiritiladi (admin qarori).
+        from division import div_rating
+        from wc_eligibility import rebuild_wc_eligible
+        day, _ = _season_context(season)
+        saved["wc_eligible_count"] = rebuild_wc_eligible(
+            cursor, season_number, div_rating(day))
+
         cursor.execute("COMMIT")
         logger.info("Divizion %s-mavsum yakunlandi: kubok=%s butsa=%s medal=%s",
                     season_number,

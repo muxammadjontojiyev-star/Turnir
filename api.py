@@ -753,11 +753,17 @@ def wc_get_profile(user: dict = Depends(get_authenticated_user)):
     reytingidagi statistikasi (o'rin/g'alaba/durang/mag'lubiyat). Ro'yxatdan
     o'tmagan bo'lsa registered=False.
     """
+    # 2026-09-22: JCh'ga faqat Divizion top-48 ro'yxatdan o'ta oladi —
+    # frontend shu holatga qarab tugmani yoki tushuntirishni ko'rsatadi
+    from wc_eligibility import wc_eligibility_status
+    eligibility = wc_eligibility_status(user["id"])
+
     reg = wc_get_user_registration(user["id"])
     if reg is None:
         return {
             "registered": False, "group_letter": None, "team_name": None,
             "user_id": user["id"], "rating": None,
+            "eligibility": eligibility,
         }
     from wc_rating import get_wc_player_position
     pos = get_wc_player_position(reg["group_letter"], user["id"])
@@ -767,6 +773,7 @@ def wc_get_profile(user: dict = Depends(get_authenticated_user)):
         "team_name": reg["team_name"],
         "user_id": user["id"],
         "rating": pos,  # {position, wins, draws, losses, ...} yoki None
+        "eligibility": eligibility,
     }
 
 

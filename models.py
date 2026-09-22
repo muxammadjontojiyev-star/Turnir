@@ -610,6 +610,25 @@ def init_db():
         )
     """)
 
+    # === wc_eligible (2026-09-22) — JCh'da ro'yxatdan o'tish huquqi ===
+    # Divizion mavsumi yakunlanganda top-48 shu yerga yoziladi (eski ro'yxat
+    # o'chiriladi). JCh sig'imi ham roppa-rosa 48 (12 guruh x 4).
+    # Oddiy ro'yxatdan o'tish yo'q — faqat shu jadvaldagilar o'ta oladi.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wc_eligible (
+            user_id INTEGER PRIMARY KEY,
+            telegram_id INTEGER,
+            place INTEGER NOT NULL,
+            season_number INTEGER NOT NULL,
+            points INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_wc_eligible_tg ON wc_eligible(telegram_id)"
+    )
+
     # === chat_translations (2026-08-28) — tarjima keshi ===
     # Bir xil matn qayta-qayta tarjima qilinmasin (tashqi xizmatga so'rov
     # kamayadi, javob tez qaytadi). cache_key = sha256(target_lang + matn) —
