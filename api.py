@@ -2739,6 +2739,53 @@ async def post_match_message(
     return {"ok": True}
 
 
+@app.post("/matches/{match_id}/room-code")
+async def post_match_room_code(
+    match_id: int,
+    code: str = Body(..., embed=True),
+    user: dict = Depends(get_authenticated_user),
+):
+    """
+    2026-08-28: eFootball xona ID sini raqibga yuboradi.
+    Body: {"code": "8472913"}
+
+    Kod chat xabari sifatida saqlanadi (dalil izi qoladi) va raqibga bot
+    bildirishnomasi yuboriladi — KOD BILDIRISHNOMANING O'ZIDA ko'rinadi,
+    ya'ni raqib ilovani ochmasdan nusxa ola oladi.
+
+    Oddiy chat xabaridan FARQI: anti-spam throttle QO'LLANILMAYDI — xona ID
+    vaqtga bog'liq, raqib uni darhol olishi shart.
+
+    Xatolar: invalid_code → 400, no_access → 403, send_failed → 500.
+    """
+    from room_code import send_room_code
+    ok, reason, info = send_room_code(match_id, user["telegram_id"], code)
+    if not ok:
+        if reason == "invalid_code":
+            raise HTTPException(status_code=400, detail="invalid_code")
+        if reason == "no_access":
+            raise HTTPException(status_code=403, detail="chat_no_access")
+        raise HTTPException(status_code=500, detail="send_failed")
+
+    if info["recipient_telegram_id"] is not None:
+        try:
+            recipient = get_user_by_telegram_id(info["recipient_telegram_id"])
+            lang = recipient.get("language") if recipient else None
+            await notify_user(
+                info["recipient_telegram_id"],
+                "notify_room_code",
+                lang,
+                open_button_key="btn_open_app",
+                mode=t("mode_name_league", lang),
+                code=info["code"],
+            )
+        except Exception as exc:
+            # Kod DB'ga yozildi — bildirishnoma yiqilsa javobni buzmaymiz (qoida #44)
+            logger.warning("Xona ID bildirishnomasi yuborilmadi: %s", exc)
+
+    return {"ok": True, "code": info["code"]}
+
+
 @app.get("/matches/unread")
 def get_unread_counts(user: dict = Depends(get_authenticated_user)):
     """

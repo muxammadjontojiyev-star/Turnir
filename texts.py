@@ -162,6 +162,13 @@ TEXTS = {
         LANGUAGE_RU: "💬 Ваш соперник ({mode}) отправил вам сообщение:\n«{preview}»\nОткройте приложение, чтобы ответить.",
         LANGUAGE_EN: "💬 Your {mode} opponent sent you a message:\n«{preview}»\nOpen the app to reply.",
     },
+    # 2026-08-28: eFootball xona ID si — kod BILDIRISHNOMANING O'ZIDA ko'rinadi,
+    # raqib ilovani ochmasdan nusxa ola oladi (maqsad: qadamni kamaytirish)
+    "notify_room_code": {
+        LANGUAGE_UZ: "🎮 {mode} raqibingiz xona ochdi.\nXona ID: {code}\nO'yinga kiring va natijani ilovada tasdiqlang.",
+        LANGUAGE_RU: "🎮 Ваш соперник ({mode}) создал комнату.\nID комнаты: {code}\nЗайдите в игру и подтвердите результат в приложении.",
+        LANGUAGE_EN: "🎮 Your {mode} opponent created a room.\nRoom ID: {code}\nJoin the match and confirm the result in the app.",
+    },
     # Xabar ostidagi "ilovani ochish" tugmasi (chat bildirishnomalari uchun)
     "btn_open_app": {
         LANGUAGE_UZ: "📲 Ilovani ochish",
