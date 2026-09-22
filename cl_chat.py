@@ -230,7 +230,8 @@ def cl_count_unread(user_id: int) -> dict:
             WHERE msg.is_read = 0
               AND msg.sender_id != ?
               AND (m.player1_id = ? OR m.player2_id = ?)
-              AND m.status IN ('pending', 'awaiting_confirmation')
+              -- 2026-09-22: status filtri OLIB TASHLANDI — chat o'yin
+              -- tasdiqlangach ham ochiq, rozetka ham sanashi kerak (qoida #11)
             GROUP BY msg.match_id
             """,
             (user_id, user_id, user_id),

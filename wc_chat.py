@@ -12,7 +12,7 @@ from models import get_connection
 from profanity import mask_text
 from queries import (
     get_user_by_telegram_id,
-    CHAT_ACTIVE_MATCH_STATUSES, CHAT_NOTIFY_THROTTLE_SECONDS,
+    CHAT_NOTIFY_THROTTLE_SECONDS,
     ONLINE_THRESHOLD_SECONDS, TYPING_THRESHOLD_SECONDS,
 )
 
@@ -45,8 +45,11 @@ def _wc_chat_access(match_id: int, requester_telegram_id: int, is_playoff: int =
     if row is None:
         return None
     m = dict(row)
-    if m["status"] not in CHAT_ACTIVE_MATCH_STATUSES:
-        return None
+    # 2026-09-22: status guard OLIB TASHLANDI — chat o'yin tasdiqlangach ham
+    # ochiq qoladi, yozishmalar saqlanadi (nizolarda dalif kerak).
+    # Ligada oxirgi 4 tur cheklovi bor (38 tur), WC guruh bosqichi esa atigi
+    # WC_TOTAL_MATCHDAYS = 3 tur — cheklov ma'nosiz. ChL va Divizion
+    # access'ida ham status guard yo'q (qoida #26 — bir xil xatti-harakat).
 
     if m["p1_tg"] == requester_telegram_id:
         my_id, opp_id = m["p1"], m["p2"]
@@ -142,7 +145,7 @@ def wc_count_unread_messages(requester_telegram_id: int) -> dict:
           AND msg.is_playoff = 0
           AND msg.sender_id != ?
           AND (m.player1_id = ? OR m.player2_id = ?)
-          AND m.status IN ('pending', 'awaiting_confirmation')
+          -- 2026-09-22: status filtri olib tashlandi (qoida #11)
         GROUP BY msg.match_id
         """,
         (my_id, my_id, my_id),
@@ -159,7 +162,7 @@ def wc_count_unread_messages(requester_telegram_id: int) -> dict:
           AND msg.is_playoff = 1
           AND msg.sender_id != ?
           AND (m.player1_id = ? OR m.player2_id = ?)
-          AND m.status IN ('pending', 'awaiting_confirmation')
+          -- 2026-09-22: status filtri olib tashlandi (qoida #11)
         GROUP BY msg.match_id
         """,
         (my_id, my_id, my_id),
