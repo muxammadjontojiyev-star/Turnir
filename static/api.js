@@ -1523,6 +1523,8 @@ async function leaguePrizeTransferSubmit(btn) {
 async function loadChatReport(btn) {
   const out = document.getElementById("chat-report-out");
   const idEl = document.getElementById("chat-report-match-id");
+  const modeEl = document.getElementById("chat-report-mode");
+  const mode = modeEl?.value || "league";
   const matchId = (idEl?.value || "").trim();
   if (!matchId) {
     if (out) out.innerHTML = `<div class="chat-report-empty">Match ID kiriting.</div>`;
@@ -1531,15 +1533,16 @@ async function loadChatReport(btn) {
   if (btn) btn.disabled = true;
   if (out) out.innerHTML = `<div class="chat-report-empty">Yuklanmoqda...</div>`;
   try {
-    const r = await apiFetch(`/admin/matches/${matchId}/chat-report`);
+    const r = await apiFetch(`/admin/matches/${matchId}/chat-report?mode=${encodeURIComponent(mode)}`);
     if (out) {
       out.innerHTML = chatReportHtml(r);
       bindChatReportTabs(out);
     }
   } catch (e) {
-    const msg = e.message === "match_not_found"
-      ? "Bunday Match ID topilmadi."
-      : "Yuklashda xatolik.";
+    const msg = {
+      match_not_found: "Bu rejimda bunday Match ID topilmadi.",
+      bad_mode: "Rejim noto'g'ri.",
+    }[e.message] || "Yuklashda xatolik.";
     if (out) out.innerHTML = `<div class="chat-report-empty">${escHtml(msg)}</div>`;
   } finally {
     if (btn) btn.disabled = false;
@@ -1571,10 +1574,19 @@ function crClubLogo(clubName) {
   return `<img class="cr-club" src="${escHtml(logo)}" alt="${safe}" title="${safe}">`;
 }
 
+// Tur ko'rsatkichi: raqam bo'lsa "3-tur", matn bo'lsa "bosqich: 1/8"
+function crRoundText(value, label) {
+  if (value === null || value === undefined || value === "") return "";
+  const lbl = escHtml(label || "tur");
+  return /^\d+$/.test(String(value))
+    ? ` · ${escHtml(String(value))}-${lbl}`
+    : ` · ${lbl}: ${escHtml(String(value))}`;
+}
+
 function chatReportHtml(r) {
   const m = r.match;
   if (!r.message_count) {
-    return `<div class="chat-report-empty">#${m.id} · ${escHtml(m.p1.label || "?")} vs ${escHtml(m.p2.label || "?")}<br>Bu o'yinda hech kim yozmagan.</div>`;
+    return `<div class="chat-report-empty">${escHtml(r.mode_title || "")} · #${m.id} · ${escHtml(m.p1.label || "?")} vs ${escHtml(m.p2.label || "?")}<br>Bu o'yinda hech kim yozmagan.</div>`;
   }
 
   // --- CHAT TAB: odatiy puffaklar. P1 chapda, P2 o'ngda ---
@@ -1621,7 +1633,7 @@ function chatReportHtml(r) {
   }).join("");
 
   return `
-    <div class="cr-head">#${m.id} · ${m.matchday}-tur · ${escHtml(m.status)}</div>
+    <div class="cr-head">${escHtml(r.mode_title || "")} · #${m.id}${crRoundText(m.matchday, r.round_label)} · ${escHtml(m.status)}</div>
     <div class="cr-head-vs">
       ${crClubLogo(m.p1.club)}<span>${escHtml(m.p1.label || "?")}</span>
       <b>${m.score1 ?? "-"}:${m.score2 ?? "-"}</b>
@@ -3210,10 +3222,15 @@ async function sendWebChatMessage() {
 
   input.value = "";
   try {
-    await apiFetch(`${APP.chatUrlPrefix || "/matches"}/${matchId}/messages`, {
+    const r = await apiFetch(`${APP.chatUrlPrefix || "/matches"}/${matchId}/messages`, {
       method: "POST",
       body: JSON.stringify({ text }),
     });
+    // 2026-09-22: so'kinish aniqlansa yozuvchiga ogohlantirish.
+    // Xabar yuborilgan, lekin haqoratli so'z "***" bo'lib ko'rinadi.
+    if (r && r.profanity) {
+      showToast(APP.t.chat_profanity_warn || "⚠️ So'kinmang. Haqoratli so'z yashirildi (***).");
+    }
     await loadWebChatMessages();
     const box = document.getElementById("webchat-messages");
     if (box) box.scrollTop = box.scrollHeight;

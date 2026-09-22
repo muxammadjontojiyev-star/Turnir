@@ -287,6 +287,14 @@
                Bot chatidagi yozishmani hech kim o'chira olmaydi. -->
           <div class="section-label">O'YIN YOZISHMALARI (NIZO UCHUN)</div>
           <div class="admin-fix-form">
+            <select id="chat-report-mode" class="modal-input" style="margin-bottom:8px">
+              <option value="league">Liga</option>
+              <option value="cl">ChL — guruh</option>
+              <option value="cl_po">ChL — play-off</option>
+              <option value="div">Divizion</option>
+              <option value="wc">JCh — guruh</option>
+              <option value="wc_po">JCh — play-off</option>
+            </select>
             <input id="chat-report-match-id" class="modal-input" type="number" min="1"
                    placeholder="Match ID" style="margin-bottom:8px" />
             <button class="btn" id="btn-chat-report">🔎 Yozishmalarni ko'rish</button>
@@ -568,7 +576,7 @@
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
   <script src="app.js?v=20260922b"></script>
-  <script src="api.js?v=20260922b"></script>
+  <script src="api.js?v=20260922c"></script>
   <!-- 2026-07-21: Divizion tarjimalari (uz/ru/en) — app.js dagi TEXTS ga qo'shiladi -->
   <script src="texts_division.js?v=20260810d"></script>
   <!-- 2026-07-21: ChL tarjimalari (uz/ru/en) — cl*.js dan OLDIN -->
