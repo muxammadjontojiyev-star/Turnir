@@ -5112,3 +5112,27 @@ svg.wc-bracket-trophy { display: block; margin: 0 auto; }
   line-height: 1.4;
 }
 .cr-bad { color: #ff6b6b; }
+
+/* 2026-09-22: hisobotdagi klub logolari — admin qaysi klubga ochko
+   berishni tez tushunsin */
+.cr-club {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: -3px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+.cr-head-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-primary);
+  padding-bottom: 8px;
+}
+.cr-head-vs .cr-club { margin-right: 0; }
+.cr-head-vs b { font-size: 14px; }

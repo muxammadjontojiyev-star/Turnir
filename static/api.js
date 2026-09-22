@@ -1563,6 +1563,14 @@ function crTimeOnly(s) {
   return parts.length > 1 ? parts[1] : s;
 }
 
+// Hisobotdagi kichik klub logosi (nom bo'yicha topiladi — findClubLogo)
+function crClubLogo(clubName) {
+  const logo = findClubLogo(clubName);
+  const safe = escHtml(clubName || "");
+  if (!logo) return "";
+  return `<img class="cr-club" src="${escHtml(logo)}" alt="${safe}" title="${safe}">`;
+}
+
 function chatReportHtml(r) {
   const m = r.match;
   if (!r.message_count) {
@@ -1585,7 +1593,7 @@ function chatReportHtml(r) {
     return `${sep}
       <div class="cr-row ${mine ? "right" : "left"}">
         <div class="cr-bubble">
-          <div class="cr-b-who">${escHtml(msg.sender_label)}</div>
+          <div class="cr-b-who">${crClubLogo(msg.sender_club)}${escHtml(msg.sender_label)}</div>
           <div class="cr-b-text">${escHtml(msg.text)}</div>
           <div class="cr-b-meta">${escHtml(crTimeOnly(msg.sent_at))} ${read}</div>
         </div>
@@ -1606,14 +1614,19 @@ function chatReportHtml(r) {
       : `Javob <b${d.wait_min >= 60 ? ' class="cr-bad"' : ""}>${escHtml(crFmtMin(d.wait_min))}</b> o'tib keldi (${escHtml(crTimeOnly(d.replied_at))}).`;
     return `
       <div class="cr-sum-card">
-        <div class="cr-sum-line"><b>${escHtml(d.waiting_label)}</b> ${escHtml(crTimeOnly(d.asked_at))} da yozdi.</div>
-        <div class="cr-sum-line"><b>${escHtml(d.replier_label)}</b>: ${seen}</div>
+        <div class="cr-sum-line">${crClubLogo(d.waiting_club)}<b>${escHtml(d.waiting_label)}</b> ${escHtml(crTimeOnly(d.asked_at))} da yozdi.</div>
+        <div class="cr-sum-line">${crClubLogo(d.replier_club)}<b>${escHtml(d.replier_label)}</b>: ${seen}</div>
         <div class="cr-sum-line">${replied}</div>
       </div>`;
   }).join("");
 
   return `
-    <div class="cr-head">#${m.id} · ${m.matchday}-tur · ${escHtml(m.p1.label || "?")} ${m.score1 ?? "-"}:${m.score2 ?? "-"} ${escHtml(m.p2.label || "?")} · ${escHtml(m.status)}</div>
+    <div class="cr-head">#${m.id} · ${m.matchday}-tur · ${escHtml(m.status)}</div>
+    <div class="cr-head-vs">
+      ${crClubLogo(m.p1.club)}<span>${escHtml(m.p1.label || "?")}</span>
+      <b>${m.score1 ?? "-"}:${m.score2 ?? "-"}</b>
+      <span>${escHtml(m.p2.label || "?")}</span>${crClubLogo(m.p2.club)}
+    </div>
     <div class="cr-tabs">
       <button class="cr-tab active" data-cr-tab="chat">💬 Chat</button>
       <button class="cr-tab" data-cr-tab="sum">📊 Xulosa</button>
