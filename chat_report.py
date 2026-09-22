@@ -87,10 +87,13 @@ def match_chat_report(match_id: int) -> dict | None:
             SELECT m.id, m.matchday, m.status, m.score1, m.score2,
                    m.player1_id, m.player2_id,
                    u1.username AS p1_username, u1.nickname AS p1_nickname,
-                   u2.username AS p2_username, u2.nickname AS p2_nickname
+                   u2.username AS p2_username, u2.nickname AS p2_nickname,
+                   r1.club_name AS p1_club, r2.club_name AS p2_club
             FROM matches m
             LEFT JOIN users u1 ON u1.id = m.player1_id
             LEFT JOIN users u2 ON u2.id = m.player2_id
+            LEFT JOIN registrations r1 ON r1.user_id = m.player1_id
+            LEFT JOIN registrations r2 ON r2.user_id = m.player2_id
             WHERE m.id = ?
             """,
             (match_id,),
@@ -103,6 +106,13 @@ def match_chat_report(match_id: int) -> dict | None:
         labels = {
             m["player1_id"]: m["p1_username"] or m["p1_nickname"] or f"#{m['player1_id']}",
             m["player2_id"]: m["p2_username"] or m["p2_nickname"] or f"#{m['player2_id']}",
+        }
+        # 2026-09-22: klub nomi ham — admin qaysi klubga ochko berishni tez tushunsin.
+        # Logo frontendda nom bo'yicha topiladi (api.js findClubLogo), shuning uchun
+        # bu yerda faqat NOM qaytariladi (qoida #26 — logo jadvali takrorlanmaydi).
+        clubs = {
+            m["player1_id"]: m["p1_club"],
+            m["player2_id"]: m["p2_club"],
         }
 
         cursor.execute(
@@ -121,6 +131,7 @@ def match_chat_report(match_id: int) -> dict | None:
         "id": r["id"],
         "sender_user_id": r["sender_id"],
         "sender_label": labels.get(r["sender_id"], f"#{r['sender_id']}"),
+        "sender_club": clubs.get(r["sender_id"]),
         "text": r["text"],
         "sent_at": _to_tashkent(r["created_at"]),
         "read_at": _to_tashkent(r.get("read_at")),
@@ -140,7 +151,9 @@ def match_chat_report(match_id: int) -> dict | None:
             delays.append({
                 "waiting_user_id": block_start["sender_id"],
                 "waiting_label": labels.get(block_start["sender_id"], "?"),
+                "waiting_club": clubs.get(block_start["sender_id"]),
                 "replier_label": labels.get(r["sender_id"], "?"),
+                "replier_club": clubs.get(r["sender_id"]),
                 "asked_at": _to_tashkent(block_start["created_at"]),
                 "replied_at": _to_tashkent(r["created_at"]),
                 "wait_min": _minutes_between(block_start["created_at"], r["created_at"]),
@@ -156,7 +169,9 @@ def match_chat_report(match_id: int) -> dict | None:
         delays.append({
             "waiting_user_id": block_start["sender_id"],
             "waiting_label": labels.get(block_start["sender_id"], "?"),
+            "waiting_club": clubs.get(block_start["sender_id"]),
             "replier_label": labels.get(opponent_id, "?"),
+            "replier_club": clubs.get(opponent_id),
             "asked_at": _to_tashkent(block_start["created_at"]),
             "replied_at": None,          # javob kelmagan
             "wait_min": None,
@@ -169,8 +184,10 @@ def match_chat_report(match_id: int) -> dict | None:
         "match": {
             "id": m["id"], "matchday": m["matchday"], "status": m["status"],
             "score1": m["score1"], "score2": m["score2"],
-            "p1": {"user_id": m["player1_id"], "label": labels.get(m["player1_id"])},
-            "p2": {"user_id": m["player2_id"], "label": labels.get(m["player2_id"])},
+            "p1": {"user_id": m["player1_id"], "label": labels.get(m["player1_id"]),
+                   "club": m["p1_club"]},
+            "p2": {"user_id": m["player2_id"], "label": labels.get(m["player2_id"]),
+                   "club": m["p2_club"]},
         },
         "messages": messages,
         "delays": delays,
