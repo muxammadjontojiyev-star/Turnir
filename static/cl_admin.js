@@ -56,6 +56,9 @@ async function clLoadAdminPanel() {
   const drawn = !!(CL.groups && CL.groups.drawn);
   const st = CL.state || {};
   const started = !!st.started;
+  // 2026-09-22: eskirgan holat (o'tgan mavsumdan qolgan) — backend stale deydi.
+  // Bunday holatda tugma OCHIQ bo'ladi, bosilsa 1-turdan qayta boshlanadi.
+  const stale = !!st.stale;
   panel.classList.remove("hidden");
   // 2026-07-22: qur'a / kalendar / akkount almashtirish / o'yin+play-off boshlash —
   // FAQAT bosh admin. Tayinlangan ChL admin faqat natija tuzatishni ko'radi.
@@ -88,11 +91,13 @@ async function clLoadAdminPanel() {
       <button class="btn" id="cl-admin-reassign">👤 Akkountni almashtirish</button>
 
       <div style="font-size:12.5px;opacity:.75;margin:12px 0 8px">
-        ${started
-          ? CT("cla_started_hint").replace("{cur}", st.current_matchday).replace("{total}", st.total_matchdays)
-          : CT("cla_start_hint")}
+        ${stale
+          ? `<b style="color:#ff6b6b">⚠️ Tur holati eskirgan (o'tgan mavsumdan qolgan): ${st.current_matchday}-tur ko'rsatilmoqda, lekin hech bir o'yin o'ynalmagan. Shu sababli barcha turlar YOPIQ. "O'yinlarni boshlash" ni bosing — 1-tur ochiladi.</b>`
+          : (started
+            ? CT("cla_started_hint").replace("{cur}", st.current_matchday).replace("{total}", st.total_matchdays)
+            : CT("cla_start_hint"))}
       </div>
-      <button class="btn btn--primary" id="cl-admin-start" ${started ? "disabled" : ""}>
+      <button class="btn btn--primary" id="cl-admin-start" ${started && !stale ? "disabled" : ""}>
         ${ICON.get("play", 16)} O'yinlarni boshlash
       </button>` : ""}
 
