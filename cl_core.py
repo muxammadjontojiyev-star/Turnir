@@ -165,6 +165,14 @@ def cl_draw(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, "already_drawn"
 
+        # 2026-09-22: YANGI qur'a — shu mavsumning tur holati (cl_state) ham
+        # toza boshlanishi SHART. Ilgari tozalanmasdi: o'tgan ChL mavsumidan qolgan
+        # "started=1, current_matchday=9" holati yangi o'yinlar ustiga tushib,
+        # barcha turlar YOPIQ ko'rinardi va "O'yinlarni boshlash" o'chiq qolardi.
+        # Xavfsiz: bu yerga faqat shu mavsumda BIRORTA o'yin yo'q bo'lsa kelinadi
+        # (yuqoridagi already_drawn guard), ya'ni hech qanday tur yo'qolmaydi.
+        cursor.execute("DELETE FROM cl_state WHERE season = ?", (season,))
+
         # Kvalifikantlarni (36 ta) shu tranzaksiya ichida ishtirokchiga aylantiramiz
         _seed_participants_from_qualifiers(cursor, season)
 

@@ -52,6 +52,30 @@ def _total_matchdays(cursor, season: int) -> int:
     return cursor.fetchone()["m"]
 
 
+def _is_stale_state(cursor, season: int, current: int) -> bool:
+    """
+    2026-09-22: cl_state ESKIRGANmi? (o'tgan ChL mavsumidan qolib ketgan holat)
+
+    Belgisi: current_matchday > 1, lekin shu mavsumda BIRORTA ham o'yin
+    'pending' dan boshqa holatga o'tmagan.
+
+    Nega bu ishonchli: haqiqiy mavsumda har deadline (cl_tick) oldingi turni
+    confirmed qiladi. Ya'ni current >= 2 bo'lsa, kamida 1-tur o'yinlari allaqachon
+    confirmed bo'ladi. "current > 1 va hammasi pending" — faqat YANGI qur'a
+    ESKI holat ustiga tushganda yuz beradi (cl_draw cl_state'ni tozalamasdi).
+
+    XAVF: eskirgan holatda cl_tick yangi mavsumning barcha turlarini 0:0 bilan
+    yopib yuborardi (_resolve_matchdays_upto). Shuning uchun tick buni tekshiradi.
+    """
+    if not current or current <= 1:
+        return False
+    cursor.execute(
+        "SELECT 1 FROM cl_matches WHERE season = ? AND status != 'pending' LIMIT 1",
+        (season,),
+    )
+    return cursor.fetchone() is None
+
+
 def cl_get_state(season: int | None = None) -> dict:
     """{season, started, current_matchday, total_matchdays, finished}"""
     conn = get_connection()
@@ -67,9 +91,13 @@ def cl_get_state(season: int | None = None) -> dict:
         started = bool(row["started"]) if row else False
         current = row["current_matchday"] if row else 0
         total = _total_matchdays(cursor, season)
+        stale = bool(started and _is_stale_state(cursor, season, current))
         return {"season": season, "started": started, "current_matchday": current,
                 "total_matchdays": total,
-                "finished": bool(started and total and current > total)}
+                # Eskirgan holatda "tugagan" deb ko'rsatilmaydi
+                "finished": bool(started and total and current > total and not stale),
+                # 2026-09-22: admin "O'yinlarni boshlash" ni qayta bosa olishi uchun
+                "stale": stale}
     finally:
         conn.close()
 
@@ -89,11 +117,20 @@ def cl_start_rounds(season: int | None = None) -> tuple[bool, str | dict]:
             cursor.execute("ROLLBACK")
             return False, "not_drawn"
 
-        cursor.execute("SELECT started FROM cl_state WHERE season = ?", (season,))
+        cursor.execute(
+            "SELECT started, current_matchday FROM cl_state WHERE season = ?", (season,))
         row = cursor.fetchone()
         if row and row["started"]:
-            cursor.execute("ROLLBACK")
-            return False, "already_started"
+            # 2026-09-22: eskirgan holat bo'lsa (o'tgan mavsumdan qolgan) —
+            # to'xtatmaymiz, 1-turdan qaytadan boshlaymiz. Hech qanday natija
+            # yo'qolmaydi: eskirgan holatda barcha o'yinlar 'pending'.
+            if _is_stale_state(cursor, season, row["current_matchday"]):
+                logger.warning(
+                    "ChL: eskirgan cl_state tuzatildi (mavsum %s, %s-tur -> 1-tur)",
+                    season, row["current_matchday"])
+            else:
+                cursor.execute("ROLLBACK")
+                return False, "already_started"
 
         cursor.execute(
             "INSERT INTO cl_state (season, started, current_matchday, last_advance_date) "
@@ -182,6 +219,19 @@ def cl_tick(season: int | None = None) -> dict | None:
 
         total = _total_matchdays(cursor, season)
         current = row["current_matchday"]
+
+        # 2026-09-22: ESKIRGAN holat — yangi qur'a eski holat ustiga tushgan.
+        # Bu yerda davom etsak, _resolve_matchdays_upto yangi mavsumning
+        # BARCHA turlarini 0:0 bilan yopib yuborardi. Admin "O'yinlarni
+        # boshlash" ni bosguncha hech narsa qilmaymiz.
+        if _is_stale_state(cursor, season, current):
+            cursor.execute("ROLLBACK")
+            logger.warning(
+                "ChL tick O'TKAZIB YUBORILDI: cl_state eskirgan (mavsum %s, %s-tur, "
+                "barcha o'yinlar pending). Admin 'O'yinlarni boshlash'ni bosishi kerak.",
+                season, current)
+            return None
+
         if current > total:                            # guruh bosqichi tugagan
             # 2026-08-28: tugagan bo'lsa ham qolib ketgan o'yinlarni yopamiz.
             # Ilgari bu yerda shunchaki ROLLBACK/None bo'lardi — natijada
