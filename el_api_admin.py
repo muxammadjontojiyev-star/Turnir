@@ -89,3 +89,23 @@ def el_participant_reassign(
     if not ok:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}
+
+
+# ============ Mavsumni yakunlash (faqat bosh admin) ============
+
+@router.post("/season/el/finalize")
+def season_el_finalize(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    Final g'olibi YeL kubogini oladi (season_prizes, doimiy — profil va ★), so'ng
+    YeL ma'lumoti tozalanadi. Qaytarib bo'lmaydi.
+    Xato: already_finalized / no_champion -> 400
+    """
+    from el_finalize import EL_PRIZE_CUP, finalize_el_season
+    result = finalize_el_season()
+    if result.get("already"):
+        raise HTTPException(status_code=400, detail="already_finalized")
+    if result.get("reason") == "no_champion":
+        raise HTTPException(status_code=400, detail="no_champion")
+    return {"status": "ok", "season": result["season"], "counts": result["counts"],
+            "champion": (result.get("prizes") or {}).get(EL_PRIZE_CUP)}
+

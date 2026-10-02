@@ -76,6 +76,13 @@ def el_rating_all(user: dict = Depends(get_authenticated_user)):
     return {"groups": groups}
 
 
+@router.get("/el/cup-holder")
+def el_cup_holder():
+    """YeL kubogi egasi (Sovrinlar sahifasi). Ochiq — /cl/cup-holder bilan bir xil."""
+    from el_finalize import get_el_cup_holder
+    return get_el_cup_holder()
+
+
 # ============ Turlar ============
 
 @router.get("/el/state")

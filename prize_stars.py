@@ -18,7 +18,7 @@ from models import get_connection
 
 # Yulduzcha beriladigan sovrin turlari — faqat kuboklar
 # 2026-08: div_cup qo'shildi (Divizion mavsumi 1-o'rni ham kubok — yulduzcha beradi).
-CUP_PRIZE_TYPES = ("league_cup", "wc_cup", "cl_cup", "div_cup")
+CUP_PRIZE_TYPES = ("league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup")  # 2026-10-02: +el_cup
 
 
 def get_cup_star_counts() -> dict:

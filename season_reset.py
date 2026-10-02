@@ -51,6 +51,12 @@ _CL_TABLES = [
     "cl_playoff_matches", "cl_matches", "cl_participants", "cl_qualifiers",
 ]
 
+# 2026-10-02: Yevropa ligasi kontenti (users, season_prizes TEGILMAYDI).
+_EL_TABLES = [
+    "el_po_messages", "el_messages",
+    "el_playoff_matches", "el_matches", "el_participants", "el_qualifiers",
+]
+
 
 def reset_league_data() -> dict:
     """
@@ -161,3 +167,32 @@ def reset_cl_data() -> dict:
         raise
     conn.close()
     return {"tables": counts}
+
+
+def reset_el_data() -> dict:
+    """
+    2026-10-02: YeL ma'lumotlarini tozalaydi (mavsum yakunlangach) — reset_cl_data naqshi.
+    O'chiriladi: _EL_TABLES + el_state, el_playoff_state (barcha mavsum qatorlari).
+    users, season_prizes — TEGILMAYDI (kubok tarixi saqlanadi).
+    Qaytaradi: {"tables": {jadval: o'chirilgan_qatorlar}}
+    """
+    conn = _reset_connection()
+    cursor = conn.cursor()
+    counts = {}
+    try:
+        cursor.execute("BEGIN")
+        for tbl in _EL_TABLES + ["el_state", "el_playoff_state"]:
+            cursor.execute(f"DELETE FROM {tbl}")   # nomlar KODDAN (qoida #29)
+            counts[tbl] = cursor.rowcount
+        cursor.execute("COMMIT")
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            logger.exception("reset_el_data: ROLLBACK xatosi")
+        conn.close()
+        logger.exception("reset_el_data xatosi")
+        raise
+    conn.close()
+    return {"tables": counts}
+

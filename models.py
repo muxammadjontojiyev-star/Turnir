@@ -852,6 +852,8 @@ def init_db():
         # 2026-10-02: Yevropa ligasi O'ZINING mavsum raqami (cl_season kabi) —
         # ko'rsatish uchun; "YeL mavsumini yakunlash"da oshadi (6-bosqich).
         "ALTER TABLE season_state ADD COLUMN el_season INTEGER NOT NULL DEFAULT 1",
+        # 2026-10-02: YeL mavsumini yakunlashda takror bosishdan cooldown (cl_last_finalized_at kabi)
+        "ALTER TABLE season_state ADD COLUMN el_last_finalized_at TIMESTAMP",
     ]
     for sql in migrations:
         try:

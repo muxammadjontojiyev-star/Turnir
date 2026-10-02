@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 # ko'chirishda user_id VA telegram_id ikkovini yangilaymiz (qoida #11).
 TRANSFERABLE_PRIZE_TYPES = (
     # Kuboklar (yulduzcha beradi)
-    "league_cup", "wc_cup", "cl_cup", "div_cup",
+    "league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup",
     # Individual sovrinlar (yulduzcha bermaydi)
     "golden_ball", "golden_boot", "wc_golden_boot", "div_boot",
     # Divizion medalyonlari (1/2/3-o'rin)
@@ -45,6 +45,7 @@ PRIZE_LABELS_UZ = {
     "wc_cup": "Jahon chempionati kubogi",
     "cl_cup": "Chempionlar ligasi kubogi",
     "div_cup": "Divizion kubogi",
+    "el_cup": "Yevropa ligasi kubogi",
     "golden_ball": "Oltin to'p",
     "golden_boot": "Oltin butsa",
     "wc_golden_boot": "JCh oltin butsa",
