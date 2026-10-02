@@ -147,6 +147,19 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: ChL tur siljitishda xato: %s", exc)
 
+    # === YEVROPA LIGASI: 23:30 da joriy tur yopiladi, keyingisi ochiladi (ChL bilan bir xil) ===
+    try:
+        from el_rounds import el_tick
+        el_res = el_tick()
+        if el_res:
+            logger.info(
+                "Scheduler: YeL %d-tur yopildi (awaiting: %d, 0:0: %d) → %d-tur ochildi.",
+                el_res["closed_matchday"], el_res["awaiting_resolved"],
+                el_res["pending_resolved"], el_res["opened_matchday"],
+            )
+    except Exception as exc:
+        logger.warning("Scheduler: YeL tur siljitishda xato: %s", exc)
+
     # === PLAY-OFF (barcha rejim): 23:30 da AWAITING o'yinlar avtomatik tasdiqlanadi ===
     # 2026-07-22 (talab 2): play-off'da durang yo'q — hisob KIRITILGAN (awaiting)
     # o'yinlar deadline'da confirmed bo'ladi; hisob KIRITILMAGAN (pending) kataklar

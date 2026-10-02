@@ -1518,18 +1518,6 @@ def cl_qualifiers(user: dict = Depends(get_authenticated_user)):
     return data
 
 
-@app.get("/el/qualifiers")
-def el_qualifiers(user: dict = Depends(get_authenticated_user)):
-    """
-    Yevropa ligasi kvalifikantlari (oxirgi yakunlangan mavsum bo'yicha).
-    me_qualified — so'rovchi ishtirokchi YeL'ga chiqqanmi.
-    """
-    from el_qualification import get_el_qualifiers, is_el_qualifier
-    data = get_el_qualifiers()
-    data["me_qualified"] = is_el_qualifier(user["telegram_id"], data["from_season"])
-    return data
-
-
 @app.get("/cl/groups")
 def cl_groups(user: dict = Depends(get_authenticated_user)):
     """
@@ -3403,3 +3391,10 @@ async def admin_undo_resolve(league_id: int, admin: dict = Depends(get_authentic
 
     return {"status": "ok", "league_id": league_id, "reopened": reopened,
             "from_md": deadline_md, "to_md": open_md}
+
+
+# ============ YEVROPA LIGASI (router — el_api.py) ============
+# Fayl OXIRIDA: el_api auth dependency'larini shu moduldan import qiladi
+# (ular yuqorida e'lon qilingan). Yangi YeL endpointlari el_api.py'ga yoziladi.
+from el_api import router as el_router  # noqa: E402
+app.include_router(el_router)

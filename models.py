@@ -226,6 +226,44 @@ def init_db():
         "ON el_participants(season, group_number)"
     )
 
+    # === el_matches (Yevropa ligasi liga bosqichi o'yinlari — cl_matches bilan bir xil) ===
+    # Swiss: barcha ishtirokchi group_number=EL_LEAGUE_GROUP, 8 tur, mehmon o'yinisiz.
+    # status oqimi: pending -> awaiting_confirmation -> confirmed / admin_pending.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            season INTEGER NOT NULL,
+            group_number INTEGER NOT NULL,
+            matchday INTEGER NOT NULL,
+            player1_id INTEGER NOT NULL,
+            player2_id INTEGER NOT NULL,
+            score1 INTEGER,
+            score2 INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            submitted_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (player1_id) REFERENCES users(id),
+            FOREIGN KEY (player2_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_el_matches_season_group "
+        "ON el_matches(season, group_number, matchday)"
+    )
+
+    # === el_state (YeL tur boshqaruvi — cl_state bilan bir xil) ===
+    # started=0 -> hamma turlar yopiq; admin boshlaganda 1-tur ochiladi;
+    # har kuni 23:30 (Toshkent) da joriy tur yopiladi (el_rounds.el_tick).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_state (
+            season INTEGER PRIMARY KEY,
+            started INTEGER NOT NULL DEFAULT 0,
+            current_matchday INTEGER NOT NULL DEFAULT 0,
+            last_advance_date TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # === cl_participants (Chempionlar ligasi ishtirokchilari — joriy mavsum) ===
     # Kvalifikant (cl_qualifiers) yangi mavsumda liga ro'yxatidan o'tgach shu
     # jadvalga sinxronlanadi (cl_core.cl_sync_participants) — YANGI tanlagan
@@ -740,6 +778,9 @@ def init_db():
         # (reytingda kafolatlangan minimum DIV_BYE_MIN ko'rinadi).
         "ALTER TABLE div_matches ADD COLUMN bye_points INTEGER",
         "ALTER TABLE div_matches ADD COLUMN bye_wheel INTEGER NOT NULL DEFAULT 0",
+        # 2026-10-02: Yevropa ligasi O'ZINING mavsum raqami (cl_season kabi) —
+        # ko'rsatish uchun; "YeL mavsumini yakunlash"da oshadi (6-bosqich).
+        "ALTER TABLE season_state ADD COLUMN el_season INTEGER NOT NULL DEFAULT 1",
     ]
     for sql in migrations:
         try:
