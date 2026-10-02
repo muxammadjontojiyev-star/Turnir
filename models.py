@@ -204,6 +204,28 @@ def init_db():
         "CREATE INDEX IF NOT EXISTS idx_el_qualifiers_season ON el_qualifiers(from_season)"
     )
 
+    # === el_participants (Yevropa ligasi ishtirokchilari — cl_participants bilan bir xil) ===
+    # Kvalifikant (el_qualifiers) telegram_id orqali eslab qolinadi; yangi mavsumda
+    # istalgan klub bilan liga ro'yxatidan o'tsa shu jadvalga sinxronlanadi
+    # (el_core.el_sync_participants). group_number: qur'adan keyin; ungacha NULL.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_participants (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            season INTEGER NOT NULL,
+            telegram_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            nickname TEXT,
+            club_name TEXT,
+            group_number INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (telegram_id, season)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_el_participants_season_group "
+        "ON el_participants(season, group_number)"
+    )
+
     # === cl_participants (Chempionlar ligasi ishtirokchilari — joriy mavsum) ===
     # Kvalifikant (cl_qualifiers) yangi mavsumda liga ro'yxatidan o'tgach shu
     # jadvalga sinxronlanadi (cl_core.cl_sync_participants) — YANGI tanlagan

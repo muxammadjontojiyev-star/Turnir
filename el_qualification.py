@@ -4,9 +4,13 @@ Yevropa ligasi (YeL) kvalifikatsiyasi.
 Qoida (loyiha egasi): liga mavsumi yakunlanganda 5 ta liga reytingidan:
   - har ligadan 8..14-o'rinlar, qualified_via='top14'
     (ChL'ga ketgan ENG YAXSHI 8-o'rin bundan CHIQARILADI — u ChL'da)
-  - 15-o'rin egalaridan ENG YAXSHI 1 tasi (achko > gol farqi > urilgan gol),
+  - 15-o'rin egalaridan ENG YAXSHI 2 tasi (achko > gol farqi > urilgan gol),
     qualified_via='best15'
-Jami: 4 (qolgan 8-o'rinlar) + 30 (9..14) + 1 = 35 ishtirokchi.
+Jami: 4 (qolgan 8-o'rinlar) + 30 (9..14) + 2 = 36 ishtirokchi (ChL bilan teng —
+Swiss formatida juft son, hech kim o'yinsiz qolmaydi).
+
+Kirish huquqi ODAMGA (telegram_id) tegishli: keyingi mavsumda boshqa klub
+tanlasa ham YeL'da qatnashadi (el_core.el_sync_participants).
 
 ChL bilan bog'liqlik: 8-o'rin chegarasi cl_qualification konstantalaridan
 hisoblanadi (qoida #17) — ChL qoidasi o'zgarsa, YeL avtomatik moslashadi.
@@ -28,8 +32,8 @@ logger = logging.getLogger(__name__)
 EL_FIRST_POS = CL_TOP_N + 1   # 8 — ChL'ning to'g'ridan-to'g'ri chegarasidan keyin
 EL_LAST_POS = 14              # har ligadan oxirgi to'g'ridan-to'g'ri o'rin
 EL_BEST_POS = EL_LAST_POS + 1 # 15 — eng yaxshilari saralanadigan o'rin
-EL_BEST_COUNT = 1             # eng yaxshi 15-o'rinlar soni
-EL_TOTAL = 35
+EL_BEST_COUNT = 2             # eng yaxshi 15-o'rinlar soni
+EL_TOTAL = 36
 
 
 def compute_el_qualifiers(exclude_telegram_ids: set[int] | None = None) -> list[dict]:
