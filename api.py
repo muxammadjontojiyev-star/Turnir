@@ -76,7 +76,7 @@ from membership import is_user_subscribed
 from admin_roles import (
     is_super_admin, is_scope_admin, add_admin, remove_admin, list_admins,
     assign_league, unassign_league, get_admin_league_ids, can_manage_league,
-    SCOPE_LEAGUE, SCOPE_WC, SCOPE_CL, SCOPE_DIVISION, VALID_SCOPES,
+    SCOPE_LEAGUE, SCOPE_WC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, VALID_SCOPES,
 )
 from wc_chat import (
     wc_send_chat_message, wc_get_chat_messages, wc_count_unread_messages,
@@ -2842,6 +2842,7 @@ CHAT_REPORT_SCOPES = {
     "cl": SCOPE_CL, "cl_po": SCOPE_CL,
     "div": SCOPE_DIVISION,
     "wc": SCOPE_WC, "wc_po": SCOPE_WC,
+    "el": SCOPE_EL,
 }
 
 

@@ -61,6 +61,9 @@ MODES = {
     "wc_po":  {"msg_table": "wc_messages",     "match_table": "wc_playoff_matches",
                "round_col": "round",    "round_label": "bosqich",
                "playoff": 1,    "has_club": False, "title": "JCh play-off"},
+    "el":     {"msg_table": "el_messages",     "match_table": "el_matches",
+               "round_col": "matchday", "round_label": "tur",
+               "playoff": None, "has_club": False, "title": "YeL"},
 }
 DEFAULT_MODE = "league"
 

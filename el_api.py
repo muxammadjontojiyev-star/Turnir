@@ -11,7 +11,9 @@ import xavfsiz. api.py'dagi auth/rate-limit dependency'lari qayta ishlatiladi
 (DRY, qoida #26) — ChL endpointlari bilan bir xil himoya.
 """
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+import logging
+
+from fastapi import APIRouter, Body, Depends, Header, HTTPException
 
 from api import (
     _authenticated_scope_admin,
@@ -19,7 +21,12 @@ from api import (
     get_authenticated_user,
     validate_scores,
 )
+from notify import notify_user
+from profanity import contains_profanity
+from queries import get_user_by_telegram_id
+from texts import t
 
+logger = logging.getLogger("el_api")
 router = APIRouter()
 
 
@@ -180,3 +187,118 @@ def el_scorers(user: dict = Depends(get_authenticated_user)):
     from el_scorers import el_top_scorers
     from season_prizes import get_league_season
     return {"scorers": el_top_scorers(get_league_season())}
+
+
+# ============ Chat (liga/ChL webchat modali bilan bir xil format) ============
+# MUHIM: /el/matches/unread — /el/matches/{match_id}/... dan farqli yo'l (segment soni
+# har xil), shuning uchun tartib to'qnashuvi yo'q.
+
+@router.get("/el/matches/unread")
+def el_unread(user: dict = Depends(get_authenticated_user)):
+    """O'qilmagan YeL chat xabarlari: {"total", "by_match"} (liga formati)."""
+    from el_chat import el_count_unread
+    return el_count_unread(user["id"])
+
+
+@router.get("/el/matches/{match_id}/messages")
+def el_chat_get(match_id: int, user: dict = Depends(get_authenticated_user)):
+    from el_chat import el_get_messages
+    msgs = el_get_messages(match_id, user["id"])
+    if msgs is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"messages": msgs}
+
+
+@router.post("/el/matches/{match_id}/messages")
+async def el_chat_send(match_id: int, text: str = Body(..., embed=True),
+                       user: dict = Depends(get_authenticated_user)):
+    """YeL chatiga xabar. Body: {"text": "..."}. Raqibga bot bildirishnomasi."""
+    from el_chat import el_send_message
+    success, reason, notify = el_send_message(match_id, user["id"], text)
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    if notify is not None:
+        try:
+            recipient = get_user_by_telegram_id(notify["recipient_telegram_id"])
+            lang = recipient.get("language") if recipient else None
+            await notify_user(
+                notify["recipient_telegram_id"], "notify_chat_message", lang,
+                open_button_key="btn_open_app",
+                mode=t("mode_name_el", lang),
+                preview=notify["text_preview"],
+            )
+        except Exception as exc:
+            logger.warning("YeL chat bildirishnomasi yuborilmadi: %s", exc)
+    return {"status": "ok", "profanity": contains_profanity(text)}
+
+
+@router.post("/el/matches/{match_id}/typing")
+def el_chat_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
+    from el_chat import el_set_typing
+    if not el_set_typing(match_id, user["id"]):
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"status": "ok"}
+
+
+@router.get("/el/matches/{match_id}/state")
+def el_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
+    from el_chat import el_get_chat_state
+    state = el_get_chat_state(match_id, user["id"])
+    if state is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return state
+
+
+# ============ Admin: natija tuzatish (bosh admin YOKI YeL admini) ============
+
+@router.get("/el/admin/match/{match_id}/info")
+def el_admin_match_info(match_id: int, admin: dict = Depends(get_authenticated_el_admin)):
+    from el_admin_fix import el_admin_get_match_info
+    info = el_admin_get_match_info(match_id)
+    if info is None:
+        raise HTTPException(status_code=404, detail="match_not_found")
+    return info
+
+
+@router.post("/el/admin/match/set-result")
+def el_admin_set_result(match_id: int, score1: int, score2: int,
+                        admin: dict = Depends(get_authenticated_el_admin)):
+    """Istalgan statusdan -> confirmed (katta hisob qarori ham shu)."""
+    validate_scores(score1, score2)
+    from el_admin_fix import el_admin_set_result as _set
+    ok, reason = _set(match_id, score1, score2)
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+@router.post("/el/admin/match/cancel")
+def el_admin_match_cancel(match_id: int, admin: dict = Depends(get_authenticated_el_admin)):
+    """Natijani bekor qiladi -> pending (ishtirokchilar qayta kiritadi)."""
+    from el_admin_fix import el_admin_cancel_match
+    ok, reason = el_admin_cancel_match(match_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+# ============ Admin: ishtirokchini yangi akkountga ko'chirish (faqat bosh admin) ============
+
+@router.get("/el/participants/all")
+def el_participants_all(admin: dict = Depends(get_authenticated_super_admin)):
+    from el_participant_admin import el_list_all_participants
+    return {"participants": el_list_all_participants()}
+
+
+@router.post("/el/participant/reassign")
+def el_participant_reassign(
+    old_user_id: int = Body(..., embed=True),
+    new_telegram_id: int = Body(..., embed=True),
+    admin: dict = Depends(get_authenticated_super_admin),
+):
+    """Xato: new_user_not_found, nothing_to_reassign, new_already_participant -> 400"""
+    from el_participant_admin import el_reassign_participant
+    ok, result = el_reassign_participant(old_user_id, new_telegram_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}

@@ -191,6 +191,11 @@ TEXTS = {
         LANGUAGE_RU: "Лига чемпионов",
         LANGUAGE_EN: "Champions League",
     },
+    "mode_name_el": {
+        LANGUAGE_UZ: "Yevropa ligasi",
+        LANGUAGE_RU: "Лига Европы",
+        LANGUAGE_EN: "Europa League",
+    },
     "mode_name_division": {
         LANGUAGE_UZ: "Divizion",
         LANGUAGE_RU: "Дивизион",

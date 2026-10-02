@@ -251,6 +251,24 @@ def init_db():
         "ON el_matches(season, group_number, matchday)"
     )
 
+    # === el_messages (YeL o'yin ichidagi chat — cl_messages bilan bir xil) ===
+    # read_at boshidan bor (nizo hisoboti — chat_report.MODES['el']).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            read_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES el_matches(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_el_messages_match ON el_messages(match_id)"
+    )
+
     # === el_state (YeL tur boshqaruvi — cl_state bilan bir xil) ===
     # started=0 -> hamma turlar yopiq; admin boshlaganda 1-tur ochiladi;
     # har kuni 23:30 (Toshkent) da joriy tur yopiladi (el_rounds.el_tick).

@@ -54,6 +54,7 @@ MODE_NAME_KEYS = {
     "div": "mode_name_division",
     "wc": "mode_name_worldcup",
     "wc_po": "mode_name_worldcup",
+    "el": "mode_name_el",
 }
 
 
