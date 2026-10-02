@@ -236,6 +236,7 @@ const TEXTS = {
     prizes_title:       "SOVRINLAR",
     wc_trophy_name:     "Jahon Chempionati Kubogi",
     cl_trophy_name:     "Chempionlar Ligasi Kubogi",
+    el_trophy_name:     "Yevropa Ligasi Kubogi",
     wc_trophy_desc:     "Play-off g'olibi — jahon chempioni",
     wc_scorer_name:     "Jahon Chempionati To'purari",
     wc_scorer_desc:     "Eng ko'p gol urgan o'yinchi",
@@ -557,6 +558,7 @@ const TEXTS = {
     prizes_title:       "ПРИЗЫ",
     wc_trophy_name:     "Кубок Чемпионата Мира",
     cl_trophy_name:     "Кубок Лиги Чемпионов",
+    el_trophy_name:     "Кубок Лиги Европы",
     wc_trophy_desc:     "Победитель плей-офф — чемпион мира",
     wc_scorer_name:     "Лучший бомбардир Чемпионата Мира",
     wc_scorer_desc:     "Игрок, забивший больше всех голов",
@@ -878,6 +880,7 @@ const TEXTS = {
     prizes_title:       "PRIZES",
     wc_trophy_name:     "World Cup Trophy",
     cl_trophy_name:     "Champions League Trophy",
+    el_trophy_name:     "Europa League Trophy",
     wc_trophy_desc:     "Play-off winner — world champion",
     wc_scorer_name:     "World Cup Top Scorer",
     wc_scorer_desc:     "Player with the most goals",
@@ -1385,6 +1388,10 @@ function showModeSelect() {
         <img class="mode-banner" src="cl-banner.jpg?v=6" alt="${escHtml(t.mode_cl || "Chempionlar ligasi")}"
              onerror="this.style.display='none'">
       </div>
+      <div class="mode-card mode-card--el mode-card--photo" id="mode-card-el">
+        <img class="mode-banner" src="el-banner.jpg?v=1" alt="${escHtml(t.mode_el || "Yevropa ligasi")}"
+             onerror="this.style.display='none'">
+      </div>
       <div class="mode-card mode-card--division mode-card--photo" id="mode-card-division">
         <img class="mode-banner" src="division-banner.jpg?v=6" alt=""
              onerror="this.style.display='none'">
@@ -1401,6 +1408,8 @@ function showModeSelect() {
     .addEventListener("click", enterChampionsLeagueMode);
   document.getElementById("mode-card-division")
     .addEventListener("click", enterDivisionMode);
+  document.getElementById("mode-card-el")
+    .addEventListener("click", enterEuropaLeagueMode);
 }
 
 // Rejim ekranini yashiradi (tanlangach asosiy interfeysga o'tish uchun)
@@ -1446,6 +1455,15 @@ function enterChampionsLeagueMode() {
     showChampionsLeague();
   } else {
     showToast("Chempionlar ligasi tez orada ishga tushadi!");
+  }
+}
+
+// Tab 5: Yevropa ligasi rejimini ochadi (el.js)
+function enterEuropaLeagueMode() {
+  if (typeof showEuropaLeague === "function") {
+    showEuropaLeague();
+  } else {
+    showToast("Yevropa ligasi tez orada ishga tushadi!");
   }
 }
 

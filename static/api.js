@@ -839,6 +839,10 @@ function prizeVisual(p) {
   if (p.prize_type === "cl_cup") {
     return { img: "cl-trophy.png", name: t.cl_trophy_name || "ChL Kubogi" };
   }
+  // 2026-10-02: Yevropa ligasi kubogi
+  if (p.prize_type === "el_cup") {
+    return { img: "el-trophy.png", name: t.el_trophy_name || "YeL Kubogi" };
+  }
   if (p.prize_type === "league_cup") {
     const trophyFile = LEAGUE_TROPHIES[p.league_name] || null;
     return { img: trophyFile, name: (p.league_name || "") + " " + (t.league_trophy || "Kubogi") };
@@ -1427,7 +1431,7 @@ async function finalizeSeason() {
 // Zaxira: eski javoblar uchun mahalliy jadval.
 const LEAGUE_PRIZE_LABELS = {
   league_cup: "Liga kubogi", wc_cup: "JCh kubogi", cl_cup: "ChL kubogi",
-  div_cup: "Divizion kubogi", golden_ball: "Oltin to'p", golden_boot: "Oltin butsa",
+  div_cup: "Divizion kubogi", el_cup: "YeL kubogi", golden_ball: "Oltin to'p", golden_boot: "Oltin butsa",
   wc_golden_boot: "JCh oltin butsa", div_boot: "Divizion oltin butsa",
 };
 
@@ -1454,7 +1458,7 @@ async function leagueLoadPrizeTransfer() {
     // Liga kubogi qaysi liga ekani (bir necha liga bo'lishi mumkin)
     const lg = p.league_name ? " (" + escHtml(p.league_name) + ")" : "";
     // Kubok yulduzcha beradi — vizual farqlaymiz
-    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup"].includes(p.prize_type);
+    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup"].includes(p.prize_type);
     const icon = isCup ? "🏆" : "👟";
     return `
       <label class="admin-radio-row" style="display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer">
@@ -1497,7 +1501,7 @@ async function leaguePrizeTransferSubmit(btn) {
     });
     const label = LEAGUE_PRIZE_LABELS[r.prize_type] || r.prize_type;
     const who = r.new_username ? "@" + r.new_username : (r.new_nickname || ("#" + r.new_user_id));
-    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup"].includes(r.prize_type);
+    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup"].includes(r.prize_type);
     const starNote = isCup ? "\n\n⭐ Yulduzcha ham yangi akkauntga o'tdi." : "";
     window.alert(`✅ ${label} (${r.season_number}-mavsum) endi ${who} ga tegishli.${starNote}`);
     if (tgInput) tgInput.value = "";
@@ -2616,6 +2620,8 @@ function openResultModal(matchId) {
 function closeResultModal() {
   if (typeof CL !== "undefined") CL._resultMatchId = null;
   if (typeof CLPO !== "undefined") CLPO._resultMatchId = null;  // 2026-07-21: ChL play-off
+  if (typeof EL !== "undefined") EL._resultMatchId = null;      // 2026-10-02: Yevropa ligasi
+  if (typeof ELPO !== "undefined") ELPO._resultMatchId = null;  // 2026-10-02: YeL play-off
   APP.activeMatchId = null;
   document.getElementById("modal-result").classList.add("hidden");
   document.getElementById("input-score1").value = "0";
@@ -2966,6 +2972,7 @@ setInterval(() => {
     return !!el && !el.classList.contains("hidden");
   };
   if (vis("cl-root") && typeof clRefreshUnreadBadge === "function") { void clRefreshUnreadBadge(); return; }
+  if (vis("el-root") && typeof elRefreshUnreadBadge === "function") { void elRefreshUnreadBadge(); return; }
   if (vis("div-root") && typeof divRefreshUnreadBadge === "function") { void divRefreshUnreadBadge(); return; }
   if (vis("worldcup-root") && typeof wcRefreshUnreadBadge === "function") { void wcRefreshUnreadBadge(); return; }
   void refreshUnreadBadge(); // liga rejimi (yashirin bo'lsa ham zararsiz)
@@ -3334,6 +3341,13 @@ async function submitMatchResult() {
   // ChL modaldan ochilgan bo'lsa — ChL endpointiga yo'naltiramiz (qoida #26)
   if (typeof CL !== "undefined" && CL._resultMatchId != null) {
     return clSubmitResultFromModal();
+  }
+  // 2026-10-02: Yevropa ligasi (play-off avval — ChL bilan bir xil tartib)
+  if (typeof ELPO !== "undefined" && ELPO._resultMatchId != null) {
+    return elpoSubmitResultFromModal();
+  }
+  if (typeof EL !== "undefined" && EL._resultMatchId != null) {
+    return elSubmitResultFromModal();
   }
   const matchId = APP.activeMatchId;
   const score1  = parseInt(document.getElementById("input-score1").value) || 0;
