@@ -167,6 +167,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         match_tables = [
             "matches", "cl_matches", "div_matches", "wc_matches",
             "wc_playoff_matches", "cl_playoff_matches", "el_matches",
+            "el_playoff_matches",
         ]
         # YeL: o'chiriladigan o'yinlardagi RAQIB xabarlari ham (el_messages.match_id
         # FK el_matches'ga) — aks holda el_matches DELETE "FOREIGN KEY failed" beradi.

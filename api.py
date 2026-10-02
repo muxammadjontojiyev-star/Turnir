@@ -3399,4 +3399,6 @@ async def admin_undo_resolve(league_id: int, admin: dict = Depends(get_authentic
 # Fayl OXIRIDA: el_api auth dependency'larini shu moduldan import qiladi
 # (ular yuqorida e'lon qilingan). Yangi YeL endpointlari el_api.py'ga yoziladi.
 from el_api import router as el_router  # noqa: E402
+from el_api_playoff import router as el_playoff_router  # noqa: E402
 app.include_router(el_router)
+app.include_router(el_playoff_router)

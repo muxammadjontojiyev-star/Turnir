@@ -178,6 +178,15 @@ async def _check_and_notify_once() -> None:
                                 clp["confirmed"], clp["advanced"])
             except Exception as exc:
                 logger.warning("Scheduler: ChL play-off auto-confirmda xato: %s", exc)
+            # YeL play-off (ChL bilan bir xil: faqat awaiting -> confirmed)
+            try:
+                from el_playoff_results import el_po_auto_confirm_awaiting
+                elp = el_po_auto_confirm_awaiting()
+                if elp["confirmed"]:
+                    logger.info("Scheduler: YeL play-off deadline — %d awaiting → confirmed, %d advance.",
+                                elp["confirmed"], elp["advanced"])
+            except Exception as exc:
+                logger.warning("Scheduler: YeL play-off auto-confirmda xato: %s", exc)
             # WC play-off
             try:
                 from queries_wc_playoff_results import wc_playoff_auto_confirm_awaiting

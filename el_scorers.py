@@ -4,8 +4,8 @@ el_scorers.py — Yevropa ligasi "To'purarlar" ro'yxati (cl_scorers naqshi, ALOH
 Tasdiqlangan (confirmed) YeL o'yinlaridagi URILGAN GOLLAR yig'indisi.
 Saralash: gollar (kamayish) -> o'yinlar soni (kam o'yinda ko'p gol yuqorida) -> nickname.
 
-Gol manbalari EL_SCORE_TABLES ro'yxatida. 4-bosqichda (play-off) el_playoff_matches
-shu ro'yxatga qo'shiladi — ustun nomlari bir xil (player1/2_id, score1/2).
+Gol manbalari EL_SCORE_TABLES: liga bosqichi + play-off (ikkala leg alohida o'yin
+sifatida sanaladi) — ustun nomlari bir xil (player1/2_id, score1/2).
 Jadval nomlari KODDAN keladi, foydalanuvchidan emas (qoida #29).
 """
 
@@ -13,7 +13,7 @@ from config import MATCH_STATUS_CONFIRMED
 from el_qualification import EL_TOTAL
 from models import get_connection
 
-EL_SCORE_TABLES = ("el_matches",)
+EL_SCORE_TABLES = ("el_matches", "el_playoff_matches")
 
 
 def el_top_scorers(season: int | None = None, limit: int | None = None) -> list[dict]:

@@ -269,6 +269,42 @@ def init_db():
         "CREATE INDEX IF NOT EXISTS idx_el_messages_match ON el_messages(match_id)"
     )
 
+    # === el_playoff_matches (YeL play-off — cl_playoff_matches bilan bir xil) ===
+    # round: playin|r16|r8|r4|final. position: juftlik o'rni. leg: 1|2 (final faqat 1).
+    # player1_id = shu O'YINDA uy egasi. sideA = leg1.player2, sideB = leg1.player1.
+    # Uy+mehmon bir vaqtda yaratiladi; agregat teng bo'lishi taqiqlanadi.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_playoff_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            season INTEGER NOT NULL,
+            round TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            leg INTEGER NOT NULL DEFAULT 1,
+            player1_id INTEGER,
+            player2_id INTEGER,
+            score1 INTEGER,
+            score2 INTEGER,
+            submitted_by INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (season, round, position, leg),
+            FOREIGN KEY (player1_id) REFERENCES users(id),
+            FOREIGN KEY (player2_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_el_po_season_round ON el_playoff_matches(season, round)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_el_po_p1 ON el_playoff_matches(player1_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_el_po_p2 ON el_playoff_matches(player2_id)")
+
+    # === el_playoff_state (mavsum bo'yicha: YeL play-off boshlanganmi) ===
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_playoff_state (
+            season INTEGER PRIMARY KEY,
+            started INTEGER NOT NULL DEFAULT 0,
+            started_at TIMESTAMP
+        )
+    """)
+
     # === el_state (YeL tur boshqaruvi — cl_state bilan bir xil) ===
     # started=0 -> hamma turlar yopiq; admin boshlaganda 1-tur ochiladi;
     # har kuni 23:30 (Toshkent) da joriy tur yopiladi (el_rounds.el_tick).
