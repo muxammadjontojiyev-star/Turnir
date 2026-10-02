@@ -1518,6 +1518,18 @@ def cl_qualifiers(user: dict = Depends(get_authenticated_user)):
     return data
 
 
+@app.get("/el/qualifiers")
+def el_qualifiers(user: dict = Depends(get_authenticated_user)):
+    """
+    Yevropa ligasi kvalifikantlari (oxirgi yakunlangan mavsum bo'yicha).
+    me_qualified — so'rovchi ishtirokchi YeL'ga chiqqanmi.
+    """
+    from el_qualification import get_el_qualifiers, is_el_qualifier
+    data = get_el_qualifiers()
+    data["me_qualified"] = is_el_qualifier(user["telegram_id"], data["from_season"])
+    return data
+
+
 @app.get("/cl/groups")
 def cl_groups(user: dict = Depends(get_authenticated_user)):
     """

@@ -287,6 +287,11 @@ def _finalize_league_locked(conn, cursor) -> dict:
     from cl_qualification import save_cl_qualifiers
     counts["cl_qualifiers"] = save_cl_qualifiers(cursor, season)
 
+    # YeL kvalifikatsiyasi — ChL'dan KEYIN (ChL'ga o'tganlar chiqarib tashlanadi),
+    # shu tranzaksiya ichida.
+    from el_qualification import save_el_qualifiers
+    counts["el_qualifiers"] = save_el_qualifiers(cursor, season)
+
     cursor.execute(
         "UPDATE season_state SET current_season = current_season + 1, "
         "last_finalized_at = datetime('now') WHERE id = 1"

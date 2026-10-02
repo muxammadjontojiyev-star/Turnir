@@ -178,6 +178,32 @@ def init_db():
         "CREATE INDEX IF NOT EXISTS idx_cl_qualifiers_season ON cl_qualifiers(from_season)"
     )
 
+    # === el_qualifiers (Yevropa ligasi kvalifikatsiyasi — cl_qualifiers bilan bir xil tuzilma) ===
+    # Liga mavsumi yakunlanganda: 8..14-o'rinlar (ChL'ga ketgan eng yaxshi 8-o'rinsiz)
+    # + eng yaxshi 1 ta 15-o'rin = 35 (el_qualification.py).
+    # qualified_via: 'top14' yoki 'best15'. from_season: qaysi mavsum natijasidan.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_qualifiers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telegram_id INTEGER NOT NULL,
+            user_id INTEGER,
+            nickname TEXT,
+            league_id INTEGER,
+            league_name TEXT,
+            position INTEGER NOT NULL,
+            points INTEGER NOT NULL DEFAULT 0,
+            goal_difference INTEGER NOT NULL DEFAULT 0,
+            goals_for INTEGER NOT NULL DEFAULT 0,
+            qualified_via TEXT NOT NULL,
+            from_season INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (telegram_id, from_season)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_el_qualifiers_season ON el_qualifiers(from_season)"
+    )
+
     # === cl_participants (Chempionlar ligasi ishtirokchilari — joriy mavsum) ===
     # Kvalifikant (cl_qualifiers) yangi mavsumda liga ro'yxatidan o'tgach shu
     # jadvalga sinxronlanadi (cl_core.cl_sync_participants) — YANGI tanlagan
