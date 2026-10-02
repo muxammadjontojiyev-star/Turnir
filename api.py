@@ -2687,13 +2687,14 @@ def admin_whoami(x_telegram_init_data: str = Header(...)):
     """
     telegram_user = verify_telegram_init_data(x_telegram_init_data)
     tid = telegram_user["id"]
-    from admin_roles import SCOPE_CL, SCOPE_DIVISION
+    from admin_roles import SCOPE_CL, SCOPE_DIVISION, SCOPE_EL
     return {
         "is_super": is_super_admin(tid),
         "is_league_admin": is_scope_admin(tid, SCOPE_LEAGUE),
         "is_wc_admin": is_scope_admin(tid, SCOPE_WC),
         "is_cl_admin": is_scope_admin(tid, SCOPE_CL),
         "is_div_admin": is_scope_admin(tid, SCOPE_DIVISION),
+        "is_el_admin": is_scope_admin(tid, SCOPE_EL),
     }
 
 

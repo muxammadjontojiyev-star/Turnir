@@ -11,11 +11,26 @@ import xavfsiz. api.py'dagi auth/rate-limit dependency'lari qayta ishlatiladi
 (DRY, qoida #26) — ChL endpointlari bilan bir xil himoya.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 
-from api import get_authenticated_super_admin, get_authenticated_user
+from api import (
+    _authenticated_scope_admin,
+    get_authenticated_super_admin,
+    get_authenticated_user,
+    validate_scores,
+)
 
 router = APIRouter()
+
+
+def get_authenticated_el_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    """
+    YeL admini: bosh admin YOKI 'el' scope'ga tayinlangan admin
+    (get_authenticated_cl_admin bilan bir xil). Tayinlashni faqat bosh admin
+    qiladi — mavjud /admin/roles/el endpointlari orqali (YeL tabidan).
+    """
+    from admin_roles import SCOPE_EL
+    return _authenticated_scope_admin(x_telegram_init_data, SCOPE_EL)
 
 
 # ============ Kvalifikatsiya / ishtirokchilar ============
@@ -95,3 +110,73 @@ def el_admin_group_force_close(admin: dict = Depends(get_authenticated_super_adm
     if not ok:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", **info}
+
+
+# ============ O'yinlar / natija ============
+
+@router.get("/el/matches/my")
+def el_my_matches(user: dict = Depends(get_authenticated_user)):
+    """Foydalanuvchining YeL o'yinlari (joriy mavsum) + tur holati."""
+    from el_matches_queries import el_get_user_matches
+    from el_rounds import el_get_state
+    from season_prizes import get_league_season
+    season = get_league_season()
+    return {"me_id": user["id"],
+            "state": el_get_state(season),
+            "matches": el_get_user_matches(user["id"], season)}
+
+
+@router.get("/el/matches/user/{target_id}")
+def el_user_matches(target_id: int, user: dict = Depends(get_authenticated_user)):
+    """Boshqa ishtirokchining YeL o'yinlari (faqat o'qish; me_id yuborilmaydi)."""
+    from el_matches_queries import el_get_user_matches
+    from season_prizes import get_league_season
+    return {"matches": el_get_user_matches(target_id, get_league_season())}
+
+
+@router.post("/el/match/submit-result")
+def el_submit(match_id: int, score1: int, score2: int,
+              user: dict = Depends(get_authenticated_user)):
+    """YeL natijasini kiritish. Faqat ochiq tur (server tekshiruvi — qoida #41)."""
+    validate_scores(score1, score2)
+    from el_matches_queries import el_get_match_by_id, el_submit_match_result
+    from el_rounds import el_matchday_open
+    match = el_get_match_by_id(match_id)
+    if not match:
+        raise HTTPException(status_code=400, detail="match_not_found")
+    if not el_matchday_open(match["matchday"], match["season"]):
+        raise HTTPException(status_code=400, detail="matchday_locked")
+    success, reason = el_submit_match_result(match_id, score1, score2, user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": reason, "match_id": match_id}
+
+
+@router.post("/el/match/confirm")
+def el_confirm(match_id: int, accept: bool = True,
+               user: dict = Depends(get_authenticated_user)):
+    """YeL natijani tasdiqlash (accept=True) yoki rad etish (False)."""
+    from el_matches_queries import el_confirm_or_reject_match
+    success, reason = el_confirm_or_reject_match(
+        match_id, "confirm" if accept else "reject", user["id"])
+    if not success:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", "match_id": match_id}
+
+
+# ============ Profil / to'purarlar ============
+
+@router.get("/el/profile")
+def el_profile(user: dict = Depends(get_authenticated_user)):
+    """YeL profil kartochkasi — faqat SO'ROVCHINING o'zi (qoida #34)."""
+    from el_profile import el_get_profile
+    from season_prizes import get_league_season
+    return el_get_profile(user["id"], get_league_season())
+
+
+@router.get("/el/scorers")
+def el_scorers(user: dict = Depends(get_authenticated_user)):
+    """YeL to'purarlari (confirmed o'yinlar bo'yicha urilgan gollar)."""
+    from el_scorers import el_top_scorers
+    from season_prizes import get_league_season
+    return {"scorers": el_top_scorers(get_league_season())}

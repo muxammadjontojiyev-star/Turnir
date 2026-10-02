@@ -166,7 +166,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         # Matchlar (player1/player2/submitted_by) — barcha turdagi o'yinlar
         match_tables = [
             "matches", "cl_matches", "div_matches", "wc_matches",
-            "wc_playoff_matches", "cl_playoff_matches",
+            "wc_playoff_matches", "cl_playoff_matches", "el_matches",
         ]
         for t in match_tables:
             cursor.execute(
