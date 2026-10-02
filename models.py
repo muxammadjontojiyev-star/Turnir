@@ -296,6 +296,23 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_el_po_p1 ON el_playoff_matches(player1_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_el_po_p2 ON el_playoff_matches(player2_id)")
 
+    # === el_po_messages (YeL PLAY-OFF chati — cl_po_messages bilan bir xil, read_at boshidan) ===
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS el_po_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            read_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES el_playoff_matches(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_el_po_messages_match ON el_po_messages(match_id)"
+    )
+
     # === el_playoff_state (mavsum bo'yicha: YeL play-off boshlanganmi) ===
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS el_playoff_state (

@@ -171,11 +171,13 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         ]
         # YeL: o'chiriladigan o'yinlardagi RAQIB xabarlari ham (el_messages.match_id
         # FK el_matches'ga) — aks holda el_matches DELETE "FOREIGN KEY failed" beradi.
-        cursor.execute(
-            "DELETE FROM el_messages WHERE match_id IN "
-            "(SELECT id FROM el_matches WHERE player1_id = ? OR player2_id = ?)",
-            (user_id, user_id),
-        )
+        for msg_t, match_t in (("el_messages", "el_matches"),
+                               ("el_po_messages", "el_playoff_matches")):
+            cursor.execute(
+                f"DELETE FROM {msg_t} WHERE match_id IN "
+                f"(SELECT id FROM {match_t} WHERE player1_id = ? OR player2_id = ?)",
+                (user_id, user_id),
+            )
         for t in match_tables:
             cursor.execute(
                 f"DELETE FROM {t} WHERE player1_id = ? OR player2_id = ?",
@@ -184,7 +186,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
 
         # Chat xabarlari (sender_id)
         for t in ["messages", "cl_messages", "div_messages", "wc_messages",
-                  "cl_po_messages", "el_messages"]:
+                  "cl_po_messages", "el_messages", "el_po_messages"]:
             cursor.execute(f"DELETE FROM {t} WHERE sender_id = ?", (user_id,))
 
         # prizes (eski jadval): top_scorer_user_id / winner_user_id

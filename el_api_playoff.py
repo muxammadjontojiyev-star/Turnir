@@ -5,9 +5,11 @@ include_router qilinadi (el_api.py bilan bir xil import tartibi).
 Javob shakllari /cl/playoff/* bilan bir xil (frontend naqshi qayta ishlatiladi).
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from api import get_authenticated_super_admin, get_authenticated_user, validate_scores
+from el_api import notify_el_chat
+from profanity import contains_profanity
 
 router = APIRouter()
 
@@ -84,3 +86,42 @@ def el_playoff_confirm(match_id: int, accept: bool = True,
     if not ok:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": reason, "match_id": match_id}
+
+
+# ============ Play-off chati (el_chat kind="po"; guruh chati bilan bir xil format) ============
+
+@router.get("/el/playoff/matches/{match_id}/messages")
+def el_po_chat_get(match_id: int, user: dict = Depends(get_authenticated_user)):
+    from el_chat import el_get_messages
+    msgs = el_get_messages(match_id, user["id"], kind="po")
+    if msgs is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"messages": msgs}
+
+
+@router.post("/el/playoff/matches/{match_id}/messages")
+async def el_po_chat_send(match_id: int, text: str = Body(..., embed=True),
+                          user: dict = Depends(get_authenticated_user)):
+    from el_chat import el_send_message
+    ok, reason, notify = el_send_message(match_id, user["id"], text, kind="po")
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    await notify_el_chat(notify)
+    return {"status": "ok", "profanity": contains_profanity(text)}
+
+
+@router.post("/el/playoff/matches/{match_id}/typing")
+def el_po_chat_typing(match_id: int, user: dict = Depends(get_authenticated_user)):
+    from el_chat import el_set_typing
+    if not el_set_typing(match_id, user["id"], kind="po"):
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return {"status": "ok"}
+
+
+@router.get("/el/playoff/matches/{match_id}/state")
+def el_po_chat_state(match_id: int, user: dict = Depends(get_authenticated_user)):
+    from el_chat import el_get_chat_state
+    state = el_get_chat_state(match_id, user["id"], kind="po")
+    if state is None:
+        raise HTTPException(status_code=403, detail="chat_no_access")
+    return state

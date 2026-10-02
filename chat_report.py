@@ -64,6 +64,9 @@ MODES = {
     "el":     {"msg_table": "el_messages",     "match_table": "el_matches",
                "round_col": "matchday", "round_label": "tur",
                "playoff": None, "has_club": False, "title": "YeL"},
+    "el_po":  {"msg_table": "el_po_messages",  "match_table": "el_playoff_matches",
+               "round_col": "round",    "round_label": "bosqich",
+               "playoff": None, "has_club": False, "title": "YeL play-off"},
 }
 DEFAULT_MODE = "league"
 

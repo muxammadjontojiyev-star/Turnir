@@ -2842,7 +2842,7 @@ CHAT_REPORT_SCOPES = {
     "cl": SCOPE_CL, "cl_po": SCOPE_CL,
     "div": SCOPE_DIVISION,
     "wc": SCOPE_WC, "wc_po": SCOPE_WC,
-    "el": SCOPE_EL,
+    "el": SCOPE_EL, "el_po": SCOPE_EL,
 }
 
 
@@ -3400,5 +3400,7 @@ async def admin_undo_resolve(league_id: int, admin: dict = Depends(get_authentic
 # (ular yuqorida e'lon qilingan). Yangi YeL endpointlari el_api.py'ga yoziladi.
 from el_api import router as el_router  # noqa: E402
 from el_api_playoff import router as el_playoff_router  # noqa: E402
+from el_api_admin import router as el_admin_router  # noqa: E402
 app.include_router(el_router)
 app.include_router(el_playoff_router)
+app.include_router(el_admin_router)
