@@ -437,6 +437,24 @@ def init_db():
         )
     """)
 
+    # === pt_admins (turnir adminlari — 2026-10-03) ===
+    # Tashkilotchi tayinlaydi (cheklovsiz). Huquq: tashkilotchi bilan deyarli bir xil
+    # (a'zolar, boshlash, muddat, natija tuzatish, pley-off); admin qo'shish, sig'im va
+    # to'lov — faqat tashkilotchida. Admin ishtirokchi bo'lishi shart emas.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_admins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tournament_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            telegram_id INTEGER NOT NULL,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (tournament_id, user_id),
+            FOREIGN KEY (tournament_id) REFERENCES pt_tournaments(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_admins_user ON pt_admins(user_id)")
+
     # === pt_receipts (to'lov cheklari — 2-bosqich) ===
     # Alohida jadval: rasm baytlari turnirlar ro'yxati so'rovlarini og'irlashtirmasin
     # (qoida #32). Har turnirga bitta chek — qayta yuklansa almashtiriladi.
