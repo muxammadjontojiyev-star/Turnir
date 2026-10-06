@@ -132,3 +132,14 @@ async def pt_playoff_start(tournament_id: int, user: dict = Depends(get_authenti
     name, members = tournament_members(tournament_id)
     spawn(notify_members_stage(members, "pt_notify_ko_start", r["stage"], name=name))
     return {"status": "ok", "stage": r["stage"], "pairs": len(r["pairs"])}
+
+
+@router.get("/pt/{tournament_id}/player/{user_id}")
+def pt_player(tournament_id: int, user_id: int, user: dict = Depends(get_authenticated_user)):
+    """Ishtirokchi profili (Reytingdan). Faqat a'zo/tashkilotchi/admin. Xato: not_found, player_not_found -> 404"""
+    from pt_results import pt_get_player
+    ok, r = pt_get_player(tournament_id, user["id"], user_id, is_super=_is_super(user))
+    if not ok:
+        raise HTTPException(status_code=404, detail=r)
+    return r
+

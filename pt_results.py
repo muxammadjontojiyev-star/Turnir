@@ -80,7 +80,10 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
             return None
         cursor.execute("SELECT 1 FROM pt_members WHERE tournament_id = ? AND user_id = ? "
                        "AND status = 'approved'", (tid, user_id))
-        if not (cursor.fetchone() or t["owner_user_id"] == user_id or is_super):
+        is_member = cursor.fetchone() is not None
+        from pt_core import is_manager
+        manager = is_manager(cursor, tid, user_id, t["owner_user_id"])
+        if not (is_member or manager or is_super):
             return None
         cursor.execute(
             f"SELECT {_MATCH_COLS} FROM pt_matches m LEFT JOIN users u1 ON u1.id = m.player1_id "
@@ -103,7 +106,7 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         "status": t["status"], "current_round": cur, "total_rounds": t["total_rounds"],
         "groups_finished": cur > t["total_rounds"] > 0,
         "deadline_local": utc_to_local_text(t["round_deadline"]),
-        "is_owner": t["owner_user_id"] == user_id, "me_id": user_id,
+        "is_owner": t["owner_user_id"] == user_id, "is_manager": manager, "me_id": user_id,
         "standings": standings,
         "my_matches": [m for m in matches if user_id in (m["player1_id"], m["player2_id"])],
         "round_matches": [m for m in matches if m["stage"] == "group" and m["round"] == cur],
@@ -195,3 +198,49 @@ def pt_confirm_result(match_id: int, user_id: int, accept: bool) -> tuple[bool, 
         return True, {"status": "confirmed" if accept else "rejected", "advance": advance,
                       "tournament_id": m["tournament_id"]}
     return _tx(run)
+
+
+def pt_get_player(tid: int, viewer_id: int, target_id: int, is_super: bool = False) -> tuple[bool, str | dict]:
+    """
+    2026-10-04: ishtirokchining turnir profili (Reytingdan bosilganda).
+    Ruxsat: ko'ruvchi — a'zo / tashkilotchi / admin / bosh admin (qoida #34).
+    Qaytaradi: {user, group, position, row, matches (barcha bosqichlar), status, current_round}.
+    Sabablar: not_found (turnir yo'q yoki ruxsat yo'q), player_not_found.
+    """
+    from pt_core import is_manager
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT owner_user_id, status, current_round FROM pt_tournaments WHERE id = ?", (tid,))
+        t = cursor.fetchone()
+        if not t:
+            return False, "not_found"
+        cursor.execute("SELECT 1 FROM pt_members WHERE tournament_id = ? AND user_id = ? AND status = 'approved'",
+                       (tid, viewer_id))
+        if not (cursor.fetchone() or is_manager(cursor, tid, viewer_id, t["owner_user_id"]) or is_super):
+            return False, "not_found"
+        cursor.execute("SELECT u.id, u.nickname, u.username, m.group_label FROM pt_members m "
+                       "JOIN users u ON u.id = m.user_id WHERE m.tournament_id = ? AND m.user_id = ? "
+                       "AND m.status = 'approved'", (tid, target_id))
+        u = cursor.fetchone()
+        if not u:
+            return False, "player_not_found"
+        cursor.execute(
+            f"SELECT {_MATCH_COLS} FROM pt_matches m LEFT JOIN users u1 ON u1.id = m.player1_id "
+            "LEFT JOIN users u2 ON u2.id = m.player2_id WHERE m.tournament_id = ? "
+            "AND (m.player1_id = ? OR m.player2_id = ?)", (tid, target_id, target_id))
+        matches = [dict(r) for r in cursor.fetchall()]
+        standings = pt_group_standings(cursor, tid)
+    finally:
+        conn.close()
+    from pt_knockout import STAGES
+    order = {"group": 0, **{s: i + 1 for i, s in enumerate(STAGES)}}
+    matches.sort(key=lambda m: (order.get(m["stage"], 9), m["round"] or 0, m["id"]))
+    group, pos, row = u["group_label"], None, None
+    for i, r in enumerate(standings.get(group, []), start=1):
+        if r["user_id"] == target_id:
+            pos, row = i, r
+            break
+    return True, {"user": {"id": u["id"], "nickname": u["nickname"], "username": u["username"]},
+                  "group": group, "position": pos, "row": row, "matches": matches,
+                  "status": t["status"], "current_round": t["current_round"]}
