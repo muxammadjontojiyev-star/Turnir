@@ -88,9 +88,16 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
             "ORDER BY m.round, m.group_label, m.id", (tid,))
         matches = [dict(r) for r in cursor.fetchall()]
         standings = pt_group_standings(cursor, tid)
+        from pt_knockout import pt_knockout_phase
+        phase = pt_knockout_phase(cursor, tid)
+        cursor.execute("SELECT u.id, u.nickname, u.username FROM pt_tournaments t JOIN users u "
+                       "ON u.id = t.champion_user_id WHERE t.id = ?", (tid,))
+        ch = cursor.fetchone()
     finally:
         conn.close()
     cur = t["current_round"]
+    _order = {"group": 0, "semi": 1, "final": 2}
+    matches.sort(key=lambda m: (_order.get(m["stage"], 9), m["round"] or 0, m["group_label"] or "", m["id"]))
     return {
         "status": t["status"], "current_round": cur, "total_rounds": t["total_rounds"],
         "groups_finished": cur > t["total_rounds"] > 0,
@@ -99,6 +106,10 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         "standings": standings,
         "my_matches": [m for m in matches if user_id in (m["player1_id"], m["player2_id"])],
         "round_matches": [m for m in matches if m["stage"] == "group" and m["round"] == cur],
+        # 5-bosqich: pley-off
+        "phase": phase,                     # None | semi_ready | semi | final | finished
+        "knockout": [m for m in matches if m["stage"] != "group"],
+        "champion": dict(ch) if ch else None,
     }
 
 
@@ -142,6 +153,8 @@ def pt_submit_result(match_id: int, user_id: int, score1: int, score2: int) -> t
             return False, "not_running"
         if m["stage"] == "group" and m["round"] != m["current_round"]:
             return False, "round_closed"
+        if m["stage"] != "group" and score1 == score2:       # pley-offda durang yo'q (5-bosqich)
+            return False, "draw_not_allowed"
         cursor.execute(
             "UPDATE pt_matches SET score1 = ?, score2 = ?, submitted_by = ?, status = 'awaiting_confirmation' "
             "WHERE id = ? AND status = 'pending'", (score1, score2, user_id, match_id))
@@ -154,8 +167,11 @@ def pt_submit_result(match_id: int, user_id: int, score1: int, score2: int) -> t
     return _tx(run)
 
 
-def pt_confirm_result(match_id: int, user_id: int, accept: bool) -> tuple[bool, str]:
-    """Raqib tasdiqlaydi/rad etadi. Sabablar: match_not_found, not_opponent, wrong_status."""
+def pt_confirm_result(match_id: int, user_id: int, accept: bool) -> tuple[bool, str | dict]:
+    """
+    Raqib tasdiqlaydi/rad etadi. Sabablar: match_not_found, not_opponent, wrong_status.
+    Qaytaradi (ok): {"status": confirmed|rejected, "advance": pt_advance natijasi, "tournament_id"}.
+    """
     def run(cursor):
         m = _match_for_update(cursor, match_id)
         if not m:
@@ -170,5 +186,10 @@ def pt_confirm_result(match_id: int, user_id: int, accept: bool) -> tuple[bool, 
                            "submitted_by = NULL WHERE id = ? AND status = 'awaiting_confirmation'", (match_id,))
         if cursor.rowcount != 1:
             return False, "wrong_status"
-        return True, "confirmed" if accept else "rejected"
+        advance = {"event": None}
+        if accept and m["stage"] != "group":
+            from pt_knockout import pt_advance          # sikl importdan qochish (pt_knockout -> pt_results)
+            advance = pt_advance(cursor, m["tournament_id"])
+        return True, {"status": "confirmed" if accept else "rejected", "advance": advance,
+                      "tournament_id": m["tournament_id"]}
     return _tx(run)

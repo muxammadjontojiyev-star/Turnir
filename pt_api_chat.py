@@ -77,14 +77,18 @@ def pt_owner_info(match_id: int, user: dict = Depends(get_authenticated_user)):
 
 
 @router.post("/pt/owner/match/{match_id}/set")
-def pt_owner_set(match_id: int, score1: int = Body(..., embed=True), score2: int = Body(..., embed=True),
+async def pt_owner_set(match_id: int, score1: int = Body(..., embed=True), score2: int = Body(..., embed=True),
                  user: dict = Depends(get_authenticated_user)):
     validate_scores(score1, score2)
     from pt_owner_fix import pt_owner_set_result
     ok, r = pt_owner_set_result(match_id, user["id"], score1, score2)
     if not ok:
         raise HTTPException(status_code=400, detail=r)
-    return {"status": "ok"}
+    if r["advance"].get("event"):                     # final yaratildi/yangilandi yoki chempion
+        from pt_notify import notify_advance, tournament_members
+        name, members = tournament_members(r["tournament_id"])
+        await notify_advance(name, members, r["advance"])
+    return {"status": "ok", "event": r["advance"].get("event")}
 
 
 @router.post("/pt/owner/match/{match_id}/cancel")

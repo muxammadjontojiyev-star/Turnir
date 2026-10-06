@@ -962,6 +962,9 @@ def init_db():
         "ALTER TABLE pt_tournaments ADD COLUMN total_rounds INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE pt_tournaments ADD COLUMN round_deadline TEXT",
         "ALTER TABLE pt_tournaments ADD COLUMN started_at TIMESTAMP",
+        # 2026-10-02: shaxsiy turnir pley-offi (5-bosqich)
+        "ALTER TABLE pt_tournaments ADD COLUMN champion_user_id INTEGER",
+        "ALTER TABLE pt_tournaments ADD COLUMN finished_at TIMESTAMP",
     ]
     for sql in migrations:
         try:

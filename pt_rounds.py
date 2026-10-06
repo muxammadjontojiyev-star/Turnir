@@ -113,18 +113,28 @@ def _close_round(cursor, t: dict) -> dict:
 
 
 def pt_set_deadline(tid: int, owner_id: int, local_value: str) -> tuple[bool, str | dict]:
-    """Joriy tur muddati. Sabablar: not_found, not_owner, not_running, groups_finished, bad_deadline, ..."""
+    """
+    Joriy tur (yoki pley-off bosqichi) muddati.
+    Sabablar: not_found, not_owner, not_running, groups_finished (yarim final boshlanmagan), bad_deadline, ...
+    """
     utc, reason = parse_local_deadline(local_value)
     if utc is None:
         return False, reason
 
     def run(cursor):
         t, why = _owned_running(cursor, tid, owner_id)
+        phase = None
+        if t is None and why == "groups_finished":
+            from pt_knockout import pt_knockout_phase
+            phase = pt_knockout_phase(cursor, tid)
+            if phase in ("semi", "final"):                      # pley-off bosqichiga muddat
+                cursor.execute("SELECT id, name, current_round FROM pt_tournaments WHERE id = ?", (tid,))
+                t = dict(cursor.fetchone())
         if t is None:
             return False, why
         cursor.execute("UPDATE pt_tournaments SET round_deadline = ?, updated_at = CURRENT_TIMESTAMP "
                        "WHERE id = ?", (utc, tid))
-        return True, {"name": t["name"], "round": t["current_round"], "deadline_utc": utc,
+        return True, {"name": t["name"], "round": t["current_round"], "phase": phase, "deadline_utc": utc,
                       "deadline_local": utc_to_local_text(utc), "members": members_for_notify(cursor, tid)}
     return _tx(run)
 
@@ -139,18 +149,53 @@ def pt_close_round_now(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     return _tx(run)
 
 
+def _close_knockout(cursor, t: dict) -> dict:
+    """
+    Pley-off muddati o'tdi: FAQAT awaiting -> confirmed (durang yo'q, 0:0 qo'yilmaydi);
+    o'ynalmaganini tashkilotchi hal qiladi (unga xabar). Keyin pt_advance.
+    """
+    from pt_knockout import pt_advance
+    tid = t["id"]
+    cursor.execute("UPDATE pt_matches SET status = 'confirmed' WHERE tournament_id = ? AND stage != 'group' "
+                   "AND status = 'awaiting_confirmation'", (tid,))
+    awaiting = cursor.rowcount or 0
+    cursor.execute("UPDATE pt_tournaments SET round_deadline = NULL WHERE id = ?", (tid,))
+    # Hal qilinmaganlar pt_advance'dan OLDIN sanaladi — aks holda shu daqiqada yaratilgan
+    # final ham "o'ynalmagan" deb tashkilotchiga noto'g'ri xabar ketardi.
+    cursor.execute("SELECT COUNT(*) AS c FROM pt_matches WHERE tournament_id = ? AND stage != 'group' "
+                   "AND status = 'pending'", (tid,))
+    pending = cursor.fetchone()["c"]
+    adv = pt_advance(cursor, tid)
+    cursor.execute("SELECT t.owner_telegram_id, u.language FROM pt_tournaments t JOIN users u "
+                   "ON u.id = t.owner_user_id WHERE t.id = ?", (tid,))
+    o = dict(cursor.fetchone())
+    return {"id": tid, "name": t["name"], "knockout": True, "awaiting": awaiting, "pending": pending,
+            "advance": adv, "owner": o, "members": members_for_notify(cursor, tid)}
+
+
 def pt_tick(now_utc: datetime | None = None) -> list[dict]:
-    """Scheduler: muddati o'tgan barcha turlarni yopadi (idempotent — muddat NULL bo'ladi)."""
+    """
+    Scheduler: muddati o'tgan turlarni yopadi (idempotent — muddat NULL bo'ladi).
+    Guruh: _close_round (0:0 bilan). Pley-off: _close_knockout (faqat awaiting tasdiqlanadi).
+    """
     now_s = (now_utc or datetime.now(timezone.utc)).strftime(_UTC_FMT)
 
     def run(cursor):
         cursor.execute(
             "SELECT id, name, current_round, total_rounds FROM pt_tournaments "
-            "WHERE status = ? AND round_deadline IS NOT NULL AND round_deadline <= ? "
-            "AND current_round <= total_rounds", (STATUS_RUNNING, now_s))
-        return True, [_close_round(cursor, dict(r)) for r in cursor.fetchall()]
+            "WHERE status = ? AND round_deadline IS NOT NULL AND round_deadline <= ?", (STATUS_RUNNING, now_s))
+        out = []
+        for r in cursor.fetchall():
+            t = dict(r)
+            out.append(_close_round(cursor, t) if t["current_round"] <= t["total_rounds"]
+                       else _close_knockout(cursor, t))
+        return True, out
     _, closed = _tx(run)
     for c in closed:
-        logger.info("PT #%s: %s-tur muddati o'tdi (awaiting %s, 0:0 %s)",
-                    c["id"], c["closed_round"], c["awaiting"], c["zero"])
+        if c.get("knockout"):
+            logger.info("PT #%s: pley-off muddati o'tdi (awaiting %s, hal qilinmagan %s)",
+                        c["id"], c["awaiting"], c["pending"])
+        else:
+            logger.info("PT #%s: %s-tur muddati o'tdi (awaiting %s, 0:0 %s)",
+                        c["id"], c["closed_round"], c["awaiting"], c["zero"])
     return closed

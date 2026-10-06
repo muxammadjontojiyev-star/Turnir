@@ -243,6 +243,34 @@ TEXTS = {
         LANGUAGE_RU: "🏁 «{name}»: групповой этап завершён! Смотрите таблицы в приложении.",
         LANGUAGE_EN: "🏁 «{name}»: the group stage is over! See the tables in the app.",
     },
+    # 2026-10-02: shaxsiy turnir pley-offi (5-bosqich)
+    "pt_notify_semis": {
+        LANGUAGE_UZ: "⚔️ «{name}»: yarim final juftliklari:\n{pairs}\nDurang yo'q — penalti o'yin ichida.",
+        LANGUAGE_RU: "⚔️ «{name}»: пары полуфинала:\n{pairs}\nНичьих нет — пенальти внутри матча.",
+        LANGUAGE_EN: "⚔️ «{name}»: semi-final pairs:\n{pairs}\nNo draws — penalties are played in the match.",
+    },
+    "pt_notify_final": {
+        LANGUAGE_UZ: "🏟 «{name}» FINALI: {p1} — {p2}!",
+        LANGUAGE_RU: "🏟 ФИНАЛ «{name}»: {p1} — {p2}!",
+        LANGUAGE_EN: "🏟 «{name}» FINAL: {p1} — {p2}!",
+    },
+    "pt_notify_champion": {
+        LANGUAGE_UZ: "🏆 «{name}» chempioni — {champion}! Tabriklaymiz!",
+        LANGUAGE_RU: "🏆 Чемпион «{name}» — {champion}! Поздравляем!",
+        LANGUAGE_EN: "🏆 The «{name}» champion is {champion}! Congratulations!",
+    },
+    "pt_notify_ko_deadline": {
+        LANGUAGE_UZ: "⏰ «{name}»: {stage} o'yinini {deadline} gacha (Toshkent vaqti) o'ynang.",
+        LANGUAGE_RU: "⏰ «{name}»: сыграйте матч ({stage}) до {deadline} (по Ташкенту).",
+        LANGUAGE_EN: "⏰ «{name}»: play your {stage} match by {deadline} (Tashkent time).",
+    },
+    "pt_notify_ko_pending": {
+        LANGUAGE_UZ: "⚠️ «{name}»: pley-off muddati o'tdi, {count} ta o'yin o'ynalmagan. Natijani ilovada «Natijani tuzatish» orqali hal qiling.",
+        LANGUAGE_RU: "⚠️ «{name}»: срок плей-офф истёк, не сыграно матчей: {count}. Решите результат в приложении («Исправить результат»).",
+        LANGUAGE_EN: "⚠️ «{name}»: the play-off deadline passed, {count} match(es) unplayed. Decide the result in the app («Fix a result»).",
+    },
+    "pt_stage_semi": {LANGUAGE_UZ: "yarim final", LANGUAGE_RU: "полуфинал", LANGUAGE_EN: "semi-final"},
+    "pt_stage_final": {LANGUAGE_UZ: "final", LANGUAGE_RU: "финал", LANGUAGE_EN: "final"},
     "btn_open_app": {
         LANGUAGE_UZ: "📲 Ilovani ochish",
         LANGUAGE_RU: "📲 Открыть приложение",

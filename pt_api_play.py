@@ -8,7 +8,7 @@ import logging
 from fastapi import APIRouter, Body, Depends, HTTPException
 
 from api import get_authenticated_user, validate_scores
-from pt_notify import notify_round_result
+from pt_notify import _label, notify_advance, notify_round_result, tournament_members
 
 logger = logging.getLogger("pt_api_play")
 router = APIRouter()
@@ -58,14 +58,22 @@ def pt_play(tournament_id: int, user: dict = Depends(get_authenticated_user)):
 async def pt_deadline(tournament_id: int, deadline: str = Body(..., embed=True),
                       user: dict = Depends(get_authenticated_user)):
     """Joriy tur muddati (Toshkent 'YYYY-MM-DDTHH:MM'). Xato: bad_deadline, deadline_in_past, ... -> 400"""
-    from notify import notify_members
+    from notify import notify_members, notify_user
     from pt_rounds import pt_set_deadline
+    from texts import t as tr
     ok, r = pt_set_deadline(tournament_id, user["id"], deadline)
     if not ok:
         raise HTTPException(status_code=400, detail=r)
     try:
-        await notify_members(r["members"], "pt_notify_round_open", name=r["name"],
-                             round=r["round"], deadline=r["deadline_local"])
+        if r.get("phase") in ("semi", "final"):        # pley-off: bosqich nomi har kimga o'z tilida
+            for m in r["members"]:
+                await notify_user(m["telegram_id"], "pt_notify_ko_deadline", m.get("language"),
+                                  open_button_key="btn_open_app", name=r["name"],
+                                  stage=tr(f"pt_stage_{r['phase']}", m.get("language")),
+                                  deadline=r["deadline_local"])
+        else:
+            await notify_members(r["members"], "pt_notify_round_open", name=r["name"],
+                                 round=r["round"], deadline=r["deadline_local"])
     except Exception as exc:
         logger.warning("PT #%s: muddat xabari yuborilmadi: %s", tournament_id, exc)
     return {"status": "ok", "deadline_local": r["deadline_local"]}
@@ -103,11 +111,32 @@ async def pt_match_result(match_id: int, score1: int = Body(..., embed=True),
 
 
 @router.post("/pt/match/{match_id}/confirm")
-def pt_match_confirm(match_id: int, accept: bool = Body(True, embed=True),
+async def pt_match_confirm(match_id: int, accept: bool = Body(True, embed=True),
                      user: dict = Depends(get_authenticated_user)):
     """Xato: match_not_found, not_opponent, wrong_status -> 400"""
     from pt_results import pt_confirm_result
     ok, r = pt_confirm_result(match_id, user["id"], accept)
     if not ok:
         raise HTTPException(status_code=400, detail=r)
-    return {"status": r}
+    if r["advance"].get("event"):
+        name, members = tournament_members(r["tournament_id"])
+        await notify_advance(name, members, r["advance"])
+    return {"status": r["status"], "event": r["advance"].get("event")}
+
+
+@router.post("/pt/{tournament_id}/semis/start")
+async def pt_semis_start(tournament_id: int, user: dict = Depends(get_authenticated_user)):
+    """Tashkilotchi: guruhlar tugagach yarim final. Xato: not_owner, not_running, not_ready -> 400"""
+    from notify import notify_members
+    from pt_knockout import pt_owner_start_semis
+    ok, pairs = pt_owner_start_semis(tournament_id, user["id"])
+    if not ok:
+        raise HTTPException(status_code=400, detail=pairs)
+    name, members = tournament_members(tournament_id)
+    text = "\n".join(f"{_label(a)} — {_label(b)}" for a, b in pairs)
+    try:
+        await notify_members(members, "pt_notify_semis", name=name, pairs=text)
+    except Exception as exc:
+        logger.warning("PT #%s: yarim final xabari yuborilmadi: %s", tournament_id, exc)
+    return {"status": "ok", "pairs": pairs}
+
