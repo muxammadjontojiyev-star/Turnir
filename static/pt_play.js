@@ -131,7 +131,7 @@ function ptStandingsHtml(standings, meId) {
       <summary class="pt-table-title">${escHtml(PTT("pt_group", { g }))}${isMine ? ` · <span class="pt-muted">${escHtml(PTT("pt_my_group"))}</span>` : ""}</summary>
       <table class="pt-table"><thead><tr><th>#</th><th></th><th>${escHtml(PTT("pt_col_p"))}</th>
         <th>${escHtml(PTT("pt_col_gd"))}</th><th>${escHtml(PTT("pt_col_pts"))}</th></tr></thead><tbody>
-      ${rows.map((r, i) => `<tr><td>${i + 1}</td><td class="pt-table-name">${escHtml(r.username ? "@" + r.username : r.nickname || "")}</td>
+      ${rows.map((r, i) => `<tr class="pt-row-link" data-pt-player="${r.user_id}"><td>${i + 1}</td><td class="pt-table-name">${escHtml(r.username ? "@" + r.username : r.nickname || "")}</td>
         <td>${r.played}</td><td>${r.goal_diff > 0 ? "+" : ""}${r.goal_diff}</td><td><b>${r.points}</b></td></tr>`).join("")}
       </tbody></table></details>`;
   }).join("");

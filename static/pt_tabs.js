@@ -69,6 +69,7 @@ function ptParticipantsHtml(t) {
 
 function ptTabRating(t, p) {
   if (!p) return ptWaitHtml();
+  if (PT.playerView && typeof ptPlayerPageHtml === "function") return ptPlayerPageHtml(p);   // ishtirokchi profili
   const hasKo = (p.knockout || []).length > 0;
   const subs = [["groups", "pt_seg_groups"], ...(hasKo ? [["bracket", "pt_seg_bracket"]] : []), ["round", "pt_seg_round"]];
   if (!PT.ratingTab || !subs.some(([id]) => id === PT.ratingTab)) PT.ratingTab = hasKo ? "bracket" : "groups";
@@ -83,31 +84,12 @@ function ptTabRating(t, p) {
   return bar + body;
 }
 
-// ---------------- Profil: mening kartam + o'yinlarim ----------------
-
-function ptMyRow(p) {
-  for (const [g, rows] of Object.entries((p && p.standings) || {})) {
-    const i = rows.findIndex(r => r.user_id === p.me_id);
-    if (i >= 0) return { g, pos: i + 1, r: rows[i] };
-  }
-  return null;
-}
+// ---------------- Profil: rasmiy turnirlar kabi (pt_profile.js) ----------------
 
 function ptTabProfile(t, p) {
-  const me = (t.members || []).find(m => m.user_id === (p ? p.me_id : null)) ||
-             (t.members || []).find(m => m.status === "approved" && p && m.user_id === p.me_id);
-  const mine = p ? ptMyRow(p) : null;
   if (!p) return ptWaitHtml();
-  if (!mine) return `<div class="empty-state">${escHtml(PTT("pt_prof_none"))}</div>`;
-  const name = me ? ptUserLabel(me) : "";
-  const cell = (v, l) => `<div class="pt-stat"><span class="pt-stat-value">${escHtml(String(v))}</span><span class="pt-stat-label">${escHtml(PTT(l))}</span></div>`;
-  return `<div class="card pt-pay pt-prof">
-      <div class="pt-prof-top"><div class="pt-avatar">${escHtml((name.replace("@", "")[0] || "?").toUpperCase())}</div>
-        <div><div class="pt-prof-name">${escHtml(name)}</div>
-        <div class="pt-muted">${escHtml(PTT("pt_prof_group", { g: mine.g, pos: mine.pos }))}</div></div></div>
-      <div class="pt-stats">${cell("#" + mine.pos, "pt_stat_pos")}${cell(mine.r.wins, "pt_stat_w")}${cell(mine.r.draws, "pt_stat_d")}${cell(mine.r.losses, "pt_stat_l")}${cell(mine.r.points, "pt_stat_pts")}</div>
-    </div>
-    <div class="section-label pt-label">${escHtml(PTT("pt_my_matches"))}</div>${ptMyMatchesHtml(p)}`;
+  const view = ptMyProfileView(t, p);
+  return view ? ptProfileHtml(view, p, true) : `<div class="empty-state">${escHtml(PTT("pt_prof_none"))}</div>`;
 }
 
 // ---------------- Sovrinlar: turnir kubogi va chempion ----------------
@@ -125,9 +107,26 @@ function ptTabPrizes(t, p) {
 }
 
 // Admin: boshlash, tur/pley-off boshqaruvi, havola, so'rovlar va a'zolar, adminlar, sig'im
+// Admin paneli sarlavhasi: rol, kutilayotgan so'rovlar, joriy tur/bosqich, muddat (rasmiy turnirlar kabi)
+function ptAdminHeaderHtml(t, p) {
+  const pending = (t.members || []).filter(m => m.status === "pending").length;
+  const stage = !p ? PTT("pt_status_" + t.status) : p.phase === "finished" ? PTT("pt_status_finished")
+    : p.phase ? PTT("pt_ko_short") : `${Math.min(p.current_round, p.total_rounds)}/${p.total_rounds}`;
+  const stat = (v, l, cls = "") => `<div class="stat-card"><span class="stat-card-value ${cls}">${escHtml(String(v))}</span>
+      <span class="stat-card-label">${escHtml(PTT(l))}</span></div>`;
+  return `<div class="card pt-admin-head">
+      <div class="pt-admin-title">🛡 ${escHtml(PTT("pt_admin_panel"))}
+        <span class="pt-tag ${t.is_owner ? "" : "pt-tag--admin"}">${escHtml(PTT(t.is_owner ? "pt_owner_tag" : "pt_admin_tag"))}</span></div>
+      <div class="stats-grid pt-admin-stats">
+        ${stat(pending, "pt_adm_requests", pending ? "neon-red" : "")}
+        ${stat(stage, "pt_adm_stage", "neon-cyan")}
+        ${stat((p && p.deadline_local) || "—", "pt_adm_deadline")}
+      </div></div>`;
+}
+
 function ptTabAdmin(t, p) {
   if (!ptIsManager(t)) return "";
-  const parts = [ptPlayHtml(t)];                      // recruiting: boshlash tugmasi
+  const parts = [ptAdminHeaderHtml(t, p), ptPlayHtml(t)];   // sarlavha + recruiting: boshlash tugmasi
   // is_manager turnir ma'lumotidan ham olinadi — serverda pt_results eski bo'lsa ham
   // (play'da is_manager kelmasa) muddat/tuzatish tugmalari yo'qolmasin
   if (p) parts.push(ptAdminPlayHtml({ ...p, is_manager: p.is_manager || ptIsManager(t) }));
@@ -153,6 +152,7 @@ function ptRenderDetailTabs() {
   const t = PT.detail, p = PT.play;
   if (!t) return;
   if (!ptVisibleTabs(t).some(x => x.id === PT.tab)) PT.tab = "home";   // admin huquqi olib tashlangan bo'lsa
+  if (PT.playerView && String(PT.playerView._tid || PT.detailId) !== String(PT.detailId)) PT.playerView = null;
   const builders = { home: ptTabHome, rating: ptTabRating, profile: ptTabProfile, prizes: ptTabPrizes, admin: ptTabAdmin };
   ptRender(`${ptHeadHtml(t)}${builders[PT.tab](t, p)}`, ptNavHtml(t));
   ptBindDetail(t);
@@ -161,8 +161,9 @@ function ptRenderDetailTabs() {
 
 function ptBindDetail(t) {
   document.querySelectorAll("#pt-root [data-pt-tab]").forEach(b => b.addEventListener("click", () => {
-    if (PT.tab === b.dataset.ptTab) return;
+    if (PT.tab === b.dataset.ptTab && !PT.playerView) return;
     PT.tab = b.dataset.ptTab;
+    PT.playerView = null;                                  // boshqa sahifa — ishtirokchi profili yopiladi
     ptRenderDetailTabs();
     document.querySelector("#pt-root .pt-body")?.scrollTo?.(0, 0);
     window.scrollTo(0, 0);
@@ -170,6 +171,12 @@ function ptBindDetail(t) {
   document.querySelectorAll("#pt-root [data-pt-rtab]").forEach(b => b.addEventListener("click", () => {
     PT.ratingTab = b.dataset.ptRtab; ptRenderDetailTabs();
   }));
+  // Reyting: ishtirokchi qatoriga bosilsa — uning profili (pt_profile.js)
+  document.querySelectorAll("#pt-root [data-pt-player]").forEach(el => el.addEventListener("click", () => {
+    if (typeof ptOpenPlayer === "function") void ptOpenPlayer(el.dataset.ptPlayer);
+  }));
+  document.getElementById("pt-player-back")?.addEventListener("click", () => { PT.playerView = null; ptRenderDetailTabs(); });
+  if (typeof ptLoadAvatars === "function") ptLoadAvatars(document.getElementById("pt-root"));
   document.querySelectorAll("#pt-root [data-pt-goto]").forEach(b => b.addEventListener("click", () => {
     PT.tab = b.dataset.ptGoto; ptRenderDetailTabs(); window.scrollTo(0, 0);
   }));

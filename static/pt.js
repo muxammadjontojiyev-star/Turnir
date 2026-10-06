@@ -62,7 +62,7 @@ async function ptLoadList() {
 }
 
 async function ptOpenDetail(id) {
-  if (String(PT.detailId) !== String(id)) PT.tab = "home";   // boshqa turnir — Asosiy sahifadan
+  if (String(PT.detailId) !== String(id)) { PT.tab = "home"; PT.playerView = null; }   // boshqa turnir — Asosiy sahifadan
   PT.view = "detail";
   PT.detailId = id;
   ptRender(`<div class="empty-state">${escHtml(PTT("pt_loading"))}</div>`);
