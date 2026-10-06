@@ -1,4 +1,4 @@
-// texts_cl.js — Yevropa ligasi tarjimalari (2026-07-21).
+// texts_el.js — Yevropa ligasi tarjimalari (2026-07-21).
 // texts_division.js bilan bir xil naqsh: app.js dagi TEXTS ga qo'shiladi
 // (app.js shishmasin — qoida #21). index.html da app.js dan KEYIN,
 // el*.js fayllaridan OLDIN ulanadi. Kalitlar el_* / elpo_* prefiksli.

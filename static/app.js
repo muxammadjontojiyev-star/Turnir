@@ -1102,6 +1102,12 @@ function cycleLanguage() {
   if (wcRoot && !wcRoot.classList.contains("hidden") && typeof renderWorldCup === "function") {
     renderWorldCup();
   }
+
+  // 2026-10-02: bo'lim tanlash va shaxsiy turnirlar ekranlari ham yangi tilda
+  const hub = document.getElementById("hub-select");
+  if (hub && !hub.classList.contains("hidden")) showHubSelect();
+  const ptRoot = document.getElementById("pt-root");
+  if (ptRoot && !ptRoot.classList.contains("hidden") && typeof ptRerender === "function") ptRerender();
 }
 
 // ============================================================
@@ -1257,7 +1263,7 @@ async function init() {
     return;
   }
 
-  showModeSelect();
+  showHubSelect();   // 2026-10-02: avval bo'lim (Rasmiy / Shaxsiy), keyin rejim
 
   // Kubok yulduzchalari (2026-07-16) — bir marta yuklanadi, barcha rejimlar
   // reyting/profil renderlari APP.prizeStars'dan o'qiydi (bloklamaydi)
@@ -1321,7 +1327,7 @@ function showSubscribeGate() {
     const ok = await checkChannelMembership();
     if (ok) {
       hideSubscribeGate();
-      showModeSelect();
+      showHubSelect();
     } else {
       showToast(t.subscribe_not_yet || "❌ Siz hali kanalga a'zo bo'lmadingiz.");
     }
@@ -1370,8 +1376,10 @@ function showModeSelect() {
     host.appendChild(screen);
   }
   screen.classList.remove("hidden");
+  document.getElementById("hub-select")?.classList.add("hidden");   // 2026-10-02
 
   screen.innerHTML = `
+    <button class="hub-back-btn" id="mode-hub-back">${escHtml(t.hub_back || "← Bo'limlar")}</button>
     <div class="mode-select-title">${escHtml(t.mode_select_title || "REJIMNI TANLANG")}</div>
     <div class="mode-cards">
       <div class="mode-card mode-card--leagues mode-card--photo" id="mode-card-leagues">
@@ -1410,6 +1418,51 @@ function showModeSelect() {
     .addEventListener("click", enterDivisionMode);
   document.getElementById("mode-card-el")
     .addEventListener("click", enterEuropaLeagueMode);
+  document.getElementById("mode-hub-back")
+    .addEventListener("click", showHubSelect);
+}
+
+// ============================================================
+//  BO'LIM TANLASH (2026-10-02): Rasmiy turnirlar | Shaxsiy turnirlar
+//  Rasmiy → mavjud rejim tanlash (showModeSelect, o'zgarishsiz oqim).
+//  Shaxsiy → pt.js (showPrivateTournaments). Rejimlardan chiqish
+//  (exit*) avvalgidek rejim tanlashga qaytadi.
+// ============================================================
+function showHubSelect() {
+  const t = APP.t;
+  const host = document.querySelector("main") || document.body;
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelector(".bottom-nav")?.classList.add("hidden");
+  document.getElementById("league-back-btn")?.classList.add("hidden");
+  document.getElementById("mode-select")?.classList.add("hidden");
+  document.getElementById("pt-root")?.classList.add("hidden");
+
+  let screen = document.getElementById("hub-select");
+  if (!screen) {
+    screen = document.createElement("div");
+    screen.id = "hub-select";
+    host.appendChild(screen);
+  }
+  screen.classList.remove("hidden");
+  screen.innerHTML = `
+    <div class="mode-select-title">${escHtml(t.hub_title || "BO'LIMNI TANLANG")}</div>
+    <div class="hub-cards">
+      <button class="hub-card hub-card--official" id="hub-card-official">
+        <span class="hub-card-icon">${ICON.get("trophy", 34)}</span>
+        <span class="hub-card-name">${escHtml(t.hub_official || "Rasmiy turnirlar")}</span>
+        <span class="hub-card-sub">${escHtml(t.hub_official_sub || "")}</span>
+      </button>
+      <button class="hub-card hub-card--private" id="hub-card-private">
+        <span class="hub-card-icon">${ICON.get("swords", 34)}</span>
+        <span class="hub-card-name">${escHtml(t.hub_private || "Shaxsiy turnirlar")}</span>
+        <span class="hub-card-sub">${escHtml(t.hub_private_sub || "")}</span>
+      </button>
+    </div>`;
+  document.getElementById("hub-card-official").addEventListener("click", showModeSelect);
+  document.getElementById("hub-card-private").addEventListener("click", () => {
+    if (typeof showPrivateTournaments === "function") showPrivateTournaments();
+    else showToast("Tez orada!");
+  });
 }
 
 // Rejim ekranini yashiradi (tanlangach asosiy interfeysga o'tish uchun)

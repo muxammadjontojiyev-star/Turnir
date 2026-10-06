@@ -5648,3 +5648,74 @@ svg.wc-bracket-trophy { display: block; margin: 0 auto; }
   background-color: rgba(38,22,15,.9);
   border-color: rgba(255,130,70,.16);
 }
+
+/* ==========================================================================
+   BO'LIM TANLASH + SHAXSIY TURNIRLAR (2026-10-02)
+   ========================================================================== */
+#hub-select {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px; min-height: 70vh;
+  padding: 28px 18px calc(var(--nav-height) + 24px);
+}
+.hub-cards { display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 360px; }
+.hub-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  width: 100%; padding: 26px 22px; border-radius: 20px; text-align: left;
+  color: #fff; cursor: pointer; position: relative; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+.hub-card:active { transform: scale(.98); }
+.hub-card--official {
+  background: radial-gradient(120% 140% at 100% 0%, rgba(0,240,255,.28), transparent 55%),
+              linear-gradient(135deg, #2a1f6b 0%, #4a2fc4 55%, #1a3a8a 100%);
+  box-shadow: 0 12px 34px rgba(74,47,196,.35);
+}
+.hub-card--private {
+  background: radial-gradient(120% 140% at 100% 0%, rgba(255,200,80,.25), transparent 55%),
+              linear-gradient(135deg, #0f3b2e 0%, #11785a 55%, #0b4d5c 100%);
+  box-shadow: 0 12px 34px rgba(17,120,90,.35);
+}
+.hub-card-icon { opacity: .95; margin-bottom: 4px; }
+.hub-card-name { font-family: var(--font-display); font-size: 21px; font-weight: 700; letter-spacing: .5px; }
+.hub-card-sub { font-size: 13px; opacity: .78; line-height: 1.35; }
+.hub-back-btn {
+  align-self: flex-start; background: none; border: 1px solid var(--border);
+  color: var(--text-secondary); border-radius: 999px; padding: 7px 14px;
+  font-size: 13px; cursor: pointer;
+}
+
+#pt-root .pt-body { padding-bottom: 40px; display: flex; flex-direction: column; gap: 12px; }
+#pt-root .pt-title { color: #7ee2b8; }
+#pt-root .pt-label { margin-top: 6px; }
+.pt-card {
+  display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left;
+  padding: 14px 16px; border-radius: 14px; cursor: pointer; color: var(--text-primary);
+  background: var(--bg-card); border: 1px solid var(--border);
+}
+.pt-card:active { opacity: .8; }
+.pt-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pt-card-name { font-weight: 700; font-size: 15.5px; overflow-wrap: anywhere; }
+.pt-card-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 12.5px; color: var(--text-secondary); }
+.pt-tag { font-size: 11px; padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  background: rgba(126,226,184,.14); color: #7ee2b8; border: 1px solid rgba(126,226,184,.35); }
+.pt-status { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+  background: rgba(255,255,255,.07); color: var(--text-secondary); white-space: nowrap; }
+.pt-status--awaiting_payment, .pt-status--payment_review { background: rgba(245,197,66,.14); color: #f5c542; }
+.pt-status--recruiting { background: rgba(0,240,255,.12); color: #38d6ff; }
+.pt-status--running { background: rgba(34,197,94,.14); color: #22c55e; }
+.pt-status--rejected, .pt-status--cancelled { background: rgba(239,68,68,.14); color: #ef4444; }
+.pt-form, .pt-pay, .pt-head { display: flex; flex-direction: column; gap: 10px; }
+.pt-field-label { font-size: 13px; color: var(--text-secondary); }
+.pt-hint { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
+.pt-price { font-size: 14px; }
+.pt-warn { font-size: 13px; color: #f5c542; }
+.pt-head-name { font-family: var(--font-display); font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
+.pt-card-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; flex-wrap: wrap; }
+.pt-card-row > span:first-child { color: var(--text-secondary); min-width: 56px; }
+.pt-mono { font-family: ui-monospace, monospace; letter-spacing: 1px; }
+.pt-copy { margin-left: auto; font-size: 12px; padding: 5px 10px; border-radius: 8px; cursor: pointer;
+  background: rgba(126,226,184,.12); color: #7ee2b8; border: 1px solid rgba(126,226,184,.35); }
+.pt-member { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; }
+.pt-muted { color: var(--text-secondary); font-size: 12.5px; }
