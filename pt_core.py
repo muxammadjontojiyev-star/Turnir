@@ -33,7 +33,8 @@ STATUS_CANCELLED = "cancelled"
 _UNPAID = (STATUS_AWAITING_PAYMENT, STATUS_PAYMENT_REVIEW)
 
 _TOURNAMENT_COLS = ("t.id, t.name, t.status, t.invite_code, t.price_uzs, t.created_at, "
-                    "t.owner_user_id, u.nickname AS owner_nickname, u.username AS owner_username")
+                    "t.owner_user_id, u.nickname AS owner_nickname, u.username AS owner_username, "
+                    "t.receipt_at, t.reject_reason")
 
 
 def _clean_name(name: str) -> str:

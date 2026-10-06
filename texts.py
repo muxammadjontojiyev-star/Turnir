@@ -170,6 +170,22 @@ TEXTS = {
         LANGUAGE_EN: "🎮 Your {mode} opponent created a room.\nRoom ID: {code}\nJoin the match and confirm the result in the app.",
     },
     # Xabar ostidagi "ilovani ochish" tugmasi (chat bildirishnomalari uchun)
+    # 2026-10-02: shaxsiy turnir to'lovi
+    "pt_notify_receipt_admin": {
+        LANGUAGE_UZ: "💳 Yangi to'lov cheki\nTurnir: «{name}» (#{id})\nTashkilotchi: {owner}\nSumma: {price} so'm\nTekshirish uchun ilovani oching: Shaxsiy turnirlar → To'lovlar.",
+        LANGUAGE_RU: "💳 Новый чек оплаты\nТурнир: «{name}» (#{id})\nОрганизатор: {owner}\nСумма: {price} сум\nОткройте приложение: Частные турниры → Платежи.",
+        LANGUAGE_EN: "💳 New payment receipt\nTournament: «{name}» (#{id})\nOrganizer: {owner}\nAmount: {price} UZS\nOpen the app: Private tournaments → Payments.",
+    },
+    "pt_notify_approved": {
+        LANGUAGE_UZ: "✅ «{name}» turniri uchun to'lovingiz tasdiqlandi! Endi ishtirokchilarni taklif qilishingiz mumkin.",
+        LANGUAGE_RU: "✅ Оплата турнира «{name}» подтверждена! Теперь можно приглашать участников.",
+        LANGUAGE_EN: "✅ Payment for «{name}» has been approved! You can now invite players.",
+    },
+    "pt_notify_rejected": {
+        LANGUAGE_UZ: "❌ «{name}» turniri uchun to'lov rad etildi.\nSabab: {reason}\nChekni qayta yuborishingiz mumkin.",
+        LANGUAGE_RU: "❌ Оплата турнира «{name}» отклонена.\nПричина: {reason}\nВы можете отправить чек повторно.",
+        LANGUAGE_EN: "❌ Payment for «{name}» was rejected.\nReason: {reason}\nYou can send the receipt again.",
+    },
     "btn_open_app": {
         LANGUAGE_UZ: "📲 Ilovani ochish",
         LANGUAGE_RU: "📲 Открыть приложение",

@@ -178,6 +178,9 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
             "(SELECT id FROM pt_tournaments WHERE owner_user_id = ?)",
             (user_id, user_id),
         )
+        cursor.execute(
+            "DELETE FROM pt_receipts WHERE tournament_id IN "
+            "(SELECT id FROM pt_tournaments WHERE owner_user_id = ?)", (user_id,))
         cursor.execute("DELETE FROM pt_tournaments WHERE owner_user_id = ?", (user_id,))
         for msg_t, match_t in (("el_messages", "el_matches"),
                                ("el_po_messages", "el_playoff_matches")):

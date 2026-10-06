@@ -21,6 +21,16 @@ logger = logging.getLogger(__name__)
 _API_BASE = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 
+def _open_app_markup(open_button: str | None) -> dict | None:
+    """WebApp ochish tugmasi (sendMessage va sendPhoto uchun umumiy — qoida #26)."""
+    if not open_button:
+        return None
+    # WebApp tugmasi faqat HTTPS URL bilan ishlaydi (Telegram talabi)
+    if WEBAPP_URL.startswith("https://"):
+        return {"inline_keyboard": [[{"text": open_button, "web_app": {"url": WEBAPP_URL}}]]}
+    return {"inline_keyboard": [[{"text": open_button, "url": WEBAPP_URL}]]}
+
+
 async def _send_message(chat_id: int, text: str,
                         open_button: str | None = None) -> bool:
     """
@@ -34,18 +44,9 @@ async def _send_message(chat_id: int, text: str,
     if not BOT_TOKEN:
         return False
     payload = {"chat_id": chat_id, "text": text}
-    if open_button:
-        # WebApp tugmasi faqat HTTPS URL bilan ishlaydi (Telegram talabi)
-        if WEBAPP_URL.startswith("https://"):
-            payload["reply_markup"] = {
-                "inline_keyboard": [[
-                    {"text": open_button, "web_app": {"url": WEBAPP_URL}}
-                ]]
-            }
-        else:
-            payload["reply_markup"] = {
-                "inline_keyboard": [[{"text": open_button, "url": WEBAPP_URL}]]
-            }
+    markup = _open_app_markup(open_button)
+    if markup:
+        payload["reply_markup"] = markup
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
             r = await client.post(f"{_API_BASE}/sendMessage", json=payload)
@@ -89,3 +90,35 @@ async def notify_members(members: list[dict], text_key: str, **fmt) -> int:
         if ok:
             sent += 1
     return sent
+
+
+async def notify_user_photo(telegram_id: int, photo: bytes, mime: str, text_key: str,
+                            language: str, open_button_key: str | None = None, **fmt) -> bool:
+    """
+    2026-10-02: rasm + caption (uning tilida) yuboradi — sendPhoto (multipart).
+    Xato bo'lsa False (log bilan); bitta adminga yetmasligi qolganlarini to'xtatmaydi.
+    """
+    if not BOT_TOKEN:
+        return False
+    lang = language or DEFAULT_LANGUAGE
+    caption = t(text_key, lang)
+    if fmt:
+        try:
+            caption = caption.format(**fmt)
+        except (KeyError, IndexError, ValueError) as exc:
+            logger.warning("Rasm caption format xatosi (%s): %s", text_key, exc)
+    data = {"chat_id": str(telegram_id), "caption": caption[:1000]}
+    markup = _open_app_markup(t(open_button_key, lang) if open_button_key else None)
+    if markup:
+        import json
+        data["reply_markup"] = json.dumps(markup)
+    ext = "png" if mime == "image/png" else ("webp" if mime == "image/webp" else "jpg")
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.post(f"{_API_BASE}/sendPhoto", data=data,
+                                  files={"photo": (f"receipt.{ext}", photo, mime)})
+            return r.status_code == 200
+    except Exception as exc:
+        logger.warning("Rasmli bildirishnoma yuborilmadi (chat_id=%s): %s", telegram_id, exc)
+        return False
+

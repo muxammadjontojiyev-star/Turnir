@@ -364,6 +364,19 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_members_user ON pt_members(user_id)")
 
+    # === pt_receipts (to'lov cheklari — 2-bosqich) ===
+    # Alohida jadval: rasm baytlari turnirlar ro'yxati so'rovlarini og'irlashtirmasin
+    # (qoida #32). Har turnirga bitta chek — qayta yuklansa almashtiriladi.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_receipts (
+            tournament_id INTEGER PRIMARY KEY,
+            mime TEXT NOT NULL,
+            data BLOB NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tournament_id) REFERENCES pt_tournaments(id)
+        )
+    """)
+
     # === el_state (YeL tur boshqaruvi — cl_state bilan bir xil) ===
     # started=0 -> hamma turlar yopiq; admin boshlaganda 1-tur ochiladi;
     # har kuni 23:30 (Toshkent) da joriy tur yopiladi (el_rounds.el_tick).
@@ -896,6 +909,11 @@ def init_db():
         "ALTER TABLE season_state ADD COLUMN el_season INTEGER NOT NULL DEFAULT 1",
         # 2026-10-02: YeL mavsumini yakunlashda takror bosishdan cooldown (cl_last_finalized_at kabi)
         "ALTER TABLE season_state ADD COLUMN el_last_finalized_at TIMESTAMP",
+        # 2026-10-02: shaxsiy turnir to'lovi (2-bosqich)
+        "ALTER TABLE pt_tournaments ADD COLUMN receipt_at TIMESTAMP",
+        "ALTER TABLE pt_tournaments ADD COLUMN paid_at TIMESTAMP",
+        "ALTER TABLE pt_tournaments ADD COLUMN reviewed_by INTEGER",
+        "ALTER TABLE pt_tournaments ADD COLUMN reject_reason TEXT",
     ]
     for sql in migrations:
         try:
