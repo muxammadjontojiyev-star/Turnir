@@ -173,6 +173,9 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         # FK el_matches'ga) — aks holda el_matches DELETE "FOREIGN KEY failed" beradi.
         # Shaxsiy turnirlar (2026-10-02): a'zoliklar + shu user TASHKIL QILGAN turnirlar
         # (tashkilotchisiz turnir boshqarib bo'lmaydi — a'zolari bilan birga o'chiriladi).
+        cursor.execute("DELETE FROM pt_sub_receipts WHERE subscription_id IN "
+                       "(SELECT id FROM pt_subscriptions WHERE user_id = ?)", (user_id,))
+        cursor.execute("DELETE FROM pt_subscriptions WHERE user_id = ?", (user_id,))
         cursor.execute(
             "DELETE FROM pt_messages WHERE sender_id = ? OR match_id IN (SELECT id FROM pt_matches "
             "WHERE player1_id = ? OR player2_id = ? OR tournament_id IN "

@@ -122,7 +122,13 @@ ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "@Tojiyev_M")
 # PT_PRICE_UZS: bitta turnir yaratish narxi (so'm). 0 yoki bo'sh — narx belgilanmagan,
 #   turnir yaratish to'xtatiladi (tasodifan bepul bo'lib qolmasin).
 # PT_CARD_NUMBER / PT_CARD_HOLDER: to'lov ekranida ko'rsatiladigan karta va egasi.
-PT_PRICE_UZS = int(os.getenv("PT_PRICE_UZS", "0") or 0)
+PT_PRICE_UZS = int(os.getenv("PT_PRICE_UZS", "0") or 0)          # bir martalik, 8–20 kishi
+# 2026-10-03: narx pog'onalari (bir martalik) va obunalar. 0/bo'sh — o'sha variant ko'rinmaydi.
+PT_PRICE_M_UZS = int(os.getenv("PT_PRICE_M_UZS", "0") or 0)      # bir martalik, 24–64 kishi
+PT_PRICE_L_UZS = int(os.getenv("PT_PRICE_L_UZS", "0") or 0)      # bir martalik, 68–128 kishi
+PT_PRICE_WEEK_UZS = int(os.getenv("PT_PRICE_WEEK_UZS", "0") or 0)    # obuna: 7 kun
+PT_PRICE_MONTH_UZS = int(os.getenv("PT_PRICE_MONTH_UZS", "0") or 0)  # obuna: 30 kun
+PT_PRICE_YEAR_UZS = int(os.getenv("PT_PRICE_YEAR_UZS", "0") or 0)    # obuna: 365 kun
 PT_CARD_NUMBER = os.getenv("PT_CARD_NUMBER", "").strip()
 PT_CARD_HOLDER = os.getenv("PT_CARD_HOLDER", "").strip()
 # Taklif havolasi uchun (t.me/<BOT_USERNAME>?start=pt_<kod>); Railway'da allaqachon bor.

@@ -280,6 +280,25 @@ TEXTS = {
     "pt_stage_qf": {LANGUAGE_UZ: "1/4 final", LANGUAGE_RU: "1/4 финала", LANGUAGE_EN: "quarter-final"},
     "pt_stage_semi": {LANGUAGE_UZ: "yarim final", LANGUAGE_RU: "полуфинал", LANGUAGE_EN: "semi-final"},
     "pt_stage_final": {LANGUAGE_UZ: "final", LANGUAGE_RU: "финал", LANGUAGE_EN: "final"},
+    # 2026-10-03: shaxsiy turnir obunalari
+    "pt_plan_week": {LANGUAGE_UZ: "haftalik", LANGUAGE_RU: "недельная", LANGUAGE_EN: "weekly"},
+    "pt_plan_month": {LANGUAGE_UZ: "oylik", LANGUAGE_RU: "месячная", LANGUAGE_EN: "monthly"},
+    "pt_plan_year": {LANGUAGE_UZ: "yillik", LANGUAGE_RU: "годовая", LANGUAGE_EN: "yearly"},
+    "pt_notify_sub_receipt_admin": {
+        LANGUAGE_UZ: "💳 Obuna to'lovi cheki\nTarif: {plan} (#{id})\nFoydalanuvchi: {owner}\nSumma: {price} so'm\nIlovada: Shaxsiy turnirlar → To'lovlar.",
+        LANGUAGE_RU: "💳 Чек оплаты подписки\nТариф: {plan} (#{id})\nПользователь: {owner}\nСумма: {price} сум\nВ приложении: Частные турниры → Платежи.",
+        LANGUAGE_EN: "💳 Subscription payment receipt\nPlan: {plan} (#{id})\nUser: {owner}\nAmount: {price} UZS\nIn the app: Private tournaments → Payments.",
+    },
+    "pt_notify_sub_approved": {
+        LANGUAGE_UZ: "✅ {plan} obunangiz faollashtirildi! Amal qilish muddati: {until} gacha. Endi turnirlarni to'lovsiz yaratishingiz mumkin.",
+        LANGUAGE_RU: "✅ Ваша {plan} подписка активирована! Действует до {until}. Теперь турниры создаются без оплаты.",
+        LANGUAGE_EN: "✅ Your {plan} subscription is active until {until}. You can now create tournaments without paying.",
+    },
+    "pt_notify_sub_rejected": {
+        LANGUAGE_UZ: "❌ {plan} obuna to'lovi rad etildi.\nSabab: {reason}\nChekni qayta yuborishingiz mumkin.",
+        LANGUAGE_RU: "❌ Оплата подписки ({plan}) отклонена.\nПричина: {reason}\nВы можете отправить чек повторно.",
+        LANGUAGE_EN: "❌ The {plan} subscription payment was rejected.\nReason: {reason}\nYou can send the receipt again.",
+    },
     "btn_open_app": {
         LANGUAGE_UZ: "📲 Ilovani ochish",
         LANGUAGE_RU: "📲 Открыть приложение",

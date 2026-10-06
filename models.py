@@ -406,6 +406,37 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_messages_match ON pt_messages(match_id)")
 
+    # === pt_subscriptions (shaxsiy turnir obunalari — 2026-10-03) ===
+    # plan: week | month | year. status: awaiting_payment -> payment_review -> active | rejected.
+    # starts_at/expires_at — UTC; tasdiqlanganda hisoblanadi (yangilash joriy obuna oxiridan).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            telegram_id INTEGER NOT NULL,
+            plan TEXT NOT NULL,
+            price_uzs INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'awaiting_payment',
+            receipt_at TIMESTAMP,
+            reviewed_by INTEGER,
+            reject_reason TEXT,
+            starts_at TEXT,
+            expires_at TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_subs_user ON pt_subscriptions(user_id, status)")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_sub_receipts (
+            subscription_id INTEGER PRIMARY KEY,
+            mime TEXT NOT NULL,
+            data BLOB NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (subscription_id) REFERENCES pt_subscriptions(id)
+        )
+    """)
+
     # === pt_receipts (to'lov cheklari — 2-bosqich) ===
     # Alohida jadval: rasm baytlari turnirlar ro'yxati so'rovlarini og'irlashtirmasin
     # (qoida #32). Har turnirga bitta chek — qayta yuklansa almashtiriladi.
@@ -967,6 +998,8 @@ def init_db():
         "ALTER TABLE pt_tournaments ADD COLUMN finished_at TIMESTAMP",
         # 2026-10-03: tashkilotchi belgilaydigan sig'im (6..20). Mavjud turnirlar — 20 (avvalgi xulq).
         "ALTER TABLE pt_tournaments ADD COLUMN max_players INTEGER NOT NULL DEFAULT 20",
+        # 2026-10-03: turnir qanday to'langan — one_time | subscription (obuna limiti uchun)
+        "ALTER TABLE pt_tournaments ADD COLUMN paid_via TEXT NOT NULL DEFAULT 'one_time'",
     ]
     for sql in migrations:
         try:

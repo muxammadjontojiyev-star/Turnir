@@ -26,11 +26,17 @@ def pt_config(user: dict = Depends(get_authenticated_user)):
     """To'lov ma'lumotlari (.env'dan) va cheklovlar — yaratish ekrani uchun."""
     from pt_core import (PT_DEFAULT_PLAYERS, PT_GROUP_SIZE, PT_MAX_PLAYERS, PT_MIN_PLAYERS,
                          PT_NAME_MAX, PT_NAME_MIN)
+    from pt_pricing import public_pricing
+    from pt_subscriptions import pt_sub_status
+    pricing, sub = public_pricing(), pt_sub_status(user["id"])
+    # price_set: turnir yaratishning KAMIDA bitta yo'li bor (biror pog'ona narxi yoki faol obuna)
+    can_create = any(t["price_uzs"] > 0 for t in pricing["tiers"]) or bool(sub["active"])
     return {"price_uzs": PT_PRICE_UZS, "card_number": PT_CARD_NUMBER,
-            "card_holder": PT_CARD_HOLDER, "price_set": PT_PRICE_UZS > 0,
+            "card_holder": PT_CARD_HOLDER, "price_set": can_create,
             "is_super": _is_super(user),
             "min_players": PT_MIN_PLAYERS, "max_players": PT_MAX_PLAYERS,
             "default_players": PT_DEFAULT_PLAYERS, "group_size": PT_GROUP_SIZE,
+            "pricing": pricing, "subscription": sub,
             "name_min": PT_NAME_MIN, "name_max": PT_NAME_MAX}
 
 
@@ -42,10 +48,14 @@ def pt_my(user: dict = Depends(get_authenticated_user)):
 
 @router.post("/pt/create")
 def pt_create(name: str = Body(..., embed=True), max_players: int = Body(8, embed=True),
-              user: dict = Depends(get_authenticated_user)):
-    """Xato: price_not_set, bad_size, name_too_short, name_too_long, too_many_unpaid -> 400"""
-    from pt_core import pt_create_tournament
-    ok, result = pt_create_tournament(user, name, PT_PRICE_UZS, max_players)
+              pay_mode: str = Body("one_time", embed=True), user: dict = Depends(get_authenticated_user)):
+    """
+    pay_mode: one_time (narx sig'im pog'onasidan) | subscription (faol obuna, to'lovsiz).
+    Xato: price_not_set, bad_size, name_too_short, name_too_long, too_many_unpaid,
+          no_subscription, sub_limit -> 400
+    """
+    from pt_subscriptions import pt_create_with_mode
+    ok, result = pt_create_with_mode(user, name, max_players, "subscription" if pay_mode == "subscription" else "one_time")
     if not ok:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}
@@ -100,7 +110,8 @@ async def pt_receipt_submit(tournament_id: int, image_base64: str = Body(..., em
 def pt_admin_payments(admin: dict = Depends(get_authenticated_super_admin)):
     """Bosh admin: tekshiruvdagi to'lovlar navbati."""
     from pt_payment import pt_list_payments
-    return {"payments": pt_list_payments()}
+    from pt_subscriptions import pt_sub_list_payments
+    return {"payments": pt_list_payments(), "subscriptions": pt_sub_list_payments()}
 
 
 @router.get("/pt/admin/{tournament_id}/receipt")
