@@ -6,7 +6,8 @@ Admin qarori: ikkala usul ham.
      -> tashkilotchi tasdiqlaydi (approved) yoki rad etadi (o'chiriladi).
   2) Tashkilotchi Telegram ID yoki @username bilan to'g'ridan-to'g'ri qo'shadi (approved).
 A'zolik faqat 'recruiting' holatida o'zgaradi (qur'adan keyin tarkib qotadi).
-Sig'im: approved <= PT_MAX_PLAYERS. Har amal BEGIN IMMEDIATE ichida (qoida #38).
+Sig'im: approved <= turnirning o'z max_players qiymati (tashkilotchi 6..20 tanlaydi).
+Har amal BEGIN IMMEDIATE ichida (qoida #38).
 Ruxsat: boshqaruv amallari FAQAT tashkilotchi (qoida #34).
 """
 
@@ -14,7 +15,7 @@ import logging
 import re
 
 from models import get_connection
-from pt_core import PT_MAX_PLAYERS, STATUS_RECRUITING
+from pt_core import STATUS_RECRUITING
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,8 @@ def pt_invite_preview(code: str, user_id: int | None = None) -> dict | None:
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT t.id, t.name, t.status, u.nickname AS owner_nickname, u.username AS owner_username "
+            "SELECT t.id, t.name, t.status, t.max_players, u.nickname AS owner_nickname, "
+            "u.username AS owner_username "
             "FROM pt_tournaments t JOIN users u ON u.id = t.owner_user_id WHERE t.invite_code = ?",
             (code,),
         )
@@ -54,7 +56,6 @@ def pt_invite_preview(code: str, user_id: int | None = None) -> dict | None:
             return None
         out = dict(t)
         out["approved_count"] = _approved_count(cursor, t["id"])
-        out["max_players"] = PT_MAX_PLAYERS
         out["my_status"] = None
         if user_id is not None:
             cursor.execute("SELECT status FROM pt_members WHERE tournament_id = ? AND user_id = ?",
@@ -88,7 +89,8 @@ def _tx(fn):
 
 def _owner_info(cursor, tid: int) -> dict | None:
     cursor.execute(
-        "SELECT t.id, t.name, t.status, t.owner_user_id, t.owner_telegram_id, u.language AS owner_language "
+        "SELECT t.id, t.name, t.status, t.owner_user_id, t.owner_telegram_id, t.max_players, "
+        "u.language AS owner_language "
         "FROM pt_tournaments t JOIN users u ON u.id = t.owner_user_id WHERE t.id = ?", (tid,))
     r = cursor.fetchone()
     return dict(r) if r else None
@@ -113,7 +115,7 @@ def pt_request_join(code: str, user: dict) -> tuple[bool, str | dict]:
                        (t["id"], user["id"]))
         if cursor.fetchone():
             return False, "already_member"
-        if _approved_count(cursor, t["id"]) >= PT_MAX_PLAYERS:
+        if _approved_count(cursor, t["id"]) >= t["max_players"]:
             return False, "full"
         cursor.execute(
             "INSERT INTO pt_members (tournament_id, user_id, telegram_id, status) VALUES (?, ?, ?, 'pending')",
@@ -149,7 +151,7 @@ def pt_approve_member(tid: int, owner_id: int, member_user_id: int) -> tuple[boo
             return False, t
         if m["status"] == "approved":
             return False, "already_approved"
-        if _approved_count(cursor, tid) >= PT_MAX_PLAYERS:
+        if _approved_count(cursor, tid) >= t["max_players"]:
             return False, "full"
         cursor.execute("UPDATE pt_members SET status = 'approved' WHERE tournament_id = ? AND user_id = ? "
                        "AND status = 'pending'", (tid, member_user_id))
@@ -208,7 +210,7 @@ def pt_add_member(tid: int, owner_id: int, query: str) -> tuple[bool, str | dict
         existing = cursor.fetchone()
         if existing and existing["status"] == "approved":
             return False, "already_member"
-        if _approved_count(cursor, tid) >= PT_MAX_PLAYERS:
+        if _approved_count(cursor, tid) >= t["max_players"]:
             return False, "full"
         if existing:
             cursor.execute("UPDATE pt_members SET status = 'approved' WHERE tournament_id = ? AND user_id = ?",

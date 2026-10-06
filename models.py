@@ -965,6 +965,8 @@ def init_db():
         # 2026-10-02: shaxsiy turnir pley-offi (5-bosqich)
         "ALTER TABLE pt_tournaments ADD COLUMN champion_user_id INTEGER",
         "ALTER TABLE pt_tournaments ADD COLUMN finished_at TIMESTAMP",
+        # 2026-10-03: tashkilotchi belgilaydigan sig'im (6..20). Mavjud turnirlar — 20 (avvalgi xulq).
+        "ALTER TABLE pt_tournaments ADD COLUMN max_players INTEGER NOT NULL DEFAULT 20",
     ]
     for sql in migrations:
         try:

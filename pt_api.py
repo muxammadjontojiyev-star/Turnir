@@ -24,11 +24,12 @@ def _is_super(user: dict) -> bool:
 @router.get("/pt/config")
 def pt_config(user: dict = Depends(get_authenticated_user)):
     """To'lov ma'lumotlari (.env'dan) va cheklovlar — yaratish ekrani uchun."""
-    from pt_core import PT_MAX_PLAYERS, PT_MIN_PLAYERS, PT_NAME_MAX, PT_NAME_MIN
+    from pt_core import PT_DEFAULT_PLAYERS, PT_MAX_PLAYERS, PT_MIN_PLAYERS, PT_NAME_MAX, PT_NAME_MIN
     return {"price_uzs": PT_PRICE_UZS, "card_number": PT_CARD_NUMBER,
             "card_holder": PT_CARD_HOLDER, "price_set": PT_PRICE_UZS > 0,
             "is_super": _is_super(user),
             "min_players": PT_MIN_PLAYERS, "max_players": PT_MAX_PLAYERS,
+            "default_players": PT_DEFAULT_PLAYERS,
             "name_min": PT_NAME_MIN, "name_max": PT_NAME_MAX}
 
 
@@ -39,10 +40,11 @@ def pt_my(user: dict = Depends(get_authenticated_user)):
 
 
 @router.post("/pt/create")
-def pt_create(name: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
-    """Xato: price_not_set, name_too_short, name_too_long, too_many_unpaid -> 400"""
+def pt_create(name: str = Body(..., embed=True), max_players: int = Body(8, embed=True),
+              user: dict = Depends(get_authenticated_user)):
+    """Xato: price_not_set, bad_size, name_too_short, name_too_long, too_many_unpaid -> 400"""
     from pt_core import pt_create_tournament
-    ok, result = pt_create_tournament(user, name, PT_PRICE_UZS)
+    ok, result = pt_create_tournament(user, name, PT_PRICE_UZS, max_players)
     if not ok:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}
@@ -142,4 +144,15 @@ async def pt_admin_reject(tournament_id: int, reason: str = Body("", embed=True)
         raise HTTPException(status_code=400, detail=info)
     await _notify_owner(info, "pt_notify_rejected", reason=reason or "—")
     return {"status": "ok"}
+
+
+@router.post("/pt/{tournament_id}/capacity")
+def pt_capacity(tournament_id: int, max_players: int = Body(..., embed=True),
+                user: dict = Depends(get_authenticated_user)):
+    """Sig'imni o'zgartirish (qur'agacha). Xato: bad_size, not_owner, already_started, below_members -> 400"""
+    from pt_core import pt_set_capacity
+    ok, r = pt_set_capacity(tournament_id, user["id"], max_players)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    return {"status": "ok", "max_players": max_players}
 
