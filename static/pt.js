@@ -134,7 +134,7 @@ function ptRenderCreate() {
              placeholder="${escHtml(PTT("pt_name_ph"))}" autocomplete="off">
       <label class="pt-field-label" for="pt-size">${escHtml(PTT("pt_size_label"))}</label>
       ${ptSizeSelectHtml("pt-size", c.default_players || 8)}
-      <div class="pt-hint">${escHtml(PTT("pt_format", { min: c.min_players || 6 }))}</div>
+      <div class="pt-hint">${escHtml(PTT("pt_format", { min: c.min_players || 8 }))}</div>
       ${priceBlock}
       <button class="btn btn--primary" id="pt-create-btn" ${c.price_set ? "" : "disabled"}>
         ${escHtml(PTT("pt_create_btn"))}</button>
@@ -251,12 +251,15 @@ function ptRerender() {
 
 // ---------------- Sig'im (tashkilotchi belgilaydi, 6..20) ----------------
 
-// <select>: min..max; minAllowed — qabul qilinganlardan kam tanlab bo'lmaydi
+// <select>: min..max, qadam = guruh o'lchami (4) — guruhlar doim to'liq bo'lsin.
+// minAllowed — qabul qilinganlardan kam tanlab bo'lmaydi (yuqoriga 4 ga yaxlitlanadi).
 function ptSizeSelectHtml(id, selected, minAllowed) {
   const c = PT.config || {};
-  const lo = Math.max(c.min_players || 6, minAllowed || 0), hi = c.max_players || 20;
+  const step = c.group_size || 4;
+  const lo = Math.max(c.min_players || 8, Math.ceil((minAllowed || 0) / step) * step), hi = c.max_players || 128;
+  if (Number(selected) % step) selected = Math.ceil(Number(selected) / step) * step;   // eski (6/7/…) sig'im
   let opts = "";
-  for (let n = lo; n <= hi; n++) {
+  for (let n = lo; n <= hi; n += step) {
     opts += `<option value="${n}" ${n === Number(selected) ? "selected" : ""}>${escHtml(PTT("pt_size_n", { n }))}</option>`;
   }
   return `<select class="modal-input pt-select" id="${id}">${opts}</select>`;

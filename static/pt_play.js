@@ -8,7 +8,7 @@
 const PT_PLAY_ERR = {
   round_closed: "pt_err_round_closed", already_submitted: "pt_err_already_sub",
   deadline_in_past: "pt_err_deadline_past", deadline_too_far: "pt_err_deadline_far",
-  bad_deadline: "pt_err_bad_deadline", not_enough_players: "pt_err_not_enough",
+  bad_deadline: "pt_err_bad_deadline", not_enough_players: "pt_err_not_enough", not_multiple: "pt_err_not_multiple",
   wrong_status: "pt_err_wrong_status", not_owner: "pt_err_not_owner", match_not_found: "pt_err_match_404",
   draw_not_allowed: "pt_err_draw", not_ready: "pt_err_not_ready", next_stage_played: "pt_err_next_played",
 };
@@ -25,10 +25,15 @@ function ptPlayErr(e) { return PTT(PT_PLAY_ERR[e && e.message] || "pt_err_generi
 // Tafsilot sahifasidagi o'rin: recruiting — boshlash tugmasi; running — o'yin bloki
 function ptPlayHtml(t) {
   if (t.is_owner && t.status === "recruiting") {
-    const can = t.approved_count >= t.min_players;
+    const can = !t.start_block;                      // server hisoblaydi: kamida 8 va 4 ga karrali
+    const n = t.approved_count, g = t.group_size || 4, rem = n % g;
+    const need = t.start_block === "not_enough_players"
+      ? PTT("pt_start_min", { n, min: t.min_players })
+      : t.start_block === "not_multiple" ? PTT("pt_start_need", { n, add: g - rem, remove: rem }) : "";
     return `
       <div class="card pt-pay">
         <div class="pt-hint">${escHtml(PTT("pt_start_hint", { min: t.min_players }))}</div>
+        ${need ? `<div class="pt-note">${escHtml(need)}</div>` : ""}
         <button class="btn btn--primary btn--glow" id="pt-start-btn" ${can ? "" : "disabled"}>
           ${escHtml(PTT("pt_start_btn"))}</button>
       </div>`;
