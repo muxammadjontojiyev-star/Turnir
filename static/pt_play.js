@@ -10,8 +10,16 @@ const PT_PLAY_ERR = {
   deadline_in_past: "pt_err_deadline_past", deadline_too_far: "pt_err_deadline_far",
   bad_deadline: "pt_err_bad_deadline", not_enough_players: "pt_err_not_enough",
   wrong_status: "pt_err_wrong_status", not_owner: "pt_err_not_owner", match_not_found: "pt_err_match_404",
-  draw_not_allowed: "pt_err_draw", not_ready: "pt_err_not_ready",
+  draw_not_allowed: "pt_err_draw", not_ready: "pt_err_not_ready", next_stage_played: "pt_err_next_played",
 };
+
+// O'yin bosqichi nomi (guruh turi yoki pley-off bosqichi) — karta va tuzatish oynasi uchun umumiy
+function ptStageLabel(m) {
+  if (m.stage === "final") return PTT("pt_stage_final");
+  if (m.stage === "semi") return PTT("pt_stage_semi_n", { n: m.round });
+  if (m.stage && m.stage !== "group") return PTT(`pt_stage_${m.stage}_n`, { n: m.round });
+  return `${PTT("pt_round_short", { r: m.round })} · ${PTT("pt_group", { g: m.group_label })}`;
+}
 function ptPlayErr(e) { return PTT(PT_PLAY_ERR[e && e.message] || "pt_err_generic"); }
 
 // Tafsilot sahifasidagi o'rin: recruiting — boshlash tugmasi; running — o'yin bloki
@@ -72,10 +80,7 @@ function ptNameOf(m, side) {
 
 function ptMatchCardHtml(m, p, mine) {
   const me = p.me_id;
-  const label = m.stage === "semi" ? PTT("pt_stage_semi_n", { n: m.round })
-    : m.stage === "final" ? PTT("pt_stage_final")
-    : `${PTT("pt_round_short", { r: m.round })} · ${PTT("pt_group", { g: m.group_label })}`;
-  const head = `<div class="pt-match-head"><span>${escHtml(label)}</span>
+  const head = `<div class="pt-match-head"><span>${escHtml(ptStageLabel(m))}</span>
                 <span class="pt-muted">#${m.id}</span></div>`;
   const score = m.score1 != null ? `${m.score1} : ${m.score2}` : "— : —";
   const names = `<div class="pt-match-row"><b>${escHtml(ptNameOf(m, 1))}</b><span class="pt-score">${score}</span><b>${escHtml(ptNameOf(m, 2))}</b></div>`;
@@ -105,15 +110,23 @@ function ptMatchCardHtml(m, p, mine) {
   return `<div class="match-item pt-match ${m.status === "confirmed" ? "pt-match--done" : ""}">${head}${names}${action}${tools}</div>`;
 }
 
-function ptStandingsHtml(standings) {
-  return Object.entries(standings || {}).map(([g, rows]) => `
-    <div class="card pt-table-card">
-      <div class="pt-table-title">${escHtml(PTT("pt_group", { g }))}</div>
+// Guruh jadvallari: 26 guruhgacha bo'lishi mumkin — MENING guruhim birinchi va ochiq,
+// qolganlari yig'iq (<details>), 4 tadan kam bo'lsa hammasi ochiq.
+function ptStandingsHtml(standings, meId) {
+  const entries = Object.entries(standings || {});
+  const mine = entries.find(([, rows]) => rows.some(r => r.user_id === meId));
+  const ordered = mine ? [mine, ...entries.filter(e => e !== mine)] : entries;
+  const openAll = entries.length <= 3;
+  return ordered.map(([g, rows]) => {
+    const isMine = mine && g === mine[0];
+    return `<details class="card pt-table-card" ${openAll || isMine ? "open" : ""}>
+      <summary class="pt-table-title">${escHtml(PTT("pt_group", { g }))}${isMine ? ` · <span class="pt-muted">${escHtml(PTT("pt_my_group"))}</span>` : ""}</summary>
       <table class="pt-table"><thead><tr><th>#</th><th></th><th>${escHtml(PTT("pt_col_p"))}</th>
         <th>${escHtml(PTT("pt_col_gd"))}</th><th>${escHtml(PTT("pt_col_pts"))}</th></tr></thead><tbody>
       ${rows.map((r, i) => `<tr><td>${i + 1}</td><td class="pt-table-name">${escHtml(r.username ? "@" + r.username : r.nickname || "")}</td>
         <td>${r.played}</td><td>${r.goal_diff > 0 ? "+" : ""}${r.goal_diff}</td><td><b>${r.points}</b></td></tr>`).join("")}
-      </tbody></table></div>`).join("");
+      </tbody></table></details>`;
+  }).join("");
 }
 
 // Tashkilotchi boshqaruvi: muddat (+ guruhda "Turni yopish") va natijani tuzatish.
@@ -154,7 +167,7 @@ function ptPlayBodyHtml(p) {
   const others = (p.round_matches || []).filter(m => !mineIds.has(m.id)).map(m => ptMatchCardHtml(m, p, false)).join("");
   return `${head}
     ${mine ? `<div class="section-label pt-label">${escHtml(PTT("pt_my_matches"))}</div>${mine}` : ""}
-    <div class="section-label pt-label">${escHtml(PTT("pt_groups_title"))}</div>${ptStandingsHtml(p.standings)}
+    <div class="section-label pt-label">${escHtml(PTT("pt_groups_title"))}</div>${ptStandingsHtml(p.standings, p.me_id)}
     ${others ? `<div class="section-label pt-label">${escHtml(PTT("pt_round_matches"))}</div>${others}` : ""}`;
 }
 
@@ -183,7 +196,7 @@ async function ptFixLoad(tid) {
     const m = await apiFetch(`/pt/owner/match/${encodeURIComponent(id)}`);
     box.innerHTML = `
       <div class="match-item pt-match">
-        <div class="pt-match-head"><span>${escHtml(m.stage === "semi" ? PTT("pt_stage_semi_n", { n: m.round }) : m.stage === "final" ? PTT("pt_stage_final") : PTT("pt_round_short", { r: m.round }) + " · " + PTT("pt_group", { g: m.group_label }))}</span><span class="pt-muted">#${m.id}</span></div>
+        <div class="pt-match-head"><span>${escHtml(ptStageLabel(m))}</span><span class="pt-muted">#${m.id}</span></div>
         <div class="pt-match-row"><b>${escHtml(m.player1 || "—")}</b><span class="pt-score">${m.score1 != null ? `${m.score1} : ${m.score2}` : "— : —"}</span><b>${escHtml(m.player2 || "—")}</b></div>
         <div class="pt-res-form">
           <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-fix-s1" value="${m.score1 ?? ""}">
