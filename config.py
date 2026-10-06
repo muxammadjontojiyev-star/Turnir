@@ -118,6 +118,14 @@ ADMIN_TELEGRAM_IDS = [int(x) for x in _admin_ids_raw.replace(" ", "").split(",")
 # @ bilan yoki @'siz bo'lishi mumkin — frontend to'g'ri linkni tuzadi.
 ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "@Tojiyev_M")
 
+# --- Shaxsiy turnirlar (2026-10-02) — to'lov ma'lumotlari FAQAT .env'da (qoida #33/#46) ---
+# PT_PRICE_UZS: bitta turnir yaratish narxi (so'm). 0 yoki bo'sh — narx belgilanmagan,
+#   turnir yaratish to'xtatiladi (tasodifan bepul bo'lib qolmasin).
+# PT_CARD_NUMBER / PT_CARD_HOLDER: to'lov ekranida ko'rsatiladigan karta va egasi.
+PT_PRICE_UZS = int(os.getenv("PT_PRICE_UZS", "0") or 0)
+PT_CARD_NUMBER = os.getenv("PT_CARD_NUMBER", "").strip()
+PT_CARD_HOLDER = os.getenv("PT_CARD_HOLDER", "").strip()
+
 # === Majburiy kanal a'zoligi ===
 # Foydalanuvchi botdan/WebApp'dan foydalanish uchun shu kanalga a'zo bo'lishi shart.
 # ⚠️ Bot shu kanalda ADMIN bo'lishi kerak — aks holda getChatMember ishlamaydi.

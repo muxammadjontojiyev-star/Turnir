@@ -3404,3 +3404,7 @@ from el_api_admin import router as el_admin_router  # noqa: E402
 app.include_router(el_router)
 app.include_router(el_playoff_router)
 app.include_router(el_admin_router)
+
+# ============ SHAXSIY TURNIRLAR (router — pt_api.py) ============
+from pt_api import router as pt_router  # noqa: E402
+app.include_router(pt_router)

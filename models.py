@@ -322,6 +322,48 @@ def init_db():
         )
     """)
 
+    # === pt_tournaments (SHAXSIY turnirlar, 2026-10-02) ===
+    # Rasmiy rejimlardan (liga/ChL/YeL/...) TO'LIQ ajratilgan.
+    # status oqimi: awaiting_payment -> payment_review -> recruiting -> running -> finished
+    #               (rad etilsa: rejected; tashkilotchi bekor qilsa: cancelled)
+    # invite_code: taklif havolasi kodi (UNIQUE, tasodifiy). price_uzs: yaratilgan
+    # paytdagi narx (keyin .env o'zgarsa ham shu turnir uchun saqlanadi).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_tournaments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_user_id INTEGER NOT NULL,
+            owner_telegram_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'awaiting_payment',
+            invite_code TEXT NOT NULL UNIQUE,
+            price_uzs INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (owner_user_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_tournaments_owner ON pt_tournaments(owner_user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_tournaments_status ON pt_tournaments(status)")
+
+    # === pt_members (shaxsiy turnir ishtirokchilari) ===
+    # status: pending (havola orqali so'rov, tashkilotchi tasdiqlashi kerak) | approved.
+    # group_label: qur'adan keyin 'A'..'D'; ungacha NULL.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tournament_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            telegram_id INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            group_label TEXT,
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (tournament_id, user_id),
+            FOREIGN KEY (tournament_id) REFERENCES pt_tournaments(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_members_user ON pt_members(user_id)")
+
     # === el_state (YeL tur boshqaruvi — cl_state bilan bir xil) ===
     # started=0 -> hamma turlar yopiq; admin boshlaganda 1-tur ochiladi;
     # har kuni 23:30 (Toshkent) da joriy tur yopiladi (el_rounds.el_tick).
