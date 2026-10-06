@@ -5790,3 +5790,15 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .pt-ko-stage > .pt-match { margin-bottom: 8px; }
 /* Shaxsiy turnirlar: o'chiq tugma faol tugmadan aniq farqlansin (masalan, boshlash sharti bajarilmaganda) */
 #pt-root .btn:disabled { opacity: .4; filter: grayscale(.6); box-shadow: none; cursor: not-allowed; }
+/* Shaxsiy turnir obunalari va to'lov turi (2026-10-03) */
+.pt-sub-card--on { border-color: rgba(245,197,66,.45);
+  background: radial-gradient(120% 140% at 100% 0%, rgba(245,197,66,.14), transparent 60%), var(--bg-card); }
+.pt-sub-buy { border-color: rgba(245,197,66,.4); color: #f5c542; }
+.pt-plan { border-color: rgba(126,226,184,.3); }
+.pt-mode { display: flex; flex-direction: column; gap: 8px; }
+.pt-mode-opt { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 10px; cursor: pointer;
+  background: rgba(255,255,255,.03); border: 1px solid var(--border); font-size: 13.5px; }
+.pt-mode-opt input { accent-color: #7ee2b8; width: 18px; height: 18px; }
+.pt-mode-opt:has(input:checked) { border-color: rgba(126,226,184,.55); background: rgba(126,226,184,.08); }
+.pt-mode-opt--off { opacity: .45; cursor: not-allowed; }
+.pt-status--active { background: rgba(34,197,94,.14); color: #22c55e; }

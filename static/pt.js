@@ -108,24 +108,39 @@ function ptRenderList() {
   // Bosh admin: to'lovlar navbati (2-bosqich, pt_payment.js)
   const adminBtn = (PT.config && PT.config.is_super)
     ? `<button class="btn btn--ghost" id="pt-payments-btn">${escHtml(PTT("pt_payments_btn"))}</button>` : "";
+  const subCard = typeof ptSubCardHtml === "function" ? ptSubCardHtml() : "";   // 2026-10-03
   ptRender(`
     ${adminBtn}
+    ${subCard}
     <button class="btn btn--primary btn--glow" id="pt-new-btn">${escHtml(PTT("pt_new"))}</button>
     <div class="section-label pt-label">${escHtml(PTT("pt_my"))}</div>
     ${cards || `<div class="empty-state">${escHtml(PTT("pt_empty"))}</div>`}`);
 
   document.getElementById("pt-new-btn").addEventListener("click", ptRenderCreate);
   document.getElementById("pt-payments-btn")?.addEventListener("click", () => void ptOpenPayments());
+  document.getElementById("pt-sub-open")?.addEventListener("click", () => void ptOpenSub());
   document.querySelectorAll("#pt-root [data-pt-open]").forEach(el =>
     el.addEventListener("click", () => void ptOpenDetail(el.dataset.ptOpen)));
 }
 
-function ptRenderCreate() {
+function ptRenderCreate(keep) {
   PT.view = "create";
   const c = PT.config || {};
-  const priceBlock = c.price_set
-    ? `<div class="pt-price">${escHtml(PTT("pt_price"))}: <b>${escHtml(ptFormatPrice(c.price_uzs))} so'm</b></div>`
-    : `<div class="pt-warn">${escHtml(PTT("pt_price_not_set"))}</div>`;
+  // 2026-10-03: to'lov turi (obuna | bir martalik) va sig'im pog'onasiga qarab narx (pt_sub.js)
+  const mode = (keep && keep.mode) || PT.createMode || (typeof ptDefaultMode === "function" ? ptDefaultMode() : "one_time");
+  PT.createMode = mode;
+  const allow = n => (typeof ptSizeAllowed === "function" ? ptSizeAllowed(n, mode) : true);
+  let size = Number((keep && keep.size) || c.default_players || 8);
+  if (!allow(size)) {   // tanlangan sig'im shu to'lov turida yopiq — undan kichik eng yaqin ochig'iga (yo'q bo'lsa birinchisiga)
+    const step = c.group_size || 4, lo = c.min_players || 8, hi = c.max_players || 128;
+    let pick = null;
+    for (let n = Math.min(size, hi); n >= lo; n -= step) { if (allow(n)) { pick = n; break; } }
+    if (pick === null) for (let n = lo; n <= hi; n += step) { if (allow(n)) { pick = n; break; } }
+    if (pick !== null) size = pick;
+  }
+  const price = typeof ptCreatePriceText === "function" ? ptCreatePriceText(size, mode) : { ok: c.price_set, html: "" };
+  const modeHtml = typeof ptPayModeHtml === "function" ? ptPayModeHtml(mode) : "";
+  const priceBlock = `<div id="pt-price-box">${price.html}</div>`;
   ptRender(`
     <div class="card pt-form">
       <div class="section-label pt-label">${escHtml(PTT("pt_create_title"))}</div>
@@ -133,13 +148,24 @@ function ptRenderCreate() {
       <input class="modal-input" id="pt-name" maxlength="${c.name_max || 40}"
              placeholder="${escHtml(PTT("pt_name_ph"))}" autocomplete="off">
       <label class="pt-field-label" for="pt-size">${escHtml(PTT("pt_size_label"))}</label>
-      ${ptSizeSelectHtml("pt-size", c.default_players || 8)}
+      ${ptSizeSelectHtml("pt-size", size, 0, allow)}
+      ${modeHtml}
       <div class="pt-hint">${escHtml(PTT("pt_format", { min: c.min_players || 8 }))}</div>
       ${priceBlock}
-      <button class="btn btn--primary" id="pt-create-btn" ${c.price_set ? "" : "disabled"}>
+      <button class="btn btn--primary" id="pt-create-btn" ${price.ok ? "" : "disabled"}>
         ${escHtml(PTT("pt_create_btn"))}</button>
     </div>`);
+  if (keep && keep.name) document.getElementById("pt-name").value = keep.name;
   document.getElementById("pt-create-btn").addEventListener("click", ptCreateSubmit);
+  const snapshot = () => ({ name: document.getElementById("pt-name").value,
+                            size: Number(document.getElementById("pt-size").value) });
+  document.getElementById("pt-size").addEventListener("change", () => {
+    const p = ptCreatePriceText(Number(document.getElementById("pt-size").value), PT.createMode);
+    document.getElementById("pt-price-box").innerHTML = p.html;
+    document.getElementById("pt-create-btn").disabled = !p.ok;
+  });
+  document.querySelectorAll("#pt-root input[name='pt-mode']").forEach(r =>
+    r.addEventListener("change", () => ptRenderCreate({ ...snapshot(), mode: r.value })));
 }
 
 async function ptCreateSubmit() {
@@ -152,11 +178,13 @@ async function ptCreateSubmit() {
   btn.textContent = PTT("pt_creating");
   try {
     const max_players = Number(document.getElementById("pt-size")?.value || 8);
-    const r = await apiFetch("/pt/create", { method: "POST", body: JSON.stringify({ name, max_players }) });
+    const pay_mode = PT.createMode || "one_time";
+    const r = await apiFetch("/pt/create", { method: "POST", body: JSON.stringify({ name, max_players, pay_mode }) });
     showToast(PTT("pt_created"));
     await ptOpenDetail(r.id);
   } catch (e) {
     const map = { name_too_short: "pt_err_name_short", name_too_long: "pt_err_name_long", bad_size: "pt_err_bad_size",
+                  no_subscription: "pt_err_no_sub", sub_limit: "pt_err_sub_limit",
                   too_many_unpaid: "pt_err_too_many", price_not_set: "pt_price_not_set" };
     const code = (e && (e.detail || e.message)) || "";
     showToast(PTT(map[code] || "pt_err_generic"));
@@ -208,7 +236,7 @@ function ptRenderDetail() {
       </div>
       ${ptCanEditSize(t) ? `
       <label class="pt-field-label" for="pt-size-edit">${escHtml(PTT("pt_size_label"))}</label>
-      <div class="pt-fix-row">${ptSizeSelectHtml("pt-size-edit", t.max_players, t.approved_count)}
+      <div class="pt-fix-row">${ptSizeSelectHtml("pt-size-edit", t.max_players, t.approved_count, ptEditSizeFilter(t))}
         <button class="btn btn--ghost" id="pt-size-save">${escHtml(PTT("pt_size_save"))}</button></div>` : ""}
     </div>
     ${pay}
@@ -243,44 +271,9 @@ function ptCopy(text) {
 // Til almashganda joriy ko'rinishni qayta chizadi (app.js cycleLanguage chaqiradi)
 function ptRerender() {
   if (PT.view === "create") ptRenderCreate();
+  else if (PT.view === "sub" && typeof ptRenderSub === "function") ptRenderSub();
   else if (PT.view === "payments" && typeof ptRenderPayments === "function") ptRenderPayments();
   else if (PT.view === "join" && PT.invite && typeof ptRenderJoin === "function") ptRenderJoin();
   else if (PT.view === "detail" && PT.detail) ptRenderDetail();
   else ptRenderList();
-}
-
-// ---------------- Sig'im (tashkilotchi belgilaydi, 6..20) ----------------
-
-// <select>: min..max, qadam = guruh o'lchami (4) — guruhlar doim to'liq bo'lsin.
-// minAllowed — qabul qilinganlardan kam tanlab bo'lmaydi (yuqoriga 4 ga yaxlitlanadi).
-function ptSizeSelectHtml(id, selected, minAllowed) {
-  const c = PT.config || {};
-  const step = c.group_size || 4;
-  const lo = Math.max(c.min_players || 8, Math.ceil((minAllowed || 0) / step) * step), hi = c.max_players || 128;
-  if (Number(selected) % step) selected = Math.ceil(Number(selected) / step) * step;   // eski (6/7/…) sig'im
-  let opts = "";
-  for (let n = lo; n <= hi; n += step) {
-    opts += `<option value="${n}" ${n === Number(selected) ? "selected" : ""}>${escHtml(PTT("pt_size_n", { n }))}</option>`;
-  }
-  return `<select class="modal-input pt-select" id="${id}">${opts}</select>`;
-}
-
-function ptCanEditSize(t) {
-  return t.is_owner && ["awaiting_payment", "payment_review", "rejected", "recruiting"].includes(t.status);
-}
-
-async function ptSaveSize(tid) {
-  if (PT.busy) return;
-  const max_players = Number(document.getElementById("pt-size-edit")?.value || 0);
-  PT.busy = true;
-  try {
-    await apiFetch(`/pt/${encodeURIComponent(tid)}/capacity`, { method: "POST", body: JSON.stringify({ max_players }) });
-    showToast(PTT("pt_size_saved"));
-  } catch (e) {
-    const map = { bad_size: "pt_err_bad_size", below_members: "pt_err_below_members", already_started: "pt_err_started" };
-    showToast(PTT(map[e && e.message] || "pt_err_generic"));
-  } finally {
-    PT.busy = false;
-  }
-  await ptOpenDetail(tid);
 }

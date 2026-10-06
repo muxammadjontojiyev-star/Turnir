@@ -84,6 +84,7 @@ async function ptOpenPayments() {
   try {
     const d = await apiFetch("/pt/admin/payments");
     PT.payments = d.payments || [];
+    PT.subPayments = d.subscriptions || [];          // 2026-10-03: obuna to'lovlari
     ptRenderPayments();
   } catch (e) {
     ptRender(`<div class="empty-state">${escHtml(PTT("pt_load_err"))}</div>`);
@@ -109,35 +110,41 @@ function ptRenderPayments() {
         <button class="btn btn--primary" data-pt-approve="${p.id}">${escHtml(PTT("pt_approve"))}</button>
       </div>
     </div>`).join("");
+  const subs = typeof ptSubPaymentsHtml === "function" ? ptSubPaymentsHtml(PT.subPayments) : "";
   ptRender(`
     <div class="section-label pt-label">${escHtml(PTT("pt_payments_title"))}</div>
-    ${items || `<div class="empty-state">${escHtml(PTT("pt_payments_empty"))}</div>`}`);
+    ${items || (subs ? "" : `<div class="empty-state">${escHtml(PTT("pt_payments_empty"))}</div>`)}
+    ${subs}`);
 
   document.querySelectorAll("#pt-root [data-pt-approve]").forEach(b =>
     b.addEventListener("click", () => void ptReview(b.dataset.ptApprove, "approve", b)));
   document.querySelectorAll("#pt-root [data-pt-reject]").forEach(b =>
     b.addEventListener("click", () => void ptReview(b.dataset.ptReject, "reject", b)));
   (PT.payments || []).forEach(p => void ptLoadReceiptImage(p.id));
+  if (typeof ptBindSubPayments === "function") ptBindSubPayments(PT.subPayments);
 }
 
 // Chek rasmi auth bilan olinadi (ochiq <img src> emas — bank ma'lumoti, qoida #34)
-async function ptLoadReceiptImage(id) {
-  const box = document.getElementById(`pt-receipt-${id}`);
+// url/boxId — obuna cheklari uchun (pt_sub.js); standart — turnir cheki
+async function ptLoadReceiptImage(id, url, boxId) {
+  const box = document.getElementById(boxId || `pt-receipt-${id}`);
   if (!box) return;
   try {
-    const res = await fetch(`${API_BASE}/pt/admin/${encodeURIComponent(id)}/receipt`, {
+    const res = await fetch(`${API_BASE}${url || `/pt/admin/${encodeURIComponent(id)}/receipt`}`, {
       headers: { "X-Telegram-Init-Data": window.Telegram?.WebApp?.initData || "" },
     });
     if (!res.ok) throw new Error(String(res.status));
-    const url = URL.createObjectURL(await res.blob());
-    box.innerHTML = `<img class="pt-receipt-img" src="${url}" alt="">`;
-    box.querySelector("img").addEventListener("click", () => window.open(url, "_blank"));
+    const objUrl = URL.createObjectURL(await res.blob());   // 'url' parametri bilan to'qnashmasin (TDZ)
+    box.innerHTML = `<img class="pt-receipt-img" src="${objUrl}" alt="">`;
+    box.querySelector("img").addEventListener("click", () => window.open(objUrl, "_blank"));
   } catch (e) {
     box.textContent = PTT("pt_load_err");
   }
 }
 
-async function ptReview(id, action, btn) {
+// kind: "pt" (turnir to'lovi) | "sub" (obuna to'lovi)
+async function ptReview(id, action, btn, kind) {
+  const sub = kind === "sub";
   if (PT.busy) return;
   if (action === "approve" && !window.confirm(PTT("pt_approve_ask"))) return;
   PT.busy = true;
@@ -145,10 +152,10 @@ async function ptReview(id, action, btn) {
   try {
     const opts = { method: "POST" };
     if (action === "reject") {
-      const reason = (document.getElementById(`pt-reason-${id}`)?.value || "").trim();
+      const reason = (document.getElementById(sub ? `pt-reason-sub-${id}` : `pt-reason-${id}`)?.value || "").trim();
       opts.body = JSON.stringify({ reason });
     }
-    await apiFetch(`/pt/admin/${encodeURIComponent(id)}/${action}`, opts);
+    await apiFetch(sub ? `/pt/admin/sub/${encodeURIComponent(id)}/${action}` : `/pt/admin/${encodeURIComponent(id)}/${action}`, opts);
     showToast(PTT(action === "approve" ? "pt_approved_toast" : "pt_rejected_toast"));
   } catch (e) {
     showToast(PTT(e && e.message === "wrong_status" ? "pt_err_wrong_status" : "pt_err_generic"));
