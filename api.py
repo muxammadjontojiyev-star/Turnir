@@ -3408,5 +3408,7 @@ app.include_router(el_admin_router)
 # ============ SHAXSIY TURNIRLAR (router — pt_api.py) ============
 from pt_api import router as pt_router  # noqa: E402
 from pt_api_members import router as pt_members_router  # noqa: E402
+from pt_api_play import router as pt_play_router  # noqa: E402
 app.include_router(pt_router)
 app.include_router(pt_members_router)
+app.include_router(pt_play_router)

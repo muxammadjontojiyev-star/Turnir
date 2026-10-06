@@ -174,6 +174,9 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         # Shaxsiy turnirlar (2026-10-02): a'zoliklar + shu user TASHKIL QILGAN turnirlar
         # (tashkilotchisiz turnir boshqarib bo'lmaydi — a'zolari bilan birga o'chiriladi).
         cursor.execute(
+            "DELETE FROM pt_matches WHERE player1_id = ? OR player2_id = ? OR tournament_id IN "
+            "(SELECT id FROM pt_tournaments WHERE owner_user_id = ?)", (user_id, user_id, user_id))
+        cursor.execute(
             "DELETE FROM pt_members WHERE user_id = ? OR tournament_id IN "
             "(SELECT id FROM pt_tournaments WHERE owner_user_id = ?)",
             (user_id, user_id),

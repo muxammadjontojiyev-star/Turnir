@@ -222,6 +222,27 @@ TEXTS = {
         LANGUAGE_RU: "🏆 Открыть турнир",
         LANGUAGE_EN: "🏆 View tournament",
     },
+    # 2026-10-02: shaxsiy turnir o'yinlari (4-bosqich)
+    "pt_notify_started": {
+        LANGUAGE_UZ: "🏁 «{name}» turniri boshlandi! Siz {group}-guruhdasiz. O'yinlaringizni ilovada ko'ring.",
+        LANGUAGE_RU: "🏁 Турнир «{name}» начался! Вы в группе {group}. Смотрите свои матчи в приложении.",
+        LANGUAGE_EN: "🏁 «{name}» has started! You're in group {group}. See your matches in the app.",
+    },
+    "pt_notify_round_open": {
+        LANGUAGE_UZ: "⏰ «{name}»: {round}-tur o'yinlarini {deadline} gacha (Toshkent vaqti) o'ynang.",
+        LANGUAGE_RU: "⏰ «{name}»: сыграйте матчи {round}-го тура до {deadline} (по Ташкенту).",
+        LANGUAGE_EN: "⏰ «{name}»: play your round {round} matches by {deadline} (Tashkent time).",
+    },
+    "pt_notify_round_closed": {
+        LANGUAGE_UZ: "✅ «{name}»: {round}-tur yopildi. {next}-tur ochildi.",
+        LANGUAGE_RU: "✅ «{name}»: {round}-й тур завершён. Открыт {next}-й тур.",
+        LANGUAGE_EN: "✅ «{name}»: round {round} is closed. Round {next} is open.",
+    },
+    "pt_notify_groups_done": {
+        LANGUAGE_UZ: "🏁 «{name}»: guruh bosqichi yakunlandi! Jadvallarni ilovada ko'ring.",
+        LANGUAGE_RU: "🏁 «{name}»: групповой этап завершён! Смотрите таблицы в приложении.",
+        LANGUAGE_EN: "🏁 «{name}»: the group stage is over! See the tables in the app.",
+    },
     "btn_open_app": {
         LANGUAGE_UZ: "📲 Ilovani ochish",
         LANGUAGE_RU: "📲 Открыть приложение",

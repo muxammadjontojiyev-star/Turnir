@@ -364,6 +364,33 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_members_user ON pt_members(user_id)")
 
+    # === pt_matches (shaxsiy turnir o'yinlari — 4-bosqich) ===
+    # stage: group | semi | final (pley-off 5-bosqichda). round: guruhda tur raqami
+    # (barcha guruhlar uchun umumiy — bitta muddat), pley-offda NULL.
+    # status: pending -> awaiting_confirmation -> confirmed (rasmiy turnirlar bilan bir xil).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tournament_id INTEGER NOT NULL,
+            stage TEXT NOT NULL DEFAULT 'group',
+            group_label TEXT,
+            round INTEGER,
+            player1_id INTEGER,
+            player2_id INTEGER,
+            score1 INTEGER,
+            score2 INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            submitted_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tournament_id) REFERENCES pt_tournaments(id),
+            FOREIGN KEY (player1_id) REFERENCES users(id),
+            FOREIGN KEY (player2_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_matches_t_round ON pt_matches(tournament_id, stage, round)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_matches_p1 ON pt_matches(player1_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_matches_p2 ON pt_matches(player2_id)")
+
     # === pt_receipts (to'lov cheklari — 2-bosqich) ===
     # Alohida jadval: rasm baytlari turnirlar ro'yxati so'rovlarini og'irlashtirmasin
     # (qoida #32). Har turnirga bitta chek — qayta yuklansa almashtiriladi.
@@ -914,6 +941,12 @@ def init_db():
         "ALTER TABLE pt_tournaments ADD COLUMN paid_at TIMESTAMP",
         "ALTER TABLE pt_tournaments ADD COLUMN reviewed_by INTEGER",
         "ALTER TABLE pt_tournaments ADD COLUMN reject_reason TEXT",
+        # 2026-10-02: shaxsiy turnir turlari (4-bosqich). round_deadline — UTC
+        # 'YYYY-MM-DD HH:MM:SS' (datetime('now') bilan solishtiriladi); NULL — muddatsiz.
+        "ALTER TABLE pt_tournaments ADD COLUMN current_round INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE pt_tournaments ADD COLUMN total_rounds INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE pt_tournaments ADD COLUMN round_deadline TEXT",
+        "ALTER TABLE pt_tournaments ADD COLUMN started_at TIMESTAMP",
     ]
     for sql in migrations:
         try:

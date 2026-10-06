@@ -160,6 +160,17 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: YeL tur siljitishda xato: %s", exc)
 
+    # === SHAXSIY TURNIRLAR: tashkilotchi belgilagan tur muddati o'tgan bo'lsa yopiladi ===
+    try:
+        from pt_rounds import pt_tick
+        closed = pt_tick()
+        if closed:
+            from pt_notify import notify_round_result   # api'ni import qilmaydi (thread xavfsiz)
+            for res in closed:
+                await notify_round_result(res)
+    except Exception as exc:
+        logger.warning("Scheduler: shaxsiy turnir turlarini yopishda xato: %s", exc)
+
     # === PLAY-OFF (barcha rejim): 23:30 da AWAITING o'yinlar avtomatik tasdiqlanadi ===
     # 2026-07-22 (talab 2): play-off'da durang yo'q — hisob KIRITILGAN (awaiting)
     # o'yinlar deadline'da confirmed bo'ladi; hisob KIRITILMAGAN (pending) kataklar
