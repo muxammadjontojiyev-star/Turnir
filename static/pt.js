@@ -62,12 +62,18 @@ async function ptLoadList() {
 }
 
 async function ptOpenDetail(id) {
+  if (String(PT.detailId) !== String(id)) PT.tab = "home";   // boshqa turnir — Asosiy sahifadan
   PT.view = "detail";
   PT.detailId = id;
   ptRender(`<div class="empty-state">${escHtml(PTT("pt_loading"))}</div>`);
   try {
     if (!PT.config) PT.config = await apiFetch("/pt/config");
     PT.detail = await apiFetch(`/pt/${encodeURIComponent(id)}`);
+    PT.play = null;
+    // O'yin ma'lumoti bir marta yuklanadi — sahifalar orasida o'tish so'rovsiz (pt_tabs.js)
+    if (["running", "finished"].includes(PT.detail.status) && typeof ptFetchPlay === "function") {
+      await ptFetchPlay(id);
+    }
     ptRenderDetail();
   } catch (e) {
     ptRender(`<div class="empty-state">${escHtml(PTT("pt_load_err"))}</div>`);
@@ -76,7 +82,8 @@ async function ptOpenDetail(id) {
 
 // --- Chizish -------------------------------------------------------------
 
-function ptRender(body) {
+// nav — ixtiyoriy pastki menyu (turnir sahifalari, pt_tabs.js)
+function ptRender(body, nav) {
   const root = document.getElementById("pt-root");
   if (!root) return;
   root.innerHTML = `
@@ -84,7 +91,8 @@ function ptRender(body) {
       <button class="wc-back" id="pt-back-btn">←</button>
       <div class="wc-header-title pt-title">${ICON.get("swords", 20)} <span>${escHtml(PTT("pt_title"))}</span></div>
     </div>
-    <div class="wc-body pt-body">${body}</div>`;
+    <div class="wc-body pt-body${nav ? " pt-body--nav" : ""}">${body}</div>${nav || ""}`;
+  if (nav && typeof applyIcons === "function") applyIcons(root);
   document.getElementById("pt-back-btn").addEventListener("click", () => {
     if (PT.view === "list") exitPrivateTournaments();
     else { PT.view = "list"; void ptLoadList(); }
@@ -97,7 +105,8 @@ function ptRenderList() {
     <button class="pt-card" data-pt-open="${t.id}">
       <div class="pt-card-top">
         <span class="pt-card-name">${escHtml(t.name)}</span>
-        ${t.is_owner ? `<span class="pt-tag">${escHtml(PTT("pt_owner_tag"))}</span>` : ""}
+        ${t.is_owner ? `<span class="pt-tag">${escHtml(PTT("pt_owner_tag"))}</span>`
+          : t.is_admin ? `<span class="pt-tag pt-tag--admin">${escHtml(PTT("pt_admin_tag"))}</span>` : ""}
       </div>
       <div class="pt-card-meta">
         <span class="pt-status pt-status--${escHtml(t.status)}">${escHtml(ptStatusLabel(t.status))}</span>
@@ -195,13 +204,13 @@ async function ptCreateSubmit() {
   }
 }
 
-function ptRenderDetail() {
-  const t = PT.detail;
+// To'lov bloki (faqat tashkilotchi): kutilmoqda/rad etilgan — karta + chek; tekshiruvda — izoh
+function ptPayBlockHtml(t) {
   const c = PT.config || {};
-  // To'lov bloki: kutilmoqda/rad etilgan — karta + chek yuklash; tekshiruvda — izoh
   const payStatuses = ["awaiting_payment", "rejected", "payment_review"];
+  if (!(t.is_owner && payStatuses.includes(t.status))) return "";
   const showCard = t.status !== "payment_review";
-  const pay = (t.is_owner && payStatuses.includes(t.status)) ? `
+  return `
     <div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_pay_title"))}</div>
       ${showCard ? `
@@ -213,43 +222,24 @@ function ptRenderDetail() {
       </div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_card_holder"))}</span><b>${escHtml(c.card_holder || "—")}</b></div>` : ""}
       ${typeof ptPaymentActionsHtml === "function" ? ptPaymentActionsHtml(t) : ""}
-    </div>` : "";
+    </div>`;
+}
 
-  // A'zolar va boshqaruv — pt_members.js (3-bosqich); u bo'lmasa oddiy ro'yxat
-  const members = typeof ptMembersHtml === "function"
-    ? ptMembersHtml(t)
-    : `<div class="section-label pt-label">${escHtml(PTT("pt_members_title"))}</div>` +
-      (t.members || []).map(m => `
-    <div class="match-item pt-member">
-      <span>${escHtml(m.nickname || "")}${m.username ? ` <span class="pt-muted">@${escHtml(m.username)}</span>` : ""}</span>
-      ${m.status === "pending" ? `<span class="pt-status pt-status--payment_review">${escHtml(PTT("pt_pending"))}</span>` : ""}
-    </div>`).join("");
-  const manage = typeof ptManageHtml === "function" ? ptManageHtml(t) : "";
-  const play = typeof ptPlayHtml === "function" ? ptPlayHtml(t) : "";   // 4-bosqich (pt_play.js)
-
-  ptRender(`
+// Turnir sarlavha kartasi (barcha sahifalar tepasida)
+function ptHeadHtml(t) {
+  return `
     <div class="card pt-head">
       <div class="pt-head-name">${escHtml(t.name)}</div>
       <div class="pt-card-meta">
         <span class="pt-status pt-status--${escHtml(t.status)}">${escHtml(ptStatusLabel(t.status))}</span>
         <span>${t.approved_count}/${t.max_players} ${escHtml(PTT("pt_members"))}</span>
       </div>
-      ${ptCanEditSize(t) ? `
-      <label class="pt-field-label" for="pt-size-edit">${escHtml(PTT("pt_size_label"))}</label>
-      <div class="pt-fix-row">${ptSizeSelectHtml("pt-size-edit", t.max_players, t.approved_count, ptEditSizeFilter(t))}
-        <button class="btn btn--ghost" id="pt-size-save">${escHtml(PTT("pt_size_save"))}</button></div>` : ""}
-    </div>
-    ${pay}
-    ${play}
-    ${manage}
-    ${members}`);
+    </div>`;
+}
 
-  document.querySelectorAll("#pt-root [data-pt-copy]").forEach(el =>
-    el.addEventListener("click", () => ptCopy(el.dataset.ptCopy)));
-  if (pay && typeof ptBindPaymentActions === "function") ptBindPaymentActions(t);
-  document.getElementById("pt-size-save")?.addEventListener("click", () => void ptSaveSize(t.id));
-  if (typeof ptBindManage === "function") ptBindManage(t);
-  if (typeof ptBindPlay === "function") ptBindPlay(t);
+// 2026-10-03: turnir sahifasi pastki menyuli sahifalarga bo'lingan — pt_tabs.js
+function ptRenderDetail() {
+  if (typeof ptRenderDetailTabs === "function") ptRenderDetailTabs();
 }
 
 function ptCopy(text) {

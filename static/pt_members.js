@@ -95,7 +95,8 @@ async function ptJoinSubmit() {
 
 // ---------------- Tashkilotchi boshqaruvi (pt.js ptRenderDetail chaqiradi) ----------------
 
-function ptCanManage(t) { return t.is_owner && t.status === "recruiting"; }
+// Tashkilotchi YOKI turnir admini (2026-10-03); to'lov va sig'im — faqat tashkilotchi (pt.js/pt_size.js)
+function ptCanManage(t) { return (t.is_manager || t.is_owner) && t.status === "recruiting"; }
 
 function ptManageHtml(t) {
   if (!ptCanManage(t)) return "";
@@ -134,6 +135,9 @@ function ptMemberRowHtml(t, m) {
   } else if (m.user_id === t.owner_user_id) {
     actions = `<span class="pt-tag">${escHtml(PTT("pt_owner_tag"))}</span>`;
   }
+  if (m.user_id !== t.owner_user_id && (t.admins || []).some(a => a.user_id === m.user_id)) {
+    actions = `<span class="pt-tag pt-tag--admin">${escHtml(PTT("pt_admin_tag"))}</span>` + actions;
+  }
   return `<div class="match-item pt-member"><span>${who}</span>${actions}</div>`;
 }
 
@@ -151,7 +155,7 @@ function ptMembersHtml(t) {
 
 function ptBindManage(t) {
   if (!ptCanManage(t)) return;
-  void ptLoadInviteLink(t);
+  if (document.getElementById("pt-invite-link")) void ptLoadInviteLink(t);   // faqat Admin sahifasida
   document.getElementById("pt-add-btn")?.addEventListener("click", () => void ptAddMember(t.id));
   document.querySelectorAll("#pt-root [data-pt-mapprove]").forEach(b =>
     b.addEventListener("click", () => void ptMemberAction(t.id, b.dataset.ptMapprove, "approve")));

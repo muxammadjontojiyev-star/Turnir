@@ -2,7 +2,9 @@
 //  pt_play.js — SHAXSIY turnir o'yinlari (2026-10-02, 4-bosqich)
 //  Tashkilotchi: "Turnirni boshlash", tur muddati, "Turni yopish".
 //  Ishtirokchi: mening o'yinlarim (natija kiritish / tasdiqlash), guruh jadvallari.
-//  pt.js ptRenderDetail chaqiradi. Global: PT, PTT, apiFetch, escHtml, showToast, ptOpenDetail.
+//  2026-10-03: bo'laklar sahifalarga taqsimlanadi (pt_tabs.js): Asosiy — ptRoundInfoHtml,
+//  Jadval — ptStandingsHtml + ptRoundOthersHtml, O'yinlarim — ptMyMatchesHtml, Admin — ptPlayHtml
+//  (boshlash) + ptAdminPlayHtml. Global: PT, PTT, apiFetch, escHtml, showToast, ptOpenDetail.
 // =============================================================
 
 const PT_PLAY_ERR = {
@@ -24,7 +26,7 @@ function ptPlayErr(e) { return PTT(PT_PLAY_ERR[e && e.message] || "pt_err_generi
 
 // Tafsilot sahifasidagi o'rin: recruiting — boshlash tugmasi; running — o'yin bloki
 function ptPlayHtml(t) {
-  if (t.is_owner && t.status === "recruiting") {
+  if ((t.is_manager || t.is_owner) && t.status === "recruiting") {   // tashkilotchi yoki admin
     const can = !t.start_block;                      // server hisoblaydi: kamida 8 va 4 ga karrali
     const n = t.approved_count, g = t.group_size || 4, rem = n % g;
     const need = t.start_block === "not_enough_players"
@@ -38,15 +40,11 @@ function ptPlayHtml(t) {
           ${escHtml(PTT("pt_start_btn"))}</button>
       </div>`;
   }
-  if (t.status === "running" || t.status === "finished") {
-    return `<div id="pt-play-box"><div class="empty-state">${escHtml(PTT("pt_loading"))}</div></div>`;
-  }
   return "";
 }
 
 function ptBindPlay(t) {
   document.getElementById("pt-start-btn")?.addEventListener("click", () => void ptStart(t.id));
-  if (document.getElementById("pt-play-box")) void ptLoadPlay(t.id);
 }
 
 async function ptStart(tid) {
@@ -63,8 +61,8 @@ async function ptStart(tid) {
   await ptOpenDetail(tid);
 }
 
-async function ptLoadPlay(tid) {
-  const box = document.getElementById("pt-play-box");
+// O'yin ma'lumoti + o'qilmagan xabarlar (sahifalar shu keshdan chiziladi)
+async function ptFetchPlay(tid) {
   try {
     const [play, unread] = await Promise.all([
       apiFetch(`/pt/${encodeURIComponent(tid)}/play`),
@@ -72,10 +70,15 @@ async function ptLoadPlay(tid) {
     ]);
     PT.play = play;
     PT.unread = unread.by_match || {};
-    if (box && document.body.contains(box)) { box.innerHTML = ptPlayBodyHtml(PT.play); ptBindPlayBody(tid); }
   } catch (e) {
-    if (box) box.innerHTML = `<div class="empty-state">${escHtml(PTT("pt_load_err"))}</div>`;
+    PT.play = null;
   }
+}
+
+// Amaldan keyin: o'yin ma'lumoti yangilanadi va JORIY sahifa qayta chiziladi
+async function ptLoadPlay(tid) {
+  await ptFetchPlay(tid);
+  if (PT.view === "detail" && String(PT.detailId) === String(tid)) ptRenderDetail();
 }
 
 function ptNameOf(m, side) {
@@ -153,31 +156,43 @@ function ptOwnerControlsHtml(knockout) {
       <div id="pt-fix-box"></div>`;
 }
 
-function ptPlayBodyHtml(p) {
-  let head;
-  if (p.phase && typeof ptKnockoutHtml === "function") {
-    head = ptKnockoutHtml(p);                               // pt_knockout.js (5-bosqich)
-  } else if (p.groups_finished) {
-    head = `<div class="pt-note pt-note--ok">${escHtml(PTT("pt_groups_done"))}</div>`;
-  } else {
-    const owner = p.is_owner ? ptOwnerControlsHtml(false) : "";
-    head = `<div class="card pt-pay">
+// --- Sahifa bo'laklari (pt_tabs.js) ---
+
+// Asosiy: joriy tur va muddat (faqat ko'rish)
+function ptRoundInfoHtml(p) {
+  if (p.phase || p.groups_finished) return "";
+  return `<div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_round_title", { round: p.current_round, total: p.total_rounds }))}</div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
-        <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>${owner}</div>`;
-  }
-  // Pley-off o'yinlari yuqoridagi PLEY-OFF blokida — bu yerda faqat guruh o'yinlari
-  const mine = (p.my_matches || []).filter(m => m.stage === "group").map(m => ptMatchCardHtml(m, p, true)).join("");
+        <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div></div>`;
+}
+
+// Admin: guruh bosqichida tur boshqaruvi; pley-offda pt_knockout.js
+function ptAdminPlayHtml(p) {
+  if (!p.is_manager) return "";
+  if (p.phase && typeof ptKnockoutAdminHtml === "function") return ptKnockoutAdminHtml(p);
+  if (p.groups_finished) return "";
+  return `<div class="card pt-pay">
+      <div class="section-label pt-label">${escHtml(PTT("pt_round_title", { round: p.current_round, total: p.total_rounds }))}</div>
+      <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
+        <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>${ptOwnerControlsHtml(false)}</div>`;
+}
+
+// O'yinlarim: guruh + pley-off o'yinlarim (natija, tasdiq, chat, xona ID)
+function ptMyMatchesHtml(p) {
+  const mine = (p.my_matches || []).map(m => ptMatchCardHtml(m, p, true)).join("");
+  return mine || `<div class="empty-state">${escHtml(PTT("pt_no_my_matches"))}</div>`;
+}
+
+// Jadval: joriy turning boshqa o'yinlari
+function ptRoundOthersHtml(p) {
   const mineIds = new Set((p.my_matches || []).map(m => m.id));
   const others = (p.round_matches || []).filter(m => !mineIds.has(m.id)).map(m => ptMatchCardHtml(m, p, false)).join("");
-  return `${head}
-    ${mine ? `<div class="section-label pt-label">${escHtml(PTT("pt_my_matches"))}</div>${mine}` : ""}
-    <div class="section-label pt-label">${escHtml(PTT("pt_groups_title"))}</div>${ptStandingsHtml(p.standings, p.me_id)}
-    ${others ? `<div class="section-label pt-label">${escHtml(PTT("pt_round_matches"))}</div>${others}` : ""}`;
+  return others ? `<div class="section-label pt-label">${escHtml(PTT("pt_round_matches"))}</div>${others}` : "";
 }
 
 function ptBindPlayBody(tid) {
-  const q = (sel, fn) => document.querySelectorAll(`#pt-play-box ${sel}`).forEach(fn);
+  const q = (sel, fn) => document.querySelectorAll(`#pt-root ${sel}`).forEach(fn);
   q("[data-pt-submit]", b => b.addEventListener("click", () => void ptSubmitResult(tid, b.dataset.ptSubmit)));
   q("[data-pt-confirm]", b => b.addEventListener("click", () => void ptConfirmResult(tid, b.dataset.ptConfirm, true)));
   q("[data-pt-rejectres]", b => b.addEventListener("click", () => void ptConfirmResult(tid, b.dataset.ptRejectres, false)));

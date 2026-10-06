@@ -1,10 +1,8 @@
 // =============================================================
 //  pt_knockout.js — SHAXSIY turnir pley-offi (5-bosqich; 2026-10-03: setka 4..64)
-//  pt_play.js ptPlayBodyHtml chaqiradi (p.phase bo'lsa):
-//    ko_ready    — tashkilotchiga "Pley-offni boshlash" (setka hajmi bilan), boshqalarga kutish izohi
-//    r64..final  — PLEY-OFF bloki: muddat, tashkilotchi boshqaruvi, bosqichlar
-//                  (joriy bosqich ochiq, o'tganlari yig'iq)
-//    finished    — chempion banneri + barcha bosqichlar (final ochiq)
+//  2026-10-03 sahifalar (pt_tabs.js): Asosiy — ptKnockoutHomeHtml (kutish/muddat/chempion),
+//  Jadval — ptKnockoutStagesHtml (joriy bosqich ochiq, o'tganlari yig'iq),
+//  Admin — ptKnockoutAdminHtml (pley-offni boshlash yoki muddat + tuzatish).
 //  Global: PTT, escHtml, PT, ptMatchCardHtml, ptOwnerControlsHtml, ptPlayAction.
 // =============================================================
 
@@ -36,27 +34,33 @@ function ptKnockoutStagesHtml(p) {
   }).join("");
 }
 
-function ptKnockoutHtml(p) {
+// Asosiy (hamma uchun): pley-off holati — kutish izohi, muddat yoki chempion
+function ptKnockoutHomeHtml(p) {
+  if (p.phase === "finished") return ptChampionHtml(p);
   if (p.phase === "ko_ready") {
-    const body = p.is_owner
-      ? `<div class="pt-hint">${escHtml(PTT("pt_semis_hint", { size: p.bracket_size }))}</div>
-         <button class="btn btn--primary btn--glow" id="pt-semis-btn">${escHtml(PTT("pt_semis_btn"))}</button>`
-      : `<div class="pt-note">${escHtml(PTT("pt_semis_wait"))}</div>`;
-    return `<div class="card pt-pay">
-        <div class="pt-note pt-note--ok">${escHtml(PTT("pt_groups_done"))}</div>${body}</div>`;
+    return `<div class="card pt-pay"><div class="pt-note pt-note--ok">${escHtml(PTT("pt_groups_done"))}</div>
+      ${p.is_manager ? "" : `<div class="pt-note">${escHtml(PTT("pt_semis_wait"))}</div>`}</div>`;
   }
-  if (p.phase === "finished") {
-    return `${ptChampionHtml(p)}${ptKnockoutStagesHtml(p)}`;
-  }
-  const owner = p.is_owner ? ptOwnerControlsHtml(true) : "";
   return `<div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_ko_title"))}</div>
       <div class="pt-hint">${escHtml(PTT("pt_ko_hint"))}</div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
+        <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div></div>`;
+}
+
+// Admin (tashkilotchi/admin): pley-offni boshlash yoki muddat + natija tuzatish
+function ptKnockoutAdminHtml(p) {
+  if (!p.is_manager || p.phase === "finished") return "";
+  if (p.phase === "ko_ready") {
+    return `<div class="card pt-pay">
+        <div class="pt-hint">${escHtml(PTT("pt_semis_hint", { size: p.bracket_size }))}</div>
+        <button class="btn btn--primary btn--glow" id="pt-semis-btn">${escHtml(PTT("pt_semis_btn"))}</button></div>`;
+  }
+  return `<div class="card pt-pay">
+      <div class="section-label pt-label">${escHtml(PTT("pt_ko_title"))}</div>
+      <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
         <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>
-      ${owner}
-    </div>
-    ${ptKnockoutStagesHtml(p)}`;
+      ${ptOwnerControlsHtml(true)}</div>`;
 }
 
 function ptStartSemis(tid) {

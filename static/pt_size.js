@@ -50,3 +50,14 @@ async function ptSaveSize(tid) {
   }
   await ptOpenDetail(tid);
 }
+
+
+// Sig'im tahriri bloki (faqat tashkilotchi, qur'agacha) — Admin sahifasida
+function ptSizeEditHtml(t) {
+  if (!ptCanEditSize(t)) return "";
+  return `<div class="card pt-pay">
+      <label class="pt-field-label" for="pt-size-edit">${escHtml(PTT("pt_size_label"))}</label>
+      <div class="pt-fix-row">${ptSizeSelectHtml("pt-size-edit", t.max_players, t.approved_count, ptEditSizeFilter(t))}
+        <button class="btn btn--ghost" id="pt-size-save">${escHtml(PTT("pt_size_save"))}</button></div>
+    </div>`;
+}
