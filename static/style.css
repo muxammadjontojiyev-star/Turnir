@@ -5719,3 +5719,13 @@ svg.wc-bracket-trophy { display: block; margin: 0 auto; }
   background: rgba(126,226,184,.12); color: #7ee2b8; border: 1px solid rgba(126,226,184,.35); }
 .pt-member { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; }
 .pt-muted { color: var(--text-secondary); font-size: 12.5px; }
+/* Shaxsiy turnir to'lovi (2-bosqich) */
+.pt-note { font-size: 13px; line-height: 1.45; color: #f5c542; background: rgba(245,197,66,.08);
+  border: 1px solid rgba(245,197,66,.25); border-radius: 10px; padding: 10px 12px; }
+.pt-pay-item { display: flex; flex-direction: column; gap: 10px; }
+.pt-receipt-box { min-height: 60px; display: flex; align-items: center; justify-content: center;
+  font-size: 12.5px; color: var(--text-secondary); background: rgba(255,255,255,.03);
+  border: 1px dashed var(--border); border-radius: 10px; overflow: hidden; }
+.pt-receipt-img { display: block; width: 100%; max-height: 420px; object-fit: contain; cursor: zoom-in; }
+.pt-pay-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pt-pay-actions .btn { width: 100%; padding: 11px 8px; font-size: 14px; }

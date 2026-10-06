@@ -6,7 +6,8 @@
 // =============================================================
 
 const PT = {
-  view: "list",        // list | create | detail
+  view: "list",        // list | create | detail | payments
+  payments: [],
   list: [],
   config: null,
   detail: null,
@@ -102,12 +103,17 @@ function ptRenderList() {
       </div>
     </button>`).join("");
 
+  // Bosh admin: to'lovlar navbati (2-bosqich, pt_payment.js)
+  const adminBtn = (PT.config && PT.config.is_super)
+    ? `<button class="btn btn--ghost" id="pt-payments-btn">${escHtml(PTT("pt_payments_btn"))}</button>` : "";
   ptRender(`
+    ${adminBtn}
     <button class="btn btn--primary btn--glow" id="pt-new-btn">${escHtml(PTT("pt_new"))}</button>
     <div class="section-label pt-label">${escHtml(PTT("pt_my"))}</div>
     ${cards || `<div class="empty-state">${escHtml(PTT("pt_empty"))}</div>`}`);
 
   document.getElementById("pt-new-btn").addEventListener("click", ptRenderCreate);
+  document.getElementById("pt-payments-btn")?.addEventListener("click", () => void ptOpenPayments());
   document.querySelectorAll("#pt-root [data-pt-open]").forEach(el =>
     el.addEventListener("click", () => void ptOpenDetail(el.dataset.ptOpen)));
 }
@@ -159,16 +165,21 @@ async function ptCreateSubmit() {
 function ptRenderDetail() {
   const t = PT.detail;
   const c = PT.config || {};
-  const pay = (t.is_owner && t.status === "awaiting_payment") ? `
+  // To'lov bloki: kutilmoqda/rad etilgan — karta + chek yuklash; tekshiruvda — izoh
+  const payStatuses = ["awaiting_payment", "rejected", "payment_review"];
+  const showCard = t.status !== "payment_review";
+  const pay = (t.is_owner && payStatuses.includes(t.status)) ? `
     <div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_pay_title"))}</div>
+      ${showCard ? `
       <div class="pt-hint">${escHtml(PTT("pt_pay_text", { price: ptFormatPrice(t.price_uzs) }))}</div>
       <div class="pt-card-row">
         <span>${escHtml(PTT("pt_card"))}</span>
         <b class="pt-mono">${escHtml(c.card_number || "—")}</b>
         ${c.card_number ? `<button class="pt-copy" data-pt-copy="${escHtml(c.card_number.replace(/\s/g, ""))}">${escHtml(PTT("pt_copy"))}</button>` : ""}
       </div>
-      <div class="pt-card-row"><span>${escHtml(PTT("pt_card_holder"))}</span><b>${escHtml(c.card_holder || "—")}</b></div>
+      <div class="pt-card-row"><span>${escHtml(PTT("pt_card_holder"))}</span><b>${escHtml(c.card_holder || "—")}</b></div>` : ""}
+      ${typeof ptPaymentActionsHtml === "function" ? ptPaymentActionsHtml(t) : ""}
     </div>` : "";
 
   const members = (t.members || []).map(m => `
@@ -191,6 +202,7 @@ function ptRenderDetail() {
 
   document.querySelectorAll("#pt-root [data-pt-copy]").forEach(el =>
     el.addEventListener("click", () => ptCopy(el.dataset.ptCopy)));
+  if (pay && typeof ptBindPaymentActions === "function") ptBindPaymentActions(t);
 }
 
 function ptCopy(text) {
@@ -212,6 +224,7 @@ function ptCopy(text) {
 // Til almashganda joriy ko'rinishni qayta chizadi (app.js cycleLanguage chaqiradi)
 function ptRerender() {
   if (PT.view === "create") ptRenderCreate();
+  else if (PT.view === "payments" && typeof ptRenderPayments === "function") ptRenderPayments();
   else if (PT.view === "detail" && PT.detail) ptRenderDetail();
   else ptRenderList();
 }
