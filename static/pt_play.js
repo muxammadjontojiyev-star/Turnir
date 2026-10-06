@@ -9,7 +9,7 @@ const PT_PLAY_ERR = {
   round_closed: "pt_err_round_closed", already_submitted: "pt_err_already_sub",
   deadline_in_past: "pt_err_deadline_past", deadline_too_far: "pt_err_deadline_far",
   bad_deadline: "pt_err_bad_deadline", not_enough_players: "pt_err_not_enough",
-  wrong_status: "pt_err_wrong_status",
+  wrong_status: "pt_err_wrong_status", not_owner: "pt_err_not_owner", match_not_found: "pt_err_match_404",
 };
 function ptPlayErr(e) { return PTT(PT_PLAY_ERR[e && e.message] || "pt_err_generic"); }
 
@@ -52,7 +52,12 @@ async function ptStart(tid) {
 async function ptLoadPlay(tid) {
   const box = document.getElementById("pt-play-box");
   try {
-    PT.play = await apiFetch(`/pt/${encodeURIComponent(tid)}/play`);
+    const [play, unread] = await Promise.all([
+      apiFetch(`/pt/${encodeURIComponent(tid)}/play`),
+      apiFetch("/pt/matches/unread").catch(() => ({ by_match: {} })),   // rozetka ixtiyoriy
+    ]);
+    PT.play = play;
+    PT.unread = unread.by_match || {};
     if (box && document.body.contains(box)) { box.innerHTML = ptPlayBodyHtml(PT.play); ptBindPlayBody(tid); }
   } catch (e) {
     if (box) box.innerHTML = `<div class="empty-state">${escHtml(PTT("pt_load_err"))}</div>`;
@@ -84,7 +89,15 @@ function ptMatchCardHtml(m, p, mine) {
            <button class="pt-mini pt-mini--ok" data-pt-confirm="${m.id}">${escHtml(PTT("pt_confirm"))}</button>
            <button class="pt-mini pt-mini--no" data-pt-rejectres="${m.id}">${escHtml(PTT("pt_reject_res"))}</button></div>`;
   }
-  return `<div class="match-item pt-match ${m.status === "confirmed" ? "pt-match--done" : ""}">${head}${names}${action}</div>`;
+  let tools = "";
+  if (mine && m.player1_id && m.player2_id && (m.stage !== "group" || m.round <= p.current_round)) {
+    const opp = m.player1_id === me ? ptNameOf(m, 2) : ptNameOf(m, 1);
+    const n = (PT.unread || {})[m.id] || 0;
+    tools = `<div class="pt-match-tools">
+      <button class="pt-mini pt-mini--chat" data-pt-chat="${m.id}" data-pt-opp="${escHtml(opp)}">${escHtml(PTT("pt_chat"))}${n ? ` <span class="pt-badge">${n}</span>` : ""}</button>
+      ${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(m.id, "pt") : ""}</div>`;
+  }
+  return `<div class="match-item pt-match ${m.status === "confirmed" ? "pt-match--done" : ""}">${head}${names}${action}${tools}</div>`;
 }
 
 function ptStandingsHtml(standings) {
@@ -109,7 +122,14 @@ function ptPlayBodyHtml(p) {
       <div class="pt-pay-actions">
         <button class="btn btn--ghost" id="pt-close-round">${escHtml(PTT("pt_close_round"))}</button>
         <button class="btn btn--primary" id="pt-deadline-btn">${escHtml(PTT("pt_deadline_set"))}</button>
-      </div>` : "";
+      </div>
+      <div class="section-label pt-label">${escHtml(PTT("pt_fix_title"))}</div>
+      <div class="pt-hint">${escHtml(PTT("pt_fix_hint"))}</div>
+      <div class="pt-fix-row">
+        <input class="modal-input" type="number" min="1" inputmode="numeric" id="pt-fix-id" placeholder="${escHtml(PTT("pt_fix_id_ph"))}">
+        <button class="btn btn--ghost" id="pt-fix-load">${escHtml(PTT("pt_fix_load"))}</button>
+      </div>
+      <div id="pt-fix-box"></div>` : "";
     head = `<div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_round_title", { round: p.current_round, total: p.total_rounds }))}</div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
@@ -131,6 +151,44 @@ function ptBindPlayBody(tid) {
   q("[data-pt-rejectres]", b => b.addEventListener("click", () => void ptConfirmResult(tid, b.dataset.ptRejectres, false)));
   document.getElementById("pt-deadline-btn")?.addEventListener("click", () => void ptSetDeadline(tid));
   document.getElementById("pt-close-round")?.addEventListener("click", () => void ptCloseRound(tid));
+  q("[data-pt-chat]", b => b.addEventListener("click", () => {
+    b.querySelector(".pt-badge")?.remove();                 // ochilgach o'qildi deb hisoblanadi
+    openWebChat(Number(b.dataset.ptChat), b.dataset.ptOpp, "/pt/matches");
+  }));
+  document.getElementById("pt-fix-load")?.addEventListener("click", () => void ptFixLoad(tid));
+}
+
+// ---------------- Tashkilotchi: natijani tuzatish (Match ID bo'yicha) ----------------
+
+async function ptFixLoad(tid) {
+  const id = Number(document.getElementById("pt-fix-id")?.value || 0);
+  const box = document.getElementById("pt-fix-box");
+  if (!id || !box) return;
+  try {
+    const m = await apiFetch(`/pt/owner/match/${encodeURIComponent(id)}`);
+    box.innerHTML = `
+      <div class="match-item pt-match">
+        <div class="pt-match-head"><span>${escHtml(PTT("pt_round_short", { r: m.round }))} · ${escHtml(PTT("pt_group", { g: m.group_label }))}</span><span class="pt-muted">#${m.id}</span></div>
+        <div class="pt-match-row"><b>${escHtml(m.player1 || "—")}</b><span class="pt-score">${m.score1 != null ? `${m.score1} : ${m.score2}` : "— : —"}</span><b>${escHtml(m.player2 || "—")}</b></div>
+        <div class="pt-res-form">
+          <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-fix-s1" value="${m.score1 ?? ""}">
+          <span>:</span>
+          <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-fix-s2" value="${m.score2 ?? ""}">
+          <button class="pt-mini pt-mini--ok" id="pt-fix-save">${escHtml(PTT("pt_fix_save"))}</button>
+        </div>
+        ${m.can_cancel && m.status !== "pending" ? `<button class="pt-mini pt-mini--no" id="pt-fix-cancel">${escHtml(PTT("pt_fix_cancel"))}</button>` : ""}
+      </div>`;
+    document.getElementById("pt-fix-save").addEventListener("click", () => {
+      const s1 = document.getElementById("pt-fix-s1").value, s2 = document.getElementById("pt-fix-s2").value;
+      if (s1 === "" || s2 === "") return;
+      void ptPlayAction(tid, `/pt/owner/match/${id}/set`, { score1: Number(s1), score2: Number(s2) }, "pt_fix_saved");
+    });
+    document.getElementById("pt-fix-cancel")?.addEventListener("click", () =>
+      void ptPlayAction(tid, `/pt/owner/match/${id}/cancel`, null, "pt_fix_cancelled"));
+  } catch (e) {
+    box.innerHTML = "";
+    showToast(ptPlayErr(e));
+  }
 }
 
 async function ptPlayAction(tid, path, body, okKey) {
