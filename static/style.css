@@ -5763,3 +5763,12 @@ svg.wc-bracket-trophy { display: block; margin: 0 auto; }
   color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
 .pt-fix-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .pt-fix-row .btn { padding: 10px 14px; }
+/* Shaxsiy turnir pley-offi (5-bosqich) */
+.pt-pay-actions--one { grid-template-columns: 1fr; }
+.pt-champion { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 22px 16px;
+  text-align: center; border: 1px solid rgba(245,197,66,.45);
+  background: radial-gradient(120% 120% at 50% 0%, rgba(245,197,66,.22), transparent 60%), var(--bg-card);
+  box-shadow: 0 10px 30px rgba(245,197,66,.15); }
+.pt-champion-cup { font-size: 46px; line-height: 1; filter: drop-shadow(0 4px 12px rgba(245,197,66,.5)); }
+.pt-champion-label { font-size: 12px; letter-spacing: 3px; font-weight: 700; color: #f5c542; margin-top: 6px; }
+.pt-champion-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }

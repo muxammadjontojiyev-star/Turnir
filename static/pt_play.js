@@ -10,6 +10,7 @@ const PT_PLAY_ERR = {
   deadline_in_past: "pt_err_deadline_past", deadline_too_far: "pt_err_deadline_far",
   bad_deadline: "pt_err_bad_deadline", not_enough_players: "pt_err_not_enough",
   wrong_status: "pt_err_wrong_status", not_owner: "pt_err_not_owner", match_not_found: "pt_err_match_404",
+  draw_not_allowed: "pt_err_draw", not_ready: "pt_err_not_ready",
 };
 function ptPlayErr(e) { return PTT(PT_PLAY_ERR[e && e.message] || "pt_err_generic"); }
 
@@ -71,12 +72,16 @@ function ptNameOf(m, side) {
 
 function ptMatchCardHtml(m, p, mine) {
   const me = p.me_id;
-  const head = `<div class="pt-match-head"><span>${escHtml(PTT("pt_round_short", { r: m.round }))} · ${escHtml(PTT("pt_group", { g: m.group_label }))}</span>
+  const label = m.stage === "semi" ? PTT("pt_stage_semi_n", { n: m.round })
+    : m.stage === "final" ? PTT("pt_stage_final")
+    : `${PTT("pt_round_short", { r: m.round })} · ${PTT("pt_group", { g: m.group_label })}`;
+  const head = `<div class="pt-match-head"><span>${escHtml(label)}</span>
                 <span class="pt-muted">#${m.id}</span></div>`;
   const score = m.score1 != null ? `${m.score1} : ${m.score2}` : "— : —";
   const names = `<div class="pt-match-row"><b>${escHtml(ptNameOf(m, 1))}</b><span class="pt-score">${score}</span><b>${escHtml(ptNameOf(m, 2))}</b></div>`;
   let action = "";
-  if (mine && m.status === "pending" && m.round === p.current_round && p.status === "running") {
+  const open = m.stage === "group" ? m.round === p.current_round : true;   // pley-off: bosqich ochiq
+  if (mine && m.status === "pending" && open && p.status === "running") {
     action = `<div class="pt-res-form">
       <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-s1-${m.id}">
       <span>:</span>
@@ -111,16 +116,14 @@ function ptStandingsHtml(standings) {
       </tbody></table></div>`).join("");
 }
 
-function ptPlayBodyHtml(p) {
-  let head;
-  if (p.groups_finished) {
-    head = `<div class="pt-note pt-note--ok">${escHtml(PTT("pt_groups_done"))}</div>`;
-  } else {
-    const owner = p.is_owner ? `
+// Tashkilotchi boshqaruvi: muddat (+ guruhda "Turni yopish") va natijani tuzatish.
+// Guruh va pley-off uchun umumiy (qoida #26).
+function ptOwnerControlsHtml(knockout) {
+  return `
       <input class="modal-input" type="datetime-local" id="pt-deadline-input">
-      <div class="pt-hint">${escHtml(PTT("pt_deadline_hint"))}</div>
-      <div class="pt-pay-actions">
-        <button class="btn btn--ghost" id="pt-close-round">${escHtml(PTT("pt_close_round"))}</button>
+      <div class="pt-hint">${escHtml(PTT(knockout ? "pt_ko_deadline_hint" : "pt_deadline_hint"))}</div>
+      <div class="pt-pay-actions${knockout ? " pt-pay-actions--one" : ""}">
+        ${knockout ? "" : `<button class="btn btn--ghost" id="pt-close-round">${escHtml(PTT("pt_close_round"))}</button>`}
         <button class="btn btn--primary" id="pt-deadline-btn">${escHtml(PTT("pt_deadline_set"))}</button>
       </div>
       <div class="section-label pt-label">${escHtml(PTT("pt_fix_title"))}</div>
@@ -129,13 +132,24 @@ function ptPlayBodyHtml(p) {
         <input class="modal-input" type="number" min="1" inputmode="numeric" id="pt-fix-id" placeholder="${escHtml(PTT("pt_fix_id_ph"))}">
         <button class="btn btn--ghost" id="pt-fix-load">${escHtml(PTT("pt_fix_load"))}</button>
       </div>
-      <div id="pt-fix-box"></div>` : "";
+      <div id="pt-fix-box"></div>`;
+}
+
+function ptPlayBodyHtml(p) {
+  let head;
+  if (p.phase && typeof ptKnockoutHtml === "function") {
+    head = ptKnockoutHtml(p);                               // pt_knockout.js (5-bosqich)
+  } else if (p.groups_finished) {
+    head = `<div class="pt-note pt-note--ok">${escHtml(PTT("pt_groups_done"))}</div>`;
+  } else {
+    const owner = p.is_owner ? ptOwnerControlsHtml(false) : "";
     head = `<div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_round_title", { round: p.current_round, total: p.total_rounds }))}</div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
         <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>${owner}</div>`;
   }
-  const mine = (p.my_matches || []).map(m => ptMatchCardHtml(m, p, true)).join("");
+  // Pley-off o'yinlari yuqoridagi PLEY-OFF blokida — bu yerda faqat guruh o'yinlari
+  const mine = (p.my_matches || []).filter(m => m.stage === "group").map(m => ptMatchCardHtml(m, p, true)).join("");
   const mineIds = new Set((p.my_matches || []).map(m => m.id));
   const others = (p.round_matches || []).filter(m => !mineIds.has(m.id)).map(m => ptMatchCardHtml(m, p, false)).join("");
   return `${head}
@@ -156,6 +170,7 @@ function ptBindPlayBody(tid) {
     openWebChat(Number(b.dataset.ptChat), b.dataset.ptOpp, "/pt/matches");
   }));
   document.getElementById("pt-fix-load")?.addEventListener("click", () => void ptFixLoad(tid));
+  document.getElementById("pt-semis-btn")?.addEventListener("click", () => void ptStartSemis(tid));
 }
 
 // ---------------- Tashkilotchi: natijani tuzatish (Match ID bo'yicha) ----------------
@@ -168,7 +183,7 @@ async function ptFixLoad(tid) {
     const m = await apiFetch(`/pt/owner/match/${encodeURIComponent(id)}`);
     box.innerHTML = `
       <div class="match-item pt-match">
-        <div class="pt-match-head"><span>${escHtml(PTT("pt_round_short", { r: m.round }))} · ${escHtml(PTT("pt_group", { g: m.group_label }))}</span><span class="pt-muted">#${m.id}</span></div>
+        <div class="pt-match-head"><span>${escHtml(m.stage === "semi" ? PTT("pt_stage_semi_n", { n: m.round }) : m.stage === "final" ? PTT("pt_stage_final") : PTT("pt_round_short", { r: m.round }) + " · " + PTT("pt_group", { g: m.group_label }))}</span><span class="pt-muted">#${m.id}</span></div>
         <div class="pt-match-row"><b>${escHtml(m.player1 || "—")}</b><span class="pt-score">${m.score1 != null ? `${m.score1} : ${m.score2}` : "— : —"}</span><b>${escHtml(m.player2 || "—")}</b></div>
         <div class="pt-res-form">
           <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-fix-s1" value="${m.score1 ?? ""}">
@@ -194,15 +209,18 @@ async function ptFixLoad(tid) {
 async function ptPlayAction(tid, path, body, okKey) {
   if (PT.busy) return;
   PT.busy = true;
+  let finished = false;
   try {
-    await apiFetch(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+    const r = await apiFetch(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+    finished = !!(r && r.event === "finished");       // final hal bo'ldi — sarlavha holati ham o'zgaradi
     if (okKey) showToast(PTT(okKey));
   } catch (e) {
     showToast(ptPlayErr(e));
   } finally {
     PT.busy = false;
   }
-  await ptLoadPlay(tid);
+  if (finished) await ptOpenDetail(tid);
+  else await ptLoadPlay(tid);
 }
 
 function ptSubmitResult(tid, mid) {
