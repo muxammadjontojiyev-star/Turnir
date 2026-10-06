@@ -3409,6 +3409,8 @@ app.include_router(el_admin_router)
 from pt_api import router as pt_router  # noqa: E402
 from pt_api_members import router as pt_members_router  # noqa: E402
 from pt_api_play import router as pt_play_router  # noqa: E402
+from pt_api_chat import router as pt_chat_router  # noqa: E402
+app.include_router(pt_chat_router)   # /pt/matches/unread — /pt/{id}/... dan OLDIN (aniq yo'l)
 app.include_router(pt_router)
 app.include_router(pt_members_router)
 app.include_router(pt_play_router)

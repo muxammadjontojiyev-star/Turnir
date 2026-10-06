@@ -67,6 +67,10 @@ MODES = {
     "el_po":  {"msg_table": "el_po_messages",  "match_table": "el_playoff_matches",
                "round_col": "round",    "round_label": "bosqich",
                "playoff": None, "has_club": False, "title": "YeL play-off"},
+    # 2026-10-02: shaxsiy turnir (xona ID uchun; hisobot faqat bosh admin — scope yo'q)
+    "pt":     {"msg_table": "pt_messages",     "match_table": "pt_matches",
+               "round_col": "round",    "round_label": "tur",
+               "playoff": None, "has_club": False, "title": "Shaxsiy turnir"},
 }
 DEFAULT_MODE = "league"
 

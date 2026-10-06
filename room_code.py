@@ -56,6 +56,7 @@ MODE_NAME_KEYS = {
     "wc_po": "mode_name_worldcup",
     "el": "mode_name_el",
     "el_po": "mode_name_el",
+    "pt": "mode_name_pt",
 }
 
 

@@ -391,6 +391,21 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_matches_p1 ON pt_matches(player1_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_matches_p2 ON pt_matches(player2_id)")
 
+    # === pt_messages (shaxsiy turnir o'yin chati — 4b; el_messages bilan bir xil tuzilma) ===
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            read_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (match_id) REFERENCES pt_matches(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_messages_match ON pt_messages(match_id)")
+
     # === pt_receipts (to'lov cheklari — 2-bosqich) ===
     # Alohida jadval: rasm baytlari turnirlar ro'yxati so'rovlarini og'irlashtirmasin
     # (qoida #32). Har turnirga bitta chek — qayta yuklansa almashtiriladi.

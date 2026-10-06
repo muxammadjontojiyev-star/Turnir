@@ -269,6 +269,11 @@ TEXTS = {
         LANGUAGE_RU: "Лига Европы",
         LANGUAGE_EN: "Europa League",
     },
+    "mode_name_pt": {
+        LANGUAGE_UZ: "Shaxsiy turnir",
+        LANGUAGE_RU: "Частный турнир",
+        LANGUAGE_EN: "Private tournament",
+    },
     "mode_name_division": {
         LANGUAGE_UZ: "Divizion",
         LANGUAGE_RU: "Дивизион",
