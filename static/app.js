@@ -1263,7 +1263,7 @@ async function init() {
     return;
   }
 
-  showHubSelect();   // 2026-10-02: avval bo'lim (Rasmiy / Shaxsiy), keyin rejim
+  showEntryScreen();   // 2026-10-02: bo'lim tanlash (yoki taklif havolasi — qo'shilish ekrani)
 
   // Kubok yulduzchalari (2026-07-16) — bir marta yuklanadi, barcha rejimlar
   // reyting/profil renderlari APP.prizeStars'dan o'qiydi (bloklamaydi)
@@ -1327,7 +1327,7 @@ function showSubscribeGate() {
     const ok = await checkChannelMembership();
     if (ok) {
       hideSubscribeGate();
-      showHubSelect();
+      showEntryScreen();
     } else {
       showToast(t.subscribe_not_yet || "❌ Siz hali kanalga a'zo bo'lmadingiz.");
     }
@@ -1428,6 +1428,18 @@ function showModeSelect() {
 //  Shaxsiy → pt.js (showPrivateTournaments). Rejimlardan chiqish
 //  (exit*) avvalgidek rejim tanlashga qaytadi.
 // ============================================================
+// Kirish nuqtasi: taklif havolasi bilan ochilgan bo'lsa — shaxsiy turnirga qo'shilish
+// ekrani (pt_members.js), aks holda bo'lim tanlash.
+function showEntryScreen() {
+  const code = typeof ptConsumeInviteParam === "function" ? ptConsumeInviteParam() : null;
+  if (code && typeof showPrivateTournaments === "function") {
+    document.getElementById("hub-select")?.classList.add("hidden");
+    showPrivateTournaments(code);
+    return;
+  }
+  showHubSelect();
+}
+
 function showHubSelect() {
   const t = APP.t;
   const host = document.querySelector("main") || document.body;

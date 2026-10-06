@@ -6,7 +6,7 @@
 // =============================================================
 
 const PT = {
-  view: "list",        // list | create | detail | payments
+  view: "list",        // list | create | detail | payments | join
   payments: [],
   list: [],
   config: null,
@@ -15,7 +15,8 @@ const PT = {
   busy: false,
 };
 
-function showPrivateTournaments() {
+// joinCode: taklif havolasi orqali kelinsa (pt_members.js) — ro'yxat o'rniga qo'shilish ekrani
+function showPrivateTournaments(joinCode) {
   document.getElementById("hub-select")?.classList.add("hidden");
   document.getElementById("mode-select")?.classList.add("hidden");
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
@@ -28,6 +29,7 @@ function showPrivateTournaments() {
     (document.querySelector("main") || document.body).appendChild(root);
   }
   root.classList.remove("hidden");
+  if (joinCode && typeof ptOpenJoin === "function") { void ptOpenJoin(joinCode); return; }
   PT.view = "list";
   void ptLoadList();
 }
@@ -182,11 +184,16 @@ function ptRenderDetail() {
       ${typeof ptPaymentActionsHtml === "function" ? ptPaymentActionsHtml(t) : ""}
     </div>` : "";
 
-  const members = (t.members || []).map(m => `
+  // A'zolar va boshqaruv — pt_members.js (3-bosqich); u bo'lmasa oddiy ro'yxat
+  const members = typeof ptMembersHtml === "function"
+    ? ptMembersHtml(t)
+    : `<div class="section-label pt-label">${escHtml(PTT("pt_members_title"))}</div>` +
+      (t.members || []).map(m => `
     <div class="match-item pt-member">
       <span>${escHtml(m.nickname || "")}${m.username ? ` <span class="pt-muted">@${escHtml(m.username)}</span>` : ""}</span>
       ${m.status === "pending" ? `<span class="pt-status pt-status--payment_review">${escHtml(PTT("pt_pending"))}</span>` : ""}
     </div>`).join("");
+  const manage = typeof ptManageHtml === "function" ? ptManageHtml(t) : "";
 
   ptRender(`
     <div class="card pt-head">
@@ -197,12 +204,13 @@ function ptRenderDetail() {
       </div>
     </div>
     ${pay}
-    <div class="section-label pt-label">${escHtml(PTT("pt_members_title"))}</div>
+    ${manage}
     ${members}`);
 
   document.querySelectorAll("#pt-root [data-pt-copy]").forEach(el =>
     el.addEventListener("click", () => ptCopy(el.dataset.ptCopy)));
   if (pay && typeof ptBindPaymentActions === "function") ptBindPaymentActions(t);
+  if (typeof ptBindManage === "function") ptBindManage(t);
 }
 
 function ptCopy(text) {
@@ -225,6 +233,7 @@ function ptCopy(text) {
 function ptRerender() {
   if (PT.view === "create") ptRenderCreate();
   else if (PT.view === "payments" && typeof ptRenderPayments === "function") ptRenderPayments();
+  else if (PT.view === "join" && PT.invite && typeof ptRenderJoin === "function") ptRenderJoin();
   else if (PT.view === "detail" && PT.detail) ptRenderDetail();
   else ptRenderList();
 }
