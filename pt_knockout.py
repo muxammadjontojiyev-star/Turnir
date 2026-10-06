@@ -1,14 +1,17 @@
 """
-pt_knockout.py — SHAXSIY turnir pley-offi: yarim final, final, chempion (2026-10-02, 5-bosqich).
+pt_knockout.py — SHAXSIY turnir pley-offi (5-bosqich; 2026-10-03: 128 kishigacha).
 
-Yarim finalga 4 kishi (admin qarori, guruhlar ≤ 4):
-  2 guruh: A1–B2, B1–A2
-  3 guruh: 3 g'olib + eng yaxshi 2-o'rin; eng kuchli g'olib – 2-o'rin (bir guruhdan
-           bo'lsa keyingi g'olib bilan almashtiriladi), qolgan ikki g'olib bir-biri bilan
-  4 guruh: g'oliblar reytingi 1–4, 2–3
-Guruhlararo solishtirish: o'yin boshiga ochko > o'yin boshiga gol farqi > o'yin boshiga gol
-(guruhlar o'lchami 3–5 — oddiy ochko adolatsiz bo'lardi).
-Bitta o'yin, durang yo'q. Ikkala yarim final confirmed -> final; final confirmed -> chempion.
+Admin qarori:
+  - Pley-offga BARCHA guruh g'oliblari + eng yaxshi 2-o'rinlar (qolgan joylarga).
+  - Setka hajmi P = 2 ning darajasi, 2·G dan oshmaydigan eng kattasi (4..64), G — guruhlar.
+      2–3 guruh -> 4 (yarim final), 4–7 -> 8 (1/4), 8–15 -> 16 (1/8), 16–26 -> 32 (1/16).
+      Guruhlar 5 kishilik (pt_draw) — 128 kishida 26 guruh, setka 32; 64 (r64) faqat zaxira.
+  - Urug'lash: g'oliblar (kuch tartibida), keyin 2-o'rinlar; guruhlararo solishtirish —
+    o'yin boshiga ochko > GF/o'yin > gol/o'yin (guruhlar 3–5 kishi — oddiy ochko adolatsiz).
+  - Standart setka: 1-urug' va 2-urug' faqat finalda uchrashadi; 1-turda bir guruhdan
+    ikki kishi tushsa, quyi urug'lar o'rni almashtiriladi.
+  - Har o'yin bitta, durang yo'q. Bosqichning HAMMA o'yinlari hal bo'lgach keyingi bosqich
+    yaratiladi (k-o'yin = (2k-1) va (2k) g'oliblari). Final hal -> chempion.
 """
 
 import logging
@@ -18,8 +21,18 @@ from pt_results import pt_group_standings
 
 logger = logging.getLogger(__name__)
 
+STAGES = ["r64", "r32", "r16", "qf", "semi", "final"]
+STAGE_FOR_SIZE = {64: "r64", 32: "r32", 16: "r16", 8: "qf", 4: "semi", 2: "final"}
 STAGE_SEMI = "semi"
 STAGE_FINAL = "final"
+BRACKET_MIN, BRACKET_MAX = 4, 64
+
+
+def bracket_size(n_groups: int) -> int:
+    p = BRACKET_MIN
+    while p * 2 <= min(2 * n_groups, BRACKET_MAX):
+        p *= 2
+    return p
 
 
 def _cross_key(row: dict) -> tuple:
@@ -27,22 +40,49 @@ def _cross_key(row: dict) -> tuple:
     return (row["points"] / p, row["goal_diff"] / p, row["goals_for"] / p)
 
 
-def pt_semi_pairs(standings: dict[str, list[dict]]) -> list[tuple[int, int]]:
-    """Guruh jadvallaridan 2 ta yarim final juftligi [(sideA, sideB), ...] (user_id)."""
-    labels = sorted(standings)
-    if len(labels) == 2:
-        a, b = standings[labels[0]], standings[labels[1]]
-        return [(a[0]["user_id"], b[1]["user_id"]), (b[0]["user_id"], a[1]["user_id"])]
-    winners = sorted(((g, standings[g][0]) for g in labels), key=lambda x: _cross_key(x[1]), reverse=True)
-    if len(labels) == 4:
-        w = [r["user_id"] for _, r in winners]
-        return [(w[0], w[3]), (w[1], w[2])]
-    # 3 guruh: eng yaxshi 2-o'rin
-    g_r, runner = max(((g, standings[g][1]) for g in labels), key=lambda x: _cross_key(x[1]))
-    order = [g for g, _ in winners]
-    vs_runner = 0 if order[0] != g_r else 1          # bir guruhdan bo'lsa — keyingi g'olib
-    rest = [winners[i][1]["user_id"] for i in range(3) if i != vs_runner]
-    return [(winners[vs_runner][1]["user_id"], runner["user_id"]), (rest[0], rest[1])]
+def seed_order(size: int) -> list[int]:
+    """Standart setka tartibi (1-asosli urug'lar): 4 -> [1,4,2,3], 8 -> [1,8,4,5,2,7,3,6]."""
+    order = [1, 2]
+    while len(order) < size:
+        n = len(order) * 2
+        order = [x for s in order for x in (s, n + 1 - s)]
+    return order
+
+
+def pt_playoff_seeds(standings: dict[str, list[dict]]) -> list[tuple[int, str]]:
+    """[(user_id, guruh), ...] urug' tartibida: g'oliblar, keyin eng yaxshi 2-o'rinlar."""
+    size = bracket_size(len(standings))
+    winners = sorted(((g, rows[0]) for g, rows in standings.items() if rows),
+                     key=lambda x: _cross_key(x[1]), reverse=True)
+    runners = sorted(((g, rows[1]) for g, rows in standings.items() if len(rows) > 1),
+                     key=lambda x: _cross_key(x[1]), reverse=True)
+    seeds = [(r["user_id"], g) for g, r in winners] + [(r["user_id"], g) for g, r in runners]
+    return seeds[:size]
+
+
+def pt_first_round_pairs(standings: dict[str, list[dict]]) -> tuple[str, list[tuple[int, int]]]:
+    """(bosqich, [(yuqori_urug', quyi_urug'), ...]) — bir guruhdan ikki kishi 1-turda uchrashmaydi."""
+    seeds = pt_playoff_seeds(standings)
+    size = len(seeds)
+    order = seed_order(size)
+    pairs = [[seeds[order[i] - 1], seeds[order[i + 1] - 1]] for i in range(0, size, 2)]
+    for i, (hi, lo) in enumerate(pairs):
+        if hi[1] != lo[1]:
+            continue
+        # yaqin juftlik bilan quyi urug'larni almashtiramiz (ikkala tomon ham to'qnashmasin)
+        for j in sorted(range(len(pairs)), key=lambda k: abs(k - i)):
+            if j == i:
+                continue
+            hj, lj = pairs[j]
+            if lj[1] != hi[1] and lo[1] != hj[1]:
+                pairs[i][1], pairs[j][1] = lj, lo
+                break
+    return STAGE_FOR_SIZE[size], [(a[0], b[0]) for a, b in pairs]
+
+
+# Eski nom (5-bosqich testlari va chaqiruvlar uchun moslik)
+def pt_semi_pairs(standings):
+    return pt_first_round_pairs(standings)[1]
 
 
 def _winner(m) -> int | None:
@@ -51,74 +91,94 @@ def _winner(m) -> int | None:
     return m["player1_id"] if m["score1"] > m["score2"] else m["player2_id"]
 
 
-def pt_start_semis(cursor, tid: int) -> list[tuple[int, int]]:
-    """Yarim final o'yinlarini yaratadi (ochiq tranzaksiya ichida). Juftliklarni qaytaradi."""
-    pairs = pt_semi_pairs(pt_group_standings(cursor, tid))
+def pt_start_knockout(cursor, tid: int) -> tuple[str, list[tuple[int, int]]]:
+    """1-bosqich o'yinlarini yaratadi (ochiq tranzaksiya ichida)."""
+    stage, pairs = pt_first_round_pairs(pt_group_standings(cursor, tid))
     cursor.executemany(
         "INSERT INTO pt_matches (tournament_id, stage, round, player1_id, player2_id) VALUES (?, ?, ?, ?, ?)",
-        [(tid, STAGE_SEMI, i, a, b) for i, (a, b) in enumerate(pairs, start=1)])
+        [(tid, stage, i, a, b) for i, (a, b) in enumerate(pairs, start=1)])
     cursor.execute("UPDATE pt_tournaments SET round_deadline = NULL, updated_at = CURRENT_TIMESTAMP "
                    "WHERE id = ?", (tid,))
-    return pairs
+    return stage, pairs
+
+
+def _ko_by_stage(cursor, tid: int) -> dict[str, list[dict]]:
+    cursor.execute("SELECT id, stage, round, player1_id, player2_id, score1, score2, status FROM pt_matches "
+                   "WHERE tournament_id = ? AND stage != 'group' ORDER BY round", (tid,))
+    out: dict[str, list[dict]] = {}
+    for r in cursor.fetchall():
+        out.setdefault(r["stage"], []).append(dict(r))
+    return out
 
 
 def pt_advance(cursor, tid: int) -> dict:
     """
-    Har tasdiqlashdan keyin chaqiriladi (idempotent):
-      - ikkala yarim final hal -> final yaratiladi yoki (g'olib o'zgargan bo'lsa) yangilanadi;
-      - final hal -> turnir 'finished', champion_user_id.
-    Qaytaradi: {"event": None | "final_created" | "final_updated" | "finished", ...}
+    Har tasdiqlashdan keyin (idempotent):
+      - tuzatish natijasida g'olib o'zgargan bo'lsa — keyingi bosqich o'yini yangilanadi
+        (u hali tasdiqlanmagan bo'lsa): event 'stage_updated';
+      - oxirgi bosqichning hamma o'yini hal -> keyingi bosqich: event 'stage_created';
+      - final hal -> turnir 'finished': event 'finished'.
     """
-    cursor.execute("SELECT id, stage, round, player1_id, player2_id, score1, score2, status "
-                   "FROM pt_matches WHERE tournament_id = ? AND stage IN (?, ?) ORDER BY round",
-                   (tid, STAGE_SEMI, STAGE_FINAL))
-    rows = [dict(r) for r in cursor.fetchall()]
-    semis = [r for r in rows if r["stage"] == STAGE_SEMI]
-    final = next((r for r in rows if r["stage"] == STAGE_FINAL), None)
-    if final and final["status"] == "confirmed":
-        champ = _winner(final)
-        if champ:
-            cursor.execute("UPDATE pt_tournaments SET status = 'finished', champion_user_id = ?, "
-                           "finished_at = CURRENT_TIMESTAMP, round_deadline = NULL, "
-                           "updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'running'", (champ, tid))
-            if cursor.rowcount:
-                return {"event": "finished", "champion_id": champ}
+    by = _ko_by_stage(cursor, tid)
+    present = [s for s in STAGES if s in by]
+    if not present:
         return {"event": None}
-    if len(semis) != 2:
-        return {"event": None}
-    w = [_winner(s) for s in semis]
-    if None in w:
-        return {"event": None}
-    if final is None:
-        cursor.execute("INSERT INTO pt_matches (tournament_id, stage, round, player1_id, player2_id) "
-                       "VALUES (?, ?, 1, ?, ?)", (tid, STAGE_FINAL, w[0], w[1]))
-        cursor.execute("UPDATE pt_tournaments SET round_deadline = NULL WHERE id = ?", (tid,))
-        return {"event": "final_created", "players": w}
-    if [final["player1_id"], final["player2_id"]] != w:   # tashkilotchi yarim finalni tuzatgan
-        cursor.execute("UPDATE pt_matches SET player1_id = ?, player2_id = ?, score1 = NULL, score2 = NULL, "
-                       "submitted_by = NULL, status = 'pending' WHERE id = ?", (w[0], w[1], final["id"]))
-        return {"event": "final_updated", "players": w}
-    return {"event": None}
+    updated = None
+    for s, nxt in zip(present, present[1:]):
+        for j, m in enumerate(by[nxt]):
+            w = [_winner(x) for x in by[s][2 * j:2 * j + 2]]
+            if None in w or [m["player1_id"], m["player2_id"]] == w or m["status"] == "confirmed":
+                continue
+            cursor.execute("UPDATE pt_matches SET player1_id = ?, player2_id = ?, score1 = NULL, score2 = NULL, "
+                           "submitted_by = NULL, status = 'pending' WHERE id = ?", (w[0], w[1], m["id"]))
+            m.update(player1_id=w[0], player2_id=w[1], status="pending", score1=None, score2=None)
+            updated = {"event": "stage_updated", "stage": nxt, "players": w}
+    last = present[-1]
+    winners = [_winner(m) for m in by[last]]
+    if None in winners:
+        return updated or {"event": None}
+    if last == STAGE_FINAL:
+        cursor.execute("UPDATE pt_tournaments SET status = 'finished', champion_user_id = ?, "
+                       "finished_at = CURRENT_TIMESTAMP, round_deadline = NULL, "
+                       "updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'running'", (winners[0], tid))
+        return {"event": "finished", "champion_id": winners[0]} if cursor.rowcount else (updated or {"event": None})
+    nxt = STAGES[STAGES.index(last) + 1]
+    pairs = [(winners[i], winners[i + 1]) for i in range(0, len(winners), 2)]
+    cursor.executemany(
+        "INSERT INTO pt_matches (tournament_id, stage, round, player1_id, player2_id) VALUES (?, ?, ?, ?, ?)",
+        [(tid, nxt, i, a, b) for i, (a, b) in enumerate(pairs, start=1)])
+    cursor.execute("UPDATE pt_tournaments SET round_deadline = NULL WHERE id = ?", (tid,))
+    return {"event": "stage_created", "stage": nxt, "pairs": pairs,
+            "players": list(pairs[0]) if nxt == STAGE_FINAL else None}
+
+
+def pt_next_match_locked(cursor, tid: int, stage: str, rnd: int) -> bool:
+    """Shu o'yin g'olibi o'tgan keyingi bosqich o'yini allaqachon tasdiqlanganmi? (tuzatish taqiqi)"""
+    if stage == STAGE_FINAL:
+        return False
+    nxt = STAGES[STAGES.index(stage) + 1]
+    cursor.execute("SELECT status FROM pt_matches WHERE tournament_id = ? AND stage = ? AND round = ?",
+                   (tid, nxt, (rnd + 1) // 2))
+    r = cursor.fetchone()
+    return bool(r and r["status"] == "confirmed")
 
 
 def pt_knockout_phase(cursor, tid: int) -> str | None:
-    """None (guruh) | 'semi_ready' (yarim final hali boshlanmagan) | 'semi' | 'final' | 'finished'."""
+    """None (guruh) | 'ko_ready' (pley-off boshlanmagan) | joriy bosqich ('r64'..'final') | 'finished'."""
     cursor.execute("SELECT status, current_round, total_rounds FROM pt_tournaments WHERE id = ?", (tid,))
     t = cursor.fetchone()
     if not t or t["total_rounds"] == 0 or t["current_round"] <= t["total_rounds"]:
         return None
     if t["status"] == "finished":
         return "finished"
-    cursor.execute("SELECT stage FROM pt_matches WHERE tournament_id = ? AND stage IN (?, ?)",
-                   (tid, STAGE_SEMI, STAGE_FINAL))
+    cursor.execute("SELECT DISTINCT stage FROM pt_matches WHERE tournament_id = ? AND stage != 'group'", (tid,))
     stages = {r["stage"] for r in cursor.fetchall()}
-    if STAGE_FINAL in stages:
-        return "final"
-    return "semi" if STAGE_SEMI in stages else "semi_ready"
+    present = [s for s in STAGES if s in stages]
+    return present[-1] if present else "ko_ready"
 
 
-def pt_owner_start_semis(tid: int, owner_id: int) -> tuple[bool, str | list]:
-    """Tashkilotchi yarim finalni boshlaydi. Sabablar: not_found, not_owner, not_running, not_ready."""
+def pt_owner_start_knockout(tid: int, owner_id: int) -> tuple[bool, str | dict]:
+    """Tashkilotchi pley-offni boshlaydi. Sabablar: not_found, not_owner, not_running, not_ready."""
     conn = get_connection()
     conn.isolation_level = None
     cursor = conn.cursor()
@@ -133,20 +193,20 @@ def pt_owner_start_semis(tid: int, owner_id: int) -> tuple[bool, str | list]:
             why = "not_owner"
         elif t["status"] != "running":
             why = "not_running"
-        elif pt_knockout_phase(cursor, tid) != "semi_ready":
-            why = "not_ready"                      # guruhlar tugamagan yoki allaqachon boshlangan
+        elif pt_knockout_phase(cursor, tid) != "ko_ready":
+            why = "not_ready"
         if why:
             cursor.execute("ROLLBACK")
             return False, why
-        pairs = pt_start_semis(cursor, tid)
+        stage, pairs = pt_start_knockout(cursor, tid)
         cursor.execute("COMMIT")
     except Exception:
         try:
             cursor.execute("ROLLBACK")
         except Exception:
-            logger.exception("pt_owner_start_semis: ROLLBACK xatosi")
+            logger.exception("pt_owner_start_knockout: ROLLBACK xatosi")
         raise
     finally:
         conn.close()
-    logger.info("PT #%s: yarim final boshlandi %s", tid, pairs)
-    return True, pairs
+    logger.info("PT #%s: pley-off boshlandi (%s, %s juftlik)", tid, stage, len(pairs))
+    return True, {"stage": stage, "pairs": pairs}

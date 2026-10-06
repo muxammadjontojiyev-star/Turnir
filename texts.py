@@ -244,10 +244,15 @@ TEXTS = {
         LANGUAGE_EN: "🏁 «{name}»: the group stage is over! See the tables in the app.",
     },
     # 2026-10-02: shaxsiy turnir pley-offi (5-bosqich)
-    "pt_notify_semis": {
-        LANGUAGE_UZ: "⚔️ «{name}»: yarim final juftliklari:\n{pairs}\nDurang yo'q — penalti o'yin ichida.",
-        LANGUAGE_RU: "⚔️ «{name}»: пары полуфинала:\n{pairs}\nНичьих нет — пенальти внутри матча.",
-        LANGUAGE_EN: "⚔️ «{name}»: semi-final pairs:\n{pairs}\nNo draws — penalties are played in the match.",
+    "pt_notify_ko_start": {
+        LANGUAGE_UZ: "⚔️ «{name}»: pley-off boshlandi — {stage}.\nSizning juftligingiz va setka ilovada. Durang yo'q — penalti o'yin ichida.",
+        LANGUAGE_RU: "⚔️ «{name}»: начался плей-офф — {stage}.\nВаша пара и сетка в приложении. Ничьих нет — пенальти внутри матча.",
+        LANGUAGE_EN: "⚔️ «{name}»: the play-off has started — {stage}.\nYour pairing and the bracket are in the app. No draws — penalties in the match.",
+    },
+    "pt_notify_next_stage": {
+        LANGUAGE_UZ: "➡️ «{name}»: {stage} juftliklari tayyor. O'yiningizni ilovada ko'ring.",
+        LANGUAGE_RU: "➡️ «{name}»: пары стадии «{stage}» готовы. Смотрите свой матч в приложении.",
+        LANGUAGE_EN: "➡️ «{name}»: the {stage} pairs are ready. See your match in the app.",
     },
     "pt_notify_final": {
         LANGUAGE_UZ: "🏟 «{name}» FINALI: {p1} — {p2}!",
@@ -269,6 +274,10 @@ TEXTS = {
         LANGUAGE_RU: "⚠️ «{name}»: срок плей-офф истёк, не сыграно матчей: {count}. Решите результат в приложении («Исправить результат»).",
         LANGUAGE_EN: "⚠️ «{name}»: the play-off deadline passed, {count} match(es) unplayed. Decide the result in the app («Fix a result»).",
     },
+    "pt_stage_r64": {LANGUAGE_UZ: "1/32 final", LANGUAGE_RU: "1/32 финала", LANGUAGE_EN: "round of 64"},
+    "pt_stage_r32": {LANGUAGE_UZ: "1/16 final", LANGUAGE_RU: "1/16 финала", LANGUAGE_EN: "round of 32"},
+    "pt_stage_r16": {LANGUAGE_UZ: "1/8 final", LANGUAGE_RU: "1/8 финала", LANGUAGE_EN: "round of 16"},
+    "pt_stage_qf": {LANGUAGE_UZ: "1/4 final", LANGUAGE_RU: "1/4 финала", LANGUAGE_EN: "quarter-final"},
     "pt_stage_semi": {LANGUAGE_UZ: "yarim final", LANGUAGE_RU: "полуфинал", LANGUAGE_EN: "semi-final"},
     "pt_stage_final": {LANGUAGE_UZ: "final", LANGUAGE_RU: "финал", LANGUAGE_EN: "final"},
     "btn_open_app": {

@@ -4,12 +4,40 @@ MUHIM: bu modul api.py ni IMPORT QILMAYDI — scheduler alohida thread'da ishlay
 api'ni u yerdan import qilish ikki thread'da bir vaqtda modul yuklanishiga olib kelardi.
 """
 
+import asyncio
 import logging
 
 from models import get_connection
 from notify import notify_members, notify_user
+from texts import t
 
 logger = logging.getLogger(__name__)
+
+# Fon vazifalari havolasi (GC yig'ib yubormasin)
+_BG_TASKS: set = set()
+
+
+def spawn(coro) -> None:
+    """
+    Bildirishnomani FONDA yuboradi — 128 kishilik turnirda ketma-ket yuborish ~13 s;
+    endpoint shuncha kutib qolmasin. Xato log'ga yoziladi (qoida #44).
+    """
+    async def _run():
+        try:
+            await coro
+        except Exception:
+            logger.exception("PT fon bildirishnomasi xatosi")
+    task = asyncio.get_running_loop().create_task(_run())
+    _BG_TASKS.add(task)
+    task.add_done_callback(_BG_TASKS.discard)
+
+
+async def notify_members_stage(members: list[dict], key: str, stage: str, **fmt) -> None:
+    """Bosqich nomi har kimga O'Z tilida (pt_stage_<stage>)."""
+    for m in members:
+        lang = m.get("language")
+        await notify_user(m["telegram_id"], key, lang, open_button_key="btn_open_app",
+                          stage=t(f"pt_stage_{stage}", lang), **fmt)
 
 
 def _label(uid: int | None) -> str:
@@ -27,14 +55,17 @@ def _label(uid: int | None) -> str:
 
 
 async def notify_advance(name: str, members: list[dict], adv: dict | None) -> None:
-    """pt_advance hodisasi: final yaratildi/yangilandi yoki chempion aniqlandi."""
+    """pt_advance hodisasi: keyingi bosqich yaratildi/yangilandi (final — alohida xabar) yoki chempion."""
     if not adv or not adv.get("event"):
         return
     try:
-        if adv["event"] in ("final_created", "final_updated"):
+        ev, stage = adv["event"], adv.get("stage")
+        if ev in ("stage_created", "stage_updated") and stage == "final":
             p1, p2 = adv["players"]
             await notify_members(members, "pt_notify_final", name=name, p1=_label(p1), p2=_label(p2))
-        elif adv["event"] == "finished":
+        elif ev == "stage_created":
+            await notify_members_stage(members, "pt_notify_next_stage", stage, name=name)
+        elif ev == "finished":
             await notify_members(members, "pt_notify_champion", name=name, champion=_label(adv["champion_id"]))
     except Exception as exc:
         logger.warning("PT pley-off xabari yuborilmadi: %s", exc)

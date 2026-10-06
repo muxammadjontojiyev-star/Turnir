@@ -7,7 +7,8 @@ Shaxsiy turnir admini — TASHKILOTCHI (bosh admin aralashmaydi). Match ID bo'yi
                          turdagi o'yinni hech kim qayta kirita olmaydi — u yerda faqat tuzatish).
 Pley-off (5-bosqich): durang yo'q; set -> pt_advance (final yangilanadi / chempion);
 cancel faqat tasdiqlanmagan (awaiting) pley-off o'yinida.
-Sabablar: match_not_found, not_owner, not_running, round_closed, draw_not_allowed, wrong_status.
+Sabablar: match_not_found, not_owner, not_running, round_closed, draw_not_allowed, wrong_status,
+next_stage_played (pley-offda g'olib o'tgan keyingi o'yin allaqachon tasdiqlangan).
 """
 
 import logging
@@ -87,6 +88,10 @@ def pt_owner_set_result(match_id: int, owner_id: int, score1: int, score2: int) 
             return False, why
         if m["stage"] != "group" and score1 == score2:
             return False, "draw_not_allowed"
+        if m["stage"] != "group":
+            from pt_knockout import pt_next_match_locked
+            if pt_next_match_locked(cursor, m["tid"], m["stage"], m["round"]):
+                return False, "next_stage_played"     # keyingi bosqich o'yini tasdiqlangan
         cursor.execute("UPDATE pt_matches SET score1 = ?, score2 = ?, status = 'confirmed' WHERE id = ?",
                        (score1, score2, match_id))
         logger.info("PT #%s: tashkilotchi o'yin %s natijasini %s:%s qildi", m["tid"], match_id, score1, score2)

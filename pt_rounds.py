@@ -125,9 +125,9 @@ def pt_set_deadline(tid: int, owner_id: int, local_value: str) -> tuple[bool, st
         t, why = _owned_running(cursor, tid, owner_id)
         phase = None
         if t is None and why == "groups_finished":
-            from pt_knockout import pt_knockout_phase
+            from pt_knockout import STAGES, pt_knockout_phase
             phase = pt_knockout_phase(cursor, tid)
-            if phase in ("semi", "final"):                      # pley-off bosqichiga muddat
+            if phase in STAGES:                                 # pley-off bosqichiga muddat
                 cursor.execute("SELECT id, name, current_round FROM pt_tournaments WHERE id = ?", (tid,))
                 t = dict(cursor.fetchone())
         if t is None:

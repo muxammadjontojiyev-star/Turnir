@@ -1,10 +1,12 @@
 """
 pt_draw.py — SHAXSIY turnir qur'asi (2026-10-02, 4-bosqich).
 
-Admin qarori (guruhlar ≤ 4 ta, 4 kishilikka yaqin):
-  6–8 ishtirokchi  -> 2 guruh      9–12 -> 3 guruh      13–20 -> 4 guruh
+Admin qarori (2026-10-03, 128 kishigacha): guruhlar 5 KISHILIK; soni = ceil(n / 5), kamida 2.
+Bo'linmasa ba'zi guruhlar 4 (kichik turnirda 3) kishi: 6–10 -> 2, 11–15 -> 3, ... 126–128 -> 26.
+5 kishilik guruhda 5 tur (har turda 1 kishi dam oladi), har kim 4 o'yin.
 Ishtirokchilar tasodifiy aralashtiriladi va guruhlarga navbat bilan taqsimlanadi
 (guruhlar farqi ≤ 1 kishi). Har guruh 1 doira (har kim har kim bilan 1 marta).
+Guruh nomlari: A..Z, keyin AA, AB, ... (32 guruhgacha).
 Tur raqami barcha guruhlar uchun UMUMIY — tashkilotchi bitta muddat belgilaydi.
 Toq sonli guruhda har turda 1 kishi dam oladi (schedule._generate_round_robin_pairs).
 """
@@ -18,16 +20,18 @@ from schedule import _generate_round_robin_pairs
 
 logger = logging.getLogger(__name__)
 
-GROUP_LABELS = "ABCD"
+GROUP_SIZE = 5                  # admin qarori: guruhda 5 kishi
+_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def group_label(i: int) -> str:
+    """0 -> 'A', 25 -> 'Z', 26 -> 'AA', 27 -> 'AB', ..."""
+    return _LETTERS[i] if i < 26 else _LETTERS[i // 26 - 1] + _LETTERS[i % 26]
 
 
 def pt_group_count(n_players: int) -> int:
-    """Ishtirokchilar soniga qarab guruhlar soni (≤ 4)."""
-    if n_players <= 8:
-        return 2
-    if n_players <= 12:
-        return 3
-    return 4
+    """Guruhlar soni: ceil(n / GROUP_SIZE), kamida 2 (har guruh ko'pi bilan 5 kishi)."""
+    return max(2, -(-n_players // GROUP_SIZE))
 
 
 def pt_split_groups(player_ids: list[int], rng: random.Random | None = None) -> dict[str, list[int]]:
@@ -35,9 +39,9 @@ def pt_split_groups(player_ids: list[int], rng: random.Random | None = None) -> 
     ids = player_ids[:]
     (rng or random).shuffle(ids)
     g = pt_group_count(len(ids))
-    groups = {GROUP_LABELS[i]: [] for i in range(g)}
+    groups = {group_label(i): [] for i in range(g)}
     for i, uid in enumerate(ids):
-        groups[GROUP_LABELS[i % g]].append(uid)
+        groups[group_label(i % g)].append(uid)
     return groups
 
 
@@ -62,7 +66,7 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     cursor = conn.cursor()
     try:
         cursor.execute("BEGIN IMMEDIATE")
-        cursor.execute("SELECT owner_user_id, status, name FROM pt_tournaments WHERE id = ?", (tid,))
+        cursor.execute("SELECT owner_user_id, status, name, max_players FROM pt_tournaments WHERE id = ?", (tid,))
         t = cursor.fetchone()
         reason = None
         if not t:
@@ -78,7 +82,7 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
             players = [r["user_id"] for r in cursor.fetchall()]
             if len(players) < PT_MIN_PLAYERS:
                 reason = "not_enough_players"
-            elif len(players) > PT_MAX_PLAYERS:
+            elif len(players) > min(t["max_players"], PT_MAX_PLAYERS):
                 reason = "too_many_players"
         if reason:
             cursor.execute("ROLLBACK")

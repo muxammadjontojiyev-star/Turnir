@@ -96,7 +96,8 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
     finally:
         conn.close()
     cur = t["current_round"]
-    _order = {"group": 0, "semi": 1, "final": 2}
+    from pt_knockout import STAGES, bracket_size as _bracket
+    _order = {"group": 0, **{s: i + 1 for i, s in enumerate(STAGES)}}
     matches.sort(key=lambda m: (_order.get(m["stage"], 9), m["round"] or 0, m["group_label"] or "", m["id"]))
     return {
         "status": t["status"], "current_round": cur, "total_rounds": t["total_rounds"],
@@ -107,7 +108,8 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         "my_matches": [m for m in matches if user_id in (m["player1_id"], m["player2_id"])],
         "round_matches": [m for m in matches if m["stage"] == "group" and m["round"] == cur],
         # 5-bosqich: pley-off
-        "phase": phase,                     # None | semi_ready | semi | final | finished
+        "phase": phase,                     # None | ko_ready | r64..final (joriy bosqich) | finished
+        "bracket_size": _bracket(len(standings)),
         "knockout": [m for m in matches if m["stage"] != "group"],
         "champion": dict(ch) if ch else None,
     }

@@ -85,9 +85,9 @@ async def pt_owner_set(match_id: int, score1: int = Body(..., embed=True), score
     if not ok:
         raise HTTPException(status_code=400, detail=r)
     if r["advance"].get("event"):                     # final yaratildi/yangilandi yoki chempion
-        from pt_notify import notify_advance, tournament_members
+        from pt_notify import notify_advance, spawn, tournament_members
         name, members = tournament_members(r["tournament_id"])
-        await notify_advance(name, members, r["advance"])
+        spawn(notify_advance(name, members, r["advance"]))
     return {"status": "ok", "event": r["advance"].get("event")}
 
 
