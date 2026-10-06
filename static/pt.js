@@ -194,6 +194,7 @@ function ptRenderDetail() {
       ${m.status === "pending" ? `<span class="pt-status pt-status--payment_review">${escHtml(PTT("pt_pending"))}</span>` : ""}
     </div>`).join("");
   const manage = typeof ptManageHtml === "function" ? ptManageHtml(t) : "";
+  const play = typeof ptPlayHtml === "function" ? ptPlayHtml(t) : "";   // 4-bosqich (pt_play.js)
 
   ptRender(`
     <div class="card pt-head">
@@ -204,6 +205,7 @@ function ptRenderDetail() {
       </div>
     </div>
     ${pay}
+    ${play}
     ${manage}
     ${members}`);
 
@@ -211,6 +213,7 @@ function ptRenderDetail() {
     el.addEventListener("click", () => ptCopy(el.dataset.ptCopy)));
   if (pay && typeof ptBindPaymentActions === "function") ptBindPaymentActions(t);
   if (typeof ptBindManage === "function") ptBindManage(t);
+  if (typeof ptBindPlay === "function") ptBindPlay(t);
 }
 
 function ptCopy(text) {
