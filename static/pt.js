@@ -132,7 +132,9 @@ function ptRenderCreate() {
       <label class="pt-field-label" for="pt-name">${escHtml(PTT("pt_name_label"))}</label>
       <input class="modal-input" id="pt-name" maxlength="${c.name_max || 40}"
              placeholder="${escHtml(PTT("pt_name_ph"))}" autocomplete="off">
-      <div class="pt-hint">${escHtml(PTT("pt_format", { min: c.min_players || 6, max: c.max_players || 20 }))}</div>
+      <label class="pt-field-label" for="pt-size">${escHtml(PTT("pt_size_label"))}</label>
+      ${ptSizeSelectHtml("pt-size", c.default_players || 8)}
+      <div class="pt-hint">${escHtml(PTT("pt_format", { min: c.min_players || 6 }))}</div>
       ${priceBlock}
       <button class="btn btn--primary" id="pt-create-btn" ${c.price_set ? "" : "disabled"}>
         ${escHtml(PTT("pt_create_btn"))}</button>
@@ -149,11 +151,12 @@ async function ptCreateSubmit() {
   btn.disabled = true;
   btn.textContent = PTT("pt_creating");
   try {
-    const r = await apiFetch("/pt/create", { method: "POST", body: JSON.stringify({ name }) });
+    const max_players = Number(document.getElementById("pt-size")?.value || 8);
+    const r = await apiFetch("/pt/create", { method: "POST", body: JSON.stringify({ name, max_players }) });
     showToast(PTT("pt_created"));
     await ptOpenDetail(r.id);
   } catch (e) {
-    const map = { name_too_short: "pt_err_name_short", name_too_long: "pt_err_name_long",
+    const map = { name_too_short: "pt_err_name_short", name_too_long: "pt_err_name_long", bad_size: "pt_err_bad_size",
                   too_many_unpaid: "pt_err_too_many", price_not_set: "pt_price_not_set" };
     const code = (e && (e.detail || e.message)) || "";
     showToast(PTT(map[code] || "pt_err_generic"));
@@ -203,6 +206,10 @@ function ptRenderDetail() {
         <span class="pt-status pt-status--${escHtml(t.status)}">${escHtml(ptStatusLabel(t.status))}</span>
         <span>${t.approved_count}/${t.max_players} ${escHtml(PTT("pt_members"))}</span>
       </div>
+      ${ptCanEditSize(t) ? `
+      <label class="pt-field-label" for="pt-size-edit">${escHtml(PTT("pt_size_label"))}</label>
+      <div class="pt-fix-row">${ptSizeSelectHtml("pt-size-edit", t.max_players, t.approved_count)}
+        <button class="btn btn--ghost" id="pt-size-save">${escHtml(PTT("pt_size_save"))}</button></div>` : ""}
     </div>
     ${pay}
     ${play}
@@ -212,6 +219,7 @@ function ptRenderDetail() {
   document.querySelectorAll("#pt-root [data-pt-copy]").forEach(el =>
     el.addEventListener("click", () => ptCopy(el.dataset.ptCopy)));
   if (pay && typeof ptBindPaymentActions === "function") ptBindPaymentActions(t);
+  document.getElementById("pt-size-save")?.addEventListener("click", () => void ptSaveSize(t.id));
   if (typeof ptBindManage === "function") ptBindManage(t);
   if (typeof ptBindPlay === "function") ptBindPlay(t);
 }
@@ -239,4 +247,37 @@ function ptRerender() {
   else if (PT.view === "join" && PT.invite && typeof ptRenderJoin === "function") ptRenderJoin();
   else if (PT.view === "detail" && PT.detail) ptRenderDetail();
   else ptRenderList();
+}
+
+// ---------------- Sig'im (tashkilotchi belgilaydi, 6..20) ----------------
+
+// <select>: min..max; minAllowed — qabul qilinganlardan kam tanlab bo'lmaydi
+function ptSizeSelectHtml(id, selected, minAllowed) {
+  const c = PT.config || {};
+  const lo = Math.max(c.min_players || 6, minAllowed || 0), hi = c.max_players || 20;
+  let opts = "";
+  for (let n = lo; n <= hi; n++) {
+    opts += `<option value="${n}" ${n === Number(selected) ? "selected" : ""}>${escHtml(PTT("pt_size_n", { n }))}</option>`;
+  }
+  return `<select class="modal-input pt-select" id="${id}">${opts}</select>`;
+}
+
+function ptCanEditSize(t) {
+  return t.is_owner && ["awaiting_payment", "payment_review", "rejected", "recruiting"].includes(t.status);
+}
+
+async function ptSaveSize(tid) {
+  if (PT.busy) return;
+  const max_players = Number(document.getElementById("pt-size-edit")?.value || 0);
+  PT.busy = true;
+  try {
+    await apiFetch(`/pt/${encodeURIComponent(tid)}/capacity`, { method: "POST", body: JSON.stringify({ max_players }) });
+    showToast(PTT("pt_size_saved"));
+  } catch (e) {
+    const map = { bad_size: "pt_err_bad_size", below_members: "pt_err_below_members", already_started: "pt_err_started" };
+    showToast(PTT(map[e && e.message] || "pt_err_generic"));
+  } finally {
+    PT.busy = false;
+  }
+  await ptOpenDetail(tid);
 }
