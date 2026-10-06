@@ -45,8 +45,9 @@ async def pt_join(code: str = Body(..., embed=True), user: dict = Depends(get_au
     ok, r = pt_request_join(code, user)
     if not ok:
         raise HTTPException(status_code=400, detail=r)
-    await _notify(r["owner_telegram_id"], r["owner_language"], "pt_notify_join_request",
-                  who=_who(user), name=r["name"])
+    for mgr in r["managers"]:                            # tashkilotchi + adminlar
+        await _notify(mgr["telegram_id"], mgr.get("language"), "pt_notify_join_request",
+                      who=_who(user), name=r["name"])
     return {"status": "pending", "tournament_id": r["tournament_id"]}
 
 
@@ -55,7 +56,7 @@ def pt_invite_link(tournament_id: int, user: dict = Depends(get_authenticated_us
     """Tashkilotchiga taklif havolasi (faqat recruiting holatida)."""
     from pt_core import STATUS_RECRUITING, pt_get_tournament
     t = pt_get_tournament(tournament_id, user["id"])
-    if t is None or not t["is_owner"]:
+    if t is None or not t["is_manager"]:                 # tashkilotchi yoki admin
         raise HTTPException(status_code=404, detail="not_found")
     if t["status"] != STATUS_RECRUITING:
         raise HTTPException(status_code=400, detail="not_recruiting")
@@ -98,3 +99,28 @@ async def pt_member_add(tournament_id: int, query: str = Body(..., embed=True),
         raise HTTPException(status_code=400, detail=r)
     await _notify(r["telegram_id"], r["language"], "pt_notify_added", name=r["name"])
     return {"status": "ok", "user_id": r["user_id"]}
+
+
+# ============ Turnir adminlari (faqat tashkilotchi boshqaradi) ============
+
+@router.post("/pt/{tournament_id}/admins/add")
+async def pt_admin_add(tournament_id: int, query: str = Body(..., embed=True),
+                       user: dict = Depends(get_authenticated_user)):
+    """Xato: not_owner, finished, user_not_found, is_owner, already_admin -> 400"""
+    from pt_admins import pt_add_admin
+    ok, r = pt_add_admin(tournament_id, user["id"], query)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    await _notify(r["telegram_id"], r["language"], "pt_notify_admin_added", name=r["name"])
+    return {"status": "ok", "user_id": r["user_id"]}
+
+
+@router.post("/pt/{tournament_id}/admins/{admin_user_id}/remove")
+def pt_admin_remove(tournament_id: int, admin_user_id: int, user: dict = Depends(get_authenticated_user)):
+    """Xato: not_owner, finished, admin_not_found -> 400"""
+    from pt_admins import pt_remove_admin
+    ok, r = pt_remove_admin(tournament_id, user["id"], admin_user_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    return {"status": "ok"}
+

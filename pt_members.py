@@ -15,7 +15,7 @@ import logging
 import re
 
 from models import get_connection
-from pt_core import STATUS_RECRUITING
+from pt_core import STATUS_RECRUITING, is_manager, managers_for_notify
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,8 @@ def pt_request_join(code: str, user: dict) -> tuple[bool, str | dict]:
             "INSERT INTO pt_members (tournament_id, user_id, telegram_id, status) VALUES (?, ?, ?, 'pending')",
             (t["id"], user["id"], user["telegram_id"]))
         return True, {"tournament_id": t["id"], "name": t["name"],
-                      "owner_telegram_id": t["owner_telegram_id"], "owner_language": t["owner_language"]}
+                      "owner_telegram_id": t["owner_telegram_id"], "owner_language": t["owner_language"],
+                      "managers": managers_for_notify(cursor, t["id"])}
     return _tx(run)
 
 
@@ -130,7 +131,7 @@ def _target_member(cursor, tid: int, owner_id: int, member_user_id: int):
     t = _owner_info(cursor, tid)
     if not t:
         return False, "not_found", None
-    if t["owner_user_id"] != owner_id:
+    if not is_manager(cursor, tid, owner_id, t["owner_user_id"]):       # tashkilotchi yoki admin
         return False, "not_owner", None
     if t["status"] != STATUS_RECRUITING:
         return False, "not_recruiting", None
@@ -160,13 +161,17 @@ def pt_approve_member(tid: int, owner_id: int, member_user_id: int) -> tuple[boo
 
 
 def pt_remove_member(tid: int, owner_id: int, member_user_id: int) -> tuple[bool, str | dict]:
-    """So'rovni rad etish YOKI a'zoni chiqarish. Tashkilotchi o'zini chiqara olmaydi (cannot_remove_owner)."""
+    """
+    So'rovni rad etish YOKI a'zoni chiqarish (tashkilotchi yoki admin).
+    TASHKILOTCHINI hech kim chiqara olmaydi (cannot_remove_owner) — tekshiruv chiqarilayotgan
+    odam bo'yicha (amal bajaruvchi bo'yicha emas: admin tashkilotchini chiqarib yubormasin).
+    """
     def run(cursor):
-        if member_user_id == owner_id:
-            return False, "cannot_remove_owner"
         ok, t, m = _target_member(cursor, tid, owner_id, member_user_id)
         if not ok:
             return False, t
+        if member_user_id == t["owner_user_id"]:
+            return False, "cannot_remove_owner"
         cursor.execute("DELETE FROM pt_members WHERE tournament_id = ? AND user_id = ?",
                        (tid, member_user_id))
         return True, {"name": t["name"], "telegram_id": m["telegram_id"], "language": m["language"],
@@ -199,7 +204,7 @@ def pt_add_member(tid: int, owner_id: int, query: str) -> tuple[bool, str | dict
         t = _owner_info(cursor, tid)
         if not t:
             return False, "not_found"
-        if t["owner_user_id"] != owner_id:
+        if not is_manager(cursor, tid, owner_id, t["owner_user_id"]):   # tashkilotchi yoki admin
             return False, "not_owner"
         if t["status"] != STATUS_RECRUITING:
             return False, "not_recruiting"

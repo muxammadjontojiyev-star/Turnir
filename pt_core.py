@@ -41,6 +41,32 @@ _TOURNAMENT_COLS = ("t.id, t.name, t.status, t.invite_code, t.price_uzs, t.creat
                     "t.receipt_at, t.reject_reason, t.max_players, t.paid_via")
 
 
+def is_manager(cursor, tid: int, user_id: int, owner_user_id: int | None = None) -> bool:
+    """
+    Turnirni boshqara oladimi: tashkilotchi YOKI turnir admini (pt_admins).
+    Barcha "boshqaruv" tekshiruvlari shu yerdan (qoida #26). owner_user_id berilsa — qo'shimcha so'rovsiz.
+    """
+    if owner_user_id is None:
+        cursor.execute("SELECT owner_user_id FROM pt_tournaments WHERE id = ?", (tid,))
+        r = cursor.fetchone()
+        if not r:
+            return False
+        owner_user_id = r["owner_user_id"]
+    if owner_user_id == user_id:
+        return True
+    cursor.execute("SELECT 1 FROM pt_admins WHERE tournament_id = ? AND user_id = ?", (tid, user_id))
+    return cursor.fetchone() is not None
+
+
+def managers_for_notify(cursor, tid: int) -> list[dict]:
+    """Tashkilotchi + adminlar: [{telegram_id, language}] (so'rovlar, hal qilinmagan o'yinlar xabari)."""
+    cursor.execute(
+        "SELECT u.telegram_id, u.language FROM pt_tournaments t JOIN users u ON u.id = t.owner_user_id "
+        "WHERE t.id = ? UNION SELECT u.telegram_id, u.language FROM pt_admins a "
+        "JOIN users u ON u.id = a.user_id WHERE a.tournament_id = ?", (tid, tid))
+    return [dict(r) for r in cursor.fetchall()]
+
+
 def _clean_name(name: str) -> str:
     """Bo'sh joylarni siqadi. HTML frontendda escHtml qilinadi (qoida #35)."""
     return " ".join((name or "").split())
@@ -138,18 +164,22 @@ def pt_list_my_tournaments(user_id: int) -> list[dict]:
             FROM pt_tournaments t
             JOIN users u ON u.id = t.owner_user_id
             LEFT JOIN pt_members m ON m.tournament_id = t.id AND m.user_id = ?
-            WHERE t.owner_user_id = ? OR m.user_id IS NOT NULL
+            LEFT JOIN pt_admins a ON a.tournament_id = t.id AND a.user_id = ?
+            WHERE t.owner_user_id = ? OR m.user_id IS NOT NULL OR a.user_id IS NOT NULL
             ORDER BY t.id DESC
             """,
-            (user_id, user_id),
+            (user_id, user_id, user_id),
         )
         rows = [dict(r) for r in cursor.fetchall()]
+        cursor.execute("SELECT tournament_id FROM pt_admins WHERE user_id = ?", (user_id,))
+        admin_of = {r["tournament_id"] for r in cursor.fetchall()}
     finally:
         conn.close()
     for r in rows:
         r["is_owner"] = r["owner_user_id"] == user_id
-        if not r["is_owner"]:
-            r.pop("invite_code", None)   # havolani faqat tashkilotchi tarqatadi
+        r["is_admin"] = r["id"] in admin_of
+        if not (r["is_owner"] or r["is_admin"]):
+            r.pop("invite_code", None)   # havolani faqat tashkilotchi/admin tarqatadi
     return rows
 
 
@@ -177,17 +207,22 @@ def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) 
             (tournament_id,),
         )
         members = [dict(r) for r in cursor.fetchall()]
+        cursor.execute("SELECT a.user_id, u.nickname, u.username FROM pt_admins a JOIN users u "
+                       "ON u.id = a.user_id WHERE a.tournament_id = ? ORDER BY a.id", (tournament_id,))
+        admins = [dict(r) for r in cursor.fetchall()]
     finally:
         conn.close()
 
     is_owner = t["owner_user_id"] == user_id
+    is_admin = any(a["user_id"] == user_id for a in admins)
     is_member = any(m["user_id"] == user_id for m in members)
-    if not (is_owner or is_member or is_super):
+    if not (is_owner or is_admin or is_member or is_super):
         return None
-    if not (is_owner or is_super):
+    if not (is_owner or is_admin or is_super):
         t.pop("invite_code", None)
         members = [m for m in members if m["status"] == "approved"]
-    t.update({"is_owner": is_owner, "members": members,
+    t.update({"is_owner": is_owner, "is_admin": is_admin, "is_manager": is_owner or is_admin,
+              "admins": admins, "members": members,
               "approved_count": sum(1 for m in members if m["status"] == "approved"),
               "min_players": PT_MIN_PLAYERS, "size_limit": PT_MAX_PLAYERS, "group_size": PT_GROUP_SIZE,
               "start_block": can_start_with(sum(1 for m in members if m["status"] == "approved"))})
