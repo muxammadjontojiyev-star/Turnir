@@ -4,8 +4,8 @@ pt_knockout.py — SHAXSIY turnir pley-offi (5-bosqich; 2026-10-03: 128 kishigac
 Admin qarori:
   - Pley-offga BARCHA guruh g'oliblari + eng yaxshi 2-o'rinlar (qolgan joylarga).
   - Setka hajmi P = 2 ning darajasi, 2·G dan oshmaydigan eng kattasi (4..64), G — guruhlar.
-      2–3 guruh -> 4 (yarim final), 4–7 -> 8 (1/4), 8–15 -> 16 (1/8), 16–26 -> 32 (1/16).
-      Guruhlar 5 kishilik (pt_draw) — 128 kishida 26 guruh, setka 32; 64 (r64) faqat zaxira.
+      2–3 guruh -> 4 (yarim final), 4–7 -> 8 (1/4), 8–15 -> 16 (1/8), 16–31 -> 32 (1/16), 32 -> 64 (1/32).
+      Guruhlar 4 kishilik (pt_draw): 8 kishi -> yarim final ... 128 kishi (32 guruh) -> 1/32 final.
   - Urug'lash: g'oliblar (kuch tartibida), keyin 2-o'rinlar; guruhlararo solishtirish —
     o'yin boshiga ochko > GF/o'yin > gol/o'yin (guruhlar 3–5 kishi — oddiy ochko adolatsiz).
   - Standart setka: 1-urug' va 2-urug' faqat finalda uchrashadi; 1-turda bir guruhdan

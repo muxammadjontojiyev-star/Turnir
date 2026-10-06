@@ -21,7 +21,7 @@ def _is_super(user: dict) -> bool:
 
 @router.post("/pt/{tournament_id}/start")
 async def pt_start(tournament_id: int, user: dict = Depends(get_authenticated_user)):
-    """Tashkilotchi: qur'a + guruh o'yinlari. Xato: not_owner, not_recruiting, not_enough_players, ... -> 400"""
+    """Tashkilotchi: qur'a + guruh o'yinlari. Xato: not_owner, not_recruiting, not_enough_players, not_multiple, ... -> 400"""
     from pt_draw import pt_start_tournament
     ok, r = pt_start_tournament(tournament_id, user["id"])
     if not ok:

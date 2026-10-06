@@ -1,9 +1,9 @@
 """
 pt_draw.py — SHAXSIY turnir qur'asi (2026-10-02, 4-bosqich).
 
-Admin qarori (2026-10-03, 128 kishigacha): guruhlar 5 KISHILIK; soni = ceil(n / 5), kamida 2.
-Bo'linmasa ba'zi guruhlar 4 (kichik turnirda 3) kishi: 6–10 -> 2, 11–15 -> 3, ... 126–128 -> 26.
-5 kishilik guruhda 5 tur (har turda 1 kishi dam oladi), har kim 4 o'yin.
+Admin qarori (2026-10-03, 128 kishigacha): guruhlar 4 KISHILIK va DOIM TO'LIQ.
+Boshlash faqat ishtirokchilar soni 4 ga karrali bo'lganda (pt_core.can_start_with):
+8 -> 2 guruh, 12 -> 3, ... 128 -> 32. Har guruh 3 tur, har kim 3 o'yin.
 Ishtirokchilar tasodifiy aralashtiriladi va guruhlarga navbat bilan taqsimlanadi
 (guruhlar farqi ≤ 1 kishi). Har guruh 1 doira (har kim har kim bilan 1 marta).
 Guruh nomlari: A..Z, keyin AA, AB, ... (32 guruhgacha).
@@ -15,12 +15,11 @@ import logging
 import random
 
 from models import get_connection
-from pt_core import PT_MAX_PLAYERS, PT_MIN_PLAYERS, STATUS_RECRUITING, STATUS_RUNNING
+from pt_core import PT_GROUP_SIZE, PT_MAX_PLAYERS, STATUS_RECRUITING, STATUS_RUNNING, can_start_with
 from schedule import _generate_round_robin_pairs
 
 logger = logging.getLogger(__name__)
 
-GROUP_SIZE = 5                  # admin qarori: guruhda 5 kishi
 _LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
@@ -30,8 +29,8 @@ def group_label(i: int) -> str:
 
 
 def pt_group_count(n_players: int) -> int:
-    """Guruhlar soni: ceil(n / GROUP_SIZE), kamida 2 (har guruh ko'pi bilan 5 kishi)."""
-    return max(2, -(-n_players // GROUP_SIZE))
+    """Guruhlar soni: n / PT_GROUP_SIZE (boshlashda n 4 ga karrali — guruhlar to'liq), kamida 2."""
+    return max(2, -(-n_players // PT_GROUP_SIZE))
 
 
 def pt_split_groups(player_ids: list[int], rng: random.Random | None = None) -> dict[str, list[int]]:
@@ -58,7 +57,7 @@ def pt_build_group_schedule(groups: dict[str, list[int]]) -> list[tuple[str, int
 def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     """
     Tashkilotchi turnirni boshlaydi: pending so'rovlar o'chiriladi, qur'a, o'yinlar.
-    Sabablar: not_found, not_owner, not_recruiting, not_enough_players, too_many_players.
+    Sabablar: not_found, not_owner, not_recruiting, not_enough_players, not_multiple, too_many_players.
     1-tur ochiladi (muddatsiz — tashkilotchi belgilaydi).
     """
     conn = get_connection()
@@ -80,10 +79,10 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
             cursor.execute("SELECT user_id FROM pt_members WHERE tournament_id = ? AND status = 'approved'",
                            (tid,))
             players = [r["user_id"] for r in cursor.fetchall()]
-            if len(players) < PT_MIN_PLAYERS:
-                reason = "not_enough_players"
-            elif len(players) > min(t["max_players"], PT_MAX_PLAYERS):
+            if len(players) > min(t["max_players"], PT_MAX_PLAYERS):
                 reason = "too_many_players"
+            else:
+                reason = can_start_with(len(players))      # not_enough_players | not_multiple
         if reason:
             cursor.execute("ROLLBACK")
             return False, reason

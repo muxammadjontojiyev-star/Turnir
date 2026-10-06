@@ -24,12 +24,13 @@ def _is_super(user: dict) -> bool:
 @router.get("/pt/config")
 def pt_config(user: dict = Depends(get_authenticated_user)):
     """To'lov ma'lumotlari (.env'dan) va cheklovlar — yaratish ekrani uchun."""
-    from pt_core import PT_DEFAULT_PLAYERS, PT_MAX_PLAYERS, PT_MIN_PLAYERS, PT_NAME_MAX, PT_NAME_MIN
+    from pt_core import (PT_DEFAULT_PLAYERS, PT_GROUP_SIZE, PT_MAX_PLAYERS, PT_MIN_PLAYERS,
+                         PT_NAME_MAX, PT_NAME_MIN)
     return {"price_uzs": PT_PRICE_UZS, "card_number": PT_CARD_NUMBER,
             "card_holder": PT_CARD_HOLDER, "price_set": PT_PRICE_UZS > 0,
             "is_super": _is_super(user),
             "min_players": PT_MIN_PLAYERS, "max_players": PT_MAX_PLAYERS,
-            "default_players": PT_DEFAULT_PLAYERS,
+            "default_players": PT_DEFAULT_PLAYERS, "group_size": PT_GROUP_SIZE,
             "name_min": PT_NAME_MIN, "name_max": PT_NAME_MAX}
 
 

@@ -16,8 +16,11 @@ from models import get_connection
 
 logger = logging.getLogger(__name__)
 
-PT_MIN_PLAYERS = 6
-PT_MAX_PLAYERS = 128            # umumiy yuqori chegara (2026-10-03: 20 -> 128; pley-off 4..64)
+# 2026-10-03 (admin qarori): guruhlar 4 kishilik va DOIM TO'LIQ — sig'im 4 ga karrali,
+# turnir faqat qabul qilinganlar soni 4 ga karrali bo'lganda boshlanadi (sig'imdan kam bo'lsa ham).
+PT_GROUP_SIZE = 4               # guruhda kishi soni (pt_draw shu yerdan oladi — qoida #17)
+PT_MIN_PLAYERS = 8              # = 2 guruh
+PT_MAX_PLAYERS = 128            # = 32 guruh (pley-off 1/32 finaldan)
 PT_DEFAULT_PLAYERS = 8          # yaratish formasidagi standart sig'im
 PT_NAME_MIN = 3
 PT_NAME_MAX = 40
@@ -44,8 +47,18 @@ def _clean_name(name: str) -> str:
 
 
 def valid_size(n) -> bool:
-    """Sig'im butun son va PT_MIN_PLAYERS..PT_MAX_PLAYERS oralig'ida."""
-    return isinstance(n, int) and not isinstance(n, bool) and PT_MIN_PLAYERS <= n <= PT_MAX_PLAYERS
+    """Sig'im: butun son, PT_MIN_PLAYERS..PT_MAX_PLAYERS oralig'ida va PT_GROUP_SIZE ga karrali."""
+    return (isinstance(n, int) and not isinstance(n, bool)
+            and PT_MIN_PLAYERS <= n <= PT_MAX_PLAYERS and n % PT_GROUP_SIZE == 0)
+
+
+def can_start_with(n: int) -> str | None:
+    """Shu sondagi ishtirokchi bilan boshlash mumkinmi? None — mumkin, aks holda sabab."""
+    if n < PT_MIN_PLAYERS:
+        return "not_enough_players"
+    if n % PT_GROUP_SIZE:
+        return "not_multiple"
+    return None
 
 
 def pt_create_tournament(user: dict, name: str, price_uzs: int,
@@ -169,7 +182,8 @@ def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) 
         members = [m for m in members if m["status"] == "approved"]
     t.update({"is_owner": is_owner, "members": members,
               "approved_count": sum(1 for m in members if m["status"] == "approved"),
-              "min_players": PT_MIN_PLAYERS, "size_limit": PT_MAX_PLAYERS})
+              "min_players": PT_MIN_PLAYERS, "size_limit": PT_MAX_PLAYERS, "group_size": PT_GROUP_SIZE,
+              "start_block": can_start_with(sum(1 for m in members if m["status"] == "approved"))})
     return t
 
 
