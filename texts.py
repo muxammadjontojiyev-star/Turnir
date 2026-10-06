@@ -186,6 +186,42 @@ TEXTS = {
         LANGUAGE_RU: "❌ Оплата турнира «{name}» отклонена.\nПричина: {reason}\nВы можете отправить чек повторно.",
         LANGUAGE_EN: "❌ Payment for «{name}» was rejected.\nReason: {reason}\nYou can send the receipt again.",
     },
+    # 2026-10-02: shaxsiy turnirga qo'shilish (3-bosqich)
+    "pt_notify_join_request": {
+        LANGUAGE_UZ: "🙋 {who} «{name}» turniringizga qo'shilmoqchi. Tasdiqlash uchun ilovani oching.",
+        LANGUAGE_RU: "🙋 {who} хочет присоединиться к турниру «{name}». Откройте приложение, чтобы подтвердить.",
+        LANGUAGE_EN: "🙋 {who} wants to join your tournament «{name}». Open the app to approve.",
+    },
+    "pt_notify_join_approved": {
+        LANGUAGE_UZ: "✅ Siz «{name}» turniriga qabul qilindingiz!",
+        LANGUAGE_RU: "✅ Вас приняли в турнир «{name}»!",
+        LANGUAGE_EN: "✅ You've been accepted into «{name}»!",
+    },
+    "pt_notify_added": {
+        LANGUAGE_UZ: "🏆 Sizni «{name}» shaxsiy turniriga qo'shishdi!",
+        LANGUAGE_RU: "🏆 Вас добавили в частный турнир «{name}»!",
+        LANGUAGE_EN: "🏆 You've been added to the private tournament «{name}»!",
+    },
+    "pt_notify_removed": {
+        LANGUAGE_UZ: "«{name}» turniri tashkilotchisi sizning ishtirokingizni bekor qildi.",
+        LANGUAGE_RU: "Организатор турнира «{name}» отменил ваше участие.",
+        LANGUAGE_EN: "The organizer of «{name}» has cancelled your participation.",
+    },
+    "pt_invite_message": {
+        LANGUAGE_UZ: "🏆 Sizni «{name}» shaxsiy turniriga taklif qilishdi!\nTashkilotchi: {owner}\nQo'shilish uchun quyidagi tugmani bosing.",
+        LANGUAGE_RU: "🏆 Вас пригласили в частный турнир «{name}»!\nОрганизатор: {owner}\nНажмите кнопку ниже, чтобы присоединиться.",
+        LANGUAGE_EN: "🏆 You've been invited to the private tournament «{name}»!\nOrganizer: {owner}\nTap the button below to join.",
+    },
+    "pt_invite_invalid": {
+        LANGUAGE_UZ: "❌ Taklif havolasi yaroqsiz yoki turnir topilmadi.",
+        LANGUAGE_RU: "❌ Ссылка-приглашение недействительна или турнир не найден.",
+        LANGUAGE_EN: "❌ The invite link is invalid or the tournament was not found.",
+    },
+    "pt_invite_button": {
+        LANGUAGE_UZ: "🏆 Turnirni ko'rish",
+        LANGUAGE_RU: "🏆 Открыть турнир",
+        LANGUAGE_EN: "🏆 View tournament",
+    },
     "btn_open_app": {
         LANGUAGE_UZ: "📲 Ilovani ochish",
         LANGUAGE_RU: "📲 Открыть приложение",

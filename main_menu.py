@@ -86,10 +86,42 @@ async def _show_gate_or_enter(query, telegram_id: int, language: str) -> None:
         )
 
 
+def _webapp_url_with(param: str, value: str) -> str:
+    """WEBAPP_URL ga so'rov parametri qo'shadi (URL'da allaqachon '?' bo'lishi mumkin)."""
+    sep = "&" if "?" in WEBAPP_URL else "?"
+    return f"{WEBAPP_URL}{sep}{param}={value}"
+
+
+async def _send_pt_invite(update: Update, user: dict, code: str) -> None:
+    """
+    2026-10-02: shaxsiy turnir taklif havolasi (/start pt_<kod>).
+    Turnir nomi + WebApp tugmasi (ilova qo'shilish ekranida ochiladi: ?pt_join=<kod>).
+    Kanal a'zoligini WebApp o'zi tekshiradi (mavjud gate).
+    """
+    from pt_members import pt_invite_preview
+    lang = user.get("language") or LANGUAGE_UZ
+    preview = pt_invite_preview(code)
+    if preview is None:
+        await update.message.reply_text(t("pt_invite_invalid", lang))
+        return
+    owner = "@" + preview["owner_username"] if preview.get("owner_username") else (preview.get("owner_nickname") or "")
+    text = t("pt_invite_message", lang).format(name=preview["name"], owner=owner)
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(
+        t("pt_invite_button", lang), web_app=WebAppInfo(url=_webapp_url_with("pt_join", code)))]])
+    await update.message.reply_text(text, reply_markup=keyboard)
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """/start buyrug'i — foydalanuvchini DB'ga yozadi va til tanlashni so'raydi."""
+    """/start buyrug'i — foydalanuvchini DB'ga yozadi va til tanlashni so'raydi.
+    2026-10-02: '/start pt_<kod>' — shaxsiy turnir taklifi (til tanlash o'tkazib yuboriladi)."""
     telegram_user = update.effective_user
-    get_or_create_user(telegram_user.id, telegram_user.full_name)
+    user = get_or_create_user(telegram_user.id, telegram_user.full_name)
+
+    from pt_members import parse_invite_payload
+    code = parse_invite_payload(context.args[0] if context.args else None)
+    if code:
+        await _send_pt_invite(update, user, code)
+        return
 
     await update.message.reply_text(
         t("choose_language", LANGUAGE_UZ),

@@ -125,6 +125,8 @@ ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "@Tojiyev_M")
 PT_PRICE_UZS = int(os.getenv("PT_PRICE_UZS", "0") or 0)
 PT_CARD_NUMBER = os.getenv("PT_CARD_NUMBER", "").strip()
 PT_CARD_HOLDER = os.getenv("PT_CARD_HOLDER", "").strip()
+# Taklif havolasi uchun (t.me/<BOT_USERNAME>?start=pt_<kod>); Railway'da allaqachon bor.
+BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
 
 # === Majburiy kanal a'zoligi ===
 # Foydalanuvchi botdan/WebApp'dan foydalanish uchun shu kanalga a'zo bo'lishi shart.
