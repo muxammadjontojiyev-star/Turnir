@@ -168,3 +168,15 @@ def pt_capacity(tournament_id: int, max_players: int = Body(..., embed=True),
         raise HTTPException(status_code=400, detail=r)
     return {"status": "ok", "max_players": max_players}
 
+
+
+@router.post("/pt/{tournament_id}/rules")
+def pt_rules_save(tournament_id: int, rules: str = Body("", embed=True),
+                  user: dict = Depends(get_authenticated_user)):
+    """Turnir qoidalari — FAQAT tashkilotchi. Bo'sh — standart qoidalar.
+    Xato: too_long, not_owner, wrong_status -> 400; not_found -> 404"""
+    from pt_rules import clean_rules, pt_set_rules
+    ok, r = pt_set_rules(tournament_id, user["id"], rules)
+    if not ok:
+        raise HTTPException(status_code=404 if r == "not_found" else 400, detail=r)
+    return {"status": "ok", "rules": clean_rules(rules) or None}

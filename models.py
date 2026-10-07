@@ -1018,6 +1018,8 @@ def init_db():
         "ALTER TABLE pt_tournaments ADD COLUMN max_players INTEGER NOT NULL DEFAULT 20",
         # 2026-10-03: turnir qanday to'langan — one_time | subscription (obuna limiti uchun)
         "ALTER TABLE pt_tournaments ADD COLUMN paid_via TEXT NOT NULL DEFAULT 'one_time'",
+        # 2026-10-07: turnir qoidalari (faqat tashkilotchi o'zgartiradi; NULL — standart qoidalar)
+        "ALTER TABLE pt_tournaments ADD COLUMN rules TEXT",
     ]
     for sql in migrations:
         try:

@@ -38,7 +38,7 @@ _UNPAID = (STATUS_AWAITING_PAYMENT, STATUS_PAYMENT_REVIEW)
 
 _TOURNAMENT_COLS = ("t.id, t.name, t.status, t.invite_code, t.price_uzs, t.created_at, "
                     "t.owner_user_id, u.nickname AS owner_nickname, u.username AS owner_username, "
-                    "t.receipt_at, t.reject_reason, t.max_players, t.paid_via")
+                    "t.receipt_at, t.reject_reason, t.max_players, t.paid_via, t.rules")
 
 
 def is_manager(cursor, tid: int, user_id: int, owner_user_id: int | None = None) -> bool:
