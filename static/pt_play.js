@@ -2,7 +2,7 @@
 //  pt_play.js — SHAXSIY turnir o'yinlari (2026-10-02, 4-bosqich)
 //  Tashkilotchi: "Turnirni boshlash", tur muddati, "Turni yopish".
 //  Ishtirokchi: mening o'yinlarim (natija kiritish / tasdiqlash), guruh jadvallari.
-//  2026-10-03: bo'laklar sahifalarga taqsimlanadi (pt_tabs.js): Asosiy — ptRoundInfoHtml,
+//  2026-10-03: bo'laklar sahifalarga taqsimlanadi (pt_tabs.js; 2026-10-07 Asosiy — pt_home.js),
 //  Jadval — ptStandingsHtml + ptRoundOthersHtml, O'yinlarim — ptMyMatchesHtml, Admin — ptPlayHtml
 //  (boshlash) + ptAdminPlayHtml. Global: PT, PTT, apiFetch, escHtml, showToast, ptOpenDetail.
 // =============================================================
@@ -137,35 +137,41 @@ function ptStandingsHtml(standings, meId) {
   }).join("");
 }
 
-// Tashkilotchi boshqaruvi: muddat (+ guruhda "Turni yopish") va natijani tuzatish.
-// Guruh va pley-off uchun umumiy (qoida #26).
+// Tashkilotchi boshqaruvi: muddat (tezkor tanlash + kalendar) va guruhda "Turni yopish".
+// Guruh va pley-off uchun umumiy (qoida #26). Natijani tuzatish — alohida karta (ptFixCardHtml).
+const PT_DL_PRESETS = [[1, "pt_dl_1d"], [2, "pt_dl_2d"], [3, "pt_dl_3d"], [7, "pt_dl_7d"]];
+
 function ptOwnerControlsHtml(knockout) {
   return `
+      <div class="pt-field-label">${escHtml(PTT("pt_dl_quick"))}</div>
+      <div class="pt-chips">${PT_DL_PRESETS.map(([d, k]) =>
+        `<button class="pt-chip" data-pt-dl="${d}">${escHtml(PTT(k))}</button>`).join("")}</div>
       <input class="modal-input" type="datetime-local" id="pt-deadline-input">
       <div class="pt-hint">${escHtml(PTT(knockout ? "pt_ko_deadline_hint" : "pt_deadline_hint"))}</div>
       <div class="pt-pay-actions${knockout ? " pt-pay-actions--one" : ""}">
         ${knockout ? "" : `<button class="btn btn--ghost" id="pt-close-round">${escHtml(PTT("pt_close_round"))}</button>`}
         <button class="btn btn--primary" id="pt-deadline-btn">${escHtml(PTT("pt_deadline_set"))}</button>
-      </div>
-      <div class="section-label pt-label">${escHtml(PTT("pt_fix_title"))}</div>
+      </div>`;
+}
+
+// Tezkor muddat: Toshkent vaqti bilan bugundan N kun keyin, 23:59 (server Toshkent vaqtini kutadi)
+function ptPresetDeadline(days) {
+  const d = new Date(Date.now() + 5 * 3600 * 1000 + days * 86400 * 1000);   // UTC+5 "soat" sifatida
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T23:59`;
+}
+
+function ptFixCardHtml() {
+  return `<div class="card pt-pay">
       <div class="pt-hint">${escHtml(PTT("pt_fix_hint"))}</div>
       <div class="pt-fix-row">
         <input class="modal-input" type="number" min="1" inputmode="numeric" id="pt-fix-id" placeholder="${escHtml(PTT("pt_fix_id_ph"))}">
         <button class="btn btn--ghost" id="pt-fix-load">${escHtml(PTT("pt_fix_load"))}</button>
       </div>
-      <div id="pt-fix-box"></div>`;
+      <div id="pt-fix-box"></div></div>`;
 }
 
 // --- Sahifa bo'laklari (pt_tabs.js) ---
-
-// Asosiy: joriy tur va muddat (faqat ko'rish)
-function ptRoundInfoHtml(p) {
-  if (p.phase || p.groups_finished) return "";
-  return `<div class="card pt-pay">
-      <div class="section-label pt-label">${escHtml(PTT("pt_round_title", { round: p.current_round, total: p.total_rounds }))}</div>
-      <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
-        <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div></div>`;
-}
 
 // Admin: guruh bosqichida tur boshqaruvi; pley-offda pt_knockout.js
 function ptAdminPlayHtml(p) {
@@ -198,6 +204,11 @@ function ptBindPlayBody(tid) {
   q("[data-pt-rejectres]", b => b.addEventListener("click", () => void ptConfirmResult(tid, b.dataset.ptRejectres, false)));
   document.getElementById("pt-deadline-btn")?.addEventListener("click", () => void ptSetDeadline(tid));
   document.getElementById("pt-close-round")?.addEventListener("click", () => void ptCloseRound(tid));
+  q("[data-pt-dl]", b => b.addEventListener("click", () => {
+    const inp = document.getElementById("pt-deadline-input");
+    if (inp) inp.value = ptPresetDeadline(Number(b.dataset.ptDl));
+    document.querySelectorAll("#pt-root [data-pt-dl]").forEach(x => x.classList.toggle("active", x === b));
+  }));
   q("[data-pt-chat]", b => b.addEventListener("click", () => {
     b.querySelector(".pt-badge")?.remove();                 // ochilgach o'qildi deb hisoblanadi
     openWebChat(Number(b.dataset.ptChat), b.dataset.ptOpp, "/pt/matches");

@@ -62,7 +62,7 @@ async function ptLoadList() {
 }
 
 async function ptOpenDetail(id) {
-  if (String(PT.detailId) !== String(id)) { PT.tab = "home"; PT.playerView = null; }   // boshqa turnir — Asosiy sahifadan
+  if (String(PT.detailId) !== String(id)) { PT.tab = "home"; PT.playerView = null; PT.rulesEdit = false; PT.rulesOpen = false; }   // boshqa turnir — Asosiy sahifadan
   PT.view = "detail";
   PT.detailId = id;
   ptRender(`<div class="empty-state">${escHtml(PTT("pt_loading"))}</div>`);
@@ -99,33 +99,21 @@ function ptRender(body, nav) {
   });
 }
 
+// 2026-10-07: stadion fonidagi hero + "Yangi turnir" asosiy tugma; bo'sh bo'lsa "Qanday ishlaydi" (pt_home.js)
 function ptRenderList() {
   PT.view = "list";
-  const cards = PT.list.map(t => `
-    <button class="pt-card" data-pt-open="${t.id}">
-      <div class="pt-card-top">
-        <span class="pt-card-name">${escHtml(t.name)}</span>
-        ${t.is_owner ? `<span class="pt-tag">${escHtml(PTT("pt_owner_tag"))}</span>`
-          : t.is_admin ? `<span class="pt-tag pt-tag--admin">${escHtml(PTT("pt_admin_tag"))}</span>` : ""}
-      </div>
-      <div class="pt-card-meta">
-        <span class="pt-status pt-status--${escHtml(t.status)}">${escHtml(ptStatusLabel(t.status))}</span>
-        <span>${t.members_count} ${escHtml(PTT("pt_members"))}</span>
-      </div>
-    </button>`).join("");
-
+  const cards = PT.list.map(ptListCardHtml).join("");
   // Bosh admin: to'lovlar navbati (2-bosqich, pt_payment.js)
   const adminBtn = (PT.config && PT.config.is_super)
     ? `<button class="btn btn--ghost" id="pt-payments-btn">${escHtml(PTT("pt_payments_btn"))}</button>` : "";
   const subCard = typeof ptSubCardHtml === "function" ? ptSubCardHtml() : "";   // 2026-10-03
   ptRender(`
-    ${adminBtn}
+    ${ptListHeroHtml()}
     ${subCard}
-    <button class="btn btn--primary btn--glow" id="pt-new-btn">${escHtml(PTT("pt_new"))}</button>
-    <div class="section-label pt-label">${escHtml(PTT("pt_my"))}</div>
-    ${cards || `<div class="empty-state">${escHtml(PTT("pt_empty"))}</div>`}`);
+    ${adminBtn}
+    ${cards ? `<div class="section-label pt-label">${escHtml(PTT("pt_my"))}</div>${cards}` : ptHowHtml()}`);
 
-  document.getElementById("pt-new-btn").addEventListener("click", ptRenderCreate);
+  document.getElementById("pt-new-btn").addEventListener("click", () => ptRenderCreate());
   document.getElementById("pt-payments-btn")?.addEventListener("click", () => void ptOpenPayments());
   document.getElementById("pt-sub-open")?.addEventListener("click", () => void ptOpenSub());
   document.querySelectorAll("#pt-root [data-pt-open]").forEach(el =>
@@ -158,6 +146,7 @@ function ptRenderCreate(keep) {
              placeholder="${escHtml(PTT("pt_name_ph"))}" autocomplete="off">
       <label class="pt-field-label" for="pt-size">${escHtml(PTT("pt_size_label"))}</label>
       ${ptSizeSelectHtml("pt-size", size, 0, allow)}
+      <div class="pt-size-sum" id="pt-size-sum">${escHtml(ptSizeSummary(size))}</div>
       ${modeHtml}
       <div class="pt-hint">${escHtml(PTT("pt_format", { min: c.min_players || 8 }))}</div>
       ${priceBlock}
@@ -170,6 +159,7 @@ function ptRenderCreate(keep) {
                             size: Number(document.getElementById("pt-size").value) });
   document.getElementById("pt-size").addEventListener("change", () => {
     const p = ptCreatePriceText(Number(document.getElementById("pt-size").value), PT.createMode);
+    document.getElementById("pt-size-sum").textContent = ptSizeSummary(Number(document.getElementById("pt-size").value));
     document.getElementById("pt-price-box").innerHTML = p.html;
     document.getElementById("pt-create-btn").disabled = !p.ok;
   });
@@ -225,10 +215,10 @@ function ptPayBlockHtml(t) {
     </div>`;
 }
 
-// Turnir sarlavha kartasi (barcha sahifalar tepasida)
+// Turnir sarlavhasi (Asosiy'dan boshqa sahifalar tepasida) — stadion fonidagi ixcham banner
 function ptHeadHtml(t) {
   return `
-    <div class="card pt-head">
+    <div class="pt-head pt-head--banner">
       <div class="pt-head-name">${escHtml(t.name)}</div>
       <div class="pt-card-meta">
         <span class="pt-status pt-status--${escHtml(t.status)}">${escHtml(ptStatusLabel(t.status))}</span>

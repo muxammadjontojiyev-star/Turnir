@@ -1,5 +1,6 @@
 // =============================================================
 //  pt_tabs.js — SHAXSIY turnir sahifasi: pastki menyuli sahifalar (2026-10-03)
+//  2026-10-07: Asosiy — pt_home.js (hero + keyingi qadam + qoidalar), Admin — bo'limlar sarlavhali.
 //  🏠 Asosiy | 🏆 Reyting | 👤 Profil | 🎁 Sovrinlar | 🛡 Admin (faqat tashkilotchi/admin) —
 //  rasmiy turnirlar (EL/ChL) bilan bir xil tuzilma
 //  Mavjud bo'laklar qayta ishlatiladi (pt.js, pt_play.js, pt_knockout.js, pt_members.js,
@@ -26,44 +27,7 @@ function ptWaitHtml() { return `<div class="empty-state">${escHtml(PTT("pt_tab_w
 
 function ptUserLabel(u) { return u.username ? "@" + u.username : (u.nickname || ""); }
 
-// ---------------- Asosiy: statistika kartasi, holat, ishtirokchilar ----------------
-
-function ptStatsHtml(t, p) {
-  const groups = p ? Object.keys(p.standings || {}).length : 0;      // qur'agacha guruhlar yo'q — "—"
-  const round = p ? (p.phase ? "PO" : `${Math.min(p.current_round, p.total_rounds)}/${p.total_rounds}`) : "—";
-  const cell = (v, l) => `<div class="pt-stat"><span class="pt-stat-value">${escHtml(String(v))}</span><span class="pt-stat-label">${escHtml(PTT(l))}</span></div>`;
-  return `<div class="pt-stats">${cell(`${t.approved_count}/${t.max_players}`, "pt_stat_players")}${cell(groups || "—", "pt_stat_groups")}${cell(round, "pt_stat_round")}</div>`;
-}
-
-function ptTabHome(t, p) {
-  const parts = [`<div class="card pt-pay">${ptStatsHtml(t, p)}</div>`, ptPayBlockHtml(t)];
-  if (t.status === "recruiting") {
-    parts.push(`<div class="card pt-pay"><div class="pt-hint">${escHtml(PTT("pt_home_recruiting", { n: t.approved_count, max: t.max_players }))}</div></div>`);
-  }
-  if (p) {
-    parts.push(p.phase && typeof ptKnockoutHomeHtml === "function" ? ptKnockoutHomeHtml(p)
-      : p.groups_finished ? `<div class="pt-note pt-note--ok">${escHtml(PTT("pt_groups_done"))}</div>`
-      : ptRoundInfoHtml(p));
-  }
-  if (ptIsManager(t) && !["finished", "cancelled"].includes(t.status)) {
-    parts.push(`<button class="btn btn--ghost" data-pt-goto="admin">🛡 ${escHtml(PTT("pt_home_admin_hint"))}</button>`);
-  }
-  parts.push(ptParticipantsHtml(t));
-  return parts.filter(Boolean).join("");
-}
-
-// Ishtirokchilar (faqat ko'rish; boshqaruv — Admin sahifasida)
-function ptParticipantsHtml(t) {
-  const ro = { ...t, is_manager: false, is_owner: false };      // amal tugmalarisiz
-  const approved = (t.members || []).filter(m => m.status === "approved");
-  const admins = (t.admins || []).length
-    ? `<div class="section-label pt-label">🛡 ${escHtml(PTT("pt_admins_title"))} (${t.admins.length})</div>` +
-      t.admins.map(a => `<div class="match-item pt-member"><span>${escHtml(a.nickname || "")}${a.username ? ` <span class="pt-muted">@${escHtml(a.username)}</span>` : ""}</span>
-        <span class="pt-tag pt-tag--admin">${escHtml(PTT("pt_admin_tag"))}</span></div>`).join("")
-    : "";
-  return `<div class="section-label pt-label">${escHtml(PTT("pt_members_title"))} (${approved.length}/${t.max_players})</div>
-    ${approved.map(m => ptMemberRowHtml(ro, m)).join("")}${admins}`;
-}
+// Asosiy sahifa (hero, keyingi qadam, qoidalar, ishtirokchilar) — pt_home.js (2026-10-07)
 
 // ---------------- Reyting: Guruhlar | Setka | Joriy tur ----------------
 
@@ -73,7 +37,7 @@ function ptTabRating(t, p) {
   const hasKo = (p.knockout || []).length > 0;
   const subs = [["groups", "pt_seg_groups"], ...(hasKo ? [["bracket", "pt_seg_bracket"]] : []), ["round", "pt_seg_round"]];
   if (!PT.ratingTab || !subs.some(([id]) => id === PT.ratingTab)) PT.ratingTab = hasKo ? "bracket" : "groups";
-  const bar = `<div class="pt-rtabs">${subs.map(([id, l]) =>
+  const bar = `<div class="pt-rtabs pt-seg">${subs.map(([id, l]) =>
     `<button class="tab-btn${PT.ratingTab === id ? " active" : ""}" data-pt-rtab="${id}">${escHtml(PTT(l))}</button>`).join("")}</div>`;
   let body;
   if (PT.ratingTab === "bracket") body = ptKnockoutStagesHtml(p);
@@ -124,16 +88,25 @@ function ptAdminHeaderHtml(t, p) {
       </div></div>`;
 }
 
+// Admin sahifasi: bo'limlar sarlavhali (boshlash → tur → tuzatish → taklif → a'zolar → adminlar → sozlamalar)
+function ptSectionHtml(key, body) {
+  return body ? `<div class="section-label pt-label pt-sec">${escHtml(PTT(key))}</div>${body}` : "";
+}
+
 function ptTabAdmin(t, p) {
   if (!ptIsManager(t)) return "";
-  const parts = [ptAdminHeaderHtml(t, p), ptPlayHtml(t)];   // sarlavha + recruiting: boshlash tugmasi
-  // is_manager turnir ma'lumotidan ham olinadi — serverda pt_results eski bo'lsa ham
-  // (play'da is_manager kelmasa) muddat/tuzatish tugmalari yo'qolmasin
-  if (p) parts.push(ptAdminPlayHtml({ ...p, is_manager: p.is_manager || ptIsManager(t) }));
-  if (typeof ptManageHtml === "function") parts.push(ptManageHtml(t));     // havola + qo'shish
-  if (t.status === "recruiting" && typeof ptMembersHtml === "function") parts.push(ptMembersHtml(t));  // so'rovlar
-  if (typeof ptAdminsHtml === "function") parts.push(ptAdminsHtml(t));
-  if (typeof ptSizeEditHtml === "function") parts.push(ptSizeEditHtml(t));
+  const pm = p ? { ...p, is_manager: p.is_manager || ptIsManager(t) } : null;  // eski server: play'da is_manager yo'q
+  const ko = pm && pm.phase;
+  const parts = [
+    ptAdminHeaderHtml(t, p),
+    ptSectionHtml("pt_adm_sec_start", ptPlayHtml(t)),
+    pm ? ptSectionHtml(ko ? "pt_adm_sec_ko" : "pt_adm_sec_round", ptAdminPlayHtml(pm)) : "",
+    pm && pm.phase !== "finished" && typeof ptFixCardHtml === "function" ? ptSectionHtml("pt_adm_sec_fix", ptFixCardHtml()) : "",
+    typeof ptManageHtml === "function" ? ptSectionHtml("pt_adm_sec_invite", ptManageHtml(t)) : "",
+    t.status === "recruiting" && typeof ptMembersHtml === "function" ? ptMembersHtml(t) : "",
+    typeof ptAdminsHtml === "function" ? ptAdminsHtml(t) : "",
+    typeof ptSizeEditHtml === "function" ? ptSectionHtml("pt_adm_sec_settings", ptSizeEditHtml(t)) : "",
+  ];
   const body = parts.filter(Boolean).join("");
   return body || `<div class="empty-state">${escHtml(PTT("pt_admin_nothing"))}</div>`;
 }
@@ -154,7 +127,8 @@ function ptRenderDetailTabs() {
   if (!ptVisibleTabs(t).some(x => x.id === PT.tab)) PT.tab = "home";   // admin huquqi olib tashlangan bo'lsa
   if (PT.playerView && String(PT.playerView._tid || PT.detailId) !== String(PT.detailId)) PT.playerView = null;
   const builders = { home: ptTabHome, rating: ptTabRating, profile: ptTabProfile, prizes: ptTabPrizes, admin: ptTabAdmin };
-  ptRender(`${ptHeadHtml(t)}${builders[PT.tab](t, p)}`, ptNavHtml(t));
+  // Asosiy sahifada sarlavha o'rniga stadion fonidagi hero (pt_home.js)
+  ptRender(`${PT.tab === "home" ? "" : ptHeadHtml(t)}${builders[PT.tab](t, p)}`, ptNavHtml(t));
   ptBindDetail(t);
   ptUpdateTabBadges(t, p);
 }
@@ -164,6 +138,7 @@ function ptBindDetail(t) {
     if (PT.tab === b.dataset.ptTab && !PT.playerView) return;
     PT.tab = b.dataset.ptTab;
     PT.playerView = null;                                  // boshqa sahifa — ishtirokchi profili yopiladi
+    PT.rulesEdit = false;                                  // saqlanmagan qoidalar tahriri yopiladi
     ptRenderDetailTabs();
     document.querySelector("#pt-root .pt-body")?.scrollTo?.(0, 0);
     window.scrollTo(0, 0);
@@ -184,6 +159,7 @@ function ptBindDetail(t) {
     el.addEventListener("click", () => ptCopy(el.dataset.ptCopy)));
   if (typeof ptBindPaymentActions === "function") ptBindPaymentActions(t);
   document.getElementById("pt-size-save")?.addEventListener("click", () => void ptSaveSize(t.id));
+  if (PT.tab === "home" && typeof ptBindHome === "function") ptBindHome(t);
   if (typeof ptBindManage === "function") ptBindManage(t);
   if (typeof ptBindPlay === "function") ptBindPlay(t);
   if (typeof ptBindAdmins === "function") ptBindAdmins(t);

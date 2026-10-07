@@ -25,7 +25,7 @@ function ptProfileHtml(view, p, isMe) {
       <span class="stat-card-value ${cls}">${escHtml(String(v))}</span><span class="stat-card-label">${escHtml(PTT(l))}</span></div>`;
   const form = (view.matches || []).map(m => ptWinnerOf(m, u.id)).filter(Boolean).slice(-5);
   const formHtml = form.length
-    ? `<div class="pt-form">${form.map(f => `<span class="pt-form-dot pt-form-dot--${f}">${escHtml(PTT("pt_form_" + f))}</span>`).join("")}</div>`
+    ? `<div class="pt-formline">${form.map(f => `<span class="pt-form-dot pt-form-dot--${f}">${escHtml(PTT("pt_form_" + f))}</span>`).join("")}</div>`
     : `<div class="pt-muted">${escHtml(PTT("pt_form_none"))}</div>`;
   const next = (view.matches || []).find(m => m.status !== "confirmed" && m.player1_id && m.player2_id);
   return `
