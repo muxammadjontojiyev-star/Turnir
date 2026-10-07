@@ -6120,3 +6120,10 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 #pt-root .pt-rt-logo { width: 24px; height: 24px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
 #pt-root .pt-rt-league { font-size: 12px; white-space: nowrap; }
 #pt-root .pt-rt-league .tab-league-logo { vertical-align: middle; margin-right: 4px; }
+
+/* Bosh admin: barcha turnirlar (2026-10-07) */
+.pt-super-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pt-super-actions .btn { width: 100%; padding: 11px 6px; font-size: 13px; }
+.pt-super-head { border-color: rgba(0,240,255,.3) !important; }
+.pt-all-filter { margin: 2px 0; }
+.pt-super-note { color: #38d6ff; background: rgba(0,240,255,.08); border-color: rgba(0,240,255,.3); }

@@ -210,6 +210,7 @@ function ptMembersGridHtml(t, p) {
 function ptTabHome(t, p) {
   return [
     ptHeroHtml(t, p),
+    t.is_super && !t.is_owner ? `<div class="pt-note pt-super-note">🛡 ${escHtml(PTT("pt_super_note", { owner: t.owner_username ? "@" + t.owner_username : (t.owner_nickname || "") }))}</div>` : "",
     ptMyTeamHtml(t),
     ptNextStepHtml(t, p),
     typeof ptRulesHtml === "function" ? ptRulesHtml(t) : "",

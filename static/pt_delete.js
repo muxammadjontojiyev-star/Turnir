@@ -7,7 +7,7 @@
 // =============================================================
 
 function ptDeleteHtml(t) {
-  if (!t.is_owner) return "";
+  if (!(t.can_own || t.is_owner)) return "";            // tashkilotchi yoki bosh admin
   return `<div class="card pt-pay pt-danger">
       <div class="pt-hint">${escHtml(PTT("pt_del_hint"))}</div>
       <button class="btn pt-btn-danger" data-pt-del="${t.id}" data-pt-name="${escHtml(t.name)}"

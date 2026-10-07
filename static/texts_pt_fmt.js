@@ -3,6 +3,13 @@
 
 const PT_FMT_TEXTS = {
   uz: {
+    pt_all_btn: "🗂 Barcha turnirlar",
+    pt_all_title: "BARCHA SHAXSIY TURNIRLAR",
+    pt_all_hint: "Bosh admin sifatida istalgan turnirni ochib, tashkilotchi o'rnida sozlay olasiz: a'zolar, boshlash, muddat, natijalar, qoidalar, sig'im, adminlar, o'chirish.",
+    pt_all_search: "Nom, @tashkilotchi yoki #ID", pt_all_find: "Qidirish", pt_all_any: "Hammasi",
+    pt_all_none: "Turnir topilmadi",
+    pt_super_tag: "Bosh admin",
+    pt_super_note: "Siz bosh admin sifatida ko'ryapsiz (tashkilotchi: {owner}). Barcha sozlamalarni o'zgartira olasiz.",
     pt_adm_sec_big: "⚠️ KATTA HISOBLAR",
     pt_big_hint: "Bir tomon {n} tadan ko'p gol kiritsa, natija avtomatik tasdiqlanmaydi — siz tasdiqlaysiz yoki rad etasiz.",
     pt_big_decide_hint: "Katta hisob — tasdiqlaysizmi?",
@@ -91,6 +98,13 @@ const PT_FMT_TEXTS = {
       "Xona ID va kelishuvlar — o'yin chatida. Raqibingizga hurmat bilan munosabatda bo'ling.",
   },
   ru: {
+    pt_all_btn: "🗂 Все турниры",
+    pt_all_title: "ВСЕ ЧАСТНЫЕ ТУРНИРЫ",
+    pt_all_hint: "Как главный админ вы можете открыть любой турнир и настроить его вместо организатора: участники, старт, сроки, результаты, правила, вместимость, админы, удаление.",
+    pt_all_search: "Название, @организатор или #ID", pt_all_find: "Найти", pt_all_any: "Все",
+    pt_all_none: "Турниры не найдены",
+    pt_super_tag: "Главный админ",
+    pt_super_note: "Вы смотрите как главный админ (организатор: {owner}). Можно менять все настройки.",
     pt_adm_sec_big: "⚠️ КРУПНЫЕ СЧЕТА",
     pt_big_hint: "Если одна сторона забила больше {n}, результат не подтверждается автоматически — вы подтверждаете или отклоняете.",
     pt_big_decide_hint: "Крупный счёт — подтвердить?",
@@ -179,6 +193,13 @@ const PT_FMT_TEXTS = {
       "ID комнаты и договорённости — в чате матча. Уважайте соперника.",
   },
   en: {
+    pt_all_btn: "🗂 All tournaments",
+    pt_all_title: "ALL PRIVATE TOURNAMENTS",
+    pt_all_hint: "As the main admin you can open any tournament and manage it in the organizer's place: players, start, deadlines, results, rules, capacity, admins, deletion.",
+    pt_all_search: "Name, @organizer or #ID", pt_all_find: "Search", pt_all_any: "All",
+    pt_all_none: "No tournaments found",
+    pt_super_tag: "Main admin",
+    pt_super_note: "You're viewing as the main admin (organizer: {owner}). You can change all settings.",
     pt_adm_sec_big: "⚠️ BIG SCORES",
     pt_big_hint: "If one side scores more than {n}, the result isn't confirmed automatically — you approve or reject it.",
     pt_big_decide_hint: "Big score — approve it?",

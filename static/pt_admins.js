@@ -17,10 +17,10 @@ function ptAdminsHtml(t) {
   const list = (t.admins || []).map(a => `
     <div class="match-item pt-member">
       <span>${escHtml(a.nickname || "")}${a.username ? ` <span class="pt-muted">@${escHtml(a.username)}</span>` : ""}</span>
-      ${t.is_owner && !finished ? `<button class="pt-mini pt-mini--no" data-pt-arem="${a.user_id}" data-pt-who="${escHtml(a.nickname || "")}">${escHtml(PTT("pt_remove"))}</button>`
+      ${(t.can_own || t.is_owner) && !finished ? `<button class="pt-mini pt-mini--no" data-pt-arem="${a.user_id}" data-pt-who="${escHtml(a.nickname || "")}">${escHtml(PTT("pt_remove"))}</button>`
         : `<span class="pt-tag pt-tag--admin">${escHtml(PTT("pt_admin_tag"))}</span>`}
     </div>`).join("");
-  const add = t.is_owner && !finished ? `
+  const add = (t.can_own || t.is_owner) && !finished ? `
     <div class="card pt-pay">
       <div class="pt-hint">${escHtml(PTT("pt_admins_hint"))}</div>
       <div class="pt-fix-row">

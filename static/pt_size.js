@@ -33,7 +33,7 @@ function ptEditSizeFilter(t) {
 }
 
 function ptCanEditSize(t) {
-  return t.is_owner && (t.format || "classic") !== "league" &&     // liga: sig'im = klublar soni (qat'iy)
+  return (t.can_own || t.is_owner) && (t.format || "classic") !== "league" &&     // liga: sig'im = klublar soni (qat'iy)
     ["awaiting_payment", "payment_review", "rejected", "recruiting"].includes(t.status);
 }
 

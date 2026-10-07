@@ -101,7 +101,8 @@ function ptRender(body, nav) {
   if (nav && typeof applyIcons === "function") applyIcons(root);
   document.getElementById("pt-back-btn").addEventListener("click", () => {
     if (PT.view === "list") exitPrivateTournaments();
-    else { PT.view = "list"; void ptLoadList(); }
+    else if (PT.view === "detail" && PT.fromAll && typeof ptOpenAll === "function") void ptOpenAll();   // bosh admin ro'yxatiga
+    else { PT.view = "list"; PT.fromAll = false; void ptLoadList(); }
   });
 }
 
@@ -111,7 +112,8 @@ function ptRenderList() {
   const cards = PT.list.map(ptListCardHtml).join("");
   // Bosh admin: to'lovlar navbati (2-bosqich, pt_payment.js)
   const adminBtn = (PT.config && PT.config.is_super)
-    ? `<button class="btn btn--ghost" id="pt-payments-btn">${escHtml(PTT("pt_payments_btn"))}</button>` : "";
+    ? `<div class="pt-super-actions"><button class="btn btn--ghost" id="pt-payments-btn">${escHtml(PTT("pt_payments_btn"))}</button>
+       <button class="btn btn--ghost" id="pt-all-btn">${escHtml(PTT("pt_all_btn"))}</button></div>` : "";
   const subCard = typeof ptSubCardHtml === "function" ? ptSubCardHtml() : "";   // 2026-10-03
   ptRender(`
     ${ptListHeroHtml()}
@@ -121,6 +123,7 @@ function ptRenderList() {
 
   document.getElementById("pt-new-btn").addEventListener("click", () => ptRenderCreate());
   document.getElementById("pt-payments-btn")?.addEventListener("click", () => void ptOpenPayments());
+  document.getElementById("pt-all-btn")?.addEventListener("click", () => void ptOpenAll());       // pt_superadmin.js
   document.getElementById("pt-sub-open")?.addEventListener("click", () => void ptOpenSub());
   document.querySelectorAll("#pt-root [data-pt-open]").forEach(el =>
     el.addEventListener("click", () => void ptOpenDetail(el.dataset.ptOpen)));
@@ -191,5 +194,6 @@ function ptRerender() {
   else if (PT.view === "payments" && typeof ptRenderPayments === "function") ptRenderPayments();
   else if (PT.view === "join" && PT.invite && typeof ptRenderJoin === "function") ptRenderJoin();
   else if (PT.view === "detail" && PT.detail) ptRenderDetail();
+  else if (PT.view === "all" && typeof ptRenderAll === "function") ptRenderAll();
   else ptRenderList();
 }

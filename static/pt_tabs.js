@@ -97,7 +97,7 @@ function ptAdminHeaderHtml(t, p) {
       <span class="stat-card-label">${escHtml(PTT(l))}</span></div>`;
   return `<div class="card pt-admin-head">
       <div class="pt-admin-title">🛡 ${escHtml(PTT("pt_admin_panel"))}
-        <span class="pt-tag ${t.is_owner ? "" : "pt-tag--admin"}">${escHtml(PTT(t.is_owner ? "pt_owner_tag" : "pt_admin_tag"))}</span></div>
+        <span class="pt-tag ${t.is_owner ? "" : "pt-tag--admin"}">${escHtml(PTT(t.is_owner ? "pt_owner_tag" : t.is_super ? "pt_super_tag" : "pt_admin_tag"))}</span></div>
       <div class="stats-grid pt-admin-stats">
         ${stat(pending, "pt_adm_requests", pending ? "neon-red" : "")}
         ${stat(stage, "pt_adm_stage", "neon-cyan")}

@@ -24,12 +24,12 @@ function ptRulesItems(text) {
 
 function ptRulesHtml(t) {
   const isDefault = !(t.rules || "").trim();
-  const editBtn = t.is_owner && t.status !== "cancelled" && !PT.rulesEdit
+  const editBtn = (t.can_own || t.is_owner) && t.status !== "cancelled" && !PT.rulesEdit
     ? `<button class="pt-mini pt-mini--edit" id="pt-rules-edit">${escHtml(PTT("pt_rules_edit"))}</button>` : "";
   const head = `<div class="pt-rules-head"><span class="pt-next-kicker">${escHtml(PTT("pt_rules_title"))}</span>
 ${editBtn}</div>`;
   const defTag = isDefault ? `<span class="pt-tag pt-tag--muted">${escHtml(PTT("pt_rules_default_tag"))}</span>` : "";
-  if (PT.rulesEdit && t.is_owner) {
+  if (PT.rulesEdit && (t.can_own || t.is_owner)) {
     return `<div class="card pt-rules">${head}
         <textarea class="modal-input pt-rules-input" id="pt-rules-input" maxlength="${PT_RULES_MAX}" rows="9">${escHtml(ptRulesText(t))}</textarea>
         <div class="pt-rules-meta"><span class="pt-hint">${escHtml(PTT("pt_rules_hint"))}</span>
