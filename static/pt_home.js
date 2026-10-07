@@ -62,7 +62,8 @@ function ptHeroHtml(t, p) {
 // ---------------- Mening klubim / terma jamoam (qur'agacha tanlanadi) ----------------
 
 function ptMyTeamHtml(t) {
-  const fmt = typeof ptFmt === "function" ? ptFmt(t) : "classic";
+  if (typeof ptUsesTeams !== "function") return "";        // pt_formats.js yuklanmagan bo'lsa ham sahifa ochilsin
+  const fmt = ptFmt(t);
   if (!ptUsesTeams(fmt) || !t.my_status) return "";
   const title = PTT(fmt === "wc" ? "pt_team_my_wc" : "pt_team_my_club");
   if (t.status !== "recruiting") return "";
@@ -82,6 +83,7 @@ function ptMyTeamHtml(t) {
 }
 
 function ptBindMyTeam(t) {
+  if (typeof ptFmt !== "function") return;
   const opts = { id: "home", fmt: ptFmt(t), league: t.league_name, taken: t.taken_teams || [], mine: t.my_team };
   document.getElementById("pt-team-change")?.addEventListener("click", () => { PT.teamEdit = true; ptRenderDetailTabs(); });
   document.getElementById("pt-team-cancel")?.addEventListener("click", () => { PT.teamEdit = false; ptRenderDetailTabs(); });

@@ -74,9 +74,15 @@ async function ptOpenDetail(id) {
     if (["running", "finished"].includes(PT.detail.status) && typeof ptFetchPlay === "function") {
       await ptFetchPlay(id);
     }
-    ptRenderDetail();
   } catch (e) {
     ptRender(`<div class="empty-state">${escHtml(PTT("pt_load_err"))}</div>`);
+    return;
+  }
+  try {
+    ptRenderDetail();
+  } catch (e) {          // chizish xatosi (masalan, skript fayli yuklanmagan) — tarmoq xatosi bilan adashtirilmasin
+    console.error("PT chizish xatosi:", e);
+    ptRender(`<div class="empty-state">${escHtml(PTT("pt_load_err"))}<br><small class="pt-muted">${escHtml(String(e && e.message || e))}</small></div>`);
   }
 }
 
