@@ -1,5 +1,7 @@
 """
 pt_knockout.py — SHAXSIY turnir pley-offi (5-bosqich; 2026-10-03: 128 kishigacha).
+2026-10-07: ChL/YeL formati — yagona jadvaldan: top-Q to'g'ridan setkaga, Q+1..3Q pley-off raundi
+("po", 1 o'yin), so'ng 2Q setka (cl_po_pairs, cl_bracket_slots). Liga formatida pley-off yo'q.
 
 Admin qarori:
   - Pley-offga BARCHA guruh g'oliblari + eng yaxshi 2-o'rinlar (qolgan joylarga).
@@ -17,11 +19,14 @@ Admin qarori:
 import logging
 
 from models import get_connection
+from pt_core import is_manager
 from pt_results import pt_group_standings
 
 logger = logging.getLogger(__name__)
 
-STAGES = ["r64", "r32", "r16", "qf", "semi", "final"]
+# 2026-10-07: "po" — ChL/YeL pley-off raundi (rasmiy 9–24 pley-in kabi), setkadan oldin
+STAGES = ["po", "r64", "r32", "r16", "qf", "semi", "final"]
+STAGE_PO = "po"
 STAGE_FOR_SIZE = {64: "r64", 32: "r32", 16: "r16", 8: "qf", 4: "semi", 2: "final"}
 STAGE_SEMI = "semi"
 STAGE_FINAL = "final"
@@ -33,6 +38,44 @@ def bracket_size(n_groups: int) -> int:
     while p * 2 <= min(2 * n_groups, BRACKET_MAX):
         p *= 2
     return p
+
+
+def _fmt(cursor, tid: int) -> str:
+    cursor.execute("SELECT format FROM pt_tournaments WHERE id = ?", (tid,))
+    r = cursor.fetchone()
+    return (r["format"] if r else None) or "classic"
+
+
+def pt_bracket_size(fmt: str, standings: dict[str, list[dict]]) -> int:
+    """Setka hajmi: ChL/YeL — 2Q (pt_formats.cl_direct_count); guruhli formatlar — bracket_size."""
+    from pt_formats import FMT_CL, FMT_EL, cl_direct_count
+    if fmt in (FMT_CL, FMT_EL):
+        return 2 * cl_direct_count(sum(len(r) for r in standings.values()))
+    return bracket_size(len(standings))
+
+
+def _ranking(standings: dict[str, list[dict]]) -> list[int]:
+    return [r["user_id"] for r in next(iter(standings.values()), [])]
+
+
+def cl_po_pairs(ranking: list[int]) -> list[tuple[int, int]]:
+    """ChL/YeL pley-off raundi: k-juftlik = (Q+1+k)-o'rin vs (3Q-k)-o'rin (kuchli — eng past bilan)."""
+    from pt_formats import cl_direct_count
+    q = cl_direct_count(len(ranking))
+    return [(ranking[q + k], ranking[3 * q - 1 - k]) for k in range(q)]
+
+
+def cl_bracket_slots(ranking: list[int]) -> list[tuple[tuple, tuple]]:
+    """
+    Setka 1-bosqichi (2Q): urug'lar 1..Q — jadvaldagi top-Q ('u', user_id); Q+1..2Q — pley-off
+    raundi g'oliblari ('w', juftlik indeksi; k-juftlik g'olibi Q+1+k-urug'). Standart setka
+    (seed_order): 1-urug' eng zaif pley-off juftligi g'olibi bilan — rasmiy ChL kabi.
+    """
+    from pt_formats import cl_direct_count
+    q = cl_direct_count(len(ranking))
+    seeds = [("u", ranking[i]) for i in range(q)] + [("w", k) for k in range(q)]
+    order = seed_order(2 * q)
+    return [(seeds[order[i] - 1], seeds[order[i + 1] - 1]) for i in range(0, 2 * q, 2)]
 
 
 def _cross_key(row: dict) -> tuple:
@@ -92,8 +135,12 @@ def _winner(m) -> int | None:
 
 
 def pt_start_knockout(cursor, tid: int) -> tuple[str, list[tuple[int, int]]]:
-    """1-bosqich o'yinlarini yaratadi (ochiq tranzaksiya ichida)."""
-    stage, pairs = pt_first_round_pairs(pt_group_standings(cursor, tid))
+    """1-bosqich o'yinlarini yaratadi (ochiq tranzaksiya ichida). ChL/YeL — pley-off raundi."""
+    standings = pt_group_standings(cursor, tid)
+    if _fmt(cursor, tid) in ("cl", "el"):
+        stage, pairs = STAGE_PO, cl_po_pairs(_ranking(standings))
+    else:
+        stage, pairs = pt_first_round_pairs(standings)
     cursor.executemany(
         "INSERT INTO pt_matches (tournament_id, stage, round, player1_id, player2_id) VALUES (?, ?, ?, ?, ?)",
         [(tid, stage, i, a, b) for i, (a, b) in enumerate(pairs, start=1)])
@@ -123,10 +170,21 @@ def pt_advance(cursor, tid: int) -> dict:
     present = [s for s in STAGES if s in by]
     if not present:
         return {"event": None}
+    slots = None
+    if STAGE_PO in by:                                   # ChL/YeL: setka urug'lari jadvaldan (o'zgarmas)
+        slots = cl_bracket_slots(_ranking(pt_group_standings(cursor, tid)))
+    po_win = [_winner(m) for m in by.get(STAGE_PO, [])]
+
+    def _slot(sl):
+        return sl[1] if sl[0] == "u" else po_win[sl[1]]
+
     updated = None
     for s, nxt in zip(present, present[1:]):
         for j, m in enumerate(by[nxt]):
-            w = [_winner(x) for x in by[s][2 * j:2 * j + 2]]
+            if s == STAGE_PO:
+                w = [_slot(a) for a in slots[j]] if j < len(slots) else [None]
+            else:
+                w = [_winner(x) for x in by[s][2 * j:2 * j + 2]]
             if None in w or [m["player1_id"], m["player2_id"]] == w or m["status"] == "confirmed":
                 continue
             cursor.execute("UPDATE pt_matches SET player1_id = ?, player2_id = ?, score1 = NULL, score2 = NULL, "
@@ -142,8 +200,12 @@ def pt_advance(cursor, tid: int) -> dict:
                        "finished_at = CURRENT_TIMESTAMP, round_deadline = NULL, "
                        "updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'running'", (winners[0], tid))
         return {"event": "finished", "champion_id": winners[0]} if cursor.rowcount else (updated or {"event": None})
-    nxt = STAGES[STAGES.index(last) + 1]
-    pairs = [(winners[i], winners[i + 1]) for i in range(0, len(winners), 2)]
+    if last == STAGE_PO:
+        nxt = STAGE_FOR_SIZE[2 * len(slots)]
+        pairs = [(_slot(a), _slot(b)) for a, b in slots]
+    else:
+        nxt = STAGES[STAGES.index(last) + 1]
+        pairs = [(winners[i], winners[i + 1]) for i in range(0, len(winners), 2)]
     cursor.executemany(
         "INSERT INTO pt_matches (tournament_id, stage, round, player1_id, player2_id) VALUES (?, ?, ?, ?, ?)",
         [(tid, nxt, i, a, b) for i, (a, b) in enumerate(pairs, start=1)])
@@ -156,9 +218,16 @@ def pt_next_match_locked(cursor, tid: int, stage: str, rnd: int) -> bool:
     """Shu o'yin g'olibi o'tgan keyingi bosqich o'yini allaqachon tasdiqlanganmi? (tuzatish taqiqi)"""
     if stage == STAGE_FINAL:
         return False
-    nxt = STAGES[STAGES.index(stage) + 1]
+    if stage == STAGE_PO:                                # ChL/YeL: g'olib qaysi setka o'yiniga o'tgan
+        slots = cl_bracket_slots(_ranking(pt_group_standings(cursor, tid)))
+        j = next((i for i, pair in enumerate(slots) if ("w", rnd - 1) in pair), None)
+        if j is None:
+            return False
+        nxt, nrnd = STAGE_FOR_SIZE[2 * len(slots)], j + 1
+    else:
+        nxt, nrnd = STAGES[STAGES.index(stage) + 1], (rnd + 1) // 2
     cursor.execute("SELECT status FROM pt_matches WHERE tournament_id = ? AND stage = ? AND round = ?",
-                   (tid, nxt, (rnd + 1) // 2))
+                   (tid, nxt, nrnd))
     r = cursor.fetchone()
     return bool(r and r["status"] == "confirmed")
 
@@ -189,12 +258,12 @@ def pt_owner_start_knockout(tid: int, owner_id: int) -> tuple[bool, str | dict]:
         why = None
         if not t:
             why = "not_found"
-        elif t["owner_user_id"] != owner_id:
+        elif not is_manager(cursor, tid, owner_id, t["owner_user_id"]):   # tashkilotchi yoki admin
             why = "not_owner"
         elif t["status"] != "running":
             why = "not_running"
-        elif pt_knockout_phase(cursor, tid) != "ko_ready":
-            why = "not_ready"
+        elif pt_knockout_phase(cursor, tid) != "ko_ready" or _fmt(cursor, tid) == "league":
+            why = "not_ready"                            # liga formatida pley-off yo'q
         if why:
             cursor.execute("ROLLBACK")
             return False, why

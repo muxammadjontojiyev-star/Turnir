@@ -228,6 +228,17 @@ TEXTS = {
         LANGUAGE_RU: "🏁 Турнир «{name}» начался! Вы в группе {group}. Смотрите свои матчи в приложении.",
         LANGUAGE_EN: "🏁 «{name}» has started! You're in group {group}. See your matches in the app.",
     },
+    # 2026-10-07: yagona jadvalli formatlar (liga / ChL / YeL)
+    "pt_notify_started_table": {
+        LANGUAGE_UZ: "🏁 «{name}» turniri boshlandi! Jadval {rounds} turdan iborat. O'yinlaringizni ilovada ko'ring.",
+        LANGUAGE_RU: "🏁 Турнир «{name}» начался! В таблице {rounds} туров. Смотрите свои матчи в приложении.",
+        LANGUAGE_EN: "🏁 «{name}» has started! The table has {rounds} rounds. See your matches in the app.",
+    },
+    "pt_notify_table_done": {
+        LANGUAGE_UZ: "🏁 «{name}»: liga bosqichi yakunlandi! Jadval va pley-off juftliklarini ilovada ko'ring.",
+        LANGUAGE_RU: "🏁 «{name}»: общий этап завершён! Таблица и пары плей-офф — в приложении.",
+        LANGUAGE_EN: "🏁 «{name}»: the league phase is over! See the table and play-off pairs in the app.",
+    },
     "pt_notify_round_open": {
         LANGUAGE_UZ: "⏰ «{name}»: {round}-tur o'yinlarini {deadline} gacha (Toshkent vaqti) o'ynang.",
         LANGUAGE_RU: "⏰ «{name}»: сыграйте матчи {round}-го тура до {deadline} (по Ташкенту).",
@@ -274,6 +285,7 @@ TEXTS = {
         LANGUAGE_RU: "⚠️ «{name}»: срок плей-офф истёк, не сыграно матчей: {count}. Решите результат в приложении («Исправить результат»).",
         LANGUAGE_EN: "⚠️ «{name}»: the play-off deadline passed, {count} match(es) unplayed. Decide the result in the app («Fix a result»).",
     },
+    "pt_stage_po": {LANGUAGE_UZ: "pley-off raundi", LANGUAGE_RU: "раунд плей-офф", LANGUAGE_EN: "knockout round play-off"},
     "pt_stage_r64": {LANGUAGE_UZ: "1/32 final", LANGUAGE_RU: "1/32 финала", LANGUAGE_EN: "round of 64"},
     "pt_stage_r32": {LANGUAGE_UZ: "1/16 final", LANGUAGE_RU: "1/16 финала", LANGUAGE_EN: "round of 32"},
     "pt_stage_r16": {LANGUAGE_UZ: "1/8 final", LANGUAGE_RU: "1/8 финала", LANGUAGE_EN: "round of 16"},
@@ -298,6 +310,11 @@ TEXTS = {
         LANGUAGE_UZ: "❌ {plan} obuna to'lovi rad etildi.\nSabab: {reason}\nChekni qayta yuborishingiz mumkin.",
         LANGUAGE_RU: "❌ Оплата подписки ({plan}) отклонена.\nПричина: {reason}\nВы можете отправить чек повторно.",
         LANGUAGE_EN: "❌ The {plan} subscription payment was rejected.\nReason: {reason}\nYou can send the receipt again.",
+    },
+    "pt_notify_admin_added": {
+        LANGUAGE_UZ: "🛡 Sizni «{name}» shaxsiy turniriga ADMIN qilib tayinlashdi. Endi a'zolar, muddatlar va natijalarni boshqarishingiz mumkin.",
+        LANGUAGE_RU: "🛡 Вас назначили АДМИНОМ частного турнира «{name}». Теперь вы можете управлять участниками, сроками и результатами.",
+        LANGUAGE_EN: "🛡 You've been made an ADMIN of the private tournament «{name}». You can now manage players, deadlines and results.",
     },
     "btn_open_app": {
         LANGUAGE_UZ: "📲 Ilovani ochish",

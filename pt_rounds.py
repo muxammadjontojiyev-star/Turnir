@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 
 from config import TOURNAMENT_TIMEZONE_OFFSET
 from models import get_connection
-from pt_core import STATUS_RUNNING
+from pt_core import STATUS_RUNNING, is_manager, managers_for_notify
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def _owned_running(cursor, tid: int, owner_id: int):
     t = cursor.fetchone()
     if not t:
         return None, "not_found"
-    if t["owner_user_id"] != owner_id:
+    if not is_manager(cursor, tid, owner_id, t["owner_user_id"]):    # tashkilotchi yoki admin
         return None, "not_owner"
     if t["status"] != STATUS_RUNNING:
         return None, "not_running"
@@ -107,9 +107,38 @@ def _close_round(cursor, t: dict) -> dict:
     cursor.execute(
         "UPDATE pt_tournaments SET current_round = current_round + 1, round_deadline = NULL, "
         "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (tid,))
+    finished = cur + 1 > t["total_rounds"]
+    champion = _finish_league(cursor, tid) if finished else None
     return {"id": tid, "name": t["name"], "closed_round": cur, "next_round": cur + 1,
-            "groups_finished": cur + 1 > t["total_rounds"], "awaiting": awaiting, "zero": zero,
+            "groups_finished": finished, "awaiting": awaiting, "zero": zero,
+            "champion_id": champion, "single_table": _single_table(cursor, tid),
             "members": members_for_notify(cursor, tid)}
+
+
+def _single_table(cursor, tid: int) -> bool:
+    from pt_formats import is_single_table
+    cursor.execute("SELECT format FROM pt_tournaments WHERE id = ?", (tid,))
+    r = cursor.fetchone()
+    return bool(r and is_single_table(r["format"] or "classic"))
+
+
+def _finish_league(cursor, tid: int) -> int | None:
+    """
+    2026-10-07: LIGA formati — oxirgi tur yopilgach pley-off yo'q: jadval birinchisi chempion,
+    turnir 'finished'. Boshqa formatlarda None (guruhdan keyin pley-off). Idempotent.
+    """
+    cursor.execute("SELECT format FROM pt_tournaments WHERE id = ?", (tid,))
+    r = cursor.fetchone()
+    if not r or r["format"] != "league":
+        return None
+    from pt_results import pt_group_standings          # sikl importdan qochish (pt_results -> pt_rounds)
+    rows = next(iter(pt_group_standings(cursor, tid).values()), [])
+    if not rows:
+        return None
+    cursor.execute("UPDATE pt_tournaments SET status = 'finished', champion_user_id = ?, "
+                   "finished_at = CURRENT_TIMESTAMP, round_deadline = NULL, updated_at = CURRENT_TIMESTAMP "
+                   "WHERE id = ? AND status = 'running'", (rows[0]["user_id"], tid))
+    return rows[0]["user_id"] if cursor.rowcount else None
 
 
 def pt_set_deadline(tid: int, owner_id: int, local_value: str) -> tuple[bool, str | dict]:
@@ -166,11 +195,8 @@ def _close_knockout(cursor, t: dict) -> dict:
                    "AND status = 'pending'", (tid,))
     pending = cursor.fetchone()["c"]
     adv = pt_advance(cursor, tid)
-    cursor.execute("SELECT t.owner_telegram_id, u.language FROM pt_tournaments t JOIN users u "
-                   "ON u.id = t.owner_user_id WHERE t.id = ?", (tid,))
-    o = dict(cursor.fetchone())
     return {"id": tid, "name": t["name"], "knockout": True, "awaiting": awaiting, "pending": pending,
-            "advance": adv, "owner": o, "members": members_for_notify(cursor, tid)}
+            "advance": adv, "managers": managers_for_notify(cursor, tid), "members": members_for_notify(cursor, tid)}
 
 
 def pt_tick(now_utc: datetime | None = None) -> list[dict]:

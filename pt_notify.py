@@ -89,13 +89,17 @@ async def notify_round_result(res: dict) -> None:
     try:
         if res.get("knockout"):
             if res["pending"]:
-                o = res["owner"]
-                await notify_user(o["owner_telegram_id"], "pt_notify_ko_pending", o["language"],
-                                  open_button_key="btn_open_app", name=res["name"], count=res["pending"])
+                for o in res["managers"]:                # tashkilotchi + adminlar
+                    await notify_user(o["telegram_id"], "pt_notify_ko_pending", o.get("language"),
+                                      open_button_key="btn_open_app", name=res["name"], count=res["pending"])
             await notify_advance(res["name"], res["members"], res.get("advance"))
             return
-        if res["groups_finished"]:
-            await notify_members(res["members"], "pt_notify_groups_done", name=res["name"])
+        if res.get("champion_id"):                       # 2026-10-07: liga yakunlandi — chempion
+            await notify_members(res["members"], "pt_notify_champion", name=res["name"],
+                                 champion=_label(res["champion_id"]))
+        elif res["groups_finished"]:
+            key = "pt_notify_table_done" if res.get("single_table") else "pt_notify_groups_done"
+            await notify_members(res["members"], key, name=res["name"])
         else:
             await notify_members(res["members"], "pt_notify_round_closed", name=res["name"],
                                  round=res["closed_round"], next=res["next_round"])

@@ -39,10 +39,16 @@ def pt_invite(code: str, user: dict = Depends(get_authenticated_user)):
 
 
 @router.post("/pt/join")
-async def pt_join(code: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
-    """So'rov yuborish (pending). Xato: not_found, not_recruiting, already_member, full -> 400"""
+async def pt_join(code: str = Body(..., embed=True), team: str | None = Body(None, embed=True),
+                  user: dict = Depends(get_authenticated_user)):
+    """So'rov yuborish (pending). Xato: not_found, not_recruiting, already_member, full,
+    bad_team, team_taken -> 400 (2026-10-07: team — ixtiyoriy klub/terma jamoa)"""
+    import sqlite3
     from pt_members import pt_request_join
-    ok, r = pt_request_join(code, user)
+    try:
+        ok, r = pt_request_join(code, user, team)
+    except sqlite3.IntegrityError:                       # bir vaqtda shu jamoa band qilindi
+        ok, r = False, "team_taken"
     if not ok:
         raise HTTPException(status_code=400, detail=r)
     for mgr in r["managers"]:                            # tashkilotchi + adminlar
@@ -124,3 +130,14 @@ def pt_admin_remove(tournament_id: int, admin_user_id: int, user: dict = Depends
         raise HTTPException(status_code=400, detail=r)
     return {"status": "ok"}
 
+
+
+@router.post("/pt/{tournament_id}/team")
+def pt_team(tournament_id: int, team: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    """2026-10-07: a'zo klub/terma jamoa tanlaydi (qur'agacha).
+    Xato: not_member, not_recruiting, no_teams, bad_team, team_taken -> 400; not_found -> 404"""
+    from pt_teams import pt_set_team
+    ok, r = pt_set_team(tournament_id, user["id"], team)
+    if not ok:
+        raise HTTPException(status_code=404 if r == "not_found" else 400, detail=r)
+    return {"status": "ok", "team": team}

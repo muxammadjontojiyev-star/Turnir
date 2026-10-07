@@ -15,7 +15,8 @@ import logging
 import random
 
 from models import get_connection
-from pt_core import PT_GROUP_SIZE, PT_MAX_PLAYERS, STATUS_RECRUITING, STATUS_RUNNING, can_start_with
+from pt_core import PT_GROUP_SIZE, PT_MAX_PLAYERS, STATUS_RECRUITING, STATUS_RUNNING, is_manager, start_block
+from pt_formats import FMT_LEAGUE, TABLE_LABEL, is_single_table, swiss_rounds
 from schedule import _generate_round_robin_pairs
 
 logger = logging.getLogger(__name__)
@@ -54,10 +55,30 @@ def pt_build_group_schedule(groups: dict[str, list[int]]) -> list[tuple[str, int
     return out
 
 
+def pt_build_table_schedule(fmt: str, ids: list[int], legs: int = 1,
+                            rng: random.Random | None = None) -> list[tuple[str, int, int, int]]:
+    """
+    2026-10-07: yagona jadval (guruhsiz) — [(TABLE_LABEL, tur, player1, player2), ...].
+      league: har kim har kim bilan 1 yoki 2 doira (2-doirada uy/mehmon almashadi, turlar davomi).
+      cl/el : Swiss — doira usulining birinchi min(8, n-1) turi (aralashtirilgan tartibda):
+              har turda hamma o'ynaydi, hech kim bir raqib bilan ikki marta uchrashmaydi.
+    """
+    ids = ids[:]
+    (rng or random).shuffle(ids)
+    rounds = _generate_round_robin_pairs(ids)
+    if fmt == FMT_LEAGUE:
+        if legs == 2:
+            rounds = rounds + [[(b, a) for a, b in r] for r in rounds]
+    else:
+        rounds = rounds[:swiss_rounds(len(ids))]
+    return [(TABLE_LABEL, rnd, p1, p2) for rnd, pairs in enumerate(rounds, start=1) for p1, p2 in pairs]
+
+
 def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     """
     Tashkilotchi turnirni boshlaydi: pending so'rovlar o'chiriladi, qur'a, o'yinlar.
-    Sabablar: not_found, not_owner, not_recruiting, not_enough_players, not_multiple, too_many_players.
+    Sabablar: not_found, not_owner, not_recruiting, not_enough_players, not_multiple, too_many_players,
+    2026-10-07: not_even (ChL/YeL), league_not_full (liga), teams_missing (jamoa tanlamaganlar bor).
     1-tur ochiladi (muddatsiz — tashkilotchi belgilaydi).
     """
     conn = get_connection()
@@ -65,30 +86,37 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     cursor = conn.cursor()
     try:
         cursor.execute("BEGIN IMMEDIATE")
-        cursor.execute("SELECT owner_user_id, status, name, max_players FROM pt_tournaments WHERE id = ?", (tid,))
+        cursor.execute("SELECT owner_user_id, status, name, max_players, format, league_name, legs "
+                       "FROM pt_tournaments WHERE id = ?", (tid,))
         t = cursor.fetchone()
         reason = None
         if not t:
             reason = "not_found"
-        elif t["owner_user_id"] != owner_id:
+        elif not is_manager(cursor, tid, owner_id, t["owner_user_id"]):   # tashkilotchi yoki admin
             reason = "not_owner"
         elif t["status"] != STATUS_RECRUITING:
             reason = "not_recruiting"
         players = []
         if not reason:
-            cursor.execute("SELECT user_id FROM pt_members WHERE tournament_id = ? AND status = 'approved'",
-                           (tid,))
-            players = [r["user_id"] for r in cursor.fetchall()]
+            cursor.execute("SELECT user_id, status, team_name FROM pt_members WHERE tournament_id = ? "
+                           "AND status = 'approved'", (tid,))
+            members = [dict(r) for r in cursor.fetchall()]
+            players = [m["user_id"] for m in members]
             if len(players) > min(t["max_players"], PT_MAX_PLAYERS):
                 reason = "too_many_players"
-            else:
-                reason = can_start_with(len(players))      # not_enough_players | not_multiple
+            else:   # formatga qarab: not_enough_players | not_multiple | not_even | league_not_full | teams_missing
+                reason = start_block(dict(t), members)
         if reason:
             cursor.execute("ROLLBACK")
             return False, reason
 
-        groups = pt_split_groups(players)
-        schedule = pt_build_group_schedule(groups)
+        fmt = t["format"] or "classic"
+        if is_single_table(fmt):                       # liga / ChL / YeL — yagona jadval
+            groups = {TABLE_LABEL: players}
+            schedule = pt_build_table_schedule(fmt, players, t["legs"] or 1)
+        else:                                          # erkin / JCh — 4 kishilik guruhlar
+            groups = pt_split_groups(players)
+            schedule = pt_build_group_schedule(groups)
         total_rounds = max(r for _, r, _, _ in schedule)
 
         cursor.execute("DELETE FROM pt_members WHERE tournament_id = ? AND status = 'pending'", (tid,))
@@ -116,4 +144,4 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     logger.info("PT #%s boshlandi: %s ishtirokchi, %s guruh, %s o'yin, %s tur",
                 tid, len(players), len(groups), len(schedule), total_rounds)
     return True, {"groups": {k: len(v) for k, v in groups.items()},
-                  "matches": len(schedule), "total_rounds": total_rounds, "name": t["name"]}
+                  "matches": len(schedule), "total_rounds": total_rounds, "name": t["name"], "format": fmt}

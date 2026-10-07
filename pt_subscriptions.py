@@ -188,15 +188,19 @@ def pt_sub_reject(sub_id: int, admin_tg: int, reason: str | None) -> tuple[bool,
     return _tx(run)
 
 
-def pt_create_with_mode(user: dict, name: str, max_players: int, pay_mode: str) -> tuple[bool, str | dict]:
+def pt_create_with_mode(user: dict, name: str, max_players: int, pay_mode: str, fmt: str = "classic",
+                        league: str | None = None, legs: int = 1) -> tuple[bool, str | dict]:
     """
     Turnir yaratish to'lov turi bilan (biznes-mantiq shu yerda — endpoint faqat chaqiradi, qoida #27):
       pay_mode='subscription' — faol obuna kerak (no_subscription), limit (sub_limit);
       pay_mode='one_time'     — narx sig'im pog'onasidan (price_not_set — bu pog'ona yopiq).
+    2026-10-07: fmt/league/legs (pt_core.check_format: bad_format, bad_league, bad_legs, bad_size).
     """
-    from pt_core import pt_create_tournament, valid_size
-    if not valid_size(max_players):
-        return False, "bad_size"
+    from pt_core import check_format, pt_create_tournament
+    why = check_format(fmt, league, legs, max_players)
+    if why:
+        return False, why
+    extra = {"fmt": fmt, "league": league, "legs": legs}
     if pay_mode == "subscription":
         conn = get_connection()
         cursor = conn.cursor()
@@ -207,5 +211,5 @@ def pt_create_with_mode(user: dict, name: str, max_players: int, pay_mode: str) 
                 return False, "sub_limit"
         finally:
             conn.close()
-        return pt_create_tournament(user, name, 0, max_players, via_subscription=True)
-    return pt_create_tournament(user, name, price_for_size(max_players), max_players)
+        return pt_create_tournament(user, name, 0, max_players, via_subscription=True, **extra)
+    return pt_create_tournament(user, name, price_for_size(max_players), max_players, **extra)

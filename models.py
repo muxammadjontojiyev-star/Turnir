@@ -1020,6 +1020,12 @@ def init_db():
         "ALTER TABLE pt_tournaments ADD COLUMN paid_via TEXT NOT NULL DEFAULT 'one_time'",
         # 2026-10-07: turnir qoidalari (faqat tashkilotchi o'zgartiradi; NULL — standart qoidalar)
         "ALTER TABLE pt_tournaments ADD COLUMN rules TEXT",
+        # 2026-10-07: turnir formati (classic | league | cl | el | wc), liga nomi, doira soni (1|2)
+        "ALTER TABLE pt_tournaments ADD COLUMN format TEXT NOT NULL DEFAULT 'classic'",
+        "ALTER TABLE pt_tournaments ADD COLUMN league_name TEXT",
+        "ALTER TABLE pt_tournaments ADD COLUMN legs INTEGER NOT NULL DEFAULT 1",
+        # 2026-10-07: ishtirokchi tanlagan klub / terma jamoa (classic'da NULL)
+        "ALTER TABLE pt_members ADD COLUMN team_name TEXT",
     ]
     for sql in migrations:
         try:
@@ -1033,6 +1039,11 @@ def init_db():
             else:
                 logger.error("Migratsiya xatosi: %s — %s", sql, exc)
                 raise
+
+    # 2026-10-07: shaxsiy turnirda bitta klub/terma jamoa — bitta ishtirokchi (poyga holatidan himoya)
+    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_pt_members_team ON pt_members(tournament_id, team_name) "
+                   "WHERE team_name IS NOT NULL")
+    conn.commit()
 
     # Data-fix (bir martalik, idempotent): eski wc_cup sovrinlari yangi
     # season_kind ustunida default 'league' bo'lib qolmasin — 'wc' ga to'g'rilanadi.

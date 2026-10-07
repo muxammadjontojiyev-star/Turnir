@@ -46,8 +46,8 @@ def pt_invite_preview(code: str, user_id: int | None = None) -> dict | None:
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT t.id, t.name, t.status, t.max_players, u.nickname AS owner_nickname, "
-            "u.username AS owner_username "
+            "SELECT t.id, t.name, t.status, t.max_players, t.format, t.league_name, t.legs, "
+            "u.nickname AS owner_nickname, u.username AS owner_username "
             "FROM pt_tournaments t JOIN users u ON u.id = t.owner_user_id WHERE t.invite_code = ?",
             (code,),
         )
@@ -56,6 +56,9 @@ def pt_invite_preview(code: str, user_id: int | None = None) -> dict | None:
             return None
         out = dict(t)
         out["approved_count"] = _approved_count(cursor, t["id"])
+        cursor.execute("SELECT team_name FROM pt_members WHERE tournament_id = ? AND team_name IS NOT NULL",
+                       (t["id"],))
+        out["taken_teams"] = sorted(r["team_name"] for r in cursor.fetchall())   # 2026-10-07: jamoa tanlash
         out["my_status"] = None
         if user_id is not None:
             cursor.execute("SELECT status FROM pt_members WHERE tournament_id = ? AND user_id = ?",
@@ -96,9 +99,10 @@ def _owner_info(cursor, tid: int) -> dict | None:
     return dict(r) if r else None
 
 
-def pt_request_join(code: str, user: dict) -> tuple[bool, str | dict]:
+def pt_request_join(code: str, user: dict, team: str | None = None) -> tuple[bool, str | dict]:
     """
     Havola orqali so'rov (pending). Sabablar: not_found, not_recruiting, already_member, full.
+    2026-10-07: team — ixtiyoriy klub/terma jamoa (jamoali formatlarda; bad_team, team_taken).
     Qaytaradi (ok): {tournament_id, name, owner_telegram_id, owner_language} — tashkilotchiga xabar uchun.
     """
     def run(cursor):
@@ -117,9 +121,18 @@ def pt_request_join(code: str, user: dict) -> tuple[bool, str | dict]:
             return False, "already_member"
         if _approved_count(cursor, t["id"]) >= t["max_players"]:
             return False, "full"
+        if team:
+            from pt_teams import check_team, team_taken
+            cursor.execute("SELECT format, league_name FROM pt_tournaments WHERE id = ?", (t["id"],))
+            f = cursor.fetchone()
+            why = check_team(f["format"] or "classic", f["league_name"], team)
+            if why:
+                return False, why
+            if team_taken(cursor, t["id"], team, user["id"]):
+                return False, "team_taken"
         cursor.execute(
-            "INSERT INTO pt_members (tournament_id, user_id, telegram_id, status) VALUES (?, ?, ?, 'pending')",
-            (t["id"], user["id"], user["telegram_id"]))
+            "INSERT INTO pt_members (tournament_id, user_id, telegram_id, status, team_name) "
+            "VALUES (?, ?, ?, 'pending', ?)", (t["id"], user["id"], user["telegram_id"], team or None))
         return True, {"tournament_id": t["id"], "name": t["name"],
                       "owner_telegram_id": t["owner_telegram_id"], "owner_language": t["owner_language"],
                       "managers": managers_for_notify(cursor, t["id"])}

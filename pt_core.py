@@ -38,7 +38,8 @@ _UNPAID = (STATUS_AWAITING_PAYMENT, STATUS_PAYMENT_REVIEW)
 
 _TOURNAMENT_COLS = ("t.id, t.name, t.status, t.invite_code, t.price_uzs, t.created_at, "
                     "t.owner_user_id, u.nickname AS owner_nickname, u.username AS owner_username, "
-                    "t.receipt_at, t.reject_reason, t.max_players, t.paid_via, t.rules")
+                    "t.receipt_at, t.reject_reason, t.max_players, t.paid_via, t.rules, "
+                    "t.format, t.league_name, t.legs")
 
 
 def is_manager(cursor, tid: int, user_id: int, owner_user_id: int | None = None) -> bool:
@@ -87,10 +88,24 @@ def can_start_with(n: int) -> str | None:
     return None
 
 
+def check_format(fmt: str, league: str | None, legs: int, max_players: int) -> str | None:
+    """2026-10-07: format, liga, doira va sig'im tekshiruvi. None — to'g'ri, aks holda sabab."""
+    from pt_formats import FMT_LEAGUE, LEAGUE_CLUBS, LEGS_ALLOWED, valid_format, valid_size_for
+    if not valid_format(fmt):
+        return "bad_format"
+    if fmt == FMT_LEAGUE and league not in LEAGUE_CLUBS:
+        return "bad_league"
+    if legs not in LEGS_ALLOWED or (legs == 2 and fmt != FMT_LEAGUE):
+        return "bad_legs"
+    return None if valid_size_for(fmt, max_players, league) else "bad_size"
+
+
 def pt_create_tournament(user: dict, name: str, price_uzs: int,
                          max_players: int = PT_DEFAULT_PLAYERS,
-                         via_subscription: bool = False) -> tuple[bool, str | dict]:
+                         via_subscription: bool = False, fmt: str = "classic",
+                         league: str | None = None, legs: int = 1) -> tuple[bool, str | dict]:
     """
+    2026-10-07: fmt (classic|league|cl|el|wc), league (faqat league), legs (1|2, faqat league).
     via_subscription=True — faol obuna bilan: to'lovsiz, darhol 'recruiting', paid_via='subscription'
     (obuna va limit tekshiruvi chaqiruvchida — pt_subscriptions.pt_create_with_mode).
     Sabablar: price_not_set, bad_size, name_too_short, name_too_long, too_many_unpaid.
@@ -98,8 +113,10 @@ def pt_create_tournament(user: dict, name: str, price_uzs: int,
     """
     if price_uzs <= 0 and not via_subscription:
         return False, "price_not_set"
-    if not valid_size(max_players):
-        return False, "bad_size"
+    why = check_format(fmt, league, legs, max_players)
+    if why:
+        return False, why
+    league = league if fmt == "league" else None
     name = _clean_name(name)
     if len(name) < PT_NAME_MIN:
         return False, "name_too_short"
@@ -124,10 +141,11 @@ def pt_create_tournament(user: dict, name: str, price_uzs: int,
         status = STATUS_RECRUITING if via_subscription else STATUS_AWAITING_PAYMENT
         cursor.execute(
             "INSERT INTO pt_tournaments (owner_user_id, owner_telegram_id, name, status, "
-            "invite_code, price_uzs, max_players, paid_via) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "invite_code, price_uzs, max_players, paid_via, format, league_name, legs) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (user["id"], user["telegram_id"], name, status, code,
              0 if via_subscription else price_uzs, max_players,
-             "subscription" if via_subscription else "one_time"),
+             "subscription" if via_subscription else "one_time", fmt, league, legs),
         )
         tid = cursor.lastrowid
         cursor.execute(
@@ -147,7 +165,8 @@ def pt_create_tournament(user: dict, name: str, price_uzs: int,
     logger.info("Shaxsiy turnir yaratildi: #%s '%s' (user %s)", tid, name, user["id"])
     return True, {"id": tid, "status": status, "invite_code": code,
                   "price_uzs": 0 if via_subscription else price_uzs, "max_players": max_players,
-                  "paid_via": "subscription" if via_subscription else "one_time"}
+                  "paid_via": "subscription" if via_subscription else "one_time",
+                  "format": fmt, "league_name": league, "legs": legs}
 
 
 def pt_list_my_tournaments(user_id: int) -> list[dict]:
@@ -183,6 +202,17 @@ def pt_list_my_tournaments(user_id: int) -> list[dict]:
     return rows
 
 
+def start_block(t: dict, members: list[dict]) -> str | None:
+    """Boshlash to'sig'i formatga qarab; jamoali formatlarda hamma klub/jamoa tanlagan bo'lishi shart."""
+    from pt_formats import can_start_fmt, uses_teams
+    approved = [m for m in members if m["status"] == "approved"]
+    fmt = t.get("format") or "classic"
+    why = can_start_fmt(fmt, len(approved), t["max_players"])
+    if not why and uses_teams(fmt) and any(not m.get("team_name") for m in approved):
+        why = "teams_missing"
+    return why
+
+
 def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) -> dict | None:
     """
     Turnir tafsiloti + a'zolar. Ruxsat: tashkilotchi, a'zo (pending ham) yoki bosh admin.
@@ -201,7 +231,7 @@ def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) 
             return None
         t = dict(t)
         cursor.execute(
-            "SELECT m.user_id, m.status, m.group_label, u.nickname, u.username "
+            "SELECT m.user_id, m.status, m.group_label, m.team_name, u.nickname, u.username "
             "FROM pt_members m JOIN users u ON u.id = m.user_id "
             "WHERE m.tournament_id = ? ORDER BY m.status = 'pending', m.id",
             (tournament_id,),
@@ -218,6 +248,8 @@ def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) 
     is_member = any(m["user_id"] == user_id for m in members)
     if not (is_owner or is_admin or is_member or is_super):
         return None
+    taken = sorted(m["team_name"] for m in members if m.get("team_name"))   # pending'lar ham band qilgan
+    my = next((m for m in members if m["user_id"] == user_id), None)
     if not (is_owner or is_admin or is_super):
         t.pop("invite_code", None)
         members = [m for m in members if m["status"] == "approved"]
@@ -225,63 +257,10 @@ def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) 
               "admins": admins, "members": members,
               "approved_count": sum(1 for m in members if m["status"] == "approved"),
               "min_players": PT_MIN_PLAYERS, "size_limit": PT_MAX_PLAYERS, "group_size": PT_GROUP_SIZE,
-              "start_block": can_start_with(sum(1 for m in members if m["status"] == "approved"))})
+              "start_block": start_block(t, members),
+              "taken_teams": taken, "my_team": my.get("team_name") if my else None,
+              "my_status": my["status"] if my else None})
     return t
 
 
-def pt_set_capacity(tid: int, owner_id: int, max_players: int) -> tuple[bool, str]:
-    """
-    Tashkilotchi sig'imni o'zgartiradi (qur'agacha). Qabul qilinganlardan kam bo'lolmaydi.
-    Bir martalik to'lov (2026-10-03):
-      - to'lovdan OLDIN (awaiting_payment/rejected) — narx yangi pog'onaga qayta hisoblanadi;
-      - to'langan/tekshiruvda — faqat O'SHA narx pog'onasi ichida (tier_locked), aks holda
-        8 kishilik narxni to'lab 128 kishilik turnir qilish mumkin bo'lardi.
-    Obuna orqali yaratilgan turnirda — istalgan sig'im.
-    Sabablar: bad_size, not_found, not_owner, already_started, below_members, tier_locked, price_not_set.
-    """
-    from pt_pricing import price_for_size, tier_for_size
-    if not valid_size(max_players):
-        return False, "bad_size"
-    conn = get_connection()
-    conn.isolation_level = None
-    cursor = conn.cursor()
-    try:
-        cursor.execute("BEGIN IMMEDIATE")
-        cursor.execute("SELECT owner_user_id, status, max_players, paid_via FROM pt_tournaments WHERE id = ?",
-                       (tid,))
-        t = cursor.fetchone()
-        why = None
-        new_price = None
-        if not t:
-            why = "not_found"
-        elif t["owner_user_id"] != owner_id:
-            why = "not_owner"
-        elif t["status"] not in (*_UNPAID, STATUS_RECRUITING, STATUS_REJECTED):
-            why = "already_started"
-        else:
-            cursor.execute("SELECT COUNT(*) AS c FROM pt_members WHERE tournament_id = ? "
-                           "AND status = 'approved'", (tid,))
-            if cursor.fetchone()["c"] > max_players:
-                why = "below_members"
-            elif t["paid_via"] == "one_time":
-                if t["status"] in (STATUS_AWAITING_PAYMENT, STATUS_REJECTED):
-                    new_price = price_for_size(max_players)
-                    if new_price <= 0:
-                        why = "price_not_set"
-                elif tier_for_size(max_players) != tier_for_size(t["max_players"]):
-                    why = "tier_locked"
-        if why:
-            cursor.execute("ROLLBACK")
-            return False, why
-        cursor.execute("UPDATE pt_tournaments SET max_players = ?, price_uzs = COALESCE(?, price_uzs), "
-                       "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (max_players, new_price, tid))
-        cursor.execute("COMMIT")
-        return True, "ok"
-    except Exception:
-        try:
-            cursor.execute("ROLLBACK")
-        except Exception:
-            logger.exception("pt_set_capacity: ROLLBACK xatosi")
-        raise
-    finally:
-        conn.close()
+# 2026-10-07: pt_set_capacity -> pt_capacity.py (formatga qarab sig'im; qoida #21)

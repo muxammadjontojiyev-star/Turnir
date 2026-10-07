@@ -26,6 +26,7 @@ def pt_config(user: dict = Depends(get_authenticated_user)):
     """To'lov ma'lumotlari (.env'dan) va cheklovlar — yaratish ekrani uchun."""
     from pt_core import (PT_DEFAULT_PLAYERS, PT_GROUP_SIZE, PT_MAX_PLAYERS, PT_MIN_PLAYERS,
                          PT_NAME_MAX, PT_NAME_MIN)
+    from pt_formats import public_formats
     from pt_pricing import public_pricing
     from pt_subscriptions import pt_sub_status
     pricing, sub = public_pricing(), pt_sub_status(user["id"])
@@ -36,7 +37,7 @@ def pt_config(user: dict = Depends(get_authenticated_user)):
             "is_super": _is_super(user),
             "min_players": PT_MIN_PLAYERS, "max_players": PT_MAX_PLAYERS,
             "default_players": PT_DEFAULT_PLAYERS, "group_size": PT_GROUP_SIZE,
-            "pricing": pricing, "subscription": sub,
+            "pricing": pricing, "subscription": sub, **public_formats(),
             "name_min": PT_NAME_MIN, "name_max": PT_NAME_MAX}
 
 
@@ -48,14 +49,18 @@ def pt_my(user: dict = Depends(get_authenticated_user)):
 
 @router.post("/pt/create")
 def pt_create(name: str = Body(..., embed=True), max_players: int = Body(8, embed=True),
-              pay_mode: str = Body("one_time", embed=True), user: dict = Depends(get_authenticated_user)):
+              pay_mode: str = Body("one_time", embed=True), format: str = Body("classic", embed=True),
+              league: str | None = Body(None, embed=True), legs: int = Body(1, embed=True),
+              user: dict = Depends(get_authenticated_user)):
     """
     pay_mode: one_time (narx sig'im pog'onasidan) | subscription (faol obuna, to'lovsiz).
     Xato: price_not_set, bad_size, name_too_short, name_too_long, too_many_unpaid,
-          no_subscription, sub_limit -> 400
+          no_subscription, sub_limit, bad_format, bad_league, bad_legs -> 400
+    2026-10-07: format (classic|league|cl|el|wc), league (league uchun), legs (1|2, league uchun).
     """
     from pt_subscriptions import pt_create_with_mode
-    ok, result = pt_create_with_mode(user, name, max_players, "subscription" if pay_mode == "subscription" else "one_time")
+    ok, result = pt_create_with_mode(user, name, max_players, "subscription" if pay_mode == "subscription" else "one_time",
+                                     fmt=format, league=league, legs=legs)
     if not ok:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}
@@ -162,7 +167,7 @@ async def pt_admin_reject(tournament_id: int, reason: str = Body("", embed=True)
 def pt_capacity(tournament_id: int, max_players: int = Body(..., embed=True),
                 user: dict = Depends(get_authenticated_user)):
     """Sig'imni o'zgartirish (qur'agacha). Xato: bad_size, not_owner, already_started, below_members -> 400"""
-    from pt_core import pt_set_capacity
+    from pt_capacity import pt_set_capacity
     ok, r = pt_set_capacity(tournament_id, user["id"], max_players)
     if not ok:
         raise HTTPException(status_code=400, detail=r)

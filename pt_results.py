@@ -18,11 +18,17 @@ logger = logging.getLogger(__name__)
 
 _MATCH_COLS = ("m.id, m.stage, m.group_label, m.round, m.player1_id, m.player2_id, m.score1, m.score2, "
                "m.status, m.submitted_by, u1.nickname AS p1_name, u1.username AS p1_username, "
-               "u2.nickname AS p2_name, u2.username AS p2_username")
+               "u2.nickname AS p2_name, u2.username AS p2_username, "
+               "pm1.team_name AS p1_team, pm2.team_name AS p2_team")
+# 2026-10-07: o'yinchilar klubi/terma jamoasi (jamoali formatlar) — pt_members'dan
+_MATCH_FROM = ("FROM pt_matches m LEFT JOIN users u1 ON u1.id = m.player1_id "
+               "LEFT JOIN users u2 ON u2.id = m.player2_id "
+               "LEFT JOIN pt_members pm1 ON pm1.tournament_id = m.tournament_id AND pm1.user_id = m.player1_id "
+               "LEFT JOIN pt_members pm2 ON pm2.tournament_id = m.tournament_id AND pm2.user_id = m.player2_id ")
 
 
-def _empty_row(uid: int, nick: str, username: str | None) -> dict:
-    return {"user_id": uid, "nickname": nick, "username": username, "played": 0, "wins": 0,
+def _empty_row(uid: int, nick: str, username: str | None, team: str | None = None) -> dict:
+    return {"user_id": uid, "nickname": nick, "username": username, "team_name": team, "played": 0, "wins": 0,
             "draws": 0, "losses": 0, "goals_for": 0, "goals_against": 0, "points": 0}
 
 
@@ -43,13 +49,13 @@ def _apply(row: dict, gf: int, ga: int) -> None:
 def pt_group_standings(cursor, tid: int) -> dict[str, list[dict]]:
     """{'A': [qatorlar tartiblangan], ...} — faqat confirmed guruh o'yinlari."""
     cursor.execute(
-        "SELECT m.user_id, m.group_label, u.nickname, u.username FROM pt_members m "
+        "SELECT m.user_id, m.group_label, m.team_name, u.nickname, u.username FROM pt_members m "
         "JOIN users u ON u.id = m.user_id WHERE m.tournament_id = ? AND m.status = 'approved' "
         "AND m.group_label IS NOT NULL", (tid,))
     rows: dict[int, dict] = {}
     groups: dict[str, list[dict]] = {}
     for r in cursor.fetchall():
-        row = _empty_row(r["user_id"], r["nickname"], r["username"])
+        row = _empty_row(r["user_id"], r["nickname"], r["username"], r["team_name"])
         rows[r["user_id"]] = row
         groups.setdefault(r["group_label"], []).append(row)
     cursor.execute(
@@ -73,8 +79,8 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT id, owner_user_id, status, current_round, total_rounds, round_deadline "
-                       "FROM pt_tournaments WHERE id = ?", (tid,))
+        cursor.execute("SELECT id, owner_user_id, status, current_round, total_rounds, round_deadline, "
+                       "format, league_name, legs FROM pt_tournaments WHERE id = ?", (tid,))
         t = cursor.fetchone()
         if not t:
             return None
@@ -86,20 +92,23 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         if not (is_member or manager or is_super):
             return None
         cursor.execute(
-            f"SELECT {_MATCH_COLS} FROM pt_matches m LEFT JOIN users u1 ON u1.id = m.player1_id "
-            "LEFT JOIN users u2 ON u2.id = m.player2_id WHERE m.tournament_id = ? "
+            f"SELECT {_MATCH_COLS} {_MATCH_FROM}WHERE m.tournament_id = ? "
             "ORDER BY m.round, m.group_label, m.id", (tid,))
         matches = [dict(r) for r in cursor.fetchall()]
         standings = pt_group_standings(cursor, tid)
         from pt_knockout import pt_knockout_phase
         phase = pt_knockout_phase(cursor, tid)
-        cursor.execute("SELECT u.id, u.nickname, u.username FROM pt_tournaments t JOIN users u "
-                       "ON u.id = t.champion_user_id WHERE t.id = ?", (tid,))
+        cursor.execute("SELECT u.id, u.nickname, u.username, pm.team_name FROM pt_tournaments t JOIN users u "
+                       "ON u.id = t.champion_user_id LEFT JOIN pt_members pm ON pm.tournament_id = t.id "
+                       "AND pm.user_id = u.id WHERE t.id = ?", (tid,))
         ch = cursor.fetchone()
     finally:
         conn.close()
     cur = t["current_round"]
-    from pt_knockout import STAGES, bracket_size as _bracket
+    fmt = t["format"] or "classic"
+    n_players = sum(len(r) for r in standings.values())
+    from pt_formats import cl_direct_count, is_single_table
+    from pt_knockout import STAGES, pt_bracket_size
     _order = {"group": 0, **{s: i + 1 for i, s in enumerate(STAGES)}}
     matches.sort(key=lambda m: (_order.get(m["stage"], 9), m["round"] or 0, m["group_label"] or "", m["id"]))
     return {
@@ -112,7 +121,10 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         "round_matches": [m for m in matches if m["stage"] == "group" and m["round"] == cur],
         # 5-bosqich: pley-off
         "phase": phase,                     # None | ko_ready | r64..final (joriy bosqich) | finished
-        "bracket_size": _bracket(len(standings)),
+        "bracket_size": pt_bracket_size(fmt, standings),
+        # 2026-10-07: format (yagona jadval — liga/ChL/YeL), ChL/YeL zonalari: top-Q setka, Q+1..3Q pley-off raundi
+        "format": fmt, "league_name": t["league_name"], "legs": t["legs"], "single_table": is_single_table(fmt),
+        "direct_count": cl_direct_count(n_players) if fmt in ("cl", "el") else None,
         "knockout": [m for m in matches if m["stage"] != "group"],
         "champion": dict(ch) if ch else None,
     }
@@ -219,15 +231,14 @@ def pt_get_player(tid: int, viewer_id: int, target_id: int, is_super: bool = Fal
                        (tid, viewer_id))
         if not (cursor.fetchone() or is_manager(cursor, tid, viewer_id, t["owner_user_id"]) or is_super):
             return False, "not_found"
-        cursor.execute("SELECT u.id, u.nickname, u.username, m.group_label FROM pt_members m "
+        cursor.execute("SELECT u.id, u.nickname, u.username, m.group_label, m.team_name FROM pt_members m "
                        "JOIN users u ON u.id = m.user_id WHERE m.tournament_id = ? AND m.user_id = ? "
                        "AND m.status = 'approved'", (tid, target_id))
         u = cursor.fetchone()
         if not u:
             return False, "player_not_found"
         cursor.execute(
-            f"SELECT {_MATCH_COLS} FROM pt_matches m LEFT JOIN users u1 ON u1.id = m.player1_id "
-            "LEFT JOIN users u2 ON u2.id = m.player2_id WHERE m.tournament_id = ? "
+            f"SELECT {_MATCH_COLS} {_MATCH_FROM}WHERE m.tournament_id = ? "
             "AND (m.player1_id = ? OR m.player2_id = ?)", (tid, target_id, target_id))
         matches = [dict(r) for r in cursor.fetchall()]
         standings = pt_group_standings(cursor, tid)
@@ -241,6 +252,7 @@ def pt_get_player(tid: int, viewer_id: int, target_id: int, is_super: bool = Fal
         if r["user_id"] == target_id:
             pos, row = i, r
             break
-    return True, {"user": {"id": u["id"], "nickname": u["nickname"], "username": u["username"]},
+    return True, {"user": {"id": u["id"], "nickname": u["nickname"], "username": u["username"],
+                           "team_name": u["team_name"]},
                   "group": group, "position": pos, "row": row, "matches": matches,
                   "status": t["status"], "current_round": t["current_round"]}

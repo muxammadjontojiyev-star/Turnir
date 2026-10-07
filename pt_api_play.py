@@ -38,8 +38,10 @@ async def pt_start(tournament_id: int, user: dict = Depends(get_authenticated_us
     async def _send_started():
         for row in rows:
             try:
-                await notify_user(row["telegram_id"], "pt_notify_started", row["language"],
-                                  open_button_key="btn_open_app", name=r["name"], group=row["group_label"])
+                single = row["group_label"] == "L" and r.get("format") in ("league", "cl", "el")
+                await notify_user(row["telegram_id"], "pt_notify_started_table" if single else "pt_notify_started",
+                                  row["language"], open_button_key="btn_open_app", name=r["name"],
+                                  group=row["group_label"], rounds=r["total_rounds"])
             except Exception as exc:
                 logger.warning("PT #%s: boshlanish xabari yuborilmadi: %s", tournament_id, exc)
     spawn(_send_started())                       # 128 kishigacha — fonda
