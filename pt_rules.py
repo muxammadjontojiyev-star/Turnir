@@ -45,7 +45,8 @@ def pt_set_rules(tid: int, owner_id: int, text) -> tuple[bool, str]:
         t = cursor.fetchone()
         if not t:
             return False, "not_found"
-        if t["owner_user_id"] != owner_id:
+        from pt_core import can_own
+        if not can_own(cursor, t["owner_user_id"], owner_id):   # 2026-10-07: bosh admin ham
             return False, "not_owner"
         if t["status"] == "cancelled":
             return False, "wrong_status"

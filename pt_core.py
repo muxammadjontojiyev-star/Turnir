@@ -42,9 +42,23 @@ _TOURNAMENT_COLS = ("t.id, t.name, t.status, t.invite_code, t.price_uzs, t.creat
                     "t.format, t.league_name, t.legs")
 
 
+def is_super_user(cursor, user_id: int) -> bool:
+    """2026-10-07: bosh admin (config.ADMIN_TELEGRAM_IDS) — tashkilotchilarga yordam berish uchun
+    istalgan shaxsiy turnirni ko'radi va tashkilotchi huquqlari bilan sozlaydi."""
+    from admin_roles import is_super_admin
+    cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (user_id,))
+    r = cursor.fetchone()
+    return bool(r) and is_super_admin(r["telegram_id"])
+
+
+def can_own(cursor, owner_user_id: int, user_id: int) -> bool:
+    """Tashkilotchi huquqi (admin qo'shish, sig'im, qoidalar, o'chirish): turnir egasi yoki bosh admin."""
+    return owner_user_id == user_id or is_super_user(cursor, user_id)
+
+
 def is_manager(cursor, tid: int, user_id: int, owner_user_id: int | None = None) -> bool:
     """
-    Turnirni boshqara oladimi: tashkilotchi YOKI turnir admini (pt_admins).
+    Turnirni boshqara oladimi: tashkilotchi YOKI turnir admini (pt_admins) YOKI bosh admin (2026-10-07).
     Barcha "boshqaruv" tekshiruvlari shu yerdan (qoida #26). owner_user_id berilsa — qo'shimcha so'rovsiz.
     """
     if owner_user_id is None:
@@ -56,7 +70,7 @@ def is_manager(cursor, tid: int, user_id: int, owner_user_id: int | None = None)
     if owner_user_id == user_id:
         return True
     cursor.execute("SELECT 1 FROM pt_admins WHERE tournament_id = ? AND user_id = ?", (tid, user_id))
-    return cursor.fetchone() is not None
+    return cursor.fetchone() is not None or is_super_user(cursor, user_id)
 
 
 def managers_for_notify(cursor, tid: int) -> list[dict]:
@@ -255,7 +269,8 @@ def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) 
     if not (is_owner or is_admin or is_super):
         t.pop("invite_code", None)
         members = [m for m in members if m["status"] == "approved"]
-    t.update({"is_owner": is_owner, "is_admin": is_admin, "is_manager": is_owner or is_admin,
+    t.update({"is_owner": is_owner, "is_admin": is_admin, "is_manager": is_owner or is_admin or is_super,
+              "is_super": is_super, "can_own": is_owner or is_super,          # 2026-10-07: bosh admin yordami
               "admins": admins, "members": members,
               "approved_count": sum(1 for m in members if m["status"] == "approved"),
               "min_players": PT_MIN_PLAYERS, "size_limit": PT_MAX_PLAYERS, "group_size": PT_GROUP_SIZE,

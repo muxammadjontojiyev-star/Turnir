@@ -6,7 +6,7 @@ va formatga moslandi: liga — sig'im qat'iy (ligadagi klublar soni), ChL/YeL 8.
 import logging
 
 from models import get_connection
-from pt_core import STATUS_AWAITING_PAYMENT, STATUS_RECRUITING, STATUS_REJECTED, _UNPAID
+from pt_core import STATUS_AWAITING_PAYMENT, STATUS_RECRUITING, STATUS_REJECTED, _UNPAID, can_own
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def pt_set_capacity(tid: int, owner_id: int, max_players: int) -> tuple[bool, st
         new_price = None
         if not t:
             why = "not_found"
-        elif t["owner_user_id"] != owner_id:
+        elif not can_own(cursor, t["owner_user_id"], owner_id):   # 2026-10-07: bosh admin ham
             why = "not_owner"
         elif not valid_size_for(t["format"] or "classic", max_players, t["league_name"]):
             why = "bad_size"                    # liga: sig'im qat'iy; boshqalar — format qoidasi

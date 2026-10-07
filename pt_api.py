@@ -201,3 +201,10 @@ async def pt_delete(tournament_id: int, user: dict = Depends(get_authenticated_u
         from pt_notify import spawn
         spawn(notify_members(r["members"], "pt_notify_deleted", name=r["name"]))
     return {"status": "ok"}
+
+
+@router.get("/pt/admin/all")
+def pt_admin_all(q: str = "", status: str = "", admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-10-07: bosh admin — barcha shaxsiy turnirlar (qidiruv: nom, tashkilotchi, #id; holat filtri)."""
+    from pt_admin_all import pt_list_all
+    return pt_list_all(q, status)

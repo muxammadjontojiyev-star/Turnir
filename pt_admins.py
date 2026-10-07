@@ -8,6 +8,8 @@ muddat, natija tuzatish, pley-off). Admin qo'shish/olib tashlash, sig'im va to'l
 
 import logging
 
+from pt_core import can_own
+
 from pt_members import _find_user, _tx
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ def _owned(cursor, tid: int, owner_id: int):
     t = cursor.fetchone()
     if not t:
         return None, "not_found"
-    if t["owner_user_id"] != owner_id:
+    if not can_own(cursor, t["owner_user_id"], owner_id):     # 2026-10-07: bosh admin ham
         return None, "not_owner"                     # admin boshqa admin tayinlay olmaydi
     if t["status"] in ("finished", "cancelled"):
         return None, "finished"
