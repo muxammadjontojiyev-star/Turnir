@@ -12,7 +12,8 @@ const PT_RULES_PREVIEW = 4;          // yig'iq holatda ko'rinadigan qoidalar son
 // 2026-10-07: standart qoidalar formatga qarab (liga / ChL-YeL / guruhli)
 function ptDefaultRules(t) {
   const f = (t && t.format) || "classic";
-  const key = f === "league" ? "pt_rules_default_league" : (f === "cl" || f === "el") ? "pt_rules_default_cl" : "pt_rules_default";
+  const key = f === "league" ? "pt_rules_default_league" : (f === "cl" || f === "el") ? "pt_rules_default_cl"
+    : f === "classic" && t.legs === 2 ? "pt_rules_default_classic2" : "pt_rules_default";
   return PTT(key) || PTT("pt_rules_default");
 }
 function ptRulesText(t) { return (t.rules || "").trim() || ptDefaultRules(t); }

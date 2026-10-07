@@ -6083,3 +6083,9 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 }
 .hub-card-name, .hub-card-sub { text-shadow: 0 2px 10px rgba(0,0,0,.85); }
 .hub-card-sub { max-width: 78%; opacity: .9; }
+
+/* Ko'p liga va javob o'yini (2026-10-07) */
+.pt-table-lglogo { width: 18px; height: 18px; object-fit: contain; vertical-align: -3px; margin-right: 6px; }
+.pt-agg { text-align: center; font-size: 12px; color: var(--text-secondary); }
+.pt-agg b { color: #f5c542; }
+.pt-hero-lglogo + .pt-hero-lglogo { margin-left: -4px; }

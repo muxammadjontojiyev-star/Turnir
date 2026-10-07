@@ -17,6 +17,11 @@ const PT_FORMAT_META = {
 const PT_FORMAT_ORDER = ["league", "cl", "el", "wc", "classic"];
 
 function ptFmt(x) { return (x && x.format) || "classic"; }
+// 2026-10-07: ko'p liga — league_name = "Premier Liga|LaLiga"
+function ptLeagues(v) { return Array.isArray(v) ? v.filter(Boolean) : String(v || "").split("|").filter(Boolean); }
+function ptLeaguesText(v) { return ptLeagues(v).join(" · "); }
+function ptLeagueSize(lg) { return ((PT.config && PT.config.leagues) || {})[lg] || (LEAGUE_CLUBS[lg] || []).length || 0; }
+function ptLegsFormat(fmt) { return ((PT.config && PT.config.legs_formats) || ["league", "classic"]).includes(fmt); }
 function ptUsesTeams(fmt) { return fmt !== "classic"; }
 function ptSingleTable(fmt) { return ["league", "cl", "el"].includes(fmt); }
 function ptFormatName(fmt) { return PTT("pt_fmt_" + fmt); }
@@ -25,7 +30,7 @@ function ptFormatName(fmt) { return PTT("pt_fmt_" + fmt); }
 function ptFmtRule(fmt, league) {
   const c = PT.config || {};
   if (fmt === "league") {
-    const n = (c.leagues || {})[league] || (LEAGUE_CLUBS[league] || []).length || 20;
+    const n = ptLeagues(league).reduce((s, lg) => s + ptLeagueSize(lg), 0) || 20;     // klublar yig'indisi
     return { min: n, max: n, step: 1 };
   }
   const r = (c.formats || {})[fmt];
@@ -41,7 +46,12 @@ function ptStageOfSize(size) { return { 64: "r64", 32: "r32", 16: "r16", 8: "qf"
 // Yaratish formasi xulosasi: format bo'yicha tur soni va pley-off tuzilishi
 function ptFormatSummary(fmt, n, legs) {
   const stage = s => PTT(`pt_stage_${s}`).toLowerCase();
-  if (fmt === "league") return PTT("pt_sum_league", { n, rounds: (n - 1) * (legs || 1) });
+  if (fmt === "league") {
+    const lgs = ptLeagues(PT.createLeagues || []);
+    const big = Math.max(...lgs.map(ptLeagueSize), 2);
+    return lgs.length > 1 ? PTT("pt_sum_leagues", { k: lgs.length, n, rounds: (big - 1) * (legs || 1) })
+      : PTT("pt_sum_league", { n, rounds: (n - 1) * (legs || 1) });
+  }
   if (fmt === "cl" || fmt === "el") {
     const q = ptDirectCount(n);
     return PTT("pt_sum_cl", { rounds: Math.min(8, n - 1), q, from: q + 1, to: 3 * q, stage: stage(ptStageOfSize(2 * q)) });
@@ -49,7 +59,8 @@ function ptFormatSummary(fmt, n, legs) {
   const g = Math.floor(n / 4);
   let size = 4;
   while (size * 2 <= Math.min(2 * g, 64)) size *= 2;
-  return PTT("pt_size_summary", { g, stage: stage(ptStageOfSize(size)) });
+  return PTT("pt_size_summary", { g, stage: stage(ptStageOfSize(size)) })
+    + (fmt === "classic" && legs === 2 ? " · " + PTT("pt_sum_classic2") : "");
 }
 
 // ---------------- Jamoa ma'lumoti: logo / bayroq ----------------
@@ -76,7 +87,7 @@ function ptTeamBadge(team, cls = "") {
 // Jamoalar ro'yxati (bo'limlarga ajratilgan): [{title, logo, teams:[{name, logo|flag}]}]
 function ptTeamSections(fmt, league) {
   const clubs = lg => (LEAGUE_CLUBS[lg] || []).map(c => ({ name: c.name, logo: c.logo }));
-  if (fmt === "league") return [{ title: league, logo: (LEAGUE_LOGOS || {})[league], teams: clubs(league) }];
+  if (fmt === "league") return ptLeagues(league).map(lg => ({ title: lg, logo: (LEAGUE_LOGOS || {})[lg], teams: clubs(lg) }));
   if (fmt === "cl" || fmt === "el") {
     return Object.keys(LEAGUE_CLUBS).map(lg => ({ title: lg, logo: (LEAGUE_LOGOS || {})[lg], teams: clubs(lg) }));
   }
@@ -109,7 +120,7 @@ function ptTeamPickerHtml(opts) {
       ? `<div class="pt-team-sec">${sec.logo ? `<img src="${escHtml(sec.logo)}?v=3" alt="">` : ""}${escHtml(sec.title)}</div>` : "";
     return `${head}<div class="pt-team-grid">${items}</div>`;
   }).join("");
-  const search = opts.fmt === "league" ? "" : `<input class="modal-input pt-team-search" data-pt-search="${opts.id}"
+  const search = opts.fmt === "league" && ptLeagues(opts.league).length < 2 ? "" : `<input class="modal-input pt-team-search" data-pt-search="${opts.id}"
       placeholder="${escHtml(PTT("pt_team_search"))}" value="${escHtml((PT.teamSearch || {})[opts.id] || "")}" autocomplete="off">`;
   return `<div class="pt-picker" id="pt-picker-${opts.id}">${search}
       <div class="pt-team-list">${sections || `<div class="empty-state">${escHtml(PTT("pt_team_none"))}</div>`}</div></div>`;
@@ -153,8 +164,9 @@ function ptFormatCardsHtml(sel) {
 
 function ptLeagueCardsHtml(sel) {
   const leagues = Object.keys((PT.config && PT.config.leagues) || LEAGUE_CLUBS);
+  const chosen = ptLeagues(sel);                          // ko'p tanlov (2026-10-07)
   return `<div class="pt-league-grid">${leagues.map(lg => `
-      <button class="pt-league${lg === sel ? " pt-league--sel" : ""}" data-pt-league="${escHtml(lg)}">
+      <button class="pt-league${chosen.includes(lg) ? " pt-league--sel" : ""}" data-pt-league="${escHtml(lg)}">
         ${(LEAGUE_LOGOS || {})[lg] ? `<img src="${escHtml(LEAGUE_LOGOS[lg])}?v=3" alt="">` : ""}
         <span class="pt-league-name">${escHtml(lg)}</span>
         <span class="pt-league-n">${escHtml(PTT("pt_league_clubs", { n: ((PT.config && PT.config.leagues) || {})[lg] || (LEAGUE_CLUBS[lg] || []).length }))}</span>
@@ -169,7 +181,7 @@ function ptLegsHtml(legs) {
 // Sovrin kubogi rasmi (format bo'yicha; liga — o'sha liga kubogi)
 function ptTrophySrc(t) {
   const f = ptFmt(t);
-  if (f === "league") return (typeof LEAGUE_TROPHIES !== "undefined" && LEAGUE_TROPHIES[t.league_name]) || null;
+  if (f === "league") return (typeof LEAGUE_TROPHIES !== "undefined" && LEAGUE_TROPHIES[ptLeagues(t.league_name)[0]]) || null;
   return PT_FORMAT_META[f] && PT_FORMAT_META[f].trophy;
 }
 

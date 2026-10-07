@@ -59,6 +59,7 @@ function ptTabProfile(t, p) {
 // ---------------- Sovrinlar: turnir kubogi va chempion ----------------
 
 function ptTabPrizes(t, p) {
+  if (p && (p.champions || []).length > 1) return ptLeagueChampionsHtml(t, p);   // ko'p ligali turnir
   const c = p && p.champion;
   const final = p && (p.knockout || []).find(m => m.stage === "final");
   const holder = c
@@ -71,6 +72,19 @@ function ptTabPrizes(t, p) {
         : `<div class="pt-champion-cup">🏆</div>`}
       <div class="pt-prize-title">${escHtml(PTT("pt_prize_title"))}</div>${holder}</div>
     ${final ? `<div class="section-label pt-label">${escHtml(PTT("pt_stage_final_h"))}</div>${ptMatchCardHtml(final, p, final.player1_id === p.me_id || final.player2_id === p.me_id)}` : ""}`;
+}
+
+// Ko'p ligali turnir: har liga kubogi va chempioni (2026-10-07)
+function ptLeagueChampionsHtml(t, p) {
+  return p.champions.map(c => {
+    const cup = typeof LEAGUE_TROPHIES !== "undefined" && LEAGUE_TROPHIES[c.league];
+    return `<div class="card pt-champion">
+        ${cup ? `<img class="pt-champion-img" src="${escHtml(cup)}" alt="">` : `<div class="pt-champion-cup">🏆</div>`}
+        <div class="pt-prize-title">${escHtml(c.league)}</div>
+        <div class="pt-champion-label">${escHtml(PTT("pt_champion_title"))}</div>
+        <div class="pt-champion-name">${escHtml(ptUserLabel(c))}</div>
+        ${c.team_name ? `<div class="pt-champion-team">${ptTeamBadge(c.team_name)}${escHtml(c.team_name)}</div>` : ""}</div>`;
+  }).join("");
 }
 
 // Admin: boshlash, tur/pley-off boshqaruvi, havola, so'rovlar va a'zolar, adminlar, sig'im

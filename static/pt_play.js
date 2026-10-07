@@ -12,10 +12,18 @@ const PT_PLAY_ERR = {
   bad_deadline: "pt_err_bad_deadline", not_enough_players: "pt_err_not_enough", not_multiple: "pt_err_not_multiple",
   wrong_status: "pt_err_wrong_status", not_owner: "pt_err_not_owner", match_not_found: "pt_err_match_404",
   draw_not_allowed: "pt_err_draw", not_ready: "pt_err_not_ready", next_stage_played: "pt_err_next_played",
+  first_leg_pending: "pt_err_first_leg", aggregate_draw: "pt_err_aggregate",
 };
 
 // O'yin bosqichi nomi (guruh turi yoki pley-off bosqichi) — karta va tuzatish oynasi uchun umumiy
 function ptStageLabel(m) {
+  const base = ptStageBase(m);
+  // 2026-10-07: erkin format 2 doira — pley-off javob o'yini
+  return m.stage && m.stage !== "group" && m.stage !== "final" && PT.play && PT.play.legs === 2 && PT.play.format === "classic"
+    ? `${base} · ${PTT("pt_leg_n", { n: m.leg || 1 })}` : base;
+}
+
+function ptStageBase(m) {
   if (m.stage === "final") return PTT("pt_stage_final");
   if (m.stage === "po") return PTT("pt_stage_po_n", { n: m.round });                 // ChL/YeL pley-off raundi
   if (m.stage === "group" && m.group_label === "L" && PT.play && PT.play.single_table) {
@@ -127,7 +135,17 @@ function ptMatchCardHtml(m, p, mine) {
       <button class="pt-mini pt-mini--chat" data-pt-chat="${m.id}" data-pt-opp="${escHtml(opp)}">${escHtml(PTT("pt_chat"))}${n ? ` <span class="pt-badge">${n}</span>` : ""}</button>
       ${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(m.id, "pt") : ""}</div>`;
   }
-  return `<div class="match-item pt-match ${m.status === "confirmed" ? "pt-match--done" : ""}">${head}${names}${action}${tools}</div>`;
+  return `<div class="match-item pt-match ${m.status === "confirmed" ? "pt-match--done" : ""}">${head}${names}${ptAggHtml(m, p)}${action}${tools}</div>`;
+}
+
+// Javob o'yini (2-o'yin): 1-o'yin tasdiqlangan bo'lsa — yig'indi (shu o'yin uy egasi nuqtai nazaridan)
+function ptAggHtml(m, p) {
+  if ((m.leg || 1) !== 2) return "";
+  const l1 = (p.knockout || []).find(x => x.stage === m.stage && x.round === m.round && (x.leg || 1) === 1);
+  if (!l1 || l1.status !== "confirmed" || l1.score1 == null) return "";
+  const prev1 = l1.player1_id === m.player1_id ? l1.score1 : l1.score2, prev2 = l1.player1_id === m.player1_id ? l1.score2 : l1.score1;
+  const done = m.status === "confirmed" && m.score1 != null;
+  return `<div class="pt-agg">${escHtml(PTT(done ? "pt_aggregate" : "pt_first_leg"))}: <b>${done ? prev1 + m.score1 : prev1} : ${done ? prev2 + m.score2 : prev2}</b></div>`;
 }
 
 // Guruh jadvallari: 26 guruhgacha bo'lishi mumkin — MENING guruhim birinchi va ochiq,

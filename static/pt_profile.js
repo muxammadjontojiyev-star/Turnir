@@ -21,7 +21,8 @@ function ptProfileHtml(view, p, isMe) {
   const letter = ((u.nickname || u.username || "?")[0] || "?").toUpperCase();
   const r = view.row || { played: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, goal_diff: 0, points: 0 };
   const single = p && p.single_table;                       // 2026-10-07: liga/ChL/YeL — guruhsiz jadval
-  const groupLabel = view.group ? PTT(single ? "pt_prof_table" : "pt_prof_group", { g: view.group, pos: view.position || "—" }) : "";
+  const groupLabel = !view.group ? "" : single && view.group !== "L" ? `${view.group} · #${view.position || "—"}`
+    : PTT(single ? "pt_prof_table" : "pt_prof_group", { g: view.group, pos: view.position || "—" });
   const team = u.team_name ? `<span class="pt-prof-team">${typeof ptTeamBadge === "function" ? ptTeamBadge(u.team_name) : ""}${escHtml(u.team_name)}</span>` : "";
   const stat = (v, l, cls = "", primary = false) => `<div class="stat-card${primary ? " stat-card--primary" : ""}">
       <span class="stat-card-value ${cls}">${escHtml(String(v))}</span><span class="stat-card-label">${escHtml(PTT(l))}</span></div>`;

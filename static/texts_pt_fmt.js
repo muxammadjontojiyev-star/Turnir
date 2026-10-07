@@ -3,6 +3,23 @@
 
 const PT_FMT_TEXTS = {
   uz: {
+    pt_sum_leagues: "{k} ta liga · {n} klub · {rounds} tur · har liga o'z chempioni",
+    pt_sum_classic2: "guruhda uy + mehmon, pley-offda javob o'yini (final — 1 o'yin)",
+    pt_leagues_hint: "Bir nechta liga tanlash mumkin — har liga alohida jadval va chempion. Har qo'shimcha liga: +{price} so'm.",
+    pt_legs_label_classic: "O'yinlar: 1 martalik yoki javob o'yini bilan",
+    pt_price_extra: "+{n} liga × {price} so'm",
+    pt_legs_2_short: "2 doira", pt_n_leagues: "{n} liga",
+    pt_leg_n: "{n}-o'yin", pt_aggregate: "Umumiy hisob", pt_first_leg: "1-o'yin",
+    pt_err_first_leg: "Avval 1-o'yin natijasi tasdiqlanishi kerak.",
+    pt_err_aggregate: "Ikki o'yin yig'indisi teng bo'lmasligi kerak — penalti 2-o'yin ichida, yakuniy hisobni kiriting.",
+    pt_rules_default_classic2:
+      "Guruhlarda 4 kishi, har kim har kim bilan 2 marta (uy + mehmon) o'ynaydi.\n" +
+      "G'alaba — 3 ochko, durang — 1, mag'lubiyat — 0. Ochko teng bo'lsa: gollar farqi, so'ng urilgan gollar.\n" +
+      "Pley-offga guruh g'oliblari va eng yaxshi 2-o'rinlar chiqadi.\n" +
+      "Pley-offda ikki o'yin (javob o'yini) — g'olib yig'indi bo'yicha; teng bo'lsa penalti 2-o'yin ichida. Final — 1 o'yin, durangsiz.\n" +
+      "Natijani o'yinchilardan biri kiritadi, raqib tasdiqlaydi. Kelishmovchilikni tashkilotchi hal qiladi.\n" +
+      "Guruh bosqichida tur muddati o'tgach tasdiqlanmagan natijalar tasdiqlanadi, o'ynalmagan o'yinlar 0:0.\n" +
+      "Xona ID va kelishuvlar — o'yin chatida. Raqibingizga hurmat bilan munosabatda bo'ling.",
     pt_fmt_league: "Liga", pt_fmt_cl: "Chempionlar ligasi", pt_fmt_el: "Yevropa ligasi",
     pt_fmt_wc: "Jahon chempionati", pt_fmt_classic: "Erkin format",
     pt_fmt_league_sub: "LaLiga, Premier Liga… — har kim klub tanlaydi, yagona jadval",
@@ -13,7 +30,7 @@ const PT_FMT_TEXTS = {
     pt_step_format: "Formatni tanlang", pt_step_league: "Ligani tanlang", pt_step_details: "Turnir ma'lumotlari",
     pt_legs_label: "Har bir juftlik necha marta o'ynaydi", pt_legs_1: "1 doira", pt_legs_2: "2 doira (uy + mehmon)",
     pt_league_clubs: "{n} klub",
-    pt_size_fixed: "{n} ishtirokchi — ligadagi klublar soni",
+    pt_size_fixed: "{n} ishtirokchi — tanlangan liga(lar)dagi klublar soni",
     pt_sum_league: "{n} klub · {rounds} tur · jadval birinchisi chempion",
     pt_sum_cl: "{rounds} tur yagona jadval · top-{q} to'g'ridan {stage}ga, {from}–{to}-o'rinlar pley-off raundida",
     pt_team_hint_club: "Har bir ishtirokchi qo'shilayotganda o'z klubini tanlaydi (bitta klub — bitta kishi).",
@@ -56,6 +73,23 @@ const PT_FMT_TEXTS = {
       "Xona ID va kelishuvlar — o'yin chatida. Raqibingizga hurmat bilan munosabatda bo'ling.",
   },
   ru: {
+    pt_sum_leagues: "{k} лиги · {n} клубов · {rounds} туров · в каждой лиге свой чемпион",
+    pt_sum_classic2: "в группах дома + в гостях, в плей-офф ответный матч (финал — 1 матч)",
+    pt_leagues_hint: "Можно выбрать несколько лиг — у каждой своя таблица и чемпион. Каждая доп. лига: +{price} сум.",
+    pt_legs_label_classic: "Матчи: один или с ответным",
+    pt_price_extra: "+{n} лиг × {price} сум",
+    pt_legs_2_short: "2 круга", pt_n_leagues: "{n} лиги",
+    pt_leg_n: "матч {n}", pt_aggregate: "Общий счёт", pt_first_leg: "1-й матч",
+    pt_err_first_leg: "Сначала должен быть подтверждён 1-й матч.",
+    pt_err_aggregate: "Сумма двух матчей не может быть равной — пенальти внутри 2-го матча, введите итоговый счёт.",
+    pt_rules_default_classic2:
+      "В группах по 4 человека, каждый играет с каждым 2 раза (дома + в гостях).\n" +
+      "Победа — 3 очка, ничья — 1, поражение — 0. При равенстве очков: разница мячей, затем забитые.\n" +
+      "В плей-офф выходят победители групп и лучшие вторые места.\n" +
+      "В плей-офф два матча (ответный) — победитель по сумме; при равенстве пенальти внутри 2-го матча. Финал — 1 матч без ничьих.\n" +
+      "Результат вносит один из игроков, соперник подтверждает. Споры решает организатор.\n" +
+      "В группах после срока тура неподтверждённые результаты подтверждаются, несыгранные матчи — 0:0.\n" +
+      "ID комнаты и договорённости — в чате матча. Уважайте соперника.",
     pt_fmt_league: "Лига", pt_fmt_cl: "Лига чемпионов", pt_fmt_el: "Лига Европы",
     pt_fmt_wc: "Чемпионат мира", pt_fmt_classic: "Свободный формат",
     pt_fmt_league_sub: "LaLiga, Premier Liga… — каждый выбирает клуб, общая таблица",
@@ -66,7 +100,7 @@ const PT_FMT_TEXTS = {
     pt_step_format: "Выберите формат", pt_step_league: "Выберите лигу", pt_step_details: "Данные турнира",
     pt_legs_label: "Сколько раз играет каждая пара", pt_legs_1: "1 круг", pt_legs_2: "2 круга (дома + в гостях)",
     pt_league_clubs: "{n} клубов",
-    pt_size_fixed: "{n} участников — по числу клубов лиги",
+    pt_size_fixed: "{n} участников — по числу клубов выбранных лиг",
     pt_sum_league: "{n} клубов · {rounds} туров · чемпион — первый в таблице",
     pt_sum_cl: "{rounds} туров общей таблицы · топ-{q} сразу в {stage}, места {from}–{to} — раунд плей-офф",
     pt_team_hint_club: "Каждый участник при вступлении выбирает свой клуб (один клуб — один игрок).",
@@ -109,6 +143,23 @@ const PT_FMT_TEXTS = {
       "ID комнаты и договорённости — в чате матча. Уважайте соперника.",
   },
   en: {
+    pt_sum_leagues: "{k} leagues · {n} clubs · {rounds} rounds · each league has its own champion",
+    pt_sum_classic2: "home + away in groups, two-legged play-off ties (final — 1 match)",
+    pt_leagues_hint: "You can pick several leagues — each has its own table and champion. Each extra league: +{price} UZS.",
+    pt_legs_label_classic: "Matches: single or with a return leg",
+    pt_price_extra: "+{n} league(s) × {price} UZS",
+    pt_legs_2_short: "2 legs", pt_n_leagues: "{n} leagues",
+    pt_leg_n: "leg {n}", pt_aggregate: "Aggregate", pt_first_leg: "1st leg",
+    pt_err_first_leg: "The 1st leg must be confirmed first.",
+    pt_err_aggregate: "The aggregate can't be level — penalties are in the 2nd leg, enter the final score.",
+    pt_rules_default_classic2:
+      "Groups of 4, everyone plays everyone twice (home + away).\n" +
+      "Win — 3 points, draw — 1, loss — 0. Tied on points: goal difference, then goals scored.\n" +
+      "Group winners and the best runners-up reach the play-off.\n" +
+      "Play-off ties are two-legged — the winner is decided on aggregate; if level, penalties in the 2nd leg. The final is 1 match, no draws.\n" +
+      "One player enters the result, the opponent confirms it. The organizer settles disputes.\n" +
+      "In the group stage, after the round deadline unconfirmed results are confirmed, unplayed matches end 0:0.\n" +
+      "Room ID and arrangements go in the match chat. Respect your opponent.",
     pt_fmt_league: "League", pt_fmt_cl: "Champions League", pt_fmt_el: "Europa League",
     pt_fmt_wc: "World Cup", pt_fmt_classic: "Free format",
     pt_fmt_league_sub: "LaLiga, Premier Liga… — everyone picks a club, one table",
@@ -119,7 +170,7 @@ const PT_FMT_TEXTS = {
     pt_step_format: "Choose a format", pt_step_league: "Choose a league", pt_step_details: "Tournament details",
     pt_legs_label: "How many times each pair plays", pt_legs_1: "Single round", pt_legs_2: "Double round (home + away)",
     pt_league_clubs: "{n} clubs",
-    pt_size_fixed: "{n} players — one per club in the league",
+    pt_size_fixed: "{n} players — one per club in the chosen league(s)",
     pt_sum_league: "{n} clubs · {rounds} rounds · top of the table is champion",
     pt_sum_cl: "{rounds}-round league table · top {q} go straight to the {stage}, places {from}–{to} play a play-off round",
     pt_team_hint_club: "Each player picks their own club when joining (one club per player).",

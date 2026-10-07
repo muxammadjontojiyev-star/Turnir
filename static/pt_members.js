@@ -79,7 +79,7 @@ function ptRenderJoin() {
       <div class="pt-card-row"><span>${escHtml(PTT("pt_join_owner"))}</span><b>${escHtml(owner)}</b></div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_join_places"))}</span><b>${p.approved_count}/${p.max_players}</b></div>
       ${p.format && typeof ptFormatName === "function" ? `<div class="pt-card-row"><span>${escHtml(PTT("pt_join_format"))}</span>
-        <b>${escHtml(ptFormatName(p.format))}${p.league_name ? " · " + escHtml(p.league_name) : ""}</b></div>` : ""}
+        <b>${escHtml(ptFormatName(p.format))}${p.league_name ? " · " + escHtml(ptLeaguesText(p.league_name)) : ""}</b></div>` : ""}
       ${action}
     </div>`);
   document.getElementById("pt-join-btn")?.addEventListener("click", ptJoinSubmit);

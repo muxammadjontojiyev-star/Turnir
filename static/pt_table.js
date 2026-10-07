@@ -6,6 +6,7 @@
 //  Global: PT, PTT, escHtml, ptTeamBadge, ptDirectCount.
 // =============================================================
 
+// i — jadvaldagi o'rin (0 dan); har liga jadvalida 1-o'rin chempion
 function ptZoneOf(p, i) {
   if (p.format === "league") return i === 0 ? "champ" : "";
   const q = p.direct_count || ptDirectCount((Object.values(p.standings || {})[0] || []).length);
@@ -13,7 +14,16 @@ function ptZoneOf(p, i) {
 }
 
 function ptTableHtml(p, meId) {
-  const rows = Object.values(p.standings || {})[0] || [];
+  // 2026-10-07: ko'p ligali turnir — har liga alohida jadval (tanlash tartibida)
+  const st = p.standings || {};
+  const keys = Object.keys(st).sort((a, b) => {
+    const o = p.leagues || [];
+    return (o.includes(a) ? o.indexOf(a) : 99) - (o.includes(b) ? o.indexOf(b) : 99);
+  });
+  return keys.map(k => ptOneTableHtml(p, k, st[k], meId)).join("");
+}
+
+function ptOneTableHtml(p, key, rows, meId) {
   const th = k => `<th>${escHtml(PTT(k))}</th>`;
   const body = rows.map((r, i) => {
     const zone = ptZoneOf(p, i);
@@ -30,8 +40,11 @@ function ptTableHtml(p, meId) {
     ? `<div class="pt-legend"><span class="pt-lg pt-lg--champ"></span>${escHtml(PTT("pt_zone_champ"))}</div>`
     : `<div class="pt-legend"><span class="pt-lg pt-lg--direct"></span>${escHtml(PTT("pt_zone_direct", { q: p.direct_count || "" }))}
         <span class="pt-lg pt-lg--po"></span>${escHtml(PTT("pt_zone_po", { from: (p.direct_count || 0) + 1, to: 3 * (p.direct_count || 0) }))}</div>`;
+  const title = p.format === "league" && key !== "L" ? key : PTT("pt_fmt_" + (p.format || "classic"));
+  const logo = p.format === "league" && typeof LEAGUE_LOGOS !== "undefined" && LEAGUE_LOGOS[key]
+    ? `<img class="pt-table-lglogo" src="${escHtml(LEAGUE_LOGOS[key])}?v=3" alt="">` : "";
   return `<div class="card pt-table-card pt-table-card--full">
-      <div class="pt-table-title">${escHtml(p.league_name || PTT("pt_fmt_" + (p.format || "classic")))}${p.legs === 2 ? ` · ${escHtml(PTT("pt_legs_2"))}` : ""}</div>
+      <div class="pt-table-title">${logo}${escHtml(title)}${p.legs === 2 ? ` · ${escHtml(PTT("pt_legs_2"))}` : ""}</div>
       <div class="pt-table-scroll"><table class="pt-table pt-table--full"><thead><tr><th>#</th><th></th>
         ${th("pt_col_p")}${th("pt_col_w")}${th("pt_col_d")}${th("pt_col_l")}${th("pt_col_gd")}${th("pt_col_pts")}</tr></thead>
         <tbody>${body}</tbody></table></div>${legend}</div>`;

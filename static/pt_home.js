@@ -36,11 +36,13 @@ function ptHeroHtml(t, p) {
     ? `<div class="pt-hero-deadline">⏱ ${escHtml(PTT("pt_hero_deadline"))}: <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>` : "";
   const progress = t.status === "recruiting" ? ptProgressHtml(t.approved_count, t.max_players) : "";
   // 2026-10-07: format nomi va foni (liga — liga logosi)
-  const lgLogo = fmt === "league" && typeof LEAGUE_LOGOS !== "undefined" && LEAGUE_LOGOS[t.league_name]
-    ? `<img class="pt-hero-lglogo" src="${escHtml(LEAGUE_LOGOS[t.league_name])}?v=3" alt="">` : "";
-  const kicker = fmt === "classic" ? PTT("pt_hero_kicker")
-    : `${ptFormatName(fmt)}${t.league_name ? " · " + t.league_name : ""}`.toUpperCase();
-  const rounds = p ? p.total_rounds : (fmt === "league" ? (t.max_players - 1) * (t.legs || 1) : Math.min(8, (t.max_players || 8) - 1));
+  const lgs = fmt === "league" ? ptLeagues(t.league_name) : [];
+  const lgLogo = typeof LEAGUE_LOGOS !== "undefined"
+    ? lgs.filter(lg => LEAGUE_LOGOS[lg]).map(lg => `<img class="pt-hero-lglogo" src="${escHtml(LEAGUE_LOGOS[lg])}?v=3" alt="">`).join("") : "";
+  const kicker = fmt === "classic" ? PTT("pt_hero_kicker") + (t.legs === 2 ? " · " + PTT("pt_legs_2_short") : "")
+    : `${ptFormatName(fmt)}${lgs.length ? " · " + (lgs.length > 2 ? PTT("pt_n_leagues", { n: lgs.length }) : lgs.join(" · ")) : ""}`.toUpperCase();
+  const rounds = p ? p.total_rounds : (fmt === "league" ? (Math.max(...lgs.map(ptLeagueSize), 2) - 1) * (t.legs || 1)
+    : Math.min(8, (t.max_players || 8) - 1));
   const second = single ? stat(rounds || "—", "pt_hero_rounds") : stat(groups || "—", "pt_hero_groups");
   const bg = typeof PT_FORMAT_META !== "undefined" && PT_FORMAT_META[fmt] ? ` style="background-image:url('${PT_FORMAT_META[fmt].bg}')"` : "";
   return `<div class="pt-hero pt-hero--${escHtml(fmt)}"${bg}>
@@ -150,7 +152,10 @@ function ptNextStepHtml(t, p) {
       ready ? "" : blockText || PTT("pt_next_invite_sub", { min: t.min_players || 8 }), btns);
   }
   if (!p) return "";
-  if (p.phase === "finished") return typeof ptChampionHtml === "function" ? ptChampionHtml(p) : "";
+  if (p.phase === "finished") {
+    if ((p.champions || []).length > 1 && typeof ptLeagueChampionsHtml === "function") return ptLeagueChampionsHtml(t, p);
+    return typeof ptChampionHtml === "function" ? ptChampionHtml(p) : "";
+  }
   const m = ptMyActionMatch(p);
   if (m && p.status === "running") {
     const needConfirm = m.status === "awaiting_confirmation" && m.submitted_by !== p.me_id;
@@ -251,7 +256,7 @@ function ptListCardHtml(t) {
   const max = t.max_players || 0;
   return `<button class="pt-card pt-card--rich" data-pt-open="${t.id}">
       <div class="pt-card-top"><span class="pt-card-name">${escHtml(t.name)}</span>${role}</div>
-      ${typeof ptFormatName === "function" ? `<div class="pt-card-fmt">${PT_FORMAT_META[ptFmt(t)].icon} ${escHtml(ptFormatName(ptFmt(t)))}${t.league_name ? " · " + escHtml(t.league_name) : ""}</div>` : ""}
+      ${typeof ptFormatName === "function" ? `<div class="pt-card-fmt">${PT_FORMAT_META[ptFmt(t)].icon} ${escHtml(ptFormatName(ptFmt(t)))}${t.league_name ? " · " + escHtml(ptLeaguesText(t.league_name)) : ""}</div>` : ""}
       <div class="pt-card-meta">
         <span class="pt-status pt-status--${escHtml(t.status)}">${escHtml(ptStatusLabel(t.status))}</span>
         <span>${t.members_count}${max ? "/" + max : ""} ${escHtml(PTT("pt_members"))}</span>
