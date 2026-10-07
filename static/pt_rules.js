@@ -9,7 +9,13 @@
 const PT_RULES_MAX = 2000;           // server bilan bir xil (pt_rules.py)
 const PT_RULES_PREVIEW = 4;          // yig'iq holatda ko'rinadigan qoidalar soni
 
-function ptRulesText(t) { return (t.rules || "").trim() || PTT("pt_rules_default"); }
+// 2026-10-07: standart qoidalar formatga qarab (liga / ChL-YeL / guruhli)
+function ptDefaultRules(t) {
+  const f = (t && t.format) || "classic";
+  const key = f === "league" ? "pt_rules_default_league" : (f === "cl" || f === "el") ? "pt_rules_default_cl" : "pt_rules_default";
+  return PTT(key) || PTT("pt_rules_default");
+}
+function ptRulesText(t) { return (t.rules || "").trim() || ptDefaultRules(t); }
 
 function ptRulesItems(text) {
   return text.split("\n").map(s => s.trim().replace(/^(\d+[.)]|[-•*–])\s*/, "")).filter(Boolean);
@@ -58,7 +64,7 @@ function ptBindRules(t) {
   document.getElementById("pt-rules-save")?.addEventListener("click", () => {
     // standart matn o'zgartirilmagan bo'lsa — NULL saqlanadi (til almashsa ham tarjima qilinadi)
     const v = (input?.value || "").trim();
-    void ptSaveRules(t, v === PTT("pt_rules_default").trim() ? "" : v);
+    void ptSaveRules(t, v === ptDefaultRules(t).trim() ? "" : v);
   });
   document.getElementById("pt-rules-reset")?.addEventListener("click", () => void ptSaveRules(t, ""));
 }

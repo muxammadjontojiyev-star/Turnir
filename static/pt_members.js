@@ -10,7 +10,7 @@
 const PT_ERR_KEYS = {
   not_found: "pt_err_not_found", user_not_found: "pt_err_user_not_found",
   already_member: "pt_err_already", already_approved: "pt_err_already",
-  full: "pt_err_full", not_recruiting: "pt_join_closed",
+  full: "pt_err_full", not_recruiting: "pt_join_closed", team_taken: "pt_err_team_taken", bad_team: "pt_err_generic",
 };
 function ptErrText(e) { return PTT(PT_ERR_KEYS[e && e.message] || "pt_err_generic"); }
 
@@ -39,6 +39,7 @@ function ptConsumeInviteParam() {
 async function ptOpenJoin(code) {
   PT.view = "join";
   PT.joinCode = code;
+  PT.teamPick = { ...(PT.teamPick || {}), join: null };      // yangilangan band ro'yxati bilan qayta tanlanadi
   ptRender(`<div class="empty-state">${escHtml(PTT("pt_loading"))}</div>`);
   try {
     PT.invite = await apiFetch(`/pt/invite/${encodeURIComponent(code)}`);
@@ -63,7 +64,13 @@ function ptRenderJoin() {
   } else if (full) {
     action = `<div class="pt-warn">${escHtml(PTT("pt_join_full"))}</div>`;
   } else {
-    action = `<button class="btn btn--primary btn--glow" id="pt-join-btn">${escHtml(PTT("pt_join_btn"))}</button>`;
+    // 2026-10-07: jamoali formatlarda avval klub / terma jamoa tanlanadi
+    const fmt = p.format || "classic";
+    const needTeam = typeof ptUsesTeams === "function" && ptUsesTeams(fmt);
+    const picked = (PT.teamPick || {}).join;
+    action = (needTeam ? `<div class="section-label pt-label">${escHtml(PTT(fmt === "wc" ? "pt_team_pick_wc" : "pt_team_pick_club"))}</div>
+        ${ptTeamPickerHtml({ id: "join", fmt, league: p.league_name, taken: p.taken_teams || [] })}` : "")
+      + `<button class="btn btn--primary btn--glow" id="pt-join-btn" ${needTeam && !picked ? "disabled" : ""}>${escHtml(PTT("pt_join_btn"))}</button>`;
   }
   ptRender(`
     <div class="card pt-head">
@@ -71,9 +78,17 @@ function ptRenderJoin() {
       <div class="pt-head-name">${escHtml(p.name)}</div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_join_owner"))}</span><b>${escHtml(owner)}</b></div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_join_places"))}</span><b>${p.approved_count}/${p.max_players}</b></div>
+      ${p.format && typeof ptFormatName === "function" ? `<div class="pt-card-row"><span>${escHtml(PTT("pt_join_format"))}</span>
+        <b>${escHtml(ptFormatName(p.format))}${p.league_name ? " · " + escHtml(p.league_name) : ""}</b></div>` : ""}
       ${action}
     </div>`);
   document.getElementById("pt-join-btn")?.addEventListener("click", ptJoinSubmit);
+  if (typeof ptBindTeamPicker === "function") {
+    ptBindTeamPicker({ id: "join", fmt: p.format || "classic", league: p.league_name, taken: p.taken_teams || [] }, () => {
+      const b = document.getElementById("pt-join-btn");
+      if (b) b.disabled = false;
+    });
+  }
   document.getElementById("pt-join-open")?.addEventListener("click", () => void ptOpenDetail(p.id));
 }
 
@@ -83,7 +98,8 @@ async function ptJoinSubmit() {
   const btn = document.getElementById("pt-join-btn");
   if (btn) btn.disabled = true;
   try {
-    await apiFetch("/pt/join", { method: "POST", body: JSON.stringify({ code: PT.joinCode }) });
+    const team = (PT.teamPick || {}).join || null;
+    await apiFetch("/pt/join", { method: "POST", body: JSON.stringify({ code: PT.joinCode, team }) });
     showToast(PTT("pt_join_sent"));
   } catch (e) {
     showToast(ptErrText(e));
@@ -120,7 +136,9 @@ function ptManageHtml(t) {
 }
 
 function ptMemberRowHtml(t, m) {
-  const who = escHtml(m.nickname || "") + (m.username ? ` <span class="pt-muted">@${escHtml(m.username)}</span>` : "");
+  const who = (m.team_name && typeof ptTeamBadge === "function" ? ptTeamBadge(m.team_name) : "")
+    + escHtml(m.nickname || "") + (m.username ? ` <span class="pt-muted">@${escHtml(m.username)}</span>` : "")
+    + (m.team_name ? ` <span class="pt-muted">· ${escHtml(m.team_name)}</span>` : "");
   let actions = "";
   if (ptCanManage(t) && m.user_id !== t.owner_user_id) {
     actions = m.status === "pending"

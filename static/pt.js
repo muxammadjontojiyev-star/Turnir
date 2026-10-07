@@ -62,7 +62,7 @@ async function ptLoadList() {
 }
 
 async function ptOpenDetail(id) {
-  if (String(PT.detailId) !== String(id)) { PT.tab = "home"; PT.playerView = null; PT.rulesEdit = false; PT.rulesOpen = false; }   // boshqa turnir — Asosiy sahifadan
+  if (String(PT.detailId) !== String(id)) { PT.tab = "home"; PT.playerView = null; PT.rulesEdit = false; PT.rulesOpen = false; PT.teamEdit = false; }   // boshqa turnir — Asosiy sahifadan
   PT.view = "detail";
   PT.detailId = id;
   ptRender(`<div class="empty-state">${escHtml(PTT("pt_loading"))}</div>`);
@@ -120,79 +120,7 @@ function ptRenderList() {
     el.addEventListener("click", () => void ptOpenDetail(el.dataset.ptOpen)));
 }
 
-function ptRenderCreate(keep) {
-  PT.view = "create";
-  const c = PT.config || {};
-  // 2026-10-03: to'lov turi (obuna | bir martalik) va sig'im pog'onasiga qarab narx (pt_sub.js)
-  const mode = (keep && keep.mode) || PT.createMode || (typeof ptDefaultMode === "function" ? ptDefaultMode() : "one_time");
-  PT.createMode = mode;
-  const allow = n => (typeof ptSizeAllowed === "function" ? ptSizeAllowed(n, mode) : true);
-  let size = Number((keep && keep.size) || c.default_players || 8);
-  if (!allow(size)) {   // tanlangan sig'im shu to'lov turida yopiq — undan kichik eng yaqin ochig'iga (yo'q bo'lsa birinchisiga)
-    const step = c.group_size || 4, lo = c.min_players || 8, hi = c.max_players || 128;
-    let pick = null;
-    for (let n = Math.min(size, hi); n >= lo; n -= step) { if (allow(n)) { pick = n; break; } }
-    if (pick === null) for (let n = lo; n <= hi; n += step) { if (allow(n)) { pick = n; break; } }
-    if (pick !== null) size = pick;
-  }
-  const price = typeof ptCreatePriceText === "function" ? ptCreatePriceText(size, mode) : { ok: c.price_set, html: "" };
-  const modeHtml = typeof ptPayModeHtml === "function" ? ptPayModeHtml(mode) : "";
-  const priceBlock = `<div id="pt-price-box">${price.html}</div>`;
-  ptRender(`
-    <div class="card pt-form">
-      <div class="section-label pt-label">${escHtml(PTT("pt_create_title"))}</div>
-      <label class="pt-field-label" for="pt-name">${escHtml(PTT("pt_name_label"))}</label>
-      <input class="modal-input" id="pt-name" maxlength="${c.name_max || 40}"
-             placeholder="${escHtml(PTT("pt_name_ph"))}" autocomplete="off">
-      <label class="pt-field-label" for="pt-size">${escHtml(PTT("pt_size_label"))}</label>
-      ${ptSizeSelectHtml("pt-size", size, 0, allow)}
-      <div class="pt-size-sum" id="pt-size-sum">${escHtml(ptSizeSummary(size))}</div>
-      ${modeHtml}
-      <div class="pt-hint">${escHtml(PTT("pt_format", { min: c.min_players || 8 }))}</div>
-      ${priceBlock}
-      <button class="btn btn--primary" id="pt-create-btn" ${price.ok ? "" : "disabled"}>
-        ${escHtml(PTT("pt_create_btn"))}</button>
-    </div>`);
-  if (keep && keep.name) document.getElementById("pt-name").value = keep.name;
-  document.getElementById("pt-create-btn").addEventListener("click", ptCreateSubmit);
-  const snapshot = () => ({ name: document.getElementById("pt-name").value,
-                            size: Number(document.getElementById("pt-size").value) });
-  document.getElementById("pt-size").addEventListener("change", () => {
-    const p = ptCreatePriceText(Number(document.getElementById("pt-size").value), PT.createMode);
-    document.getElementById("pt-size-sum").textContent = ptSizeSummary(Number(document.getElementById("pt-size").value));
-    document.getElementById("pt-price-box").innerHTML = p.html;
-    document.getElementById("pt-create-btn").disabled = !p.ok;
-  });
-  document.querySelectorAll("#pt-root input[name='pt-mode']").forEach(r =>
-    r.addEventListener("change", () => ptRenderCreate({ ...snapshot(), mode: r.value })));
-}
-
-async function ptCreateSubmit() {
-  if (PT.busy) return;                       // ikki marta bosish (qoida #38)
-  const input = document.getElementById("pt-name");
-  const btn = document.getElementById("pt-create-btn");
-  const name = (input.value || "").trim();
-  PT.busy = true;
-  btn.disabled = true;
-  btn.textContent = PTT("pt_creating");
-  try {
-    const max_players = Number(document.getElementById("pt-size")?.value || 8);
-    const pay_mode = PT.createMode || "one_time";
-    const r = await apiFetch("/pt/create", { method: "POST", body: JSON.stringify({ name, max_players, pay_mode }) });
-    showToast(PTT("pt_created"));
-    await ptOpenDetail(r.id);
-  } catch (e) {
-    const map = { name_too_short: "pt_err_name_short", name_too_long: "pt_err_name_long", bad_size: "pt_err_bad_size",
-                  no_subscription: "pt_err_no_sub", sub_limit: "pt_err_sub_limit",
-                  too_many_unpaid: "pt_err_too_many", price_not_set: "pt_price_not_set" };
-    const code = (e && (e.detail || e.message)) || "";
-    showToast(PTT(map[code] || "pt_err_generic"));
-    btn.disabled = false;
-    btn.textContent = PTT("pt_create_btn");
-  } finally {
-    PT.busy = false;
-  }
-}
+// Yaratish formasi (format, liga, sig'im, to'lov) — pt_create.js (2026-10-07)
 
 // To'lov bloki (faqat tashkilotchi): kutilmoqda/rad etilgan — karta + chek; tekshiruvda — izoh
 function ptPayBlockHtml(t) {
@@ -218,7 +146,8 @@ function ptPayBlockHtml(t) {
 // Turnir sarlavhasi (Asosiy'dan boshqa sahifalar tepasida) — stadion fonidagi ixcham banner
 function ptHeadHtml(t) {
   return `
-    <div class="pt-head pt-head--banner">
+    <div class="pt-head pt-head--banner pt-head--${escHtml(t.format || "classic")}"${typeof PT_FORMAT_META !== "undefined" && PT_FORMAT_META[t.format || "classic"]
+      ? ` style="--pt-head-bg:url('${PT_FORMAT_META[t.format || "classic"].bg}')"` : ""}>
       <div class="pt-head-name">${escHtml(t.name)}</div>
       <div class="pt-card-meta">
         <span class="pt-status pt-status--${escHtml(t.status)}">${escHtml(ptStatusLabel(t.status))}</span>

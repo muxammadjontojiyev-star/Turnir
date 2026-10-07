@@ -20,7 +20,9 @@ function ptProfileHtml(view, p, isMe) {
   const name = u.username ? "@" + u.username : (u.nickname || "");
   const letter = ((u.nickname || u.username || "?")[0] || "?").toUpperCase();
   const r = view.row || { played: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, goal_diff: 0, points: 0 };
-  const groupLabel = view.group ? PTT("pt_prof_group", { g: view.group, pos: view.position || "—" }) : "";
+  const single = p && p.single_table;                       // 2026-10-07: liga/ChL/YeL — guruhsiz jadval
+  const groupLabel = view.group ? PTT(single ? "pt_prof_table" : "pt_prof_group", { g: view.group, pos: view.position || "—" }) : "";
+  const team = u.team_name ? `<span class="pt-prof-team">${typeof ptTeamBadge === "function" ? ptTeamBadge(u.team_name) : ""}${escHtml(u.team_name)}</span>` : "";
   const stat = (v, l, cls = "", primary = false) => `<div class="stat-card${primary ? " stat-card--primary" : ""}">
       <span class="stat-card-value ${cls}">${escHtml(String(v))}</span><span class="stat-card-label">${escHtml(PTT(l))}</span></div>`;
   const form = (view.matches || []).map(m => ptWinnerOf(m, u.id)).filter(Boolean).slice(-5);
@@ -33,7 +35,7 @@ function ptProfileHtml(view, p, isMe) {
       <div class="profile-avatar" data-pt-avatar="${u.id}">${escHtml(letter)}</div>
       <div class="profile-info">
         <h2 class="profile-nickname">${escHtml(name)}</h2>
-        <span class="profile-league">${escHtml(groupLabel)}</span>
+        ${team}<span class="profile-league">${escHtml(groupLabel)}</span>
       </div>
       ${view.position === 1 ? `<div class="pt-prof-badge">🥇</div>` : ""}
     </div>
@@ -61,7 +63,8 @@ function ptMyProfileView(t, p) {
   }
   if (!row) return null;
   const me = (t.members || []).find(m => m.user_id === p.me_id) || {};
-  return { user: { id: p.me_id, nickname: me.nickname, username: me.username }, group, position, row, matches: p.my_matches || [] };
+  return { user: { id: p.me_id, nickname: me.nickname, username: me.username, team_name: me.team_name || row.team_name },
+           group, position, row, matches: p.my_matches || [] };
 }
 
 // Rasmlar: [data-pt-avatar] — Telegram profil rasmi (bo'lmasa bosh harf qoladi, qoida #40)

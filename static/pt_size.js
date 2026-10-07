@@ -8,11 +8,13 @@
 // <select>: min..max, qadam = guruh o'lchami (4) — guruhlar doim to'liq bo'lsin.
 // minAllowed — qabul qilinganlardan kam tanlab bo'lmaydi (yuqoriga 4 ga yaxlitlanadi).
 // allow(n) — ixtiyoriy filtr (narx pog'onasi yopiq sig'imlar ko'rinmasin)
-function ptSizeSelectHtml(id, selected, minAllowed, allow) {
+// 2026-10-07: rule — format qoidasi {min, max, step} (pt_formats.js ptFmtRule); bo'lmasa erkin format
+function ptSizeSelectHtml(id, selected, minAllowed, allow, rule) {
   const c = PT.config || {};
-  const step = c.group_size || 4;
-  const lo = Math.max(c.min_players || 8, Math.ceil((minAllowed || 0) / step) * step), hi = c.max_players || 128;
-  if (Number(selected) % step) selected = Math.ceil(Number(selected) / step) * step;   // eski (6/7/…) sig'im
+  const r = rule || { min: c.min_players || 8, max: c.max_players || 128, step: c.group_size || 4 };
+  const step = r.step;
+  const lo = Math.max(r.min, r.min + Math.ceil(Math.max(0, (minAllowed || 0) - r.min) / step) * step), hi = r.max;
+  if ((Number(selected) - r.min) % step) selected = r.min + Math.ceil((Number(selected) - r.min) / step) * step;   // eski sig'im
   let opts = "";
   for (let n = lo; n <= hi; n += step) {
     if (allow && !allow(n)) continue;
@@ -31,7 +33,8 @@ function ptEditSizeFilter(t) {
 }
 
 function ptCanEditSize(t) {
-  return t.is_owner && ["awaiting_payment", "payment_review", "rejected", "recruiting"].includes(t.status);
+  return t.is_owner && (t.format || "classic") !== "league" &&     // liga: sig'im = klublar soni (qat'iy)
+    ["awaiting_payment", "payment_review", "rejected", "recruiting"].includes(t.status);
 }
 
 async function ptSaveSize(tid) {
@@ -57,7 +60,8 @@ function ptSizeEditHtml(t) {
   if (!ptCanEditSize(t)) return "";
   return `<div class="card pt-pay">
       <label class="pt-field-label" for="pt-size-edit">${escHtml(PTT("pt_size_label"))}</label>
-      <div class="pt-fix-row">${ptSizeSelectHtml("pt-size-edit", t.max_players, t.approved_count, ptEditSizeFilter(t))}
+      <div class="pt-fix-row">${ptSizeSelectHtml("pt-size-edit", t.max_players, t.approved_count, ptEditSizeFilter(t),
+        typeof ptFmtRule === "function" ? ptFmtRule(t.format || "classic", t.league_name) : null)}
         <button class="btn btn--ghost" id="pt-size-save">${escHtml(PTT("pt_size_save"))}</button></div>
     </div>`;
 }

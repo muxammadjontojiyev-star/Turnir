@@ -35,7 +35,7 @@ function ptTabRating(t, p) {
   if (!p) return ptWaitHtml();
   if (PT.playerView && typeof ptPlayerPageHtml === "function") return ptPlayerPageHtml(p);   // ishtirokchi profili
   const hasKo = (p.knockout || []).length > 0;
-  const subs = [["groups", "pt_seg_groups"], ...(hasKo ? [["bracket", "pt_seg_bracket"]] : []), ["round", "pt_seg_round"]];
+  const subs = [["groups", p.single_table ? "pt_seg_table" : "pt_seg_groups"], ...(hasKo ? [["bracket", "pt_seg_bracket"]] : []), ["round", "pt_seg_round"]];
   if (!PT.ratingTab || !subs.some(([id]) => id === PT.ratingTab)) PT.ratingTab = hasKo ? "bracket" : "groups";
   const bar = `<div class="pt-rtabs pt-seg">${subs.map(([id, l]) =>
     `<button class="tab-btn${PT.ratingTab === id ? " active" : ""}" data-pt-rtab="${id}">${escHtml(PTT(l))}</button>`).join("")}</div>`;
@@ -62,10 +62,13 @@ function ptTabPrizes(t, p) {
   const c = p && p.champion;
   const final = p && (p.knockout || []).find(m => m.stage === "final");
   const holder = c
-    ? `<div class="pt-champion-label">${escHtml(PTT("pt_champion_title"))}</div><div class="pt-champion-name">${escHtml(ptUserLabel(c))}</div>`
-    : `<div class="pt-hint">${escHtml(PTT("pt_prize_hint"))}</div>`;
+    ? `<div class="pt-champion-label">${escHtml(PTT("pt_champion_title"))}</div><div class="pt-champion-name">${escHtml(ptUserLabel(c))}</div>
+       ${c.team_name ? `<div class="pt-champion-team">${ptTeamBadge(c.team_name)}${escHtml(c.team_name)}</div>` : ""}`
+    : `<div class="pt-hint">${escHtml(PTT(t.format === "league" ? "pt_prize_hint_league" : "pt_prize_hint"))}</div>`;
+  const cup = typeof ptTrophySrc === "function" && ptTrophySrc(t);      // 2026-10-07: format kubogi
   return `<div class="card pt-champion">
-      <div class="pt-champion-cup">🏆</div>
+      ${cup ? `<img class="pt-champion-img" src="${escHtml(cup)}" alt="" onerror="this.outerHTML='<div class=\'pt-champion-cup\'>🏆</div>'">`
+        : `<div class="pt-champion-cup">🏆</div>`}
       <div class="pt-prize-title">${escHtml(PTT("pt_prize_title"))}</div>${holder}</div>
     ${final ? `<div class="section-label pt-label">${escHtml(PTT("pt_stage_final_h"))}</div>${ptMatchCardHtml(final, p, final.player1_id === p.me_id || final.player2_id === p.me_id)}` : ""}`;
 }

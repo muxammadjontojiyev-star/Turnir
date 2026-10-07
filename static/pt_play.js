@@ -1,7 +1,6 @@
 // =============================================================
 //  pt_play.js — SHAXSIY turnir o'yinlari (2026-10-02, 4-bosqich)
-//  Tashkilotchi: "Turnirni boshlash", tur muddati, "Turni yopish".
-//  Ishtirokchi: mening o'yinlarim (natija kiritish / tasdiqlash), guruh jadvallari.
+//  Tashkilotchi: boshlash, tur muddati, "Turni yopish". Ishtirokchi: natija / tasdiq, jadvallar.
 //  2026-10-03: bo'laklar sahifalarga taqsimlanadi (pt_tabs.js; 2026-10-07 Asosiy — pt_home.js),
 //  Jadval — ptStandingsHtml + ptRoundOthersHtml, O'yinlarim — ptMyMatchesHtml, Admin — ptPlayHtml
 //  (boshlash) + ptAdminPlayHtml. Global: PT, PTT, apiFetch, escHtml, showToast, ptOpenDetail.
@@ -18,6 +17,10 @@ const PT_PLAY_ERR = {
 // O'yin bosqichi nomi (guruh turi yoki pley-off bosqichi) — karta va tuzatish oynasi uchun umumiy
 function ptStageLabel(m) {
   if (m.stage === "final") return PTT("pt_stage_final");
+  if (m.stage === "po") return PTT("pt_stage_po_n", { n: m.round });                 // ChL/YeL pley-off raundi
+  if (m.stage === "group" && m.group_label === "L" && PT.play && PT.play.single_table) {
+    return PTT("pt_round_short", { r: m.round });                                     // liga/ChL/YeL: guruhsiz
+  }
   if (m.stage === "semi") return PTT("pt_stage_semi_n", { n: m.round });
   if (m.stage && m.stage !== "group") return PTT(`pt_stage_${m.stage}_n`, { n: m.round });
   return `${PTT("pt_round_short", { r: m.round })} · ${PTT("pt_group", { g: m.group_label })}`;
@@ -29,12 +32,16 @@ function ptPlayHtml(t) {
   if ((t.is_manager || t.is_owner) && t.status === "recruiting") {   // tashkilotchi yoki admin
     const can = !t.start_block;                      // server hisoblaydi: kamida 8 va 4 ga karrali
     const n = t.approved_count, g = t.group_size || 4, rem = n % g;
-    const need = t.start_block === "not_enough_players"
-      ? PTT("pt_start_min", { n, min: t.min_players })
-      : t.start_block === "not_multiple" ? PTT("pt_start_need", { n, add: g - rem, remove: rem }) : "";
+    const need = {                                   // 2026-10-07: formatga xos sabablar ham
+      not_enough_players: () => PTT("pt_start_min", { n, min: t.min_players }),
+      not_multiple: () => PTT("pt_start_need", { n, add: g - rem, remove: rem }),
+      not_even: () => PTT("pt_block_even", { n }),
+      league_not_full: () => PTT("pt_block_league", { n, max: t.max_players }),
+      teams_missing: () => PTT("pt_block_teams", { n: (t.members || []).filter(m => m.status === "approved" && !m.team_name).length }),
+    }[t.start_block]?.() || "";
     return `
       <div class="card pt-pay">
-        <div class="pt-hint">${escHtml(PTT("pt_start_hint", { min: t.min_players }))}</div>
+        <div class="pt-hint">${escHtml(PTT(t.format && t.format !== "classic" && t.format !== "wc" ? "pt_start_hint_" + (t.format === "league" ? "league" : "cl") : "pt_start_hint", { min: t.min_players, max: t.max_players }))}</div>
         ${need ? `<div class="pt-note">${escHtml(need)}</div>` : ""}
         <button class="btn btn--primary btn--glow" id="pt-start-btn" ${can ? "" : "disabled"}>
           ${escHtml(PTT("pt_start_btn"))}</button>
@@ -91,7 +98,12 @@ function ptMatchCardHtml(m, p, mine) {
   const head = `<div class="pt-match-head"><span>${escHtml(ptStageLabel(m))}</span>
                 <span class="pt-muted">#${m.id}</span></div>`;
   const score = m.score1 != null ? `${m.score1} : ${m.score2}` : "— : —";
-  const names = `<div class="pt-match-row"><b>${escHtml(ptNameOf(m, 1))}</b><span class="pt-score">${score}</span><b>${escHtml(ptNameOf(m, 2))}</b></div>`;
+  const side = k => {                                   // 2026-10-07: klub/terma jamoa logosi + nom
+    const team = m[`p${k}_team`];
+    const badge = team && typeof ptTeamBadge === "function" ? ptTeamBadge(team) : "";
+    return `<b class="pt-mside pt-mside--${k}" ${team ? `title="${escHtml(team)}"` : ""}>${k === 2 ? `<span>${escHtml(ptNameOf(m, k))}</span>${badge}` : `${badge}<span>${escHtml(ptNameOf(m, k))}</span>`}</b>`;
+  };
+  const names = `<div class="pt-match-row">${side(1)}<span class="pt-score">${score}</span>${side(2)}</div>`;
   let action = "";
   const open = m.stage === "group" ? m.round === p.current_round : true;   // pley-off: bosqich ochiq
   if (mine && m.status === "pending" && open && p.status === "running") {
@@ -121,6 +133,7 @@ function ptMatchCardHtml(m, p, mine) {
 // Guruh jadvallari: 26 guruhgacha bo'lishi mumkin — MENING guruhim birinchi va ochiq,
 // qolganlari yig'iq (<details>), 4 tadan kam bo'lsa hammasi ochiq.
 function ptStandingsHtml(standings, meId) {
+  if (PT.play && PT.play.single_table && typeof ptTableHtml === "function") return ptTableHtml(PT.play, meId);
   const entries = Object.entries(standings || {});
   const mine = entries.find(([, rows]) => rows.some(r => r.user_id === meId));
   const ordered = mine ? [mine, ...entries.filter(e => e !== mine)] : entries;
@@ -131,7 +144,7 @@ function ptStandingsHtml(standings, meId) {
       <summary class="pt-table-title">${escHtml(PTT("pt_group", { g }))}${isMine ? ` · <span class="pt-muted">${escHtml(PTT("pt_my_group"))}</span>` : ""}</summary>
       <table class="pt-table"><thead><tr><th>#</th><th></th><th>${escHtml(PTT("pt_col_p"))}</th>
         <th>${escHtml(PTT("pt_col_gd"))}</th><th>${escHtml(PTT("pt_col_pts"))}</th></tr></thead><tbody>
-      ${rows.map((r, i) => `<tr class="pt-row-link" data-pt-player="${r.user_id}"><td>${i + 1}</td><td class="pt-table-name">${escHtml(r.username ? "@" + r.username : r.nickname || "")}</td>
+      ${rows.map((r, i) => `<tr class="pt-row-link" data-pt-player="${r.user_id}"><td>${i + 1}</td><td class="pt-table-name">${r.team_name && typeof ptTeamBadge === "function" ? ptTeamBadge(r.team_name) : ""}${escHtml(r.username ? "@" + r.username : r.nickname || "")}</td>
         <td>${r.played}</td><td>${r.goal_diff > 0 ? "+" : ""}${r.goal_diff}</td><td><b>${r.points}</b></td></tr>`).join("")}
       </tbody></table></details>`;
   }).join("");
@@ -217,38 +230,7 @@ function ptBindPlayBody(tid) {
   document.getElementById("pt-semis-btn")?.addEventListener("click", () => void ptStartSemis(tid));
 }
 
-// ---------------- Tashkilotchi: natijani tuzatish (Match ID bo'yicha) ----------------
-
-async function ptFixLoad(tid) {
-  const id = Number(document.getElementById("pt-fix-id")?.value || 0);
-  const box = document.getElementById("pt-fix-box");
-  if (!id || !box) return;
-  try {
-    const m = await apiFetch(`/pt/owner/match/${encodeURIComponent(id)}`);
-    box.innerHTML = `
-      <div class="match-item pt-match">
-        <div class="pt-match-head"><span>${escHtml(ptStageLabel(m))}</span><span class="pt-muted">#${m.id}</span></div>
-        <div class="pt-match-row"><b>${escHtml(m.player1 || "—")}</b><span class="pt-score">${m.score1 != null ? `${m.score1} : ${m.score2}` : "— : —"}</span><b>${escHtml(m.player2 || "—")}</b></div>
-        <div class="pt-res-form">
-          <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-fix-s1" value="${m.score1 ?? ""}">
-          <span>:</span>
-          <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-fix-s2" value="${m.score2 ?? ""}">
-          <button class="pt-mini pt-mini--ok" id="pt-fix-save">${escHtml(PTT("pt_fix_save"))}</button>
-        </div>
-        ${m.can_cancel && m.status !== "pending" ? `<button class="pt-mini pt-mini--no" id="pt-fix-cancel">${escHtml(PTT("pt_fix_cancel"))}</button>` : ""}
-      </div>`;
-    document.getElementById("pt-fix-save").addEventListener("click", () => {
-      const s1 = document.getElementById("pt-fix-s1").value, s2 = document.getElementById("pt-fix-s2").value;
-      if (s1 === "" || s2 === "") return;
-      void ptPlayAction(tid, `/pt/owner/match/${id}/set`, { score1: Number(s1), score2: Number(s2) }, "pt_fix_saved");
-    });
-    document.getElementById("pt-fix-cancel")?.addEventListener("click", () =>
-      void ptPlayAction(tid, `/pt/owner/match/${id}/cancel`, null, "pt_fix_cancelled"));
-  } catch (e) {
-    box.innerHTML = "";
-    showToast(ptPlayErr(e));
-  }
-}
+// Natijani tuzatish (Match ID bo'yicha) — pt_fix.js (2026-10-07, qoida #21)
 
 async function ptPlayAction(tid, path, body, okKey) {
   if (PT.busy) return;

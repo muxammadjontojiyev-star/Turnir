@@ -6,7 +6,7 @@
 //  Global: PTT, escHtml, PT, ptMatchCardHtml, ptOwnerControlsHtml, ptPlayAction.
 // =============================================================
 
-const PT_STAGE_ORDER = ["r64", "r32", "r16", "qf", "semi", "final"];
+const PT_STAGE_ORDER = ["po", "r64", "r32", "r16", "qf", "semi", "final"];   // po — ChL/YeL pley-off raundi
 
 function ptChampionHtml(p) {
   const c = p.champion;
@@ -16,6 +16,7 @@ function ptChampionHtml(p) {
       <div class="pt-champion-cup">🏆</div>
       <div class="pt-champion-label">${escHtml(PTT("pt_champion_title"))}</div>
       <div class="pt-champion-name">${escHtml(name)}</div>
+      ${c.team_name && typeof ptTeamBadge === "function" ? `<div class="pt-champion-team">${ptTeamBadge(c.team_name)}${escHtml(c.team_name)}</div>` : ""}
     </div>`;
 }
 
@@ -39,7 +40,7 @@ function ptKnockoutAdminHtml(p) {
   if (!p.is_manager || p.phase === "finished") return "";
   if (p.phase === "ko_ready") {
     return `<div class="card pt-pay">
-        <div class="pt-hint">${escHtml(PTT("pt_semis_hint", { size: p.bracket_size }))}</div>
+        <div class="pt-hint">${escHtml(ptKoReadyHint(p))}</div>
         <button class="btn btn--primary btn--glow" id="pt-semis-btn">${escHtml(PTT("pt_semis_btn"))}</button></div>`;
   }
   return `<div class="card pt-pay">
@@ -47,6 +48,13 @@ function ptKnockoutAdminHtml(p) {
       <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
         <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>
       ${ptOwnerControlsHtml(true)}</div>`;
+}
+
+// Pley-off boshlanishidan oldingi izoh: ChL/YeL — top-Q va pley-off raundi; guruhli — g'oliblar
+function ptKoReadyHint(p) {
+  if (!p.single_table) return PTT("pt_semis_hint", { size: p.bracket_size });
+  const q = p.direct_count || p.bracket_size / 2;
+  return PTT("pt_po_hint", { q, from: q + 1, to: 3 * q, size: p.bracket_size });
 }
 
 function ptStartSemis(tid) {

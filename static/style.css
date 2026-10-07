@@ -5964,3 +5964,105 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .pt-rules-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 #pt-root .pt-pay-actions .btn, #pt-root .pt-next-actions .btn { letter-spacing: .4px; }
 @media (prefers-reduced-motion: reduce) { .pt-hero::after { animation: none; } }
+
+/* =============================================================
+   Shaxsiy turnir formatlari va klub tanlash (2026-10-07) — faqat #pt-root / .pt-*
+   ============================================================= */
+/* Yaratish: qadamlar, format kartalari, liga tanlash, doira */
+.pt-step { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-weight: 800; font-size: 14px; }
+.pt-step-n { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #04140c; background: linear-gradient(135deg, #7ee2b8, #22c55e); }
+.pt-fmt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pt-fmt { position: relative; overflow: hidden; min-height: 104px; border-radius: 14px; padding: 10px; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; color: #fff;
+  background: linear-gradient(180deg, rgba(5,10,20,.15), rgba(5,10,20,.9)), var(--pt-fmt-bg) center/cover no-repeat;
+  border: 1px solid rgba(255,255,255,.12); transition: transform .15s, border-color .15s; }
+.pt-fmt--el { background-position: center, left center; }
+.pt-fmt:last-child:nth-child(odd) { grid-column: 1 / -1; min-height: 80px; }
+.pt-fmt--sel { border-color: #7ee2b8; box-shadow: 0 0 0 2px rgba(126,226,184,.55), 0 8px 22px rgba(34,197,94,.25); }
+.pt-fmt--sel::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; color: #04140c; background: #7ee2b8; }
+.pt-fmt-icon { position: absolute; top: 8px; left: 10px; font-size: 18px; }
+.pt-fmt-name { font-family: var(--font-display); font-weight: 800; font-size: 14.5px; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+.pt-fmt-sub { font-size: 10.5px; line-height: 1.3; color: rgba(255,255,255,.78); }
+.pt-league-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.pt-league { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 14px; cursor: pointer;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border); color: var(--text-primary); }
+.pt-league img { width: 38px; height: 38px; object-fit: contain; }
+.pt-league-name { font-size: 12px; font-weight: 700; text-align: center; }
+.pt-league-n { font-size: 10.5px; color: var(--text-secondary); }
+.pt-league--sel { border-color: #7ee2b8; background: rgba(126,226,184,.1); box-shadow: 0 0 0 1px rgba(126,226,184,.35) inset; }
+.pt-legs { display: flex; }
+.pt-legs .tab-btn { flex: 1; }
+.pt-fixed-size { padding: 11px 12px; border-radius: 10px; font-weight: 700; background: rgba(255,255,255,.04); border: 1px solid var(--border); }
+/* Jamoa logosi / bayrog'i */
+.pt-tlogo { width: 20px; height: 20px; object-fit: contain; flex: 0 0 auto; vertical-align: middle; }
+.pt-tflag { font-size: 18px; line-height: 1; flex: 0 0 auto; vertical-align: middle; }
+.pt-tlogo--lg { width: 44px; height: 44px; }
+.pt-tflag.pt-tlogo--lg { font-size: 38px; }
+/* Jamoa tanlash oynasi */
+.pt-picker { display: flex; flex-direction: column; gap: 8px; }
+.pt-team-list { max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px; }
+.pt-team-sec { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--text-secondary); margin-top: 4px; }
+.pt-team-sec img { width: 18px; height: 18px; object-fit: contain; }
+.pt-team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.pt-team { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 12px;
+  cursor: pointer; color: var(--text-primary); background: rgba(255,255,255,.04); border: 1px solid var(--border); min-width: 0; }
+.pt-team .pt-tlogo { width: 30px; height: 30px; }
+.pt-team .pt-tflag { font-size: 26px; }
+.pt-team-name { font-size: 11px; line-height: 1.2; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-team--sel { border-color: #7ee2b8; background: rgba(126,226,184,.14); box-shadow: 0 0 0 1px rgba(126,226,184,.5) inset; }
+.pt-team--busy { opacity: .35; cursor: not-allowed; filter: grayscale(1); }
+.pt-team-busy { position: absolute; top: 3px; right: 4px; font-size: 9px; color: #f87171; }
+/* Mening klubim */
+.pt-myteam-row { display: flex; align-items: center; gap: 12px; }
+.pt-myteam-row .pt-mini--edit { margin-left: auto; }
+.pt-myteam-name { font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+/* Ishtirokchi kartochkasi: klub belgisi */
+.pt-mchip-ava-wrap { position: relative; }
+.pt-mchip-team { position: absolute; right: -6px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; background: #0b1220; border: 1px solid rgba(255,255,255,.2); }
+.pt-mchip-team .pt-tlogo { width: 16px; height: 16px; }
+.pt-mchip-team .pt-tflag { font-size: 14px; }
+.pt-mchip-club { font-size: 10.5px; color: var(--text-secondary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-card-fmt { font-size: 12px; color: #7ee2b8; }
+/* O'yin kartasi: logo + nom */
+.pt-mside { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pt-mside span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-mside--2 { justify-content: flex-end; }
+.pt-table-name .pt-tlogo, .pt-table-name .pt-tflag { margin-right: 6px; }
+/* Yagona jadval (liga / ChL / YeL) */
+.pt-table-scroll { overflow-x: auto; }
+.pt-table--full td, .pt-table--full th { padding-left: 3px; padding-right: 3px; }
+.pt-table-club { display: flex; align-items: center; gap: 6px; max-width: 190px; }
+.pt-club-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.pt-club-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pt-club-user { font-size: 10.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#pt-root .pt-table-club .pt-club-name { color: var(--text-primary); text-decoration: none; }
+.pt-pos { display: inline-flex; width: 22px; height: 22px; border-radius: 7px; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800; }
+.pt-zone-direct .pt-pos { background: rgba(34,197,94,.22); color: #4ade80; }
+.pt-zone-po .pt-pos { background: rgba(245,197,66,.18); color: #f5c542; }
+.pt-zone-champ .pt-pos { background: linear-gradient(135deg, #f5c542, #d4a017); color: #1a1200; }
+.pt-row-me td { background: rgba(126,226,184,.08); }
+.pt-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 11px; color: var(--text-secondary); margin: 10px 4px 0; }
+.pt-lg { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.pt-lg--direct { background: #22c55e; } .pt-lg--po { background: #f5c542; } .pt-lg--champ { background: #f5c542; }
+/* Sovrin: format kubogi va chempion klubi */
+.pt-champion-img { width: 120px; height: 140px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(245,197,66,.35)); }
+.pt-champion-team, .pt-prof-team { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.pt-prof-team { margin-bottom: 2px; }
+/* Hero: format fonlari */
+.pt-hero--el { background-position: left center !important; }
+.pt-hero--cl .pt-hero-overlay { background: linear-gradient(180deg, rgba(3,8,30,.25) 0%, rgba(3,8,30,.5) 40%, rgba(3,8,30,.94) 100%); }
+.pt-hero--el .pt-hero-overlay { background: linear-gradient(180deg, rgba(15,10,8,.45) 0%, rgba(15,10,8,.68) 45%, rgba(15,10,8,.94) 100%); }
+.pt-hero--wc .pt-hero-overlay, .pt-hero--league .pt-hero-overlay {
+  background: linear-gradient(180deg, rgba(5,8,15,.3) 0%, rgba(5,8,15,.55) 40%, rgba(5,8,15,.94) 100%); }
+.pt-hero--cl { border-color: rgba(90,140,255,.5); box-shadow: 0 14px 44px rgba(40,70,200,.35); }
+.pt-hero--el { border-color: rgba(255,150,105,.5); box-shadow: 0 14px 44px rgba(163,71,32,.4); }
+.pt-hero--wc { border-color: rgba(245,197,66,.5); box-shadow: 0 14px 44px rgba(160,120,20,.35); }
+.pt-hero--league { border-color: rgba(180,140,255,.45); box-shadow: 0 14px 44px rgba(90,60,180,.35); }
+.pt-hero-kicker { display: inline-flex; align-items: center; gap: 6px; }
+.pt-hero-lglogo { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 0 6px rgba(0,0,0,.6)); }
+.pt-head--banner[style] { background: linear-gradient(90deg, rgba(5,10,18,.94) 35%, rgba(5,10,18,.55)), var(--pt-head-bg) center 40%/cover no-repeat; }
+.pt-head--el[style] { background-position: 0 0, left center; }
+#pt-root .pt-table--full .pt-table-name { text-decoration: none; color: inherit; }
