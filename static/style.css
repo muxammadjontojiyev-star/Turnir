@@ -6107,3 +6107,7 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 
 /* Erkin format kubogi — billur kubok (2026-10-07): shaffof fonli PNG */
 .pt-champion-img--glass { width: 190px; height: auto; filter: drop-shadow(0 10px 26px rgba(120,200,255,.35)); }
+
+/* Katta hisob tasdig'i (2026-10-07) */
+.pt-big-note { text-align: center; font-size: 12.5px; color: #f5c542; }
+.pt-big-actions { justify-content: center; }

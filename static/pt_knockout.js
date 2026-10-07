@@ -61,3 +61,13 @@ function ptStartSemis(tid) {
   if (!window.confirm(PTT("pt_semis_ask"))) return;
   return ptPlayAction(tid, `/pt/${encodeURIComponent(tid)}/playoff/start`, null, "pt_semis_started");
 }
+
+// Javob o'yini (2-o'yin): 1-o'yin tasdiqlangan bo'lsa — yig'indi (shu o'yin uy egasi nuqtai nazaridan)
+function ptAggHtml(m, p) {
+  if ((m.leg || 1) !== 2) return "";
+  const l1 = (p.knockout || []).find(x => x.stage === m.stage && x.round === m.round && (x.leg || 1) === 1);
+  if (!l1 || l1.status !== "confirmed" || l1.score1 == null) return "";
+  const prev1 = l1.player1_id === m.player1_id ? l1.score1 : l1.score2, prev2 = l1.player1_id === m.player1_id ? l1.score2 : l1.score1;
+  const done = m.status === "confirmed" && m.score1 != null;
+  return `<div class="pt-agg">${escHtml(PTT(done ? "pt_aggregate" : "pt_first_leg"))}: <b>${done ? prev1 + m.score1 : prev1} : ${done ? prev2 + m.score2 : prev2}</b></div>`;
+}

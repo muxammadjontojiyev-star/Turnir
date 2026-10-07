@@ -128,6 +128,7 @@ function ptMyActionMatch(p) {
   const open = m => (m.stage === "group" ? m.round === p.current_round : true);
   // avval men tasdiqlashim kerak bo'lganlar, keyin natija kiritilmaganlar
   return mine.find(m => m.status === "awaiting_confirmation" && m.submitted_by !== p.me_id)
+    || mine.find(m => m.status === "admin_pending")
     || mine.find(m => m.status === "pending" && open(m) && m.player1_id && m.player2_id)
     || mine.find(m => m.status === "awaiting_confirmation");
 }
@@ -155,6 +156,11 @@ function ptNextStepHtml(t, p) {
   if (p.phase === "finished") {
     if ((p.champions || []).length > 1 && typeof ptLeagueChampionsHtml === "function") return ptLeagueChampionsHtml(t, p);
     return typeof ptChampionHtml === "function" ? ptChampionHtml(p) : "";
+  }
+  // 2026-10-07: boshqaruvchiga — tasdiq kutayotgan katta hisoblar birinchi
+  if ((p.big_pending || []).length && p.status === "running") {
+    return ptNextCard(PTT("pt_big_next", { n: p.big_pending.length }), PTT("pt_big_hint", { n: p.max_normal_score || 5 }),
+      `<div class="pt-next-actions"><button class="btn btn--primary btn--glow" data-pt-goto="admin">${escHtml(PTT("pt_big_open"))}</button></div>`);
   }
   const m = ptMyActionMatch(p);
   if (m && p.status === "running") {

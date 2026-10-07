@@ -12,7 +12,7 @@ const PT_PLAY_ERR = {
   bad_deadline: "pt_err_bad_deadline", not_enough_players: "pt_err_not_enough", not_multiple: "pt_err_not_multiple",
   wrong_status: "pt_err_wrong_status", not_owner: "pt_err_not_owner", match_not_found: "pt_err_match_404",
   draw_not_allowed: "pt_err_draw", not_ready: "pt_err_not_ready", next_stage_played: "pt_err_next_played",
-  first_leg_pending: "pt_err_first_leg", aggregate_draw: "pt_err_aggregate",
+  first_leg_pending: "pt_err_first_leg", aggregate_draw: "pt_err_aggregate", not_allowed: "pt_err_not_owner",
 };
 
 // O'yin bosqichi nomi (guruh turi yoki pley-off bosqichi) — karta va tuzatish oynasi uchun umumiy
@@ -120,6 +120,12 @@ function ptMatchCardHtml(m, p, mine) {
       <span>:</span>
       <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-s2-${m.id}">
       <button class="pt-mini pt-mini--ok" data-pt-submit="${m.id}">${escHtml(PTT("pt_submit"))}</button></div>`;
+  } else if (m.status === "admin_pending") {          // 2026-10-07: katta hisob — admin tasdig'ida
+    action = m.can_decide
+      ? `<div class="pt-big-note">${escHtml(PTT("pt_big_decide_hint"))}</div><div class="pt-row-actions pt-big-actions">
+           <button class="pt-mini pt-mini--ok" data-pt-big="${m.id}" data-pt-acc="1">${escHtml(PTT("pt_big_ok"))}</button>
+           <button class="pt-mini pt-mini--no" data-pt-big="${m.id}" data-pt-acc="0">${escHtml(PTT("pt_big_no"))}</button></div>`
+      : `<div class="pt-big-note">⚠️ ${escHtml(PTT("pt_big_wait"))}</div>`;
   } else if (mine && m.status === "awaiting_confirmation") {
     action = m.submitted_by === me
       ? `<div class="pt-muted">${escHtml(PTT("pt_wait_confirm"))}</div>`
@@ -138,15 +144,6 @@ function ptMatchCardHtml(m, p, mine) {
   return `<div class="match-item pt-match ${m.status === "confirmed" ? "pt-match--done" : ""}">${head}${names}${ptAggHtml(m, p)}${action}${tools}</div>`;
 }
 
-// Javob o'yini (2-o'yin): 1-o'yin tasdiqlangan bo'lsa — yig'indi (shu o'yin uy egasi nuqtai nazaridan)
-function ptAggHtml(m, p) {
-  if ((m.leg || 1) !== 2) return "";
-  const l1 = (p.knockout || []).find(x => x.stage === m.stage && x.round === m.round && (x.leg || 1) === 1);
-  if (!l1 || l1.status !== "confirmed" || l1.score1 == null) return "";
-  const prev1 = l1.player1_id === m.player1_id ? l1.score1 : l1.score2, prev2 = l1.player1_id === m.player1_id ? l1.score2 : l1.score1;
-  const done = m.status === "confirmed" && m.score1 != null;
-  return `<div class="pt-agg">${escHtml(PTT(done ? "pt_aggregate" : "pt_first_leg"))}: <b>${done ? prev1 + m.score1 : prev1} : ${done ? prev2 + m.score2 : prev2}</b></div>`;
-}
 
 // Guruh jadvallari: 26 guruhgacha bo'lishi mumkin — MENING guruhim birinchi va ochiq,
 // qolganlari yig'iq (<details>), 4 tadan kam bo'lsa hammasi ochiq.
@@ -231,6 +228,12 @@ function ptRoundOthersHtml(p) {
 function ptBindPlayBody(tid) {
   const q = (sel, fn) => document.querySelectorAll(`#pt-root ${sel}`).forEach(fn);
   q("[data-pt-submit]", b => b.addEventListener("click", () => void ptSubmitResult(tid, b.dataset.ptSubmit)));
+  q("[data-pt-big]", b => b.addEventListener("click", () => {
+    const accept = b.dataset.ptAcc === "1";
+    if (!accept && !window.confirm(PTT("pt_big_no_ask"))) return;
+    void ptPlayAction(tid, `/pt/match/${encodeURIComponent(b.dataset.ptBig)}/big-decide`, { accept },
+      accept ? "pt_big_ok_toast" : "pt_big_no_toast");
+  }));
   q("[data-pt-confirm]", b => b.addEventListener("click", () => void ptConfirmResult(tid, b.dataset.ptConfirm, true)));
   q("[data-pt-rejectres]", b => b.addEventListener("click", () => void ptConfirmResult(tid, b.dataset.ptRejectres, false)));
   document.getElementById("pt-deadline-btn")?.addEventListener("click", () => void ptSetDeadline(tid));
@@ -271,8 +274,11 @@ function ptSubmitResult(tid, mid) {
   const s1 = document.getElementById(`pt-s1-${mid}`)?.value;
   const s2 = document.getElementById(`pt-s2-${mid}`)?.value;
   if (s1 === "" || s2 === "" || s1 == null || s2 == null) return;
+  const lim = (PT.play && PT.play.max_normal_score) || 5;            // katta hisob — admin tasdig'iga ketadi
+  const big = Math.max(Number(s1), Number(s2)) > lim;
+  if (big && !window.confirm(PTT("pt_big_submit_ask", { n: lim }))) return;
   return ptPlayAction(tid, `/pt/match/${encodeURIComponent(mid)}/result`,
-    { score1: Number(s1), score2: Number(s2) }, "pt_result_sent");
+    { score1: Number(s1), score2: Number(s2) }, big ? "pt_big_sent" : "pt_result_sent");
 }
 
 function ptConfirmResult(tid, mid, accept) {

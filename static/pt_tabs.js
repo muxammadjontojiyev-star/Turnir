@@ -117,6 +117,8 @@ function ptTabAdmin(t, p) {
   const parts = [
     ptAdminHeaderHtml(t, p),
     ptSectionHtml("pt_adm_sec_start", ptPlayHtml(t)),
+    pm && (pm.big_pending || []).length ? ptSectionHtml("pt_adm_sec_big", `<div class="pt-hint">${escHtml(PTT("pt_big_hint", { n: pm.max_normal_score || 5 }))}</div>`
+      + pm.big_pending.map(m => ptMatchCardHtml(m, pm, false)).join("")) : "",
     pm ? ptSectionHtml(ko ? "pt_adm_sec_ko" : "pt_adm_sec_round", ptAdminPlayHtml(pm)) : "",
     pm && pm.phase !== "finished" && typeof ptFixCardHtml === "function" ? ptSectionHtml("pt_adm_sec_fix", ptFixCardHtml()) : "",
     typeof ptManageHtml === "function" ? ptSectionHtml("pt_adm_sec_invite", ptManageHtml(t)) : "",
@@ -192,5 +194,6 @@ function ptUpdateTabBadges(t, p) {
   const unread = Object.entries(PT.unread || {}).reduce((s, [id, n]) => s + (myIds.has(String(id)) ? n : 0), 0);
   setNavBadge(document.querySelector('#pt-root [data-pt-tab="profile"]'), unread);
   const pending = t.status === "recruiting" ? (t.members || []).filter(m => m.status === "pending").length : 0;
-  setNavBadge(document.querySelector('#pt-root [data-pt-tab="admin"]'), pending);
+  const big = ((p && p.big_pending) || []).length;                  // katta hisoblar ham
+  setNavBadge(document.querySelector('#pt-root [data-pt-tab="admin"]'), pending + big);
 }
