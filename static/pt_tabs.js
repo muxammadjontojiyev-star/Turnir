@@ -68,7 +68,7 @@ function ptTabPrizes(t, p) {
     : `<div class="pt-hint">${escHtml(PTT(t.format === "league" ? "pt_prize_hint_league" : "pt_prize_hint"))}</div>`;
   const cup = typeof ptTrophySrc === "function" && ptTrophySrc(t);      // 2026-10-07: format kubogi
   return `<div class="card pt-champion">
-      ${cup ? `<img class="pt-champion-img" src="${escHtml(cup)}" alt="" onerror="this.outerHTML='<div class=\'pt-champion-cup\'>🏆</div>'">`
+      ${cup ? `<img class="pt-champion-img${(t.format || "classic") === "classic" ? " pt-champion-img--glass" : ""}" src="${escHtml(cup)}" alt="" onerror="this.outerHTML='<div class=\'pt-champion-cup\'>🏆</div>'">`
         : `<div class="pt-champion-cup">🏆</div>`}
       <div class="pt-prize-title">${escHtml(PTT("pt_prize_title"))}</div>${holder}</div>
     ${final ? `<div class="section-label pt-label">${escHtml(PTT("pt_stage_final_h"))}</div>${ptMatchCardHtml(final, p, final.player1_id === p.me_id || final.player2_id === p.me_id)}` : ""}`;

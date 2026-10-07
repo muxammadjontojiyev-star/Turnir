@@ -12,7 +12,7 @@ const PT_FORMAT_META = {
   cl:      { icon: "⭐", bg: "cl-hero.jpg", trophy: "cl-trophy.png" },
   el:      { icon: "🟠", bg: "el-banner.jpg", trophy: "el-trophy.png" },
   wc:      { icon: "🌍", bg: "worldcup-banner.jpg", trophy: "wc-trophy.png" },
-  classic: { icon: "⚔️", bg: "pt-hero.jpg", trophy: null },
+  classic: { icon: "⚔️", bg: "pt-hero.jpg", trophy: "classic-trophy.png" },   // 2026-10-07: billur kubok
 };
 const PT_FORMAT_ORDER = ["league", "cl", "el", "wc", "classic"];
 
