@@ -6089,3 +6089,18 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .pt-agg { text-align: center; font-size: 12px; color: var(--text-secondary); }
 .pt-agg b { color: #f5c542; }
 .pt-hero-lglogo + .pt-hero-lglogo { margin-left: -4px; }
+
+/* Turnirni o'chirish (2026-10-07) */
+.pt-card-wrap { position: relative; }
+.pt-card-del { position: absolute; right: 10px; bottom: 10px; width: 32px; height: 32px; border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.35); }
+.pt-card-del:active { transform: scale(.94); }
+.pt-card-wrap .pt-card--rich { padding-bottom: 18px; }
+.pt-danger { border-color: rgba(239,68,68,.35) !important; }
+#pt-root .pt-btn-danger { width: 100%; color: #fff; background: linear-gradient(135deg, #b91c1c, #ef4444); border: none; }
+/* 🗑 o'ng chetda, o'q o'rnida — matn bilan ustma-ust tushmasin */
+.pt-card-wrap:has(.pt-card-del) .pt-card--rich { padding-right: 58px; padding-bottom: 14px; }
+.pt-card-wrap:has(.pt-card-del) .pt-card-arrow { display: none; }
+.pt-card-wrap .pt-card-del { top: 50%; bottom: auto; right: 12px; transform: translateY(-50%); }
+.pt-card-wrap .pt-card-del:active { transform: translateY(-50%) scale(.94); }

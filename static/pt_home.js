@@ -254,7 +254,9 @@ function ptListCardHtml(t) {
   const role = t.is_owner ? `<span class="pt-tag">${escHtml(PTT("pt_owner_tag"))}</span>`
     : t.is_admin ? `<span class="pt-tag pt-tag--admin">${escHtml(PTT("pt_admin_tag"))}</span>` : "";
   const max = t.max_players || 0;
-  return `<button class="pt-card pt-card--rich" data-pt-open="${t.id}">
+  const del = t.is_owner ? `<button class="pt-card-del" data-pt-del="${t.id}" data-pt-name="${escHtml(t.name)}"
+      data-pt-status="${escHtml(t.status)}" data-pt-paid="${escHtml(t.paid_via || "")}" aria-label="${escHtml(PTT("pt_del_btn"))}">🗑</button>` : "";
+  return `<div class="pt-card-wrap"><button class="pt-card pt-card--rich" data-pt-open="${t.id}">
       <div class="pt-card-top"><span class="pt-card-name">${escHtml(t.name)}</span>${role}</div>
       ${typeof ptFormatName === "function" ? `<div class="pt-card-fmt">${PT_FORMAT_META[ptFmt(t)].icon} ${escHtml(ptFormatName(ptFmt(t)))}${t.league_name ? " · " + escHtml(ptLeaguesText(t.league_name)) : ""}</div>` : ""}
       <div class="pt-card-meta">
@@ -263,5 +265,5 @@ function ptListCardHtml(t) {
       </div>
       ${max && t.status === "recruiting" ? ptProgressHtml(t.members_count, max) : ""}
       <span class="pt-card-arrow">›</span>
-    </button>`;
+    </button>${del}</div>`;
 }

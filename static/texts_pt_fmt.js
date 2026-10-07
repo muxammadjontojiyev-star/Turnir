@@ -3,6 +3,13 @@
 
 const PT_FMT_TEXTS = {
   uz: {
+    pt_adm_sec_delete: "🗑 TURNIRNI O'CHIRISH",
+    pt_del_hint: "Muddati o'tgan yoki xato ochilgan turnirni butunlay o'chirish. Barcha a'zolar, o'yinlar va chat o'chadi, qaytarib bo'lmaydi.",
+    pt_del_btn: "Turnirni o'chirish",
+    pt_del_ask: "«{name}» turnirini butunlay o'chirasizmi? Buni qaytarib bo'lmaydi.",
+    pt_del_ask_paid: "⚠️ Turnir uchun to'langan summa qaytarilmaydi.",
+    pt_del_ask_running: "⚠️ Turnir boshlangan — barcha o'yinlar va natijalar o'chadi, ishtirokchilarga xabar boradi.",
+    pt_deleted: "Turnir o'chirildi",
     pt_sum_leagues: "{k} ta liga · {n} klub · {rounds} tur · har liga o'z chempioni",
     pt_sum_classic2: "guruhda uy + mehmon, pley-offda javob o'yini (final — 1 o'yin)",
     pt_leagues_hint: "Bir nechta liga tanlash mumkin — har liga alohida jadval va chempion. Har qo'shimcha liga: +{price} so'm.",
@@ -73,6 +80,13 @@ const PT_FMT_TEXTS = {
       "Xona ID va kelishuvlar — o'yin chatida. Raqibingizga hurmat bilan munosabatda bo'ling.",
   },
   ru: {
+    pt_adm_sec_delete: "🗑 УДАЛИТЬ ТУРНИР",
+    pt_del_hint: "Полностью удалить просроченный или ошибочно созданный турнир. Участники, матчи и чат удаляются безвозвратно.",
+    pt_del_btn: "Удалить турнир",
+    pt_del_ask: "Удалить турнир «{name}» навсегда? Это нельзя отменить.",
+    pt_del_ask_paid: "⚠️ Оплаченная сумма не возвращается.",
+    pt_del_ask_running: "⚠️ Турнир уже начался — все матчи и результаты будут удалены, участники получат уведомление.",
+    pt_deleted: "Турнир удалён",
     pt_sum_leagues: "{k} лиги · {n} клубов · {rounds} туров · в каждой лиге свой чемпион",
     pt_sum_classic2: "в группах дома + в гостях, в плей-офф ответный матч (финал — 1 матч)",
     pt_leagues_hint: "Можно выбрать несколько лиг — у каждой своя таблица и чемпион. Каждая доп. лига: +{price} сум.",
@@ -143,6 +157,13 @@ const PT_FMT_TEXTS = {
       "ID комнаты и договорённости — в чате матча. Уважайте соперника.",
   },
   en: {
+    pt_adm_sec_delete: "🗑 DELETE TOURNAMENT",
+    pt_del_hint: "Permanently delete an expired or mistakenly created tournament. Members, matches and chat are removed for good.",
+    pt_del_btn: "Delete tournament",
+    pt_del_ask: "Delete «{name}» permanently? This can't be undone.",
+    pt_del_ask_paid: "⚠️ The amount paid for the tournament is not refunded.",
+    pt_del_ask_running: "⚠️ The tournament has started — all matches and results will be deleted and players notified.",
+    pt_deleted: "Tournament deleted",
     pt_sum_leagues: "{k} leagues · {n} clubs · {rounds} rounds · each league has its own champion",
     pt_sum_classic2: "home + away in groups, two-legged play-off ties (final — 1 match)",
     pt_leagues_hint: "You can pick several leagues — each has its own table and champion. Each extra league: +{price} UZS.",

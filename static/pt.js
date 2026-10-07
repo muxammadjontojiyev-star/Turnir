@@ -124,6 +124,7 @@ function ptRenderList() {
   document.getElementById("pt-sub-open")?.addEventListener("click", () => void ptOpenSub());
   document.querySelectorAll("#pt-root [data-pt-open]").forEach(el =>
     el.addEventListener("click", () => void ptOpenDetail(el.dataset.ptOpen)));
+  if (typeof ptBindDelete === "function") ptBindDelete();          // 2026-10-07: 🗑 o'chirish
 }
 
 // Yaratish formasi (format, liga, sig'im, to'lov) — pt_create.js (2026-10-07)

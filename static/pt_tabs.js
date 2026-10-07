@@ -91,7 +91,7 @@ function ptLeagueChampionsHtml(t, p) {
 // Admin paneli sarlavhasi: rol, kutilayotgan so'rovlar, joriy tur/bosqich, muddat (rasmiy turnirlar kabi)
 function ptAdminHeaderHtml(t, p) {
   const pending = (t.members || []).filter(m => m.status === "pending").length;
-  const stage = !p ? PTT("pt_status_" + t.status) : p.phase === "finished" ? PTT("pt_status_finished")
+  const stage = !p ? "—" : p.phase === "finished" ? PTT("pt_status_finished")
     : p.phase ? PTT("pt_ko_short") : `${Math.min(p.current_round, p.total_rounds)}/${p.total_rounds}`;
   const stat = (v, l, cls = "") => `<div class="stat-card"><span class="stat-card-value ${cls}">${escHtml(String(v))}</span>
       <span class="stat-card-label">${escHtml(PTT(l))}</span></div>`;
@@ -123,6 +123,7 @@ function ptTabAdmin(t, p) {
     t.status === "recruiting" && typeof ptMembersHtml === "function" ? ptMembersHtml(t) : "",
     typeof ptAdminsHtml === "function" ? ptAdminsHtml(t) : "",
     typeof ptSizeEditHtml === "function" ? ptSectionHtml("pt_adm_sec_settings", ptSizeEditHtml(t)) : "",
+    typeof ptDeleteHtml === "function" ? ptSectionHtml("pt_adm_sec_delete", ptDeleteHtml(t)) : "",
   ];
   const body = parts.filter(Boolean).join("");
   return body || `<div class="empty-state">${escHtml(PTT("pt_admin_nothing"))}</div>`;
@@ -180,6 +181,7 @@ function ptBindDetail(t) {
   if (typeof ptBindManage === "function") ptBindManage(t);
   if (typeof ptBindPlay === "function") ptBindPlay(t);
   if (typeof ptBindAdmins === "function") ptBindAdmins(t);
+  if (typeof ptBindDelete === "function") ptBindDelete();
   if (PT.play && typeof ptBindPlayBody === "function") ptBindPlayBody(t.id);
 }
 
