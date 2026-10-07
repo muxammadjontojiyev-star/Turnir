@@ -96,6 +96,10 @@ async def pt_match_result(match_id: int, score1: int = Body(..., embed=True),
     ok, r = pt_submit_result(match_id, user["id"], score1, score2)
     if not ok:
         raise HTTPException(status_code=400, detail=r)
+    if r.get("admin_pending"):                         # 2026-10-07: katta hisob — qaror qiluvchilarga xabar
+        from notify import notify_members
+        spawn(notify_members(r["deciders"], "pt_notify_big_score", name=r["name"], match=match_id, score=r["score"]))
+        return {"status": "admin_pending"}
     opp = r.get("opponent")
     if opp:
         from notify import notify_user
@@ -145,3 +149,20 @@ def pt_player(tournament_id: int, user_id: int, user: dict = Depends(get_authent
         raise HTTPException(status_code=404, detail=r)
     return r
 
+
+
+@router.post("/pt/match/{match_id}/big-decide")
+async def pt_big_decide(match_id: int, accept: bool = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    """2026-10-07: katta hisob (admin_pending) — tashkilotchi/turnir admini (o'yinda o'ynamayotgan) yoki bosh admin.
+    Xato: match_not_found, not_allowed, wrong_status -> 400"""
+    from pt_bigscore import pt_decide_big
+    ok, r = pt_decide_big(match_id, user["id"], accept, is_super=_is_super(user))
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    from notify import notify_members
+    key = {"confirmed": "pt_notify_big_ok", "rejected": "pt_notify_big_rejected", "zeroed": "pt_notify_big_zeroed"}[r["status"]]
+    spawn(notify_members(r["players"], key, match=match_id))
+    if r["advance"].get("event"):
+        name, members = tournament_members(r["tournament_id"])
+        spawn(notify_advance(name, members, r["advance"]))
+    return {"status": r["status"], "event": r["advance"].get("event")}

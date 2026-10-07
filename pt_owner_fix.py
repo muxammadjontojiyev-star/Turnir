@@ -85,7 +85,7 @@ def pt_owner_match_info(match_id: int, owner_id: int) -> tuple[bool, str | dict]
                   "player1": names.get(m["player1_id"]), "player2": names.get(m["player2_id"]),
                   "stage": m["stage"], "leg": m["leg"],
                   "can_cancel": (m["round"] == m["current_round"]) if m["stage"] == "group"
-                                else m["status"] == "awaiting_confirmation"}
+                                else m["status"] in ("awaiting_confirmation", "admin_pending")}
 
 
 def pt_owner_set_result(match_id: int, owner_id: int, score1: int, score2: int) -> tuple[bool, str | dict]:
@@ -123,7 +123,7 @@ def pt_owner_cancel(match_id: int, owner_id: int) -> tuple[bool, str]:
             return False, why
         if m["stage"] == "group" and m["round"] != m["current_round"]:
             return False, "round_closed"
-        if m["stage"] != "group" and m["status"] != "awaiting_confirmation":
+        if m["stage"] != "group" and m["status"] not in ("awaiting_confirmation", "admin_pending"):
             return False, "wrong_status"     # tasdiqlangan pley-off — faqat tuzatish (set)
         cursor.execute("UPDATE pt_matches SET score1 = NULL, score2 = NULL, submitted_by = NULL, "
                        "status = 'pending' WHERE id = ?", (match_id,))

@@ -228,6 +228,27 @@ TEXTS = {
         LANGUAGE_RU: "🏁 Турнир «{name}» начался! Вы в группе {group}. Смотрите свои матчи в приложении.",
         LANGUAGE_EN: "🏁 «{name}» has started! You're in group {group}. See your matches in the app.",
     },
+    # 2026-10-07: shaxsiy turnirda katta hisob tasdig'i
+    "pt_notify_big_score": {
+        LANGUAGE_UZ: "⚠️ «{name}»: #{match} o'yinda katta hisob kiritildi ({score}). Tasdiqlang yoki rad eting — ilovada Admin bo'limi.",
+        LANGUAGE_RU: "⚠️ «{name}»: в матче #{match} внесён крупный счёт ({score}). Подтвердите или отклоните — раздел Админ в приложении.",
+        LANGUAGE_EN: "⚠️ «{name}»: a big score was entered in match #{match} ({score}). Approve or reject it — Admin section in the app.",
+    },
+    "pt_notify_big_ok": {
+        LANGUAGE_UZ: "✅ #{match} o'yindagi katta hisob tasdiqlandi.",
+        LANGUAGE_RU: "✅ Крупный счёт в матче #{match} подтверждён.",
+        LANGUAGE_EN: "✅ The big score in match #{match} was approved.",
+    },
+    "pt_notify_big_rejected": {
+        LANGUAGE_UZ: "❌ #{match} o'yindagi katta hisob rad etildi — natijani qayta kiriting.",
+        LANGUAGE_RU: "❌ Крупный счёт в матче #{match} отклонён — внесите результат заново.",
+        LANGUAGE_EN: "❌ The big score in match #{match} was rejected — enter the result again.",
+    },
+    "pt_notify_big_zeroed": {
+        LANGUAGE_UZ: "❌ #{match} o'yindagi katta hisob rad etildi. Tur yopilgani uchun natija 0:0.",
+        LANGUAGE_RU: "❌ Крупный счёт в матче #{match} отклонён. Тур закрыт — результат 0:0.",
+        LANGUAGE_EN: "❌ The big score in match #{match} was rejected. The round is closed, so the result is 0:0.",
+    },
     "pt_notify_deleted": {
         LANGUAGE_UZ: "🗑 «{name}» turniri tashkilotchi tomonidan o'chirildi.",
         LANGUAGE_RU: "🗑 Турнир «{name}» удалён организатором.",

@@ -4,7 +4,8 @@ pt_results.py — SHAXSIY turnir guruh o'yinlari: ko'rinish, natija, jadval (4-b
 Natija oqimi (rasmiy turnirlar kabi): pending -> (o'yinchi kiritadi) awaiting_confirmation
 -> (raqib tasdiqlaydi) confirmed | (raqib rad etadi) pending.
 Faqat JORIY turning o'yinlari kiritiladi (server tekshiruvi — qoida #41).
-Katta hisob bosh adminga ketmaydi: shaxsiy turnirning admini — tashkilotchi (4b).
+2026-10-07: katta hisob (MAX_NORMAL_SCORE dan ko'p) -> admin_pending — tashkilotchi/turnir admini
+(o'yinda o'ynamayotgan) yoki bosh admin tasdiqlaydi (pt_bigscore.py).
 Jadval: ochko (3/1/0) > gol farqi > urilgan gol; ppg — o'yin boshiga ochko
 (turli o'lchamdagi guruhlarni solishtirish uchun, 5-bosqich).
 """
@@ -111,6 +112,10 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         conn.close()
     cur = t["current_round"]
     fmt = t["format"] or "classic"
+    from config import MAX_NORMAL_SCORE
+    for x in matches:                                    # 2026-10-07: katta hisob — kim qaror qila oladi
+        if x["status"] == "admin_pending":
+            x["can_decide"] = bool(is_super or (manager and user_id not in (x["player1_id"], x["player2_id"])))
     n_players = sum(len(r) for r in standings.values())
     from pt_formats import cl_direct_count, is_single_table, split_leagues
     from pt_knockout import STAGES, pt_bracket_size
@@ -128,6 +133,8 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         "phase": phase,                     # None | ko_ready | r64..final (joriy bosqich) | finished
         "bracket_size": pt_bracket_size(fmt, standings),
         # 2026-10-07: format (yagona jadval — liga/ChL/YeL), ChL/YeL zonalari: top-Q setka, Q+1..3Q pley-off raundi
+        "max_normal_score": MAX_NORMAL_SCORE,
+        "big_pending": [x for x in matches if x["status"] == "admin_pending" and x.get("can_decide")],
         "format": fmt, "league_name": t["league_name"], "legs": t["legs"], "single_table": is_single_table(fmt),
         "direct_count": cl_direct_count(n_players) if fmt in ("cl", "el") else None,
         # 2026-10-07: ko'p ligali turnir — har liga chempioni (jadval birinchisi), tanlash tartibida
@@ -186,15 +193,23 @@ def pt_submit_result(match_id: int, user_id: int, score1: int, score2: int) -> t
             why = ko_draw_check(cursor, m, score1, score2)
             if why:
                 return False, why
+        # 2026-10-07: katta hisob (rasmiy turnirlar kabi, MAX_NORMAL_SCORE) — admin tasdig'iga (pt_bigscore)
+        from pt_bigscore import STATUS_ADMIN_PENDING, deciders, is_big_score
+        big = is_big_score(score1, score2)
         cursor.execute(
-            "UPDATE pt_matches SET score1 = ?, score2 = ?, submitted_by = ?, status = 'awaiting_confirmation' "
-            "WHERE id = ? AND status = 'pending'", (score1, score2, user_id, match_id))
+            "UPDATE pt_matches SET score1 = ?, score2 = ?, submitted_by = ?, status = ? "
+            "WHERE id = ? AND status = 'pending'",
+            (score1, score2, user_id, STATUS_ADMIN_PENDING if big else "awaiting_confirmation", match_id))
         if cursor.rowcount != 1:
             return False, "already_submitted"
         opp = m["player2_id"] if m["player1_id"] == user_id else m["player1_id"]
         cursor.execute("SELECT telegram_id, language FROM users WHERE id = ?", (opp,))
         o = cursor.fetchone()
-        return True, {"opponent": dict(o) if o else None}
+        cursor.execute("SELECT name FROM pt_tournaments WHERE id = ?", (m["tournament_id"],))
+        name = cursor.fetchone()["name"]
+        return True, {"opponent": dict(o) if o else None, "admin_pending": big, "name": name,
+                      "deciders": deciders(cursor, m["tournament_id"], m["player1_id"], m["player2_id"]) if big else [],
+                      "score": f"{score1}:{score2}"}
     return _tx(run)
 
 
