@@ -9,6 +9,7 @@ Obunada bir vaqtda faol (yig'ilayotgan/davom etayotgan) turnirlar: SUB_ACTIVE_LI
 """
 
 from config import (
+    PT_PRICE_EXTRA_LEAGUE_UZS,
     PT_PRICE_L_UZS,
     PT_PRICE_M_UZS,
     PT_PRICE_MONTH_UZS,
@@ -37,6 +38,20 @@ def price_for_size(n: int) -> int:
     return next(p for t, _, p in TIERS if t == tier)
 
 
+def price_for_tournament(fmt: str, max_players: int, league: str | None = None) -> int:
+    """
+    2026-10-07: liga formatida narx = bitta liga (eng katta liga sig'imi) narxi + har bir QO'SHIMCHA liga
+    uchun PT_PRICE_EXTRA_LEAGUE_UZS (standart 3000). Boshqa formatlarda — sig'im pog'onasi.
+    Asosiy narx 0 bo'lsa (pog'ona yopiq) — 0 qaytadi (price_not_set).
+    """
+    if fmt == "league":
+        from pt_formats import LEAGUE_CLUBS, split_leagues
+        leagues = split_leagues(league)
+        base = price_for_size(max((len(LEAGUE_CLUBS.get(lg, ())) for lg in leagues), default=max_players))
+        return base + PT_PRICE_EXTRA_LEAGUE_UZS * max(0, len(leagues) - 1) if base > 0 else 0
+    return price_for_size(max_players)
+
+
 def plan_info(plan: str) -> tuple[int, int] | None:
     """(kunlar, narx) yoki None (noma'lum yoki narxi belgilanmagan tarif)."""
     info = PLANS.get(plan)
@@ -51,4 +66,5 @@ def public_pricing() -> dict:
         tiers.append({"tier": tier, "min": lo, "max": top, "price_uzs": price})
         lo = top + 4
     plans = [{"plan": p, "days": d, "price_uzs": pr} for p, (d, pr) in PLANS.items() if pr > 0]
-    return {"tiers": tiers, "plans": plans, "sub_active_limit": SUB_ACTIVE_LIMIT}
+    return {"tiers": tiers, "plans": plans, "sub_active_limit": SUB_ACTIVE_LIMIT,
+            "extra_league_uzs": PT_PRICE_EXTRA_LEAGUE_UZS}

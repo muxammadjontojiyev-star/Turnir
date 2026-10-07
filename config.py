@@ -126,6 +126,8 @@ PT_PRICE_UZS = int(os.getenv("PT_PRICE_UZS", "0") or 0)          # bir martalik,
 # 2026-10-03: narx pog'onalari (bir martalik) va obunalar. 0/bo'sh — o'sha variant ko'rinmaydi.
 PT_PRICE_M_UZS = int(os.getenv("PT_PRICE_M_UZS", "0") or 0)      # bir martalik, 24–64 kishi
 PT_PRICE_L_UZS = int(os.getenv("PT_PRICE_L_UZS", "0") or 0)      # bir martalik, 68–128 kishi
+# 2026-10-07: liga formatida 2-chi va keyingi har bir liga uchun qo'shimcha narx (faqat bir martalik to'lovda)
+PT_PRICE_EXTRA_LEAGUE_UZS = int(os.getenv("PT_PRICE_EXTRA_LEAGUE_UZS", "3000") or 0)
 PT_PRICE_WEEK_UZS = int(os.getenv("PT_PRICE_WEEK_UZS", "0") or 0)    # obuna: 7 kun
 PT_PRICE_MONTH_UZS = int(os.getenv("PT_PRICE_MONTH_UZS", "0") or 0)  # obuna: 30 kun
 PT_PRICE_YEAR_UZS = int(os.getenv("PT_PRICE_YEAR_UZS", "0") or 0)    # obuna: 365 kun

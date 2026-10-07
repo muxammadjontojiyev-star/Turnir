@@ -212,4 +212,5 @@ def pt_create_with_mode(user: dict, name: str, max_players: int, pay_mode: str, 
         finally:
             conn.close()
         return pt_create_tournament(user, name, 0, max_players, via_subscription=True, **extra)
-    return pt_create_tournament(user, name, price_for_size(max_players), max_players, **extra)
+    from pt_pricing import price_for_tournament        # liga: +3000 har qo'shimcha liga uchun
+    return pt_create_tournament(user, name, price_for_tournament(fmt, max_players, league), max_players, **extra)

@@ -14,6 +14,7 @@ next_stage_played (pley-offda g'olib o'tgan keyingi o'yin allaqachon tasdiqlanga
 import logging
 
 from models import get_connection
+from pt_core import is_manager
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +22,24 @@ logger = logging.getLogger(__name__)
 def _load(cursor, match_id: int):
     cursor.execute(
         "SELECT m.id, m.stage, m.round, m.player1_id, m.player2_id, m.score1, m.score2, m.status, "
-        "m.group_label, t.owner_user_id, t.status AS t_status, t.current_round, t.id AS tid "
+        "m.group_label, m.leg, t.owner_user_id, t.status AS t_status, t.current_round, t.id AS tid "
         "FROM pt_matches m JOIN pt_tournaments t ON t.id = m.tournament_id WHERE m.id = ?", (match_id,))
     r = cursor.fetchone()
     return dict(r) if r else None
 
 
+def _load_for(cursor, match_id: int, user_id: int) -> dict | None:
+    """_load + is_manager (tashkilotchi yoki turnir admini)."""
+    m = _load(cursor, match_id)
+    if m:
+        m["is_manager"] = is_manager(cursor, m["tid"], user_id, m["owner_user_id"])
+    return m
+
+
 def _check(m: dict | None, owner_id: int) -> str | None:
     if not m:
         return "match_not_found"
-    if m["owner_user_id"] != owner_id:
+    if not m["is_manager"]:
         return "not_owner"
     if m["t_status"] != "running":
         return "not_running"
@@ -64,7 +73,7 @@ def pt_owner_match_info(match_id: int, owner_id: int) -> tuple[bool, str | dict]
         m = _load(cursor, match_id)
         if not m:
             return False, "match_not_found"
-        if m["owner_user_id"] != owner_id:
+        if not is_manager(cursor, m["tid"], owner_id, m["owner_user_id"]):
             return False, "not_owner"
         cursor.execute("SELECT id, nickname, username FROM users WHERE id IN (?, ?)",
                        (m["player1_id"], m["player2_id"]))
@@ -74,7 +83,7 @@ def pt_owner_match_info(match_id: int, owner_id: int) -> tuple[bool, str | dict]
     return True, {"id": m["id"], "round": m["round"], "group_label": m["group_label"], "status": m["status"],
                   "score1": m["score1"], "score2": m["score2"],
                   "player1": names.get(m["player1_id"]), "player2": names.get(m["player2_id"]),
-                  "stage": m["stage"],
+                  "stage": m["stage"], "leg": m["leg"],
                   "can_cancel": (m["round"] == m["current_round"]) if m["stage"] == "group"
                                 else m["status"] == "awaiting_confirmation"}
 
@@ -82,12 +91,15 @@ def pt_owner_match_info(match_id: int, owner_id: int) -> tuple[bool, str | dict]
 def pt_owner_set_result(match_id: int, owner_id: int, score1: int, score2: int) -> tuple[bool, str | dict]:
     """Pley-offda durang taqiqlanadi (draw_not_allowed); keyin pt_advance (final/chempion)."""
     def run(cursor):
-        m = _load(cursor, match_id)
+        m = _load_for(cursor, match_id, owner_id)
         why = _check(m, owner_id)
         if why:
             return False, why
-        if m["stage"] != "group" and score1 == score2:
-            return False, "draw_not_allowed"
+        if m["stage"] != "group":                    # 2026-10-07: javob o'yinida yig'indi tekshiruvi
+            from pt_legs import ko_draw_check
+            why = ko_draw_check(cursor, {**m, "id": match_id}, score1, score2)
+            if why:
+                return False, why
         if m["stage"] != "group":
             from pt_knockout import pt_next_match_locked
             if pt_next_match_locked(cursor, m["tid"], m["stage"], m["round"]):
@@ -105,7 +117,7 @@ def pt_owner_set_result(match_id: int, owner_id: int, score1: int, score2: int) 
 
 def pt_owner_cancel(match_id: int, owner_id: int) -> tuple[bool, str]:
     def run(cursor):
-        m = _load(cursor, match_id)
+        m = _load_for(cursor, match_id, owner_id)
         why = _check(m, owner_id)
         if why:
             return False, why

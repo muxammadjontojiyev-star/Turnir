@@ -94,9 +94,11 @@ async def notify_round_result(res: dict) -> None:
                                       open_button_key="btn_open_app", name=res["name"], count=res["pending"])
             await notify_advance(res["name"], res["members"], res.get("advance"))
             return
-        if res.get("champion_id"):                       # 2026-10-07: liga yakunlandi — chempion
-            await notify_members(res["members"], "pt_notify_champion", name=res["name"],
-                                 champion=_label(res["champion_id"]))
+        if res.get("champion_id"):                       # 2026-10-07: liga yakunlandi — har liga chempioni
+            champs = res.get("champions") or [(None, res["champion_id"])]
+            for lg, uid in champs:
+                title = f"{res['name']} · {lg}" if lg and len(champs) > 1 else res["name"]
+                await notify_members(res["members"], "pt_notify_champion", name=title, champion=_label(uid))
         elif res["groups_finished"]:
             key = "pt_notify_table_done" if res.get("single_table") else "pt_notify_groups_done"
             await notify_members(res["members"], key, name=res["name"])

@@ -108,10 +108,11 @@ def _close_round(cursor, t: dict) -> dict:
         "UPDATE pt_tournaments SET current_round = current_round + 1, round_deadline = NULL, "
         "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (tid,))
     finished = cur + 1 > t["total_rounds"]
-    champion = _finish_league(cursor, tid) if finished else None
+    champions = _finish_league(cursor, tid) if finished else None
     return {"id": tid, "name": t["name"], "closed_round": cur, "next_round": cur + 1,
             "groups_finished": finished, "awaiting": awaiting, "zero": zero,
-            "champion_id": champion, "single_table": _single_table(cursor, tid),
+            "champion_id": champions[0][1] if champions else None, "champions": champions,
+            "single_table": _single_table(cursor, tid),
             "members": members_for_notify(cursor, tid)}
 
 
@@ -122,23 +123,28 @@ def _single_table(cursor, tid: int) -> bool:
     return bool(r and is_single_table(r["format"] or "classic"))
 
 
-def _finish_league(cursor, tid: int) -> int | None:
+def _finish_league(cursor, tid: int) -> list | None:
     """
-    2026-10-07: LIGA formati — oxirgi tur yopilgach pley-off yo'q: jadval birinchisi chempion,
-    turnir 'finished'. Boshqa formatlarda None (guruhdan keyin pley-off). Idempotent.
+    2026-10-07: LIGA formati — oxirgi tur yopilgach pley-off yo'q: har liga jadvali birinchisi chempion,
+    turnir 'finished' (champion_user_id — birinchi liga chempioni). Boshqa formatlarda None. Idempotent.
+    Qaytaradi: [(liga, user_id), ...] (tanlash tartibida).
     """
-    cursor.execute("SELECT format FROM pt_tournaments WHERE id = ?", (tid,))
+    cursor.execute("SELECT format, league_name FROM pt_tournaments WHERE id = ?", (tid,))
     r = cursor.fetchone()
     if not r or r["format"] != "league":
         return None
+    from pt_formats import split_leagues
     from pt_results import pt_group_standings          # sikl importdan qochish (pt_results -> pt_rounds)
-    rows = next(iter(pt_group_standings(cursor, tid).values()), [])
-    if not rows:
+    st = pt_group_standings(cursor, tid)
+    order = split_leagues(r["league_name"])
+    champs = [(g, rows[0]["user_id"]) for g, rows in sorted(st.items(), key=lambda kv: order.index(kv[0])
+                                                              if kv[0] in order else 99) if rows]
+    if not champs:
         return None
     cursor.execute("UPDATE pt_tournaments SET status = 'finished', champion_user_id = ?, "
                    "finished_at = CURRENT_TIMESTAMP, round_deadline = NULL, updated_at = CURRENT_TIMESTAMP "
-                   "WHERE id = ? AND status = 'running'", (rows[0]["user_id"], tid))
-    return rows[0]["user_id"] if cursor.rowcount else None
+                   "WHERE id = ? AND status = 'running'", (champs[0][1], tid))
+    return champs if cursor.rowcount else None
 
 
 def pt_set_deadline(tid: int, owner_id: int, local_value: str) -> tuple[bool, str | dict]:

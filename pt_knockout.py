@@ -20,6 +20,7 @@ import logging
 
 from models import get_connection
 from pt_core import is_manager
+from pt_legs import insert_ties, ko_legs, ko_ties, update_tie_players
 from pt_results import pt_group_standings
 
 logger = logging.getLogger(__name__)
@@ -141,21 +142,15 @@ def pt_start_knockout(cursor, tid: int) -> tuple[str, list[tuple[int, int]]]:
         stage, pairs = STAGE_PO, cl_po_pairs(_ranking(standings))
     else:
         stage, pairs = pt_first_round_pairs(standings)
-    cursor.executemany(
-        "INSERT INTO pt_matches (tournament_id, stage, round, player1_id, player2_id) VALUES (?, ?, ?, ?, ?)",
-        [(tid, stage, i, a, b) for i, (a, b) in enumerate(pairs, start=1)])
+    insert_ties(cursor, tid, stage, pairs, ko_legs(cursor, tid))    # erkin 2 doira — javob o'yini bilan
     cursor.execute("UPDATE pt_tournaments SET round_deadline = NULL, updated_at = CURRENT_TIMESTAMP "
                    "WHERE id = ?", (tid,))
     return stage, pairs
 
 
 def _ko_by_stage(cursor, tid: int) -> dict[str, list[dict]]:
-    cursor.execute("SELECT id, stage, round, player1_id, player2_id, score1, score2, status FROM pt_matches "
-                   "WHERE tournament_id = ? AND stage != 'group' ORDER BY round", (tid,))
-    out: dict[str, list[dict]] = {}
-    for r in cursor.fetchall():
-        out.setdefault(r["stage"], []).append(dict(r))
-    return out
+    """2026-10-07: juftliklar (ikki o'yinli bo'lsa — yig'indi bilan), pt_legs.ko_ties."""
+    return ko_ties(cursor, tid)
 
 
 def pt_advance(cursor, tid: int) -> dict:
@@ -185,10 +180,9 @@ def pt_advance(cursor, tid: int) -> dict:
                 w = [_slot(a) for a in slots[j]] if j < len(slots) else [None]
             else:
                 w = [_winner(x) for x in by[s][2 * j:2 * j + 2]]
-            if None in w or [m["player1_id"], m["player2_id"]] == w or m["status"] == "confirmed":
+            if None in w or [m["player1_id"], m["player2_id"]] == w or m["any_confirmed"]:
                 continue
-            cursor.execute("UPDATE pt_matches SET player1_id = ?, player2_id = ?, score1 = NULL, score2 = NULL, "
-                           "submitted_by = NULL, status = 'pending' WHERE id = ?", (w[0], w[1], m["id"]))
+            update_tie_players(cursor, m, w[0], w[1])
             m.update(player1_id=w[0], player2_id=w[1], status="pending", score1=None, score2=None)
             updated = {"event": "stage_updated", "stage": nxt, "players": w}
     last = present[-1]
@@ -206,9 +200,7 @@ def pt_advance(cursor, tid: int) -> dict:
     else:
         nxt = STAGES[STAGES.index(last) + 1]
         pairs = [(winners[i], winners[i + 1]) for i in range(0, len(winners), 2)]
-    cursor.executemany(
-        "INSERT INTO pt_matches (tournament_id, stage, round, player1_id, player2_id) VALUES (?, ?, ?, ?, ?)",
-        [(tid, nxt, i, a, b) for i, (a, b) in enumerate(pairs, start=1)])
+    insert_ties(cursor, tid, nxt, pairs, ko_legs(cursor, tid))
     cursor.execute("UPDATE pt_tournaments SET round_deadline = NULL WHERE id = ?", (tid,))
     return {"event": "stage_created", "stage": nxt, "pairs": pairs,
             "players": list(pairs[0]) if nxt == STAGE_FINAL else None}
@@ -226,10 +218,9 @@ def pt_next_match_locked(cursor, tid: int, stage: str, rnd: int) -> bool:
         nxt, nrnd = STAGE_FOR_SIZE[2 * len(slots)], j + 1
     else:
         nxt, nrnd = STAGES[STAGES.index(stage) + 1], (rnd + 1) // 2
-    cursor.execute("SELECT status FROM pt_matches WHERE tournament_id = ? AND stage = ? AND round = ?",
-                   (tid, nxt, nrnd))
-    r = cursor.fetchone()
-    return bool(r and r["status"] == "confirmed")
+    cursor.execute("SELECT 1 FROM pt_matches WHERE tournament_id = ? AND stage = ? AND round = ? "
+                   "AND status = 'confirmed'", (tid, nxt, nrnd))          # ikki o'yinli: birortasi tasdiqlangan
+    return cursor.fetchone() is not None
 
 
 def pt_knockout_phase(cursor, tid: int) -> str | None:

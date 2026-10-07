@@ -22,7 +22,7 @@ def pt_set_capacity(tid: int, owner_id: int, max_players: int) -> tuple[bool, st
     Sabablar: bad_size, not_found, not_owner, already_started, below_members, tier_locked, price_not_set.
     """
     from pt_formats import valid_size_for
-    from pt_pricing import price_for_size, tier_for_size
+    from pt_pricing import price_for_tournament, tier_for_size
     if isinstance(max_players, bool) or not isinstance(max_players, int):
         return False, "bad_size"
     conn = get_connection()
@@ -50,7 +50,7 @@ def pt_set_capacity(tid: int, owner_id: int, max_players: int) -> tuple[bool, st
                 why = "below_members"
             elif t["paid_via"] == "one_time":
                 if t["status"] in (STATUS_AWAITING_PAYMENT, STATUS_REJECTED):
-                    new_price = price_for_size(max_players)
+                    new_price = price_for_tournament(t["format"] or "classic", max_players, t["league_name"])
                     if new_price <= 0:
                         why = "price_not_set"
                 elif tier_for_size(max_players) != tier_for_size(t["max_players"]):

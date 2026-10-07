@@ -90,12 +90,12 @@ def can_start_with(n: int) -> str | None:
 
 def check_format(fmt: str, league: str | None, legs: int, max_players: int) -> str | None:
     """2026-10-07: format, liga, doira va sig'im tekshiruvi. None — to'g'ri, aks holda sabab."""
-    from pt_formats import FMT_LEAGUE, LEAGUE_CLUBS, LEGS_ALLOWED, valid_format, valid_size_for
+    from pt_formats import FMT_LEAGUE, LEGS_ALLOWED, LEGS_FORMATS, valid_format, valid_leagues, valid_size_for
     if not valid_format(fmt):
         return "bad_format"
-    if fmt == FMT_LEAGUE and league not in LEAGUE_CLUBS:
+    if fmt == FMT_LEAGUE and not valid_leagues(league):
         return "bad_league"
-    if legs not in LEGS_ALLOWED or (legs == 2 and fmt != FMT_LEAGUE):
+    if legs not in LEGS_ALLOWED or (legs == 2 and fmt not in LEGS_FORMATS):
         return "bad_legs"
     return None if valid_size_for(fmt, max_players, league) else "bad_size"
 
@@ -105,7 +105,8 @@ def pt_create_tournament(user: dict, name: str, price_uzs: int,
                          via_subscription: bool = False, fmt: str = "classic",
                          league: str | None = None, legs: int = 1) -> tuple[bool, str | dict]:
     """
-    2026-10-07: fmt (classic|league|cl|el|wc), league (faqat league), legs (1|2, faqat league).
+    2026-10-07: fmt (classic|league|cl|el|wc), league (faqat league; ro'yxat yoki "A|B" — ko'p liga),
+    legs (1|2 — league va classic).
     via_subscription=True — faol obuna bilan: to'lovsiz, darhol 'recruiting', paid_via='subscription'
     (obuna va limit tekshiruvi chaqiruvchida — pt_subscriptions.pt_create_with_mode).
     Sabablar: price_not_set, bad_size, name_too_short, name_too_long, too_many_unpaid.
@@ -116,7 +117,8 @@ def pt_create_tournament(user: dict, name: str, price_uzs: int,
     why = check_format(fmt, league, legs, max_players)
     if why:
         return False, why
-    league = league if fmt == "league" else None
+    from pt_formats import join_leagues
+    league = join_leagues(league) if fmt == "league" else None       # ko'p liga: "A|B"
     name = _clean_name(name)
     if len(name) < PT_NAME_MIN:
         return False, "name_too_short"

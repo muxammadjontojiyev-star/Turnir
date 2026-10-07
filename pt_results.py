@@ -16,7 +16,7 @@ from pt_rounds import utc_to_local_text
 
 logger = logging.getLogger(__name__)
 
-_MATCH_COLS = ("m.id, m.stage, m.group_label, m.round, m.player1_id, m.player2_id, m.score1, m.score2, "
+_MATCH_COLS = ("m.id, m.stage, m.group_label, m.round, m.leg, m.player1_id, m.player2_id, m.score1, m.score2, "
                "m.status, m.submitted_by, u1.nickname AS p1_name, u1.username AS p1_username, "
                "u2.nickname AS p2_name, u2.username AS p2_username, "
                "pm1.team_name AS p1_team, pm2.team_name AS p2_team")
@@ -74,6 +74,11 @@ def pt_group_standings(cursor, tid: int) -> dict[str, list[dict]]:
     return dict(sorted(groups.items()))
 
 
+def _ordered(standings: dict, order: list[str]) -> list:
+    """Liga jadvallari tanlash tartibida (qolganlari oxirida)."""
+    return sorted(standings.items(), key=lambda kv: order.index(kv[0]) if kv[0] in order else len(order))
+
+
 def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
     """O'yin ko'rinishi: tur, muddat, guruh jadvallari, mening o'yinlarim, joriy tur o'yinlari."""
     conn = get_connection()
@@ -107,10 +112,10 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
     cur = t["current_round"]
     fmt = t["format"] or "classic"
     n_players = sum(len(r) for r in standings.values())
-    from pt_formats import cl_direct_count, is_single_table
+    from pt_formats import cl_direct_count, is_single_table, split_leagues
     from pt_knockout import STAGES, pt_bracket_size
     _order = {"group": 0, **{s: i + 1 for i, s in enumerate(STAGES)}}
-    matches.sort(key=lambda m: (_order.get(m["stage"], 9), m["round"] or 0, m["group_label"] or "", m["id"]))
+    matches.sort(key=lambda m: (_order.get(m["stage"], 9), m["round"] or 0, m["group_label"] or "", m["leg"] or 1, m["id"]))
     return {
         "status": t["status"], "current_round": cur, "total_rounds": t["total_rounds"],
         "groups_finished": cur > t["total_rounds"] > 0,
@@ -125,6 +130,12 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         # 2026-10-07: format (yagona jadval — liga/ChL/YeL), ChL/YeL zonalari: top-Q setka, Q+1..3Q pley-off raundi
         "format": fmt, "league_name": t["league_name"], "legs": t["legs"], "single_table": is_single_table(fmt),
         "direct_count": cl_direct_count(n_players) if fmt in ("cl", "el") else None,
+        # 2026-10-07: ko'p ligali turnir — har liga chempioni (jadval birinchisi), tanlash tartibida
+        "leagues": split_leagues(t["league_name"]) if fmt == "league" else [],
+        "champions": [{"league": g, "user_id": rows[0]["user_id"], "nickname": rows[0]["nickname"],
+                       "username": rows[0]["username"], "team_name": rows[0]["team_name"]}
+                      for g, rows in _ordered(standings, split_leagues(t["league_name"])) if rows]
+                     if fmt == "league" and t["status"] == "finished" else [],
         "knockout": [m for m in matches if m["stage"] != "group"],
         "champion": dict(ch) if ch else None,
     }
@@ -170,8 +181,11 @@ def pt_submit_result(match_id: int, user_id: int, score1: int, score2: int) -> t
             return False, "not_running"
         if m["stage"] == "group" and m["round"] != m["current_round"]:
             return False, "round_closed"
-        if m["stage"] != "group" and score1 == score2:       # pley-offda durang yo'q (5-bosqich)
-            return False, "draw_not_allowed"
+        if m["stage"] != "group":                            # pley-off: durang yo'q; javob o'yinida — yig'indi
+            from pt_legs import ko_draw_check
+            why = ko_draw_check(cursor, m, score1, score2)
+            if why:
+                return False, why
         cursor.execute(
             "UPDATE pt_matches SET score1 = ?, score2 = ?, submitted_by = ?, status = 'awaiting_confirmation' "
             "WHERE id = ? AND status = 'pending'", (score1, score2, user_id, match_id))
@@ -246,7 +260,7 @@ def pt_get_player(tid: int, viewer_id: int, target_id: int, is_super: bool = Fal
         conn.close()
     from pt_knockout import STAGES
     order = {"group": 0, **{s: i + 1 for i, s in enumerate(STAGES)}}
-    matches.sort(key=lambda m: (order.get(m["stage"], 9), m["round"] or 0, m["id"]))
+    matches.sort(key=lambda m: (order.get(m["stage"], 9), m["round"] or 0, m["leg"] or 1, m["id"]))
     group, pos, row = u["group_label"], None, None
     for i, r in enumerate(standings.get(group, []), start=1):
         if r["user_id"] == target_id:

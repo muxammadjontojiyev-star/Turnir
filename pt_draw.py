@@ -16,7 +16,7 @@ import random
 
 from models import get_connection
 from pt_core import PT_GROUP_SIZE, PT_MAX_PLAYERS, STATUS_RECRUITING, STATUS_RUNNING, is_manager, start_block
-from pt_formats import FMT_LEAGUE, TABLE_LABEL, is_single_table, swiss_rounds
+from pt_formats import FMT_LEAGUE, TABLE_LABEL, club_league, is_single_table, split_leagues, swiss_rounds
 from schedule import _generate_round_robin_pairs
 
 logger = logging.getLogger(__name__)
@@ -45,18 +45,22 @@ def pt_split_groups(player_ids: list[int], rng: random.Random | None = None) -> 
     return groups
 
 
-def pt_build_group_schedule(groups: dict[str, list[int]]) -> list[tuple[str, int, int, int]]:
-    """[(guruh, tur, player1, player2), ...] — har guruh 1 doira, tur raqamlari umumiy."""
+def pt_build_group_schedule(groups: dict[str, list[int]], legs: int = 1) -> list[tuple[str, int, int, int]]:
+    """[(guruh, tur, player1, player2), ...] — har guruh 1 doira (legs=2: 2-doira uy/mehmon almashgan),
+    tur raqamlari umumiy."""
     out = []
     for label, ids in groups.items():
-        for rnd, pairs in enumerate(_generate_round_robin_pairs(ids), start=1):
+        rounds = _generate_round_robin_pairs(ids)
+        if legs == 2:
+            rounds = rounds + [[(b, a) for a, b in r] for r in rounds]
+        for rnd, pairs in enumerate(rounds, start=1):
             for p1, p2 in pairs:
                 out.append((label, rnd, p1, p2))
     return out
 
 
 def pt_build_table_schedule(fmt: str, ids: list[int], legs: int = 1,
-                            rng: random.Random | None = None) -> list[tuple[str, int, int, int]]:
+                            rng: random.Random | None = None, label: str = TABLE_LABEL) -> list[tuple[str, int, int, int]]:
     """
     2026-10-07: yagona jadval (guruhsiz) — [(TABLE_LABEL, tur, player1, player2), ...].
       league: har kim har kim bilan 1 yoki 2 doira (2-doirada uy/mehmon almashadi, turlar davomi).
@@ -71,7 +75,7 @@ def pt_build_table_schedule(fmt: str, ids: list[int], legs: int = 1,
             rounds = rounds + [[(b, a) for a, b in r] for r in rounds]
     else:
         rounds = rounds[:swiss_rounds(len(ids))]
-    return [(TABLE_LABEL, rnd, p1, p2) for rnd, pairs in enumerate(rounds, start=1) for p1, p2 in pairs]
+    return [(label, rnd, p1, p2) for rnd, pairs in enumerate(rounds, start=1) for p1, p2 in pairs]
 
 
 def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
@@ -111,12 +115,18 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
             return False, reason
 
         fmt = t["format"] or "classic"
-        if is_single_table(fmt):                       # liga / ChL / YeL — yagona jadval
+        if fmt == FMT_LEAGUE:                          # liga: har tanlangan liga — alohida jadval (guruh = liga nomi)
+            groups = {lg: [] for lg in split_leagues(t["league_name"])}
+            for mbr in members:
+                groups.setdefault(club_league(mbr["team_name"], t["league_name"]) or TABLE_LABEL, []).append(mbr["user_id"])
+            schedule = [row for lg, ids in groups.items()
+                        for row in pt_build_table_schedule(fmt, ids, t["legs"] or 1, label=lg)]
+        elif is_single_table(fmt):                     # ChL / YeL — yagona jadval
             groups = {TABLE_LABEL: players}
             schedule = pt_build_table_schedule(fmt, players, t["legs"] or 1)
-        else:                                          # erkin / JCh — 4 kishilik guruhlar
+        else:                                          # erkin / JCh — 4 kishilik guruhlar (erkin: 1 yoki 2 doira)
             groups = pt_split_groups(players)
-            schedule = pt_build_group_schedule(groups)
+            schedule = pt_build_group_schedule(groups, t["legs"] or 1)
         total_rounds = max(r for _, r, _, _ in schedule)
 
         cursor.execute("DELETE FROM pt_members WHERE tournament_id = ? AND status = 'pending'", (tid,))

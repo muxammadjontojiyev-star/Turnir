@@ -50,7 +50,8 @@ def pt_my(user: dict = Depends(get_authenticated_user)):
 @router.post("/pt/create")
 def pt_create(name: str = Body(..., embed=True), max_players: int = Body(8, embed=True),
               pay_mode: str = Body("one_time", embed=True), format: str = Body("classic", embed=True),
-              league: str | None = Body(None, embed=True), legs: int = Body(1, embed=True),
+              league: str | None = Body(None, embed=True), leagues: list[str] | None = Body(None, embed=True),
+              legs: int = Body(1, embed=True),
               user: dict = Depends(get_authenticated_user)):
     """
     pay_mode: one_time (narx sig'im pog'onasidan) | subscription (faol obuna, to'lovsiz).
@@ -60,7 +61,7 @@ def pt_create(name: str = Body(..., embed=True), max_players: int = Body(8, embe
     """
     from pt_subscriptions import pt_create_with_mode
     ok, result = pt_create_with_mode(user, name, max_players, "subscription" if pay_mode == "subscription" else "one_time",
-                                     fmt=format, league=league, legs=legs)
+                                     fmt=format, league=leagues or league, legs=legs)
     if not ok:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}
