@@ -163,6 +163,9 @@ function ptBindDetail(t) {
     document.querySelector("#pt-root .pt-body")?.scrollTo?.(0, 0);
     window.scrollTo(0, 0);
   }));
+  document.querySelectorAll("#pt-root [data-pt-lgtab]").forEach(b => b.addEventListener("click", () => {
+    PT.lgTab = b.dataset.ptLgtab; ptRenderDetailTabs();              // liga / To'p urarlar tablari
+  }));
   document.querySelectorAll("#pt-root [data-pt-rtab]").forEach(b => b.addEventListener("click", () => {
     PT.ratingTab = b.dataset.ptRtab; ptRenderDetailTabs();
   }));

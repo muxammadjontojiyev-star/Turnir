@@ -6111,3 +6111,12 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 /* Katta hisob tasdig'i (2026-10-07) */
 .pt-big-note { text-align: center; font-size: 12.5px; color: #f5c542; }
 .pt-big-actions { justify-content: center; }
+
+/* Liga formati Reytingi — rasmiy ligalar sahifasi klasslari (2026-10-07) */
+#pt-root .pt-lg-filter { margin-bottom: 4px; }
+#pt-root .pt-lg-filter .tab-btn { display: inline-flex; align-items: center; gap: 6px; }
+#pt-root .pt-rt-card { overflow-x: auto; }
+#pt-root .pt-rating-table { min-width: 540px; }
+#pt-root .pt-rt-logo { width: 24px; height: 24px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
+#pt-root .pt-rt-league { font-size: 12px; white-space: nowrap; }
+#pt-root .pt-rt-league .tab-league-logo { vertical-align: middle; margin-right: 4px; }

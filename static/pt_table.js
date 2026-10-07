@@ -14,6 +14,7 @@ function ptZoneOf(p, i) {
 }
 
 function ptTableHtml(p, meId) {
+  if (p.format === "league") return ptLeagueRatingHtml(p, meId);     // rasmiy ligalar Reyting sahifasi kabi
   // 2026-10-07: ko'p ligali turnir — har liga alohida jadval (tanlash tartibida)
   const st = p.standings || {};
   const keys = Object.keys(st).sort((a, b) => {
@@ -48,4 +49,62 @@ function ptOneTableHtml(p, key, rows, meId) {
       <div class="pt-table-scroll"><table class="pt-table pt-table--full"><thead><tr><th>#</th><th></th>
         ${th("pt_col_p")}${th("pt_col_w")}${th("pt_col_d")}${th("pt_col_l")}${th("pt_col_gd")}${th("pt_col_pts")}</tr></thead>
         <tbody>${body}</tbody></table></div>${legend}</div>`;
+}
+
+// =============================================================
+//  2026-10-07: LIGA formati — Reyting rasmiy ligalar sahifasi kabi (api.js renderRatingFilter /
+//  renderRatingTable naqshi, o'sha klasslar): liga tablari (logo bilan) + "⚽ To'p urarlar",
+//  .rating-table (# · O'yinchi · B G D M GF GA GD), top-3 rang/fon, o'z qatorim (is-me).
+//  Bitta liga bo'lsa tablarda faqat o'sha liga va To'p urarlar.
+// =============================================================
+
+function ptLgT(key, def) { return (typeof APP !== "undefined" && APP.t && APP.t[key]) || def; }
+
+function ptLeagueKeys(p) {
+  const st = p.standings || {}, o = p.leagues || [];
+  return Object.keys(st).sort((a, b) => (o.includes(a) ? o.indexOf(a) : 99) - (o.includes(b) ? o.indexOf(b) : 99));
+}
+
+function ptPlayerCellHtml(r) {
+  const logo = r.team_name ? ptTeamBadge(r.team_name, "pt-rt-logo") : "";
+  return `<div class="player-cell">${logo}<div class="player-cell-text">
+      <span class="player-clubname">${escHtml(r.team_name || r.nickname || "")}</span>
+      ${r.username ? `<span class="player-username">@${escHtml(r.username)}</span>` : ""}</div></div>`;
+}
+
+function ptLeagueRatingHtml(p, meId) {
+  const keys = ptLeagueKeys(p);
+  if (!keys.includes(PT.lgTab) && PT.lgTab !== "scorers") PT.lgTab = keys[0];
+  const tab = (id, label, logo) => `<button class="tab-btn${PT.lgTab === id ? " active" : ""}" data-pt-lgtab="${escHtml(id)}">${logo}<span>${escHtml(label)}</span></button>`;
+  const tabs = `<div class="tab-filter pt-lg-filter">${keys.map(k => tab(k, k,
+      typeof renderLeagueLogo === "function" ? renderLeagueLogo(k, "tab-league-logo") : "")).join("")}
+    ${tab("scorers", ptLgT("tab_top_scorers", "⚽ To'p urarlar"), "")}</div>`;
+  if (PT.lgTab === "scorers") return tabs + ptScorersHtml(p, keys);
+  const rows = (p.standings || {})[PT.lgTab] || [];
+  const body = rows.map((r, i) => {
+    const rank = i + 1, gd = (r.goal_diff >= 0 ? "+" : "") + r.goal_diff;
+    return `<tr class="rating-row${r.user_id === meId ? " is-me" : ""}" data-pt-player="${r.user_id}">
+        <td${rank <= 3 ? ` class="rank-${rank}"` : ""}>${rank}</td><td>${ptPlayerCellHtml(r)}</td>
+        <td class="pts">${r.points}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td>
+        <td>${r.goals_for}</td><td>${r.goals_against}</td><td>${gd}</td></tr>`;
+  }).join("");
+  return `${tabs}<div class="card card--flat card--table pt-rt-card"><table class="rating-table pt-rating-table">
+      <thead><tr><th>#</th><th>${escHtml(ptLgT("th_player", "O'yinchi"))}</th><th>${escHtml(ptLgT("th_pts", "B"))}</th>
+        <th>${escHtml(ptLgT("th_w", "G"))}</th><th>${escHtml(ptLgT("th_d", "D"))}</th><th>${escHtml(ptLgT("th_l", "M"))}</th>
+        <th>${escHtml(ptLgT("th_gf", "GF"))}</th><th>${escHtml(ptLgT("th_ga", "GA"))}</th><th>${escHtml(ptLgT("th_gd", "GD"))}</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="9" class="empty-state">${escHtml(ptLgT("no_data", "Ma'lumot yo'q"))}</td></tr>`}</tbody></table></div>`;
+}
+
+// To'p urarlar — barcha tanlangan ligalar bo'yicha urilgan gollar (rasmiy kabi)
+function ptScorersHtml(p, keys) {
+  const all = keys.flatMap(k => ((p.standings || {})[k] || []).map(r => ({ ...r, league: k })))
+    .filter(r => r.goals_for > 0).sort((a, b) => b.goals_for - a.goals_for);
+  const body = all.map((r, i) => `<tr class="rating-row" data-pt-player="${r.user_id}">
+      <td${i < 3 ? ` class="rank-${i + 1}"` : ""}>${i + 1}</td><td>${ptPlayerCellHtml(r)}</td>
+      <td class="pt-rt-league">${typeof renderLeagueLogo === "function" ? renderLeagueLogo(r.league, "tab-league-logo") : ""}${escHtml(r.league)}</td>
+      <td class="pts">${r.goals_for}</td></tr>`).join("");
+  return `<div class="card card--flat card--table pt-rt-card"><table class="rating-table">
+      <thead><tr><th>#</th><th>${escHtml(ptLgT("th_player", "O'yinchi"))}</th><th>${escHtml(ptLgT("th_league", "Liga"))}</th>
+        <th>${escHtml(ptLgT("th_goals_col", "Gol"))}</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="4" class="empty-state">${escHtml(ptLgT("no_data", "Ma'lumot yo'q"))}</td></tr>`}</tbody></table></div>`;
 }
