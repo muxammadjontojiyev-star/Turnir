@@ -186,3 +186,18 @@ def pt_rules_save(tournament_id: int, rules: str = Body("", embed=True),
     if not ok:
         raise HTTPException(status_code=404 if r == "not_found" else 400, detail=r)
     return {"status": "ok", "rules": clean_rules(rules) or None}
+
+
+@router.post("/pt/{tournament_id}/delete")
+async def pt_delete(tournament_id: int, user: dict = Depends(get_authenticated_user)):
+    """2026-10-07: turnirni o'chirish — FAQAT tashkilotchi yoki bosh admin. Xato: not_owner -> 403, not_found -> 404.
+    A'zolarga xabar FONDA (pt_notify.spawn)."""
+    from pt_delete import pt_delete_tournament
+    ok, r = pt_delete_tournament(tournament_id, user["id"], is_super=_is_super(user))
+    if not ok:
+        raise HTTPException(status_code=404 if r == "not_found" else 403, detail=r)
+    if r["members"]:
+        from notify import notify_members
+        from pt_notify import spawn
+        spawn(notify_members(r["members"], "pt_notify_deleted", name=r["name"]))
+    return {"status": "ok"}

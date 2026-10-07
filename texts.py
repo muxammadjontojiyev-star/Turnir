@@ -228,6 +228,11 @@ TEXTS = {
         LANGUAGE_RU: "🏁 Турнир «{name}» начался! Вы в группе {group}. Смотрите свои матчи в приложении.",
         LANGUAGE_EN: "🏁 «{name}» has started! You're in group {group}. See your matches in the app.",
     },
+    "pt_notify_deleted": {
+        LANGUAGE_UZ: "🗑 «{name}» turniri tashkilotchi tomonidan o'chirildi.",
+        LANGUAGE_RU: "🗑 Турнир «{name}» удалён организатором.",
+        LANGUAGE_EN: "🗑 The «{name}» tournament was deleted by the organizer.",
+    },
     # 2026-10-07: yagona jadvalli formatlar (liga / ChL / YeL)
     "pt_notify_started_table": {
         LANGUAGE_UZ: "🏁 «{name}» turniri boshlandi! Jadval {rounds} turdan iborat. O'yinlaringizni ilovada ko'ring.",
