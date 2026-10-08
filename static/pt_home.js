@@ -213,6 +213,7 @@ function ptTabHome(t, p) {
     t.is_super && !t.is_owner ? `<div class="pt-note pt-super-note">🛡 ${escHtml(PTT("pt_super_note", { owner: t.owner_username ? "@" + t.owner_username : (t.owner_nickname || "") }))}</div>` : "",
     ptMyTeamHtml(t),
     ptNextStepHtml(t, p),
+    typeof ptSupportCardHtml === "function" ? ptSupportCardHtml(t) : "",       // 2026-10-08: tashkilotchiga yozish
     typeof ptRulesHtml === "function" ? ptRulesHtml(t) : "",
     ptMembersGridHtml(t, p),
   ].filter(Boolean).join("");

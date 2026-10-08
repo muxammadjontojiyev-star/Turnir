@@ -123,6 +123,7 @@ function ptTabAdmin(t, p) {
     ptSectionHtml("pt_adm_sec_start", ptPlayHtml(t)),
     pm && (pm.big_pending || []).length ? ptSectionHtml("pt_adm_sec_big", `<div class="pt-hint">${escHtml(PTT("pt_big_hint", { n: pm.max_normal_score || 5 }))}</div>`
       + pm.big_pending.map(m => ptMatchCardHtml(m, pm, false)).join("")) : "",
+    typeof ptSupportAdminHtml === "function" ? ptSectionHtml("pt_adm_sec_support", ptSupportAdminHtml(t)) : "",   // 2026-10-08
     pm ? ptSectionHtml(ko ? "pt_adm_sec_ko" : "pt_adm_sec_round", ptAdminPlayHtml(pm)) : "",
     pm && pm.phase !== "finished" && typeof ptFixCardHtml === "function" ? ptSectionHtml("pt_adm_sec_fix", ptFixCardHtml()) : "",
     typeof ptManageHtml === "function" ? ptSectionHtml("pt_adm_sec_invite", ptManageHtml(t)) : "",
@@ -192,6 +193,7 @@ function ptBindDetail(t) {
   if (typeof ptBindPlay === "function") ptBindPlay(t);
   if (typeof ptBindAdmins === "function") ptBindAdmins(t);
   if (typeof ptBindDelete === "function") ptBindDelete();
+  if (typeof ptBindSupport === "function") ptBindSupport(t);         // 2026-10-08: tashkilotchi chati
   if (PT.play && typeof ptBindPlayBody === "function") ptBindPlayBody(t.id);
 }
 
@@ -203,5 +205,7 @@ function ptUpdateTabBadges(t, p) {
   setNavBadge(document.querySelector('#pt-root [data-pt-tab="profile"]'), unread);
   const pending = t.status === "recruiting" ? (t.members || []).filter(m => m.status === "pending").length : 0;
   const big = ((p && p.big_pending) || []).length;                  // katta hisoblar ham
-  setNavBadge(document.querySelector('#pt-root [data-pt-tab="admin"]'), pending + big);
+  const sup = t.support_unread || 0;                                 // 2026-10-08: ishtirokchilar xabarlari
+  setNavBadge(document.querySelector('#pt-root [data-pt-tab="admin"]'), pending + big + (ptIsManager(t) ? sup : 0));
+  if (!ptIsManager(t)) setNavBadge(document.querySelector('#pt-root [data-pt-tab="home"]'), sup);
 }
