@@ -219,14 +219,13 @@ def pt_list_my_tournaments(user_id: int) -> list[dict]:
 
 
 def start_block(t: dict, members: list[dict]) -> str | None:
-    """Boshlash to'sig'i formatga qarab; jamoali formatlarda hamma klub/jamoa tanlagan bo'lishi shart."""
-    from pt_formats import can_start_fmt, uses_teams
+    """Boshlash to'sig'i formatga qarab (sig'im, juftlik). Jamoa tanlamaganlar to'sqinlik qilmaydi (2026-10-08)."""
+    from pt_formats import can_start_fmt
     approved = [m for m in members if m["status"] == "approved"]
     fmt = t.get("format") or "classic"
-    why = can_start_fmt(fmt, len(approved), t["max_players"])
-    if not why and uses_teams(fmt) and any(not m.get("team_name") for m in approved):
-        why = "teams_missing"
-    return why
+    # 2026-10-08: klub tanlamaganlar endi to'siq EMAS — qur'ada ularga bo'sh klub tasodifiy beriladi
+    # (pt_draw.assign_missing_teams; masalan tashkilotchi o'zi klub tanlamay qolgan bo'lsa ham boshlanadi)
+    return can_start_fmt(fmt, len(approved), t["max_players"])
 
 
 def _support_unread(tid: int, user_id: int, manager: bool) -> int:

@@ -16,7 +16,7 @@ import random
 
 from models import get_connection
 from pt_core import PT_GROUP_SIZE, PT_MAX_PLAYERS, STATUS_RECRUITING, STATUS_RUNNING, is_manager, start_block
-from pt_formats import FMT_LEAGUE, TABLE_LABEL, club_league, is_single_table, split_leagues, swiss_rounds
+from pt_formats import FMT_LEAGUE, TABLE_LABEL, club_league, is_single_table, split_leagues, swiss_rounds, teams_for, uses_teams
 from schedule import _generate_round_robin_pairs
 
 logger = logging.getLogger(__name__)
@@ -78,11 +78,37 @@ def pt_build_table_schedule(fmt: str, ids: list[int], legs: int = 1,
     return [(label, rnd, p1, p2) for rnd, pairs in enumerate(rounds, start=1) for p1, p2 in pairs]
 
 
+def assign_missing_teams(cursor, tid: int, fmt: str, league: str | None, members: list[dict],
+                         rng: random.Random | None = None) -> list[tuple[int, str]] | None:
+    """
+    2026-10-08: qur'ada klub/jamoa tanlamagan ishtirokchilarga bo'sh klub TASODIFIY beriladi
+    (admin so'rovi: tashkilotchi o'zi klub tanlamagan, joylar to'lgan — qur'a to'xtab qolmasin).
+    Liga formatida sig'im = klublar soni, shuning uchun bo'sh klublar aynan yetadi.
+    members (o'zgaradi: team_name to'ldiriladi). Qaytaradi [(user_id, team)] yoki None (klub yetmasa).
+    """
+    missing = [m for m in members if not m.get("team_name")]
+    if not missing:
+        return []
+    taken = {m["team_name"] for m in members if m.get("team_name")}
+    free = [x for x in teams_for(fmt, league) if x not in taken]
+    if len(free) < len(missing):
+        return None
+    (rng or random).shuffle(free)
+    out = []
+    for m, team in zip(missing, free):
+        m["team_name"] = team
+        cursor.execute("UPDATE pt_members SET team_name = ? WHERE tournament_id = ? AND user_id = ?",
+                       (team, tid, m["user_id"]))
+        out.append((m["user_id"], team))
+    logger.info("PT #%s: %s kishiga klub qur'ada berildi: %s", tid, len(out), out)
+    return out
+
+
 def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     """
     Tashkilotchi turnirni boshlaydi: pending so'rovlar o'chiriladi, qur'a, o'yinlar.
     Sabablar: not_found, not_owner, not_recruiting, not_enough_players, not_multiple, too_many_players,
-    2026-10-07: not_even (ChL/YeL), league_not_full (liga), teams_missing (jamoa tanlamaganlar bor).
+    2026-10-07: not_even (ChL/YeL), league_not_full (liga). 2026-10-08: klub tanlamaganlarga bo'sh klub beriladi.
     1-tur ochiladi (muddatsiz — tashkilotchi belgilaydi).
     """
     conn = get_connection()
@@ -115,6 +141,11 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
             return False, reason
 
         fmt = t["format"] or "classic"
+        cursor.execute("DELETE FROM pt_members WHERE tournament_id = ? AND status = 'pending'", (tid,))   # ularning klubi bo'shaydi
+        auto = assign_missing_teams(cursor, tid, fmt, t["league_name"], members) if uses_teams(fmt) else []
+        if auto is None:                               # bo'sh klub yetmadi (bo'lmasligi kerak — sig'im = klublar soni)
+            cursor.execute("ROLLBACK")
+            return False, "teams_missing"
         if fmt == FMT_LEAGUE:                          # liga: har tanlangan liga — alohida jadval (guruh = liga nomi)
             groups = {lg: [] for lg in split_leagues(t["league_name"])}
             for mbr in members:
@@ -129,7 +160,6 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
             schedule = pt_build_group_schedule(groups, t["legs"] or 1)
         total_rounds = max(r for _, r, _, _ in schedule)
 
-        cursor.execute("DELETE FROM pt_members WHERE tournament_id = ? AND status = 'pending'", (tid,))
         for label, ids in groups.items():
             cursor.executemany(
                 "UPDATE pt_members SET group_label = ? WHERE tournament_id = ? AND user_id = ?",
@@ -154,4 +184,5 @@ def pt_start_tournament(tid: int, owner_id: int) -> tuple[bool, str | dict]:
     logger.info("PT #%s boshlandi: %s ishtirokchi, %s guruh, %s o'yin, %s tur",
                 tid, len(players), len(groups), len(schedule), total_rounds)
     return True, {"groups": {k: len(v) for k, v in groups.items()},
-                  "matches": len(schedule), "total_rounds": total_rounds, "name": t["name"], "format": fmt}
+                  "matches": len(schedule), "total_rounds": total_rounds, "name": t["name"], "format": fmt,
+                  "auto_teams": len(auto)}
