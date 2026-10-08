@@ -33,6 +33,10 @@ def pt_delete_tournament(tid: int, user_id: int, is_super: bool = False) -> tupl
         members = [dict(r) for r in cursor.fetchall()]
         cursor.execute("DELETE FROM pt_messages WHERE match_id IN (SELECT id FROM pt_matches WHERE tournament_id = ?)",
                        (tid,))
+        # 2026-10-08: ishtirokchi <-> tashkilotchi chati
+        cursor.execute("DELETE FROM pt_support_messages WHERE thread_id IN "
+                       "(SELECT id FROM pt_support_threads WHERE tournament_id = ?)", (tid,))
+        cursor.execute("DELETE FROM pt_support_threads WHERE tournament_id = ?", (tid,))
         for table in ("pt_matches", "pt_members", "pt_admins", "pt_receipts"):
             cursor.execute(f"DELETE FROM {table} WHERE tournament_id = ?", (tid,))
         cursor.execute("DELETE FROM pt_tournaments WHERE id = ?", (tid,))

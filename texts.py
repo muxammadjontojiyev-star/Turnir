@@ -254,6 +254,17 @@ TEXTS = {
         LANGUAGE_RU: "🗑 Турнир «{name}» удалён организатором.",
         LANGUAGE_EN: "🗑 The «{name}» tournament was deleted by the organizer.",
     },
+    # 2026-10-08: ishtirokchi <-> tashkilotchi chati (pt_support.py)
+    "pt_notify_support_msg": {
+        LANGUAGE_UZ: "💬 {who} «{name}» turniri bo'yicha sizga yozdi:\n{preview}\n\nJavob berish: ilova → turnir → Admin → Ishtirokchilar xabarlari.",
+        LANGUAGE_RU: "💬 {who} написал(а) вам по турниру «{name}»:\n{preview}\n\nОтветить: приложение → турнир → Админ → Сообщения участников.",
+        LANGUAGE_EN: "💬 {who} wrote to you about «{name}»:\n{preview}\n\nReply: app → tournament → Admin → Player messages.",
+    },
+    "pt_notify_support_reply": {
+        LANGUAGE_UZ: "💬 «{name}» tashkilotchisi javob berdi:\n{preview}\n\nIlovada turnir → Asosiy → «Tashkilotchiga yozish».",
+        LANGUAGE_RU: "💬 Организатор «{name}» ответил:\n{preview}\n\nВ приложении: турнир → Главная → «Написать организатору».",
+        LANGUAGE_EN: "💬 The organizer of «{name}» replied:\n{preview}\n\nIn the app: tournament → Home → “Message the organizer”.",
+    },
     # 2026-10-07: yagona jadvalli formatlar (liga / ChL / YeL)
     "pt_notify_started_table": {
         LANGUAGE_UZ: "🏁 «{name}» turniri boshlandi! Jadval {rounds} turdan iborat. O'yinlaringizni ilovada ko'ring.",

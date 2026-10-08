@@ -229,6 +229,11 @@ def start_block(t: dict, members: list[dict]) -> str | None:
     return why
 
 
+def _support_unread(tid: int, user_id: int, manager: bool) -> int:
+    from pt_support import support_unread
+    return support_unread(tid, user_id, manager)
+
+
 def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) -> dict | None:
     """
     Turnir tafsiloti + a'zolar. Ruxsat: tashkilotchi, a'zo (pending ham) yoki bosh admin.
@@ -275,6 +280,8 @@ def pt_get_tournament(tournament_id: int, user_id: int, is_super: bool = False) 
               "approved_count": sum(1 for m in members if m["status"] == "approved"),
               "min_players": PT_MIN_PLAYERS, "size_limit": PT_MAX_PLAYERS, "group_size": PT_GROUP_SIZE,
               "start_block": start_block(t, members),
+              # 2026-10-08: ishtirokchi <-> tashkilotchi chati (pt_support.py) — o'qilmaganlar
+              "support_unread": _support_unread(tournament_id, user_id, is_owner or is_admin or is_super),
               "taken_teams": taken, "my_team": my.get("team_name") if my else None,
               "my_status": my["status"] if my else None})
     return t

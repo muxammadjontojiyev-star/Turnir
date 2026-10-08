@@ -406,6 +406,34 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_messages_match ON pt_messages(match_id)")
 
+    # === pt_support_* (2026-10-08: ishtirokchi <-> tashkilotchi chati, pt_support.py) ===
+    # Har ishtirokchi uchun turnirda bitta suhbat; sender_role: member | staff (tashkilotchi/admin).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_support_threads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tournament_id INTEGER NOT NULL,
+            member_user_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (tournament_id, member_user_id),
+            FOREIGN KEY (tournament_id) REFERENCES pt_tournaments(id)
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pt_support_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thread_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            sender_role TEXT NOT NULL,
+            text TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            read_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (thread_id) REFERENCES pt_support_threads(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pt_support_msg_thread ON pt_support_messages(thread_id, is_read)")
+
     # === pt_subscriptions (shaxsiy turnir obunalari — 2026-10-03) ===
     # plan: week | month | year. status: awaiting_payment -> payment_review -> active | rejected.
     # starts_at/expires_at — UTC; tasdiqlanganda hisoblanadi (yangilash joriy obuna oxiridan).
