@@ -6127,3 +6127,27 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .pt-super-head { border-color: rgba(0,240,255,.3) !important; }
 .pt-all-filter { margin: 2px 0; }
 .pt-super-note { color: #38d6ff; background: rgba(0,240,255,.08); border-color: rgba(0,240,255,.3); }
+
+/* Admin paneli — 📊 Statistika (2026-10-08) */
+.admin-stats-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.ast-head { display: flex; justify-content: flex-end; }
+.ast-grid { grid-template-columns: repeat(2, 1fr) !important; }
+.ast-grid--5 { grid-template-columns: repeat(3, 1fr) !important; }
+.ast-grid .stat-card-value { font-size: 20px; }
+.ast-card { padding: 12px 12px 8px; position: relative; }
+.ast-chart-title { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.ast-chart { display: flex; align-items: flex-end; gap: 4px; height: 110px; padding-top: 16px; }
+.ast-col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  position: relative; cursor: pointer; min-width: 0; }
+.ast-bar { width: 100%; max-width: 18px; border-radius: 4px 4px 0 0; background: var(--cyan, #00f0ff); opacity: .85; }
+.ast-col:hover .ast-bar { opacity: 1; }
+.ast-val { margin-bottom: 2px; line-height: 1; font-size: 10.5px; font-weight: 700; color: var(--text-primary); }
+.ast-day { font-size: 9.5px; color: var(--text-secondary); margin-top: 4px; }
+.ast-tip { min-height: 16px; font-size: 12px; text-align: center; color: var(--text-primary); opacity: 0; transition: opacity .15s; }
+.ast-tip.on { opacity: 1; }
+.ast-sub { font-size: 11px; letter-spacing: 2px; font-weight: 700; color: var(--text-secondary); margin-top: 4px; }
+.ast-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ast-chip { font-size: 12px; padding: 5px 10px; border-radius: 999px; background: var(--bg-card); border: 1px solid var(--border); }
+.ast-foot { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+.ast-grid .stat-card { padding: 10px 8px; }
+.ast-grid--5 .stat-card-label { font-size: 11px; }

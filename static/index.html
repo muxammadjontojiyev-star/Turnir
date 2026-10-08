@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20261007r" />
+  <link rel="stylesheet" href="style.css?v=20261008a" />
 </head>
 <body>
 
@@ -224,6 +224,9 @@
 
           <!-- Faqat bosh adminga: qur'a, o'yinchilar, rad etilgan natijalar -->
           <div id="admin-super-only" class="hidden">
+            <!-- 2026-10-08: bot statistikasi (admin_stats.js) -->
+            <div class="section-label" id="admin-stats-title">📊 STATISTIKA</div>
+            <div id="admin-stats-box" class="admin-stats-box"></div>
             <div class="section-label" data-i18n="admin_draw_title">QUR'A</div>
             <div id="admin-draw-list" class="admin-players-list">
               <!-- JS tomonidan to'ldiriladi -->
@@ -589,7 +592,8 @@
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
   <script src="app.js?v=20261002e"></script>
-  <script src="api.js?v=20261002b"></script>
+  <script src="api.js?v=20261008a"></script>
+  <script src="admin_stats.js?v=20261008a"></script>
   <!-- 2026-07-21: Divizion tarjimalari (uz/ru/en) — app.js dagi TEXTS ga qo'shiladi -->
   <script src="texts_division.js?v=20260922c"></script>
   <!-- 2026-07-21: ChL tarjimalari (uz/ru/en) — cl*.js dan OLDIN -->

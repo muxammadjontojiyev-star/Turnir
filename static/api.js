@@ -1336,6 +1336,7 @@ async function loadAdminPanel() {
   if (who.is_super) {
     // Bosh admin — hamma narsa
     superOnly?.classList.remove("hidden");
+    if (typeof adminLoadStats === "function") void adminLoadStats();   // 2026-10-08: 📊 Statistika
     try {
       const players = await apiFetch("/admin/players");
       renderAdminDraw();
