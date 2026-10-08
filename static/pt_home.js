@@ -133,6 +133,15 @@ function ptMyActionMatch(p) {
     || mine.find(m => m.status === "awaiting_confirmation");
 }
 
+// 2026-10-08: klub tanlamaganlar to'siq emas — qur'ada bo'sh klub tasodifiy beriladi (pt_draw.assign_missing_teams)
+function ptAutoTeamsText(t) {
+  if (!t.format || t.format === "classic") return "";
+  const miss = (t.members || []).filter(m => m.status === "approved" && !m.team_name);
+  if (!miss.length) return "";
+  const who = miss.map(m => m.user_id === t.owner_user_id ? PTT("pt_owner_you") : (m.username ? "@" + m.username : m.nickname || "")).join(", ");
+  return PTT("pt_auto_teams", { n: miss.length, who });
+}
+
 function ptNextStepHtml(t, p) {
   if (["awaiting_payment", "rejected", "payment_review"].includes(t.status)) return ptPayBlockHtml(t);
   if (t.status === "recruiting") {
@@ -150,7 +159,7 @@ function ptNextStepHtml(t, p) {
         ${ready ? `<button class="btn btn--primary btn--glow" id="pt-start-btn">${escHtml(PTT("pt_start_btn"))}</button>` : ""}
         <button class="btn ${ready ? "btn--ghost" : "btn--primary btn--glow"}" id="pt-home-share">${escHtml(PTT("pt_share_link"))}</button></div>`;
     return ptNextCard(ready ? PTT("pt_next_ready") : t.start_block === "teams_missing" ? PTT("pt_next_teams") : PTT("pt_next_invite"),
-      ready ? "" : blockText || PTT("pt_next_invite_sub", { min: t.min_players || 8 }), btns);
+      ready ? ptAutoTeamsText(t) : blockText || PTT("pt_next_invite_sub", { min: t.min_players || 8 }), btns);
   }
   if (!p) return "";
   if (p.phase === "finished") {

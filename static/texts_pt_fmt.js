@@ -66,7 +66,7 @@ const PT_FMT_TEXTS = {
     pt_team_change: "O'zgartirish", pt_team_save: "Tanlash", pt_team_saved: "Saqlandi",
     pt_err_team_taken: "Bu jamoani boshqa ishtirokchi tanlab bo'ldi — boshqasini tanlang.",
     pt_join_format: "Format",
-    pt_block_teams: "{n} kishi hali klub/jamoa tanlamagan — hamma tanlagach boshlash mumkin.",
+    pt_block_teams: "{n} kishi hali klub/jamoa tanlamagan — hamma tanlagach boshlash mumkin.", pt_owner_you: "tashkilotchi", pt_auto_teams: "{n} kishi klub/jamoa tanlamagan ({who}) — qur'ada ularga bo'sh klublardan biri tasodifiy beriladi. Xohlasangiz, avval tanlab oling.",
     pt_block_league: "Liga to'lishi kerak: {n}/{max}. Har bir klubga bitta ishtirokchi.",
     pt_block_even: "Hozir {n} kishi — juft son bo'lishi kerak (har turda hamma o'ynaydi).",
     pt_next_teams: "Hamma klubini tanlashi kerak",
@@ -78,8 +78,8 @@ const PT_FMT_TEXTS = {
     pt_po_hint: "Top-{q} to'g'ridan setkaga ({size} kishi), {from}–{to}-o'rinlar pley-off raundida (1 o'yin) o'ynaydi.",
     pt_col_w: "G", pt_col_d: "D", pt_col_l: "M",
     pt_zone_champ: "Chempion", pt_zone_direct: "To'g'ridan setkaga (top-{q})", pt_zone_po: "Pley-off raundi ({from}–{to})",
-    pt_start_hint_league: "Liga to'lishi ({max} kishi) va hamma klub tanlagan bo'lishi kerak. Boshlangach tarkib o'zgarmaydi.",
-    pt_start_hint_cl: "Kamida {min} kishi, juft son va hamma klub tanlagan bo'lishi kerak. Boshlangach tarkib o'zgarmaydi.",
+    pt_start_hint_league: "Liga to'lishi ({max} kishi) kerak. Klub tanlamaganlarga qur'ada bo'sh klub beriladi. Boshlangach tarkib o'zgarmaydi.",
+    pt_start_hint_cl: "Kamida {min} kishi va juft son bo'lishi kerak. Klub tanlamaganlarga qur'ada bo'sh klub beriladi. Boshlangach tarkib o'zgarmaydi.",
     pt_rules_default_league:
       "Har kim tanlangan ligadagi bitta klub bilan o'ynaydi; hamma bir jadvalda.\n" +
       "Har kim har kim bilan 1 yoki 2 marta (uy + mehmon) o'ynaydi — tashkilotchi tanlagan.\n" +
@@ -161,7 +161,7 @@ const PT_FMT_TEXTS = {
     pt_team_change: "Изменить", pt_team_save: "Выбрать", pt_team_saved: "Сохранено",
     pt_err_team_taken: "Эту команду уже выбрал другой участник — выберите другую.",
     pt_join_format: "Формат",
-    pt_block_teams: "{n} чел. ещё не выбрали клуб/сборную — старт после выбора всеми.",
+    pt_block_teams: "{n} чел. ещё не выбрали клуб/сборную — старт после выбора всеми.", pt_owner_you: "организатор", pt_auto_teams: "{n} чел. не выбрали клуб/сборную ({who}) — при жеребьёвке им случайно достанется один из свободных клубов. При желании выберите заранее.",
     pt_block_league: "Лига должна заполниться: {n}/{max}. Один участник на каждый клуб.",
     pt_block_even: "Сейчас {n} чел. — нужно чётное число (в каждом туре играют все).",
     pt_next_teams: "Все должны выбрать клуб",
@@ -173,8 +173,8 @@ const PT_FMT_TEXTS = {
     pt_po_hint: "Топ-{q} сразу в сетку ({size} игроков), места {from}–{to} играют раунд плей-офф (1 матч).",
     pt_col_w: "В", pt_col_d: "Н", pt_col_l: "П",
     pt_zone_champ: "Чемпион", pt_zone_direct: "Сразу в сетку (топ-{q})", pt_zone_po: "Раунд плей-офф ({from}–{to})",
-    pt_start_hint_league: "Лига должна заполниться ({max} чел.), и все должны выбрать клуб. После старта состав не меняется.",
-    pt_start_hint_cl: "Минимум {min} чел., чётное число, и все должны выбрать клуб. После старта состав не меняется.",
+    pt_start_hint_league: "Лига должна заполниться ({max} чел.). Тем, кто не выбрал клуб, он достанется при жеребьёвке. После старта состав не меняется.",
+    pt_start_hint_cl: "Минимум {min} чел., чётное число. Тем, кто не выбрал клуб, он достанется при жеребьёвке. После старта состав не меняется.",
     pt_rules_default_league:
       "Каждый играет одним клубом выбранной лиги; все в одной таблице.\n" +
       "Каждый с каждым 1 или 2 раза (дома + в гостях) — как выбрал организатор.\n" +
@@ -256,7 +256,7 @@ const PT_FMT_TEXTS = {
     pt_team_change: "Change", pt_team_save: "Select", pt_team_saved: "Saved",
     pt_err_team_taken: "Another player already took this team — pick another one.",
     pt_join_format: "Format",
-    pt_block_teams: "{n} player(s) haven't picked a club/team yet — start once everyone has.",
+    pt_block_teams: "{n} player(s) haven't picked a club/team yet — start once everyone has.", pt_owner_you: "organizer", pt_auto_teams: "{n} player(s) have not picked a club/team ({who}) — the draw will give them a random free one. Pick beforehand if you prefer.",
     pt_block_league: "The league must be full: {n}/{max}. One player per club.",
     pt_block_even: "{n} players now — the count must be even (everyone plays each round).",
     pt_next_teams: "Everyone must pick a club",
@@ -268,8 +268,8 @@ const PT_FMT_TEXTS = {
     pt_po_hint: "Top {q} go straight to the bracket ({size} players), places {from}–{to} play a play-off round (1 match).",
     pt_col_w: "W", pt_col_d: "D", pt_col_l: "L",
     pt_zone_champ: "Champion", pt_zone_direct: "Straight to bracket (top {q})", pt_zone_po: "Play-off round ({from}–{to})",
-    pt_start_hint_league: "The league must be full ({max} players) and everyone must pick a club. The line-up is locked after the start.",
-    pt_start_hint_cl: "At least {min} players, an even number, and everyone must pick a club. The line-up is locked after the start.",
+    pt_start_hint_league: "The league must be full ({max} players). Players without a club get a free one in the draw. The line-up is locked after the start.",
+    pt_start_hint_cl: "At least {min} players, an even number. Players without a club get a free one in the draw. The line-up is locked after the start.",
     pt_rules_default_league:
       "Everyone plays as one club from the chosen league; all in one table.\n" +
       "Everyone plays everyone once or twice (home + away) — as the organizer chose.\n" +

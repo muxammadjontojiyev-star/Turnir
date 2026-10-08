@@ -51,6 +51,7 @@ function ptPlayHtml(t) {
       <div class="card pt-pay">
         <div class="pt-hint">${escHtml(PTT(t.format && t.format !== "classic" && t.format !== "wc" ? "pt_start_hint_" + (t.format === "league" ? "league" : "cl") : "pt_start_hint", { min: t.min_players, max: t.max_players }))}</div>
         ${need ? `<div class="pt-note">${escHtml(need)}</div>` : ""}
+        ${can && typeof ptAutoTeamsText === "function" && ptAutoTeamsText(t) ? `<div class="pt-note pt-note--info">${escHtml(ptAutoTeamsText(t))}</div>` : ""}
         <button class="btn btn--primary btn--glow" id="pt-start-btn" ${can ? "" : "disabled"}>
           ${escHtml(PTT("pt_start_btn"))}</button>
       </div>`;
