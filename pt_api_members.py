@@ -42,7 +42,7 @@ def pt_invite(code: str, user: dict = Depends(get_authenticated_user)):
 async def pt_join(code: str = Body(..., embed=True), team: str | None = Body(None, embed=True),
                   user: dict = Depends(get_authenticated_user)):
     """So'rov yuborish (pending). Xato: not_found, not_recruiting, already_member, full,
-    bad_team, team_taken -> 400 (2026-10-07: team — ixtiyoriy klub/terma jamoa)"""
+    bad_team, team_taken, league_locked -> 400 (2026-10-07: team — ixtiyoriy klub/terma jamoa)"""
     import sqlite3
     from pt_members import pt_request_join
     try:
@@ -135,7 +135,7 @@ def pt_admin_remove(tournament_id: int, admin_user_id: int, user: dict = Depends
 @router.post("/pt/{tournament_id}/team")
 def pt_team(tournament_id: int, team: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
     """2026-10-07: a'zo klub/terma jamoa tanlaydi (qur'agacha).
-    Xato: not_member, not_recruiting, no_teams, bad_team, team_taken -> 400; not_found -> 404"""
+    Xato: not_member, not_recruiting, no_teams, bad_team, team_taken, league_locked -> 400; not_found -> 404"""
     from pt_teams import pt_set_team
     ok, r = pt_set_team(tournament_id, user["id"], team)
     if not ok:

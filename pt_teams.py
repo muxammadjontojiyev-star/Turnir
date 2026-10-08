@@ -5,13 +5,19 @@ Admin qarori: liga formatida — tanlangan ligadagi klublardan, ChL/YeL — 5 li
 klublardan, JCh — rasmiy JCh'dagi 48 terma jamoadan; bitta jamoa — bitta ishtirokchi.
 Tanlash/almashtirish faqat qur'agacha (recruiting); a'zo (approved yoki pending) o'zi tanlaydi.
 Band qilish poyga holatidan UNIQUE indeks bilan himoyalangan (idx_pt_members_team).
+
+2026-10-08: ko'p ligali turnirda ligalar KETMA-KET ochiladi (rasmiy ligalar kabi —
+api._is_league_locked): keyingi liga klubini faqat undan oldingi barcha ligalar to'lgach
+tanlash mumkin (league_locked). Ligalar tartibi — tashkilotchi tanlagan tartib.
+"To'lgan" = ligadagi barcha klublar band (approved yoki pending a'zo). O'z jamoasi hisobga
+olinmaydi — to'lgan 1-ligadan 2-ligaga o'tib, 1-ligani bo'shatib qo'yib bo'lmaydi.
 """
 
 import logging
 import sqlite3
 
 from models import get_connection
-from pt_formats import teams_for, uses_teams
+from pt_formats import FMT_LEAGUE, LEAGUE_CLUBS, club_league, split_leagues, teams_for, uses_teams
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +35,39 @@ def team_taken(cursor, tid: int, team: str, user_id: int) -> bool:
     return cursor.fetchone() is not None
 
 
+def league_locked(cursor, tid: int, league: str | None, team: str, user_id: int) -> bool:
+    """Klub ligasidan oldingi ligalardan biri to'lmagan bo'lsa — True (tanlab bo'lmaydi)."""
+    leagues = split_leagues(league)
+    lg = club_league(team, league)
+    if len(leagues) < 2 or lg is None:
+        return False
+    for prev in leagues[:leagues.index(lg)]:
+        clubs = LEAGUE_CLUBS.get(prev, ())
+        marks = ",".join("?" * len(clubs))
+        cursor.execute(f"SELECT COUNT(*) AS c FROM pt_members WHERE tournament_id = ? AND user_id != ? "
+                       f"AND team_name IN ({marks})", (tid, user_id, *clubs))
+        if cursor.fetchone()["c"] < len(clubs):
+            return True
+    return False
+
+
+def team_block(cursor, tid: int, fmt: str, league: str | None, team, user_id: int) -> str | None:
+    """Jamoani tanlash to'sig'i (DRY: so'rov va almashtirish): bad_team / no_teams / team_taken /
+    league_locked; None — mumkin."""
+    why = check_team(fmt, league, team)
+    if why:
+        return why
+    if team_taken(cursor, tid, team, user_id):
+        return "team_taken"
+    if fmt == FMT_LEAGUE and league_locked(cursor, tid, league, team, user_id):
+        return "league_locked"
+    return None
+
+
 def pt_set_team(tid: int, user_id: int, team) -> tuple[bool, str]:
     """
     A'zo o'z jamoasini tanlaydi/almashtiradi (faqat recruiting).
-    Sabablar: not_found, not_member, not_recruiting, no_teams, bad_team, team_taken.
+    Sabablar: not_found, not_member, not_recruiting, no_teams, bad_team, team_taken, league_locked.
     """
     conn = get_connection()
     conn.isolation_level = None
@@ -51,9 +86,7 @@ def pt_set_team(tid: int, user_id: int, team) -> tuple[bool, str]:
             elif t["status"] != "recruiting":
                 why = "not_recruiting"
             else:
-                why = check_team(t["format"] or "classic", t["league_name"], team)
-                if not why and team_taken(cursor, tid, team, user_id):
-                    why = "team_taken"
+                why = team_block(cursor, tid, t["format"] or "classic", t["league_name"], team, user_id)
         if why:
             cursor.execute("ROLLBACK")
             return False, why
