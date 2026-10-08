@@ -3416,3 +3416,7 @@ app.include_router(pt_sub_router)    # /pt/sub — /pt/{id} dan OLDIN (aks holda
 app.include_router(pt_router)
 app.include_router(pt_members_router)
 app.include_router(pt_play_router)
+
+# ============ BOT STATISTIKASI (2026-10-08, router — stats_api.py; faqat bosh admin) ============
+from stats_api import router as stats_router  # noqa: E402
+app.include_router(stats_router)

@@ -3,6 +3,7 @@ handlers/main_menu.py — Botning yagona kirish nuqtasi.
 
 Oqim: /start -> til tanlash (inline) -> "Kirish" tugmasi -> WebApp ochiladi.
 Botda boshqa hech qanday funksional handler yo'q — qolgan hammasi WebApp ichida.
+2026-10-08: /stats — faqat bosh admin uchun bot statistikasi (stats.py).
 """
 
 from telegram import (
@@ -157,9 +158,21 @@ async def check_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.answer(t("subscribe_not_yet", language), show_alert=True)
 
 
+async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/stats — bosh adminga bot statistikasi; boshqalarga javob berilmaydi (buyruq borligi oshkor qilinmaydi)."""
+    from admin_roles import is_super_admin
+    from stats import format_stats_text, get_bot_stats
+    tg_user = update.effective_user
+    if not tg_user or not is_super_admin(tg_user.id):
+        return
+    user = get_or_create_user(tg_user.id, tg_user.full_name)
+    await update.effective_message.reply_text(format_stats_text(get_bot_stats(), user.get("language")))
+
+
 def register_main_menu_handlers(application: Application) -> None:
     """Barcha main_menu handlerlarini botga ro'yxatdan o'tkazadi."""
     application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(
         CallbackQueryHandler(language_chosen, pattern=f"^{LANGUAGE_CALLBACK_PREFIX}")
     )
