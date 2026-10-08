@@ -6159,3 +6159,19 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
   border: 1px dashed var(--border); border-radius: 10px; }
 .pt-team-seq { font-size: 12.5px; line-height: 1.4; padding: 9px 11px; margin-bottom: 8px; border-radius: 10px;
   background: rgba(0, 240, 255, .07); border: 1px solid rgba(0, 240, 255, .25); color: var(--text-primary); }
+
+/* Shaxsiy turnir: Reyting — Setka va To'purarlar (2026-10-08, rasmiy .wc-bracket-* qayta ishlatiladi) */
+.pt-seg--4 .tab-btn { font-size: 12px; padding-left: 4px; padding-right: 4px; letter-spacing: .3px; }
+.pt-br-tbd { color: var(--text-secondary); }
+.pt-br-logo { width: 18px; height: 18px; object-fit: contain; }
+.wc-bracket-side.pt-br-me .wc-bracket-name { text-decoration: underline; text-underline-offset: 3px; }
+.pt-br-cup { font-size: 64px; text-align: center; line-height: 1; }
+.pt-br-champ { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 6px; text-align: center; }
+.pt-br-champ-logo { width: 30px; height: 30px; object-fit: contain; }
+.pt-br-champ-name { font-weight: 800; font-size: 13px; color: var(--text-primary); }
+.pt-br-champ-label { font-size: 10.5px; letter-spacing: 2px; font-weight: 700; color: #f5b942; }
+.pt-br-note { font-size: 12.5px; color: var(--text-secondary); padding: 10px 12px; margin-bottom: 10px;
+  border: 1px dashed var(--border); border-radius: 10px; }
+.pt-br-po { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.pt-bracket { margin-bottom: 12px; }
+.pt-seg--4 .tab-btn { justify-content: center; text-align: center; }

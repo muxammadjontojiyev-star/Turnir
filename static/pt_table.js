@@ -79,7 +79,7 @@ function ptLeagueRatingHtml(p, meId) {
   const tabs = `<div class="tab-filter pt-lg-filter">${keys.map(k => tab(k, k,
       typeof renderLeagueLogo === "function" ? renderLeagueLogo(k, "tab-league-logo") : "")).join("")}
     ${tab("scorers", ptLgT("tab_top_scorers", "⚽ To'p urarlar"), "")}</div>`;
-  if (PT.lgTab === "scorers") return tabs + ptScorersHtml(p, keys);
+  if (PT.lgTab === "scorers") return tabs + ptScorersHtml(p);
   const rows = (p.standings || {})[PT.lgTab] || [];
   const body = rows.map((r, i) => {
     const rank = i + 1, gd = (r.goal_diff >= 0 ? "+" : "") + r.goal_diff;
@@ -95,16 +95,34 @@ function ptLeagueRatingHtml(p, meId) {
       <tbody>${body || `<tr><td colspan="9" class="empty-state">${escHtml(ptLgT("no_data", "Ma'lumot yo'q"))}</td></tr>`}</tbody></table></div>`;
 }
 
-// To'p urarlar — barcha tanlangan ligalar bo'yicha urilgan gollar (rasmiy kabi)
-function ptScorersHtml(p, keys) {
-  const all = keys.flatMap(k => ((p.standings || {})[k] || []).map(r => ({ ...r, league: k })))
-    .filter(r => r.goals_for > 0).sort((a, b) => b.goals_for - a.goals_for);
-  const body = all.map((r, i) => `<tr class="rating-row" data-pt-player="${r.user_id}">
+// To'p urarlar (rasmiy kabi). 2026-10-08: BARCHA formatlar — jadval/guruh gollari (standings, tasdiqlangan)
+// + pley-off gollari (tasdiqlangan o'yinlar). Liga formatida "Liga" ustuni, boshqalarida o'yinlar soni.
+function ptScorerRows(p) {
+  const by = {};
+  Object.entries(p.standings || {}).forEach(([k, rows]) => rows.forEach(r => {
+    by[r.user_id] = { ...r, league: k, goals: r.goals_for, games: r.played };
+  }));
+  (p.knockout || []).filter(m => m.status === "confirmed" && m.score1 != null).forEach(m => {
+    [[m.player1_id, m.score1], [m.player2_id, m.score2]].forEach(([uid, g]) => {
+      if (!by[uid]) return;
+      by[uid].goals += g; by[uid].games += 1;
+    });
+  });
+  return Object.values(by).filter(r => r.goals > 0)
+    .sort((a, b) => b.goals - a.goals || a.games - b.games || String(a.team_name || a.nickname).localeCompare(String(b.team_name || b.nickname)));
+}
+
+function ptScorersHtml(p) {
+  const lg = p.format === "league";
+  const all = ptScorerRows(p);
+  const body = all.map((r, i) => `<tr class="rating-row${r.user_id === p.me_id ? " is-me" : ""}" data-pt-player="${r.user_id}">
       <td${i < 3 ? ` class="rank-${i + 1}"` : ""}>${i + 1}</td><td>${ptPlayerCellHtml(r)}</td>
-      <td class="pt-rt-league">${typeof renderLeagueLogo === "function" ? renderLeagueLogo(r.league, "tab-league-logo") : ""}${escHtml(r.league)}</td>
-      <td class="pts">${r.goals_for}</td></tr>`).join("");
-  return `<div class="card card--flat card--table pt-rt-card"><table class="rating-table">
-      <thead><tr><th>#</th><th>${escHtml(ptLgT("th_player", "O'yinchi"))}</th><th>${escHtml(ptLgT("th_league", "Liga"))}</th>
+      ${lg ? `<td class="pt-rt-league">${typeof renderLeagueLogo === "function" ? renderLeagueLogo(r.league, "tab-league-logo") : ""}${escHtml(r.league)}</td>`
+        : `<td>${r.games}</td>`}
+      <td class="pts">${r.goals}</td></tr>`).join("");
+  const col3 = lg ? ptLgT("th_league", "Liga") : PTT("pt_col_p");
+  return `<div class="card card--flat card--table pt-rt-card"><table class="rating-table pt-scorers-table">
+      <thead><tr><th>#</th><th>${escHtml(ptLgT("th_player", "O'yinchi"))}</th><th>${escHtml(col3)}</th>
         <th>${escHtml(ptLgT("th_goals_col", "Gol"))}</th></tr></thead>
-      <tbody>${body || `<tr><td colspan="4" class="empty-state">${escHtml(ptLgT("no_data", "Ma'lumot yo'q"))}</td></tr>`}</tbody></table></div>`;
+      <tbody>${body || `<tr><td colspan="4" class="empty-state">${escHtml(PTT("pt_sc_none"))}</td></tr>`}</tbody></table></div>`;
 }

@@ -29,18 +29,22 @@ function ptUserLabel(u) { return u.username ? "@" + u.username : (u.nickname || 
 
 // Asosiy sahifa (hero, keyingi qadam, qoidalar, ishtirokchilar) — pt_home.js (2026-10-07)
 
-// ---------------- Reyting: Guruhlar | Setka | Joriy tur ----------------
+// ---------------- Reyting: Guruhlar | Setka | Joriy tur | To'purarlar ----------------
 
 function ptTabRating(t, p) {
   if (!p) return ptWaitHtml();
   if (PT.playerView && typeof ptPlayerPageHtml === "function") return ptPlayerPageHtml(p);   // ishtirokchi profili
   const hasKo = (p.knockout || []).length > 0;
-  const subs = [["groups", p.single_table ? "pt_seg_table" : "pt_seg_groups"], ...(hasKo ? [["bracket", "pt_seg_bracket"]] : []), ["round", "pt_seg_round"]];
-  if (!PT.ratingTab || !subs.some(([id]) => id === PT.ratingTab)) PT.ratingTab = hasKo ? "bracket" : "groups";
-  const bar = `<div class="pt-rtabs pt-seg">${subs.map(([id, l]) =>
+  // 2026-10-08: + "Setka" finalli formatlarda doim (pt_bracket.js), + "To'purarlar" (pt_table.js)
+  const brOk = typeof ptHasBracket === "function" && ptHasBracket(p);
+  const subs = [["groups", p.single_table ? "pt_seg_table" : "pt_seg_groups"], ...(brOk ? [["bracket", "pt_seg_bracket"]] : []),
+    ["round", "pt_seg_round"], ...(p.format === "league" ? [] : [["scorers", "pt_seg_scorers"]])];   // ligada — ichki tab
+  if (!PT.ratingTab || !subs.some(([id]) => id === PT.ratingTab)) PT.ratingTab = hasKo && brOk ? "bracket" : "groups";
+  const bar = `<div class="pt-rtabs pt-seg pt-seg--${subs.length}">${subs.map(([id, l]) =>
     `<button class="tab-btn${PT.ratingTab === id ? " active" : ""}" data-pt-rtab="${id}">${escHtml(PTT(l))}</button>`).join("")}</div>`;
   let body;
-  if (PT.ratingTab === "bracket") body = ptKnockoutStagesHtml(p);
+  if (PT.ratingTab === "bracket") body = ptBracketHtml(t, p);
+  else if (PT.ratingTab === "scorers") body = ptScorersHtml(p);
   else if (PT.ratingTab === "round") {
     const all = (p.round_matches || []).map(m => ptMatchCardHtml(m, p, m.player1_id === p.me_id || m.player2_id === p.me_id)).join("");
     body = p.phase ? ptKnockoutStagesHtml(p) : (all || `<div class="empty-state">${escHtml(PTT("pt_tab_wait"))}</div>`);
@@ -173,6 +177,7 @@ function ptBindDetail(t) {
   document.querySelectorAll("#pt-root [data-pt-player]").forEach(el => el.addEventListener("click", () => {
     if (typeof ptOpenPlayer === "function") void ptOpenPlayer(el.dataset.ptPlayer);
   }));
+  if (typeof ptBindBracket === "function") ptBindBracket();          // 2026-10-08: setka chiziqlari
   document.getElementById("pt-player-back")?.addEventListener("click", () => { PT.playerView = null; ptRenderDetailTabs(); });
   if (typeof ptLoadAvatars === "function") ptLoadAvatars(document.getElementById("pt-root"));
   document.querySelectorAll("#pt-root [data-pt-goto]").forEach(b => b.addEventListener("click", () => {
