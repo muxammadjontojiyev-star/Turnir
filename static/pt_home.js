@@ -107,7 +107,7 @@ async function ptSaveTeam(t, team) {
     PT.teamPick = { ...(PT.teamPick || {}), home: null };
     showToast(PTT("pt_team_saved"));
   } catch (e) {
-    const map = { team_taken: "pt_err_team_taken", not_recruiting: "pt_join_closed" };
+    const map = { team_taken: "pt_err_team_taken", not_recruiting: "pt_join_closed", league_locked: "pt_err_league_locked" };
     showToast(PTT(map[e && e.message] || "pt_err_generic"));
   } finally {
     PT.busy = false;

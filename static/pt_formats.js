@@ -101,11 +101,35 @@ function ptTeamSections(fmt, league) {
 
 // ---------------- Jamoa tanlash oynasi ----------------
 // opts: {fmt, league, taken[], mine, id} — tanlangan jamoa PT.teamPick[id] da saqlanadi
+// 2026-10-08: ko'p ligali turnir — ligalar KETMA-KET ochiladi (rasmiy kabi; server: pt_teams.league_locked).
+// Liga yopiq — undan oldingi ligalardan birida bo'sh klub bor (o'z jamoam hisobga olinmaydi).
+// Qaytaradi: [{locked, waitFor, busy, total}] — bo'limlar tartibida.
+function ptLeagueLocks(fmt, league, taken) {
+  const secs = ptTeamSections(fmt, league);
+  let waitFor = null;
+  return secs.map((sec, i) => {
+    const busy = sec.teams.filter(tm => taken.has(tm.name)).length;
+    // izohda — bevosita oldingi liga (rasmiy kabi: "oldingi liga to'lgach")
+    const st = { locked: fmt === "league" && !!waitFor, waitFor: i > 0 ? secs[i - 1].title : null, busy, total: sec.teams.length };
+    if (fmt === "league" && !waitFor && busy < sec.teams.length) waitFor = sec.title;
+    return st;
+  });
+}
+
 function ptTeamPickerHtml(opts) {
   const taken = new Set((opts.taken || []).filter(x => x !== opts.mine));
   const sel = (PT.teamPick || {})[opts.id] || opts.mine || "";
   const q = ((PT.teamSearch || {})[opts.id] || "").toLowerCase();
-  const sections = ptTeamSections(opts.fmt, opts.league).map(sec => {
+  const locks = ptLeagueLocks(opts.fmt, opts.league, taken);
+  const sections = ptTeamSections(opts.fmt, opts.league).map((sec, si) => {
+    const lock = locks[si];
+    const multi = opts.fmt === "league" && locks.length > 1;
+    if (lock.locked) {                      // yopiq liga: faqat sarlavha + izoh (klublar ko'rsatilmaydi)
+      if (q) return "";
+      return `<div class="pt-team-sec pt-team-sec--locked">${sec.logo ? `<img src="${escHtml(sec.logo)}?v=3" alt="">` : ""}${escHtml(sec.title)}
+          <span class="pt-team-sec-count">🔒</span></div>
+        <div class="pt-team-locked">${escHtml(PTT("pt_league_locked_note", { league: lock.waitFor }))}</div>`;
+    }
     const items = sec.teams.filter(tm => !q || tm.name.toLowerCase().includes(q))
       .sort((a, b) => taken.has(a.name) - taken.has(b.name)).map(tm => {     // bo'shlari birinchi
       const busy = taken.has(tm.name);
@@ -116,13 +140,18 @@ function ptTeamPickerHtml(opts) {
           ${icon}<span class="pt-team-name">${escHtml(tm.name)}</span>${busy ? `<span class="pt-team-busy">${escHtml(PTT("pt_team_busy"))}</span>` : ""}</button>`;
     }).join("");
     if (!items) return "";
-    const head = sec.title && ptTeamSections(opts.fmt, opts.league).length > 1
-      ? `<div class="pt-team-sec">${sec.logo ? `<img src="${escHtml(sec.logo)}?v=3" alt="">` : ""}${escHtml(sec.title)}</div>` : "";
+    const head = sec.title && locks.length > 1
+      ? `<div class="pt-team-sec">${sec.logo ? `<img src="${escHtml(sec.logo)}?v=3" alt="">` : ""}${escHtml(sec.title)}${multi
+        ? `<span class="pt-team-sec-count">${lock.busy}/${lock.total}</span>` : ""}</div>` : "";
     return `${head}<div class="pt-team-grid">${items}</div>`;
   }).join("");
   const search = opts.fmt === "league" && ptLeagues(opts.league).length < 2 ? "" : `<input class="modal-input pt-team-search" data-pt-search="${opts.id}"
       placeholder="${escHtml(PTT("pt_team_search"))}" value="${escHtml((PT.teamSearch || {})[opts.id] || "")}" autocomplete="off">`;
-  return `<div class="pt-picker" id="pt-picker-${opts.id}">${search}
+  const openIx = locks.findIndex(l => !l.locked && l.busy < l.total);
+  const seqHint = opts.fmt === "league" && locks.some(l => l.locked) && openIx >= 0
+    ? `<div class="pt-team-seq">${escHtml(PTT("pt_league_seq_hint", { league: ptLeagues(opts.league)[openIx],
+        free: locks[openIx].total - locks[openIx].busy }))}</div>` : "";
+  return `<div class="pt-picker" id="pt-picker-${opts.id}">${seqHint}${search}
       <div class="pt-team-list">${sections || `<div class="empty-state">${escHtml(PTT("pt_team_none"))}</div>`}</div></div>`;
 }
 

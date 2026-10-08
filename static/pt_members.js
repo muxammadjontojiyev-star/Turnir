@@ -10,7 +10,7 @@
 const PT_ERR_KEYS = {
   not_found: "pt_err_not_found", user_not_found: "pt_err_user_not_found",
   already_member: "pt_err_already", already_approved: "pt_err_already",
-  full: "pt_err_full", not_recruiting: "pt_join_closed", team_taken: "pt_err_team_taken", bad_team: "pt_err_generic",
+  full: "pt_err_full", not_recruiting: "pt_join_closed", team_taken: "pt_err_team_taken", league_locked: "pt_err_league_locked", bad_team: "pt_err_generic",
 };
 function ptErrText(e) { return PTT(PT_ERR_KEYS[e && e.message] || "pt_err_generic"); }
 
