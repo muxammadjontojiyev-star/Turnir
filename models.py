@@ -1312,5 +1312,10 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("UAE Pro Liga", 14, "open"),
     )
+    # 2026-10-09: Yaponiya J1 Ligasi — UAE Pro Liga'dan keyin navbat bilan ochiladi (id 11)
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("J1 Liga", 20, "open"),
+    )
     conn.commit()
     conn.close()

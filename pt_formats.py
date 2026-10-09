@@ -104,6 +104,13 @@ LEAGUE_CLUBS: dict[str, tuple[str, ...]] = {
         "Hatta", "Kalba", "Khor Fakkan", "Shabab Al-Ahli",
         "Sharjah", "United FC",
     ),
+    "J1 Liga": (
+        "Avispa Fukuoka", "Cerezo Osaka", "FC Tokyo", "Fagiano Okayama",
+        "Gamba Osaka", "JEF United Chiba", "Kashima Antlers", "Kashiwa Reysol",
+        "Kawasaki Frontale", "Kyoto Sanga", "Machida Zelvia", "Mito HollyHock",
+        "Nagoya Grampus", "Sanfrecce Hiroshima", "Shimizu S-Pulse", "Tokyo Verdy",
+        "Urawa Reds", "V-Varen Nagasaki", "Vissel Kobe", "Yokohama F. Marinos",
+    ),
 }
 
 WC_TEAMS: tuple[str, ...] = tuple(team for teams in WC_GROUPS.values() for team in teams)
