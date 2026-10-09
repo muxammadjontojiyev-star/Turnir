@@ -121,6 +121,67 @@ const LEAGUE_CLUBS = {
     { name: "Strasbourg",      logo: "https://media.api-sports.io/football/teams/95.png" },
     { name: "Toulouse",        logo: "https://media.api-sports.io/football/teams/96.png" },
   ],
+  // 2026-10-09: 2026/27 tarkibi; logolar lokal (images/clubs/)
+  "Liga Portugal": [
+    { name: "Académico Viseu", logo: "images/clubs/por-academico-viseu.png" },
+    { name: "Alverca",         logo: "images/clubs/por-alverca.png" },
+    { name: "Arouca",          logo: "images/clubs/por-arouca.png" },
+    { name: "Benfica",         logo: "images/clubs/por-benfica.png" },
+    { name: "Braga",           logo: "images/clubs/por-braga.png" },
+    { name: "Casa Pia",        logo: "images/clubs/por-casa-pia.png" },
+    { name: "Estoril",         logo: "images/clubs/por-estoril.png" },
+    { name: "Estrela Amadora", logo: "images/clubs/por-estrela-amadora.png" },
+    { name: "Famalicão",       logo: "images/clubs/por-famalicao.png" },
+    { name: "Gil Vicente",     logo: "images/clubs/por-gil-vicente.png" },
+    { name: "Marítimo",        logo: "images/clubs/por-maritimo.png" },
+    { name: "Moreirense",      logo: "images/clubs/por-moreirense.png" },
+    { name: "Nacional",        logo: "images/clubs/por-nacional.png" },
+    { name: "Porto",           logo: "images/clubs/por-porto.png" },
+    { name: "Rio Ave",         logo: "images/clubs/por-rio-ave.png" },
+    { name: "Santa Clara",     logo: "images/clubs/por-santa-clara.png" },
+    { name: "Sporting CP",     logo: "images/clubs/por-sporting.png" },
+    { name: "Vitória SC",      logo: "images/clubs/por-vitoria-sc.png" },
+  ],
+  // 2026-10-09: 2026/27 tarkibi; logolar lokal (images/clubs/)
+  "Süper Lig": [
+    { name: "Alanyaspor",      logo: "images/clubs/tur-alanyaspor.png" },
+    { name: "Amedspor",        logo: "images/clubs/tur-amedspor.png" },
+    { name: "Başakşehir",      logo: "images/clubs/tur-basaksehir.png" },
+    { name: "Beşiktaş",        logo: "images/clubs/tur-besiktas.png" },
+    { name: "Çorum",           logo: "images/clubs/tur-corum.png" },
+    { name: "Erzurumspor",     logo: "images/clubs/tur-erzurumspor.png" },
+    { name: "Eyüpspor",        logo: "images/clubs/tur-eyupspor.png" },
+    { name: "Fenerbahçe",      logo: "images/clubs/tur-fenerbahce.png" },
+    { name: "Galatasaray",     logo: "images/clubs/tur-galatasaray.png" },
+    { name: "Gaziantep",       logo: "images/clubs/tur-gaziantep.png" },
+    { name: "Gençlerbirliği",  logo: "images/clubs/tur-genclerbirligi.png" },
+    { name: "Göztepe",         logo: "images/clubs/tur-goztepe.png" },
+    { name: "Kasımpaşa",       logo: "images/clubs/tur-kasimpasa.png" },
+    { name: "Kocaelispor",     logo: "images/clubs/tur-kocaelispor.png" },
+    { name: "Konyaspor",       logo: "images/clubs/tur-konyaspor.png" },
+    { name: "Rizespor",        logo: "images/clubs/tur-rizespor.png" },
+    { name: "Samsunspor",      logo: "images/clubs/tur-samsunspor.png" },
+    { name: "Trabzonspor",     logo: "images/clubs/tur-trabzonspor.png" },
+  ],
+  // 2026-10-09: O'zbekiston Superligasi 2026 (16 klub); logolar FotMob CDN (ID — fotmob.com/teams/{id})
+  "Superliga": [
+    { name: "Andijon",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102151.png" },
+    { name: "Bunyodkor",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102142.png" },
+    { name: "Buxoro",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102158.png" },
+    { name: "Dinamo Samarqand", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102149.png" },
+    { name: "Lokomotiv",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102167.png" },
+    { name: "Mash'al",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102144.png" },
+    { name: "Nasaf",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102153.png" },
+    { name: "Navbahor",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102155.png" },
+    { name: "Neftchi",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102145.png" },
+    { name: "OKMK",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/115128.png" },
+    { name: "Paxtakor",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102141.png" },
+    { name: "Qizilqum",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102147.png" },
+    { name: "Qo'qon-1912",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/316378.png" },
+    { name: "So'g'diyona",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/115129.png" },
+    { name: "Surxon",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/316396.png" },
+    { name: "Xorazm",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/163183.png" },
+  ],
 };
 
 // ============================================================
@@ -143,6 +204,10 @@ const LEAGUE_LOGOS = {
   "Bundesliga":   "images/bundesliga-logo.png",
   "Serie A":      "images/seriea-logo.png",
   "Ligue 1":      "images/ligue1-logo.png",
+  // 2026-10-09: FotMob CDN (leagues/61, /71, /540) — lokal rasm qo'yilsa shu yerda almashtiriladi
+  "Liga Portugal": "https://images.fotmob.com/image_resources/logo/leaguelogo/61.png",
+  "Süper Lig":     "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png",
+  "Superliga":     "https://images.fotmob.com/image_resources/logo/leaguelogo/540.png",
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
