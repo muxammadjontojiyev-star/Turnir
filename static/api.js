@@ -217,6 +217,28 @@ const LEAGUE_CLUBS = {
     { name: "Shabab Al-Ahli",   logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102119.png" },
     { name: "Sharjah",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102124.png" },
     { name: "United FC",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1552577.png" },
+  ],  // 2026-10-09: Yaponiya J1 Ligasi 2026/27 (20 klub); logolar FotMob CDN (ID — fotmob.com/leagues/223)
+  "J1 Liga": [
+    { name: "Avispa Fukuoka",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8270.png" },
+    { name: "Cerezo Osaka",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4692.png" },
+    { name: "FC Tokyo",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4399.png" },
+    { name: "Fagiano Okayama",     logo: "https://images.fotmob.com/image_resources/logo/teamlogo/164739.png" },
+    { name: "Gamba Osaka",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6582.png" },
+    { name: "JEF United Chiba",    logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9756.png" },
+    { name: "Kashima Antlers",     logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4397.png" },
+    { name: "Kashiwa Reysol",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8699.png" },
+    { name: "Kawasaki Frontale",   logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6304.png" },
+    { name: "Kyoto Sanga",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8542.png" },
+    { name: "Machida Zelvia",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/194011.png" },
+    { name: "Mito HollyHock",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/162195.png" },
+    { name: "Nagoya Grampus",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8006.png" },
+    { name: "Sanfrecce Hiroshima", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6224.png" },
+    { name: "Shimizu S-Pulse",     logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4426.png" },
+    { name: "Tokyo Verdy",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6223.png" },
+    { name: "Urawa Reds",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6244.png" },
+    { name: "V-Varen Nagasaki",    logo: "https://images.fotmob.com/image_resources/logo/teamlogo/194016.png" },
+    { name: "Vissel Kobe",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4688.png" },
+    { name: "Yokohama F. Marinos", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6581.png" },
   ],
 };
 
@@ -250,6 +272,7 @@ const LEAGUE_LOGOS = {
   "Superliga":     "https://images.fotmob.com/image_resources/logo/leaguelogo/540.png",
   "Saudi Pro Liga": "https://images.fotmob.com/image_resources/logo/leaguelogo/536.png",
   "UAE Pro Liga":   "https://images.fotmob.com/image_resources/logo/leaguelogo/538.png",
+  "J1 Liga":        "https://images.fotmob.com/image_resources/logo/leaguelogo/223.png",
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
