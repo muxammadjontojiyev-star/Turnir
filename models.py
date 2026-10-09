@@ -1307,5 +1307,10 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("Saudi Pro Liga", 18, "open"),
     )
+    # 2026-10-09: BAA (ADNOC) Pro Ligasi — Saudi Pro Liga'dan keyin navbat bilan ochiladi (id 10)
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("UAE Pro Liga", 14, "open"),
+    )
     conn.commit()
     conn.close()
