@@ -1289,5 +1289,18 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("Ligue 1", 18, "open"),
     )
+    # 2026-10-09: Portugaliya, Turkiya, O'zbekiston — Ligue 1 dan keyin navbat bilan ochiladi (id tartibi)
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Liga Portugal", 18, "open"),
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Süper Lig", 18, "open"),
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Superliga", 16, "open"),
+    )
     conn.commit()
     conn.close()

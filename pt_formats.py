@@ -70,6 +70,27 @@ LEAGUE_CLUBS: dict[str, tuple[str, ...]] = {
         "Nice", "Paris FC", "Paris SG", "Rennes",
         "Strasbourg", "Toulouse",
     ),
+    # 2026-10-09: rasmiy ligalarga qo'shilgan 3 liga (api.js LEAGUE_CLUBS bilan sinxron)
+    "Liga Portugal": (
+        "Académico Viseu", "Alverca", "Arouca", "Benfica",
+        "Braga", "Casa Pia", "Estoril", "Estrela Amadora",
+        "Famalicão", "Gil Vicente", "Marítimo", "Moreirense",
+        "Nacional", "Porto", "Rio Ave", "Santa Clara",
+        "Sporting CP", "Vitória SC",
+    ),
+    "Süper Lig": (
+        "Alanyaspor", "Amedspor", "Başakşehir", "Beşiktaş",
+        "Çorum", "Erzurumspor", "Eyüpspor", "Fenerbahçe",
+        "Galatasaray", "Gaziantep", "Gençlerbirliği", "Göztepe",
+        "Kasımpaşa", "Kocaelispor", "Konyaspor", "Rizespor",
+        "Samsunspor", "Trabzonspor",
+    ),
+    "Superliga": (
+        "Andijon", "Bunyodkor", "Buxoro", "Dinamo Samarqand",
+        "Lokomotiv", "Mash'al", "Nasaf", "Navbahor",
+        "Neftchi", "OKMK", "Paxtakor", "Qizilqum",
+        "Qo'qon-1912", "So'g'diyona", "Surxon", "Xorazm",
+    ),
 }
 
 WC_TEAMS: tuple[str, ...] = tuple(team for teams in WC_GROUPS.values() for team in teams)
