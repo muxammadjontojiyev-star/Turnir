@@ -1302,5 +1302,10 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("Superliga", 16, "open"),
     )
+    # 2026-10-09: Saudiya Pro Ligasi — Superliga'dan keyin navbat bilan ochiladi (id 9)
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Saudi Pro Liga", 18, "open"),
+    )
     conn.commit()
     conn.close()

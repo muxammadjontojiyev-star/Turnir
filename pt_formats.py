@@ -91,6 +91,13 @@ LEAGUE_CLUBS: dict[str, tuple[str, ...]] = {
         "Neftchi", "OKMK", "Paxtakor", "Qizilqum",
         "Qo'qon-1912", "So'g'diyona", "Surxon", "Xorazm",
     ),
+    "Saudi Pro Liga": (
+        "Abha", "Al-Ahli", "Al-Diriyah", "Al-Ettifaq",
+        "Al-Faisaly", "Al-Fateh", "Al-Fayha", "Al-Hazem",
+        "Al-Hilal", "Al-Ittihad", "Al-Khaleej", "Al-Kholood",
+        "Al-Nassr", "Al-Qadsiah", "Al-Riyadh", "Al-Shabab",
+        "Al-Taawoun", "Neom",
+    ),
 }
 
 WC_TEAMS: tuple[str, ...] = tuple(team for teams in WC_GROUPS.values() for team in teams)
