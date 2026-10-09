@@ -181,6 +181,26 @@ const LEAGUE_CLUBS = {
     { name: "So'g'diyona",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/115129.png" },
     { name: "Surxon",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/316396.png" },
     { name: "Xorazm",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/163183.png" },
+  ],  // 2026-10-09: Saudiya Pro Ligasi 2026/27 (18 klub); logolar FotMob CDN (ID — fotmob.com/leagues/536)
+  "Saudi Pro Liga": [
+    { name: "Abha",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/150414.png" },
+    { name: "Al-Ahli",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/2530.png" },
+    { name: "Al-Diriyah",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1787233.png" },
+    { name: "Al-Ettifaq",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/101915.png" },
+    { name: "Al-Faisaly",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/205687.png" },
+    { name: "Al-Fateh",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/177356.png" },
+    { name: "Al-Fayha",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/582749.png" },
+    { name: "Al-Hazem",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/101911.png" },
+    { name: "Al-Hilal",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/2529.png" },
+    { name: "Al-Ittihad",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8577.png" },
+    { name: "Al-Khaleej",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/550433.png" },
+    { name: "Al-Kholood",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1523706.png" },
+    { name: "Al-Nassr",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/101918.png" },
+    { name: "Al-Qadsiah",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/101919.png" },
+    { name: "Al-Riyadh",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/582739.png" },
+    { name: "Al-Shabab",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/101916.png" },
+    { name: "Al-Taawoun",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/205686.png" },
+    { name: "Neom",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1699505.png" },
   ],
 };
 
@@ -212,6 +232,7 @@ const LEAGUE_LOGOS = {
   "Liga Portugal": "https://images.fotmob.com/image_resources/logo/leaguelogo/61.png",
   "Süper Lig":     "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png",
   "Superliga":     "https://images.fotmob.com/image_resources/logo/leaguelogo/540.png",
+  "Saudi Pro Liga": "https://images.fotmob.com/image_resources/logo/leaguelogo/536.png",
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
