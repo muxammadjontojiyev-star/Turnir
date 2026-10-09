@@ -123,6 +123,14 @@ async function clLoadAdminPanel() {
               style="border-color:rgba(245,197,66,.55);color:#f5c542">
         🏆 ChL mavsumini yakunlash
       </button>
+
+      <div class="admin-hint" style="margin-top:14px">
+        <b>Yangi ChL mavsumini boshlash:</b> liga mavsumini yakunlash ChL'ga
+        tegmaydi. ChL yakunlangach shu tugma eng oxirgi liga kvalifikantlari
+        bilan yangi ChL'ni ochadi, so'ng qur'a o'tkaziladi.
+        <div id="cl-season-info" style="margin-top:6px;opacity:.85"></div>
+      </div>
+      <button class="btn" id="cl-admin-season-start" disabled>▶️ Yangi ChL mavsumini boshlash</button>
       ` : ""}
 
       ${drawn ? clAdminFixForm() : ""}
@@ -192,6 +200,9 @@ async function clLoadAdminPanel() {
     // 2026-07-23: ChL mavsumini yakunlash (kubok saqlanadi + ma'lumot tozalanadi)
     const finBtn = document.getElementById("cl-admin-finalize");
     if (finBtn) finBtn.addEventListener("click", () => void clAdminFinalizeSeason(finBtn));
+
+    // 2026-10-09: ChL alohida start (cl_season.js)
+    if (typeof clSeasonInit === "function") void clSeasonInit();
   }
 }
 
