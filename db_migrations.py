@@ -199,6 +199,9 @@ def run_migrations() -> None:
         _ensure_unique_indexes(conn)
         _ensure_perf_indexes(conn)
         _fix_cl_schedule_matchdays(conn)
+        # 2026-10-09: ChL faol mavsum ko'rsatkichi (ligadan mustaqil start)
+        from cl_season_state import migrate_cl_season_pointer
+        migrate_cl_season_pointer(conn)
     finally:
         conn.close()
 

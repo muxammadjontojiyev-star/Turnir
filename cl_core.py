@@ -37,9 +37,10 @@ CL_ROUNDS = 8            # liga bosqichida har ishtirokchi o'ynaydigan o'yinlar 
 
 
 def _current_league_season(cursor) -> int:
-    cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
-    row = cursor.fetchone()
-    return row["current_season"] if row else 1
+    # 2026-10-09: nomi eski, lekin ChL FAOL mavsumini qaytaradi (cl_season_state) —
+    # liga yangi mavsumga o'tsa ham tugamagan ChL o'z kalitida qoladi.
+    from cl_season_state import cl_data_season
+    return cl_data_season(cursor)
 
 
 def cl_sync_participants(season: int | None = None) -> dict:
@@ -58,9 +59,8 @@ def cl_sync_participants(season: int | None = None) -> dict:
         if season is None:
             season = _current_league_season(cursor)
 
-        cursor.execute("SELECT MAX(from_season) AS s FROM cl_qualifiers")
-        row = cursor.fetchone()
-        from_season = row["s"] if row else None
+        from cl_season_state import cl_qualifier_season
+        from_season = cl_qualifier_season(cursor)  # 2026-10-09: faol ChL kvalifikantlari (MAX emas)
         if not from_season:
             return {"season": season, "qualified_total": 0, "registered": 0, "added": 0}
 
@@ -113,9 +113,8 @@ def _seed_participants_from_qualifiers(cursor, season: int) -> int:
     aks holda kvalifikatsiya paytidagi snapshot (NULL bo'lishi mumkin).
     INSERT OR IGNORE — idempotent (qoida #38). Qaytaradi: qo'shilganlar soni.
     """
-    cursor.execute("SELECT MAX(from_season) AS s FROM cl_qualifiers")
-    row = cursor.fetchone()
-    from_season = row["s"] if row else None
+    from cl_season_state import cl_qualifier_season
+    from_season = cl_qualifier_season(cursor)  # 2026-10-09: faol ChL kvalifikantlari (MAX emas)
     if not from_season:
         return 0
 

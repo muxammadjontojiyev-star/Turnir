@@ -25,10 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 def _current_season(cursor) -> int:
-    """cl_rounds/cl_playoff bilan BIR XIL manba (season_state.current_season)."""
-    cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
-    row = cursor.fetchone()
-    return row["current_season"] if row else 1
+    """cl_rounds/cl_playoff bilan BIR XIL manba (2026-10-09: cl_season_state)."""
+    from cl_season_state import cl_data_season
+    return cl_data_season(cursor)
 
 
 def cl_group_blocking(season: int | None = None) -> dict:

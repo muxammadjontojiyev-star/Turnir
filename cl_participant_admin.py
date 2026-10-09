@@ -28,9 +28,8 @@ def cl_list_all_participants() -> list[dict]:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
-        row = cursor.fetchone()
-        season = row["current_season"] if row else 1
+        from cl_season_state import cl_data_season  # 2026-10-09: ligadan mustaqil
+        season = cl_data_season(cursor)
 
         cursor.execute(
             "SELECT p.user_id, p.nickname, p.club_name, p.group_number, "

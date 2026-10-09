@@ -26,9 +26,8 @@ def cl_top_scorers(season: int | None = None, limit: int | None = None) -> list[
     cursor = conn.cursor()
     try:
         if season is None:
-            cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
-            row = cursor.fetchone()
-            season = row["current_season"] if row else 1
+            from cl_season_state import cl_data_season  # 2026-10-09: ligadan mustaqil
+            season = cl_data_season(cursor)
 
         cursor.execute(
             "SELECT p.user_id, p.nickname, p.group_number, u.username, "

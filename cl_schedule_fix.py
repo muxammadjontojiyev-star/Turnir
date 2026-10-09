@@ -43,9 +43,8 @@ def cl_rebuild_schedule(season: int | None = None, force: bool = False
     try:
         cursor.execute("BEGIN IMMEDIATE")
         if season is None:
-            cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
-            row = cursor.fetchone()
-            season = row["current_season"] if row else 1
+            from cl_season_state import cl_data_season  # 2026-10-09: ligadan mustaqil
+            season = cl_data_season(cursor)
 
         cursor.execute(
             "SELECT COUNT(*) AS c FROM cl_matches WHERE season = ?", (season,))

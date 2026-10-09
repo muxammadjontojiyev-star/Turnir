@@ -1343,6 +1343,31 @@ def season_cl_finalize(admin: dict = Depends(get_authenticated_super_admin)):
             "champion": (result.get("prizes") or {}).get("cl_cup")}
 
 
+@app.get("/season/cl/info")
+def season_cl_info(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-10-09: ChL faol mavsum holati (liga mavsumidan mustaqil) — admin paneli uchun.
+    can_start=False bo'lsa reason: cl_not_finished | no_qualifiers | already_started.
+    """
+    from cl_season_state import cl_season_info
+    return cl_season_info()
+
+
+@app.post("/season/cl/start")
+def season_cl_start(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-10-09: Bosh admin YANGI ChL mavsumini boshlaydi (alohida start). Liga mavsumini
+    yakunlash ChL'ga tegmaydi — yangi ChL faqat shu tugma bilan eng oxirgi kvalifikantlardan
+    tuziladi. Keyin odatdagidek qur'a o'tkaziladi.
+    Xato: cl_not_finished (avval ChL yakunlansin) / no_qualifiers / already_started.
+    """
+    from cl_season_state import cl_start_new_season
+    ok, res = cl_start_new_season()
+    if not ok:
+        raise HTTPException(status_code=400, detail=res)
+    return {"status": "ok", **res}
+
+
 @app.get("/users/{user_id}/prizes")
 def user_prizes(user_id: int):
     """Foydalanuvchining barcha sovrinlari (mavsum bo'yicha)."""
@@ -1800,9 +1825,9 @@ def cl_rounds_start(admin: dict = Depends(get_authenticated_super_admin)):
 @app.get("/cl/scorers")
 def cl_scorers(user: dict = Depends(get_authenticated_user)):
     """ChL to'purarlari: barcha guruhlar bo'yicha urilgan gollar (confirmed o'yinlar)."""
-    from season_prizes import get_league_season
+    from cl_season_state import get_cl_data_season  # 2026-10-09: ligadan mustaqil
     from cl_scorers import cl_top_scorers
-    return {"scorers": cl_top_scorers(get_league_season())}
+    return {"scorers": cl_top_scorers(get_cl_data_season())}
 
 
 @app.get("/cl/state")
@@ -1819,9 +1844,9 @@ def cl_profile(user: dict = Depends(get_authenticated_user)):
     nickname, klub, guruh, guruhdagi o'rni va statistikasi.
     Avatar: GET /players/{user_id}/photo (alohida, mavjud endpoint).
     """
-    from season_prizes import get_league_season
+    from cl_season_state import get_cl_data_season  # 2026-10-09: ligadan mustaqil
     from cl_profile import cl_get_profile
-    return cl_get_profile(user["id"], get_league_season())
+    return cl_get_profile(user["id"], get_cl_data_season())
 
 
 @app.get("/cl/cup-holder")
@@ -1876,10 +1901,10 @@ def cl_cup_holder():
 @app.get("/cl/matches/my")
 def cl_my_matches(user: dict = Depends(get_authenticated_user)):
     """Foydalanuvchining ChL o'yinlari (joriy mavsum)."""
-    from season_prizes import get_league_season
+    from cl_season_state import get_cl_data_season  # 2026-10-09: ligadan mustaqil
     from cl_matches_queries import cl_get_user_matches
     from cl_rounds import cl_get_state
-    season = get_league_season()
+    season = get_cl_data_season()
     return {"me_id": user["id"],
             "state": cl_get_state(season),
             "matches": cl_get_user_matches(user["id"], season)}
@@ -1891,9 +1916,9 @@ def cl_user_matches(target_id: int, user: dict = Depends(get_authenticated_user)
     Boshqa ishtirokchining ChL o'yinlari (faqat o'qish — reyting profilida ko'rish uchun).
     me_id yuborilmaydi (bu boshqa odam); natija kiritish tugmalari ko'rinmaydi.
     """
-    from season_prizes import get_league_season
+    from cl_season_state import get_cl_data_season  # 2026-10-09: ligadan mustaqil
     from cl_matches_queries import cl_get_user_matches
-    season = get_league_season()
+    season = get_cl_data_season()
     return {"matches": cl_get_user_matches(target_id, season)}
 
 

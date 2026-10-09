@@ -117,15 +117,15 @@ def save_cl_qualifiers(cursor, season: int) -> int:
 def get_cl_qualifiers(from_season: int | None = None) -> dict:
     """
     Saqlangan kvalifikantlar ro'yxati (WebApp uchun).
-    from_season berilmasa — eng oxirgi mavjud mavsumniki.
+    from_season berilmasa — faol ChL'niki (cl_season_state.cl_qualifier_season).
     """
     conn = get_connection()
     cursor = conn.cursor()
     try:
         if from_season is None:
-            cursor.execute("SELECT MAX(from_season) AS s FROM cl_qualifiers")
-            row = cursor.fetchone()
-            from_season = row["s"] if row and row["s"] else None
+            # 2026-10-09: faol ChL kvalifikantlari (MAX emas — liga yakunlangach yangilari aralashmasin)
+            from cl_season_state import cl_qualifier_season
+            from_season = cl_qualifier_season(cursor)
         if from_season is None:
             return {"from_season": None, "qualifiers": []}
         cursor.execute(
@@ -147,9 +147,9 @@ def is_cl_qualifier(telegram_id: int, from_season: int | None = None) -> bool:
     cursor = conn.cursor()
     try:
         if from_season is None:
-            cursor.execute("SELECT MAX(from_season) AS s FROM cl_qualifiers")
-            row = cursor.fetchone()
-            from_season = row["s"] if row and row["s"] else None
+            # 2026-10-09: faol ChL kvalifikantlari (MAX emas — liga yakunlangach yangilari aralashmasin)
+            from cl_season_state import cl_qualifier_season
+            from_season = cl_qualifier_season(cursor)
         if from_season is None:
             return False
         cursor.execute(

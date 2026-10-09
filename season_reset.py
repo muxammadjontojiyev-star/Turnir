@@ -148,8 +148,20 @@ def reset_cl_data() -> dict:
     try:
         cursor.execute("BEGIN")
         for tbl in _CL_TABLES:
+            if tbl == "cl_qualifiers":
+                continue  # quyida alohida — keyingi ChL kvalifikantlari saqlanadi
             cursor.execute(f"DELETE FROM {tbl}")
             counts[tbl] = cursor.rowcount
+        # 2026-10-09: liga ChL'dan OLDIN yakunlangan bo'lsa, keyingi ChL kvalifikantlari
+        # (from_season > tugagan ChL'niki) allaqachon saqlangan — ular o'chirilmaydi.
+        # Faqat tugagan ChL va undan eskilari o'chiriladi.
+        from cl_season_state import cl_qualifier_season
+        done_from = cl_qualifier_season(cursor)
+        if done_from is not None:
+            cursor.execute("DELETE FROM cl_qualifiers WHERE from_season <= ?", (done_from,))
+            counts["cl_qualifiers"] = cursor.rowcount
+        else:
+            counts["cl_qualifiers"] = 0
         # Holat jadvallari: barcha mavsum qatorlari o'chiriladi — ChL qaytadan
         # boshlanganda cl_draw/cl_po_start yangi qator yaratadi.
         cursor.execute("DELETE FROM cl_state")

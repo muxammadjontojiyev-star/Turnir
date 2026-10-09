@@ -341,9 +341,8 @@ def cl_po_auto_confirm_awaiting(season: int | None = None) -> dict:
     try:
         cursor.execute("BEGIN IMMEDIATE")
         if season is None:
-            cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
-            r = cursor.fetchone()
-            season = r["current_season"] if r else 1
+            from cl_season_state import cl_data_season  # 2026-10-09: ligadan mustaqil
+            season = cl_data_season(cursor)
 
         # Play-off boshlangan bo'lishi kerak
         cursor.execute(

@@ -39,9 +39,9 @@ def _now_local() -> datetime:
 
 
 def _current_season(cursor) -> int:
-    cursor.execute("SELECT current_season FROM season_state WHERE id = 1")
-    row = cursor.fetchone()
-    return row["current_season"] if row else 1
+    # 2026-10-09: ChL faol mavsumi — liga mavsumidan mustaqil (cl_season_state)
+    from cl_season_state import cl_data_season
+    return cl_data_season(cursor)
 
 
 def _total_matchdays(cursor, season: int) -> int:
