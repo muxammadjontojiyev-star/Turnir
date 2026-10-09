@@ -201,6 +201,22 @@ const LEAGUE_CLUBS = {
     { name: "Al-Shabab",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/101916.png" },
     { name: "Al-Taawoun",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/205686.png" },
     { name: "Neom",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1699505.png" },
+  ],  // 2026-10-09: BAA (ADNOC) Pro Ligasi 2026/27 (14 klub); logolar FotMob CDN (ID — fotmob.com/leagues/538)
+  "UAE Pro Liga": [
+    { name: "Ajman",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/149994.png" },
+    { name: "Al-Ain",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102117.png" },
+    { name: "Al-Dhafra",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102118.png" },
+    { name: "Al-Jazira",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102101.png" },
+    { name: "Al-Nasr",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102123.png" },
+    { name: "Al-Wahda",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102122.png" },
+    { name: "Al-Wasl",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102111.png" },
+    { name: "Baniyas",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/182933.png" },
+    { name: "Hatta",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102113.png" },
+    { name: "Kalba",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/209190.png" },
+    { name: "Khor Fakkan",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/149993.png" },
+    { name: "Shabab Al-Ahli",   logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102119.png" },
+    { name: "Sharjah",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102124.png" },
+    { name: "United FC",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1552577.png" },
   ],
 };
 
@@ -233,6 +249,7 @@ const LEAGUE_LOGOS = {
   "Süper Lig":     "https://images.fotmob.com/image_resources/logo/leaguelogo/71.png",
   "Superliga":     "https://images.fotmob.com/image_resources/logo/leaguelogo/540.png",
   "Saudi Pro Liga": "https://images.fotmob.com/image_resources/logo/leaguelogo/536.png",
+  "UAE Pro Liga":   "https://images.fotmob.com/image_resources/logo/leaguelogo/538.png",
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
