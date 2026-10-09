@@ -195,6 +195,10 @@ const LEAGUE_TROPHIES = {
   "Bundesliga":   "images/bundesliga-trophy.png",
   "Serie A":      "images/seriea-trophy-1.png",
   "Ligue 1":      "images/ligue1-trophy-1.png",
+  // 2026-10-09: yangi ligalar kuboklari (fon shaffof PNG)
+  "Liga Portugal": "images/portugal-trophy.png",
+  "Süper Lig":     "images/turkiye-trophy.png",
+  "Superliga":     "images/uzbekistan-trophy.png",
 };
 
 // Liga emblemasi (logo) — liga nomi yonida ko'rsatiladi (hero karta + tanlash ro'yxati)
