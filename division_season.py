@@ -4,6 +4,8 @@ division_season.py — Divizion mavsumi (2026-07-21).
 1 mavsum = 1 oy. Chegara — har oyning DIV_SEASON_FIRST_DAY sanasidagi kuni
 (masalan 10-sana): 1-mavsum 10-iyul .. 10-avgust (10-avgust KIRMAYDI),
 2-mavsum 10-avgust .. 10-sentabr va hokazo.
+2026-10-10: "joriy mavsum" chegara kunida soat 16:00 da (o'yin deadline'i) almashadi —
+o'yinlarning `day` bo'yicha mavsumga tegishliligi o'zgarmaydi (_season_reference_day).
 
 Reyting har mavsumda NOLDAN boshlanadi, o'yin tarixi saqlanadi. Buning uchun
 div_matches jadvaliga `season` ustuni QO'SHILMAYDI — o'yinning `day` (sana)
@@ -15,9 +17,9 @@ Muhim: chegara kuni har oyda mavjud bo'lishi kerak (1..28 oralig'ida tanlansin) 
 """
 
 import logging
-from datetime import date
+from datetime import date, timedelta
 
-from config import DIV_SEASON_FIRST_DAY
+from config import DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE, DIV_SEASON_FIRST_DAY
 from queries_leagues import _tournament_now
 
 logger = logging.getLogger(__name__)
@@ -76,9 +78,27 @@ def div_season_for(day: str) -> dict:
     }
 
 
+def _season_reference_day() -> date:
+    """
+    Joriy mavsumni aniqlaydigan sana (Toshkent vaqti).
+
+    2026-10-10: mavsum chegara kunida (masalan 10-sana) yangi mavsum 00:00 da emas,
+    kunlik o'yin DEADLINE'ida (DIV_DEADLINE_HOUR:DIV_DEADLINE_MINUTE, 16:00) boshlanadi.
+    Sabab: 9-sana kechqurun qur'a qilingan o'tgan mavsumning oxirgi o'yinlari 10-sana
+    16:00 gacha o'ynaladi — shu vaqtgacha reyting/yakunlash o'tgan mavsumda qolishi kerak.
+    Chegara kunida deadline'gacha — kechagi sana (o'tgan mavsum) qaytariladi.
+    """
+    now = _tournament_now()
+    today = now.date()
+    if today.day == _first_day().day and \
+            (now.hour, now.minute) < (DIV_DEADLINE_HOUR, DIV_DEADLINE_MINUTE):
+        return today - timedelta(days=1)
+    return today
+
+
 def div_current_season() -> dict:
-    """Bugungi (Toshkent vaqti) mavsum ma'lumoti — div_season_for bilan bir xil shakl."""
-    return div_season_for(_tournament_now().date().isoformat())
+    """Joriy mavsum ma'lumoti (chegara kunida 16:00 gacha — o'tgan mavsum). div_season_for shakli."""
+    return div_season_for(_season_reference_day().isoformat())
 
 
 def div_season_range(day: str | None = None) -> tuple[str, str]:
@@ -102,7 +122,6 @@ def div_prev_season() -> dict | None:
     cur = div_current_season()
     if cur["number"] <= 1:
         return None
-    from datetime import timedelta
     prev_day = (date.fromisoformat(cur["start"]) - timedelta(days=1)).isoformat()
     prev = div_season_for(prev_day)
     prev["query_day"] = prev_day
