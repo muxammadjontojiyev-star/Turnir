@@ -257,6 +257,9 @@ const LEAGUE_TROPHIES = {
   "Liga Portugal": "images/portugal-trophy.png",
   "Süper Lig":     "images/turkiye-trophy.png",
   "Superliga":     "images/uzbekistan-trophy.png",
+  "Saudi Pro Liga": "images/saudi-trophy.png",
+  "UAE Pro Liga":   "images/uae-trophy.png",
+  "J1 Liga":        "images/japan-trophy.png",
 };
 
 // Liga emblemasi (logo) — liga nomi yonida ko'rsatiladi (hero karta + tanlash ro'yxati)
