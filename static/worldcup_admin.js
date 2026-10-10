@@ -45,6 +45,7 @@ async function wcLoadAdminPanel() {
   if (WC_ADMIN.isSuper) {
     void wcLoadAdminPlayers();
     void wcLoadAdminRoles();
+    if (typeof wcEligibleLoad === "function") void wcEligibleLoad();  // 2026-10-10
   }
 }
 
@@ -99,6 +100,10 @@ function wcRenderAdminPanel() {
       <div class="section-label">${escHtml(t.wc_admin_playoff_title || "PLAY-OFF")}</div>
       <button class="btn btn--primary btn--glow" id="wc-btn-playoff-start" style="width:100%">${escHtml(t.wc_admin_playoff_start_btn || "Play-off boshlash")}</button>
       <div class="admin-player-league" id="wc-playoff-status-hint" style="margin:6px 2px 0;text-align:center">${escHtml(t.wc_admin_playoff_hint || "32 jamoa: 12 g'olib + 12 ikkinchi + 8 eng yaxshi 3-o'rin")}</div>
+
+      <!-- 2026-10-10: JCh yo'llanmalari (Divizion top-48) — ko'rish + qayta hisoblash (wc_eligible_admin.js) -->
+      <div class="section-label">WC YO'LLANMALARI (DIVIZION TOP-48)</div>
+      <div id="wc-eligible-box"></div>
 
       <div class="section-label">${escHtml(t.wc_season_title || "WC MAVSUMI")}</div>
       <div class="admin-player-league" id="wc-season-current-hint" style="margin:0 2px 8px">—</div>
