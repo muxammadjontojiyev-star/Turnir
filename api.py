@@ -1195,6 +1195,28 @@ def wc_admin_start_today(admin: dict = Depends(get_authenticated_super_admin)):
 
 # ============ WC PLAY-OFF ============
 
+@app.get("/wc/admin/eligible")
+def wc_admin_eligible(admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-10-10: bosh admin — JCh yo'llanma ro'yxati (Divizion top-48) va qaysi mavsumdan."""
+    from wc_eligibility import wc_eligible_list
+    return wc_eligible_list()
+
+
+@app.post("/wc/admin/eligible/rebuild")
+def wc_admin_eligible_rebuild(season: str | None = Body("prev", embed=True),
+                              admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-10-10: bosh admin — yo'llanmalarni Divizion reytingidan qayta yozadi
+    (season='prev' — tugagan mavsum, 'current' — joriy). Sovrinlarga tegmaydi.
+    Xato: no_participants / rebuild_failed → 400
+    """
+    from wc_eligibility import rebuild_wc_eligible_from_division
+    ok, reason, info = rebuild_wc_eligible_from_division("current" if season == "current" else "prev")
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)
+    return {"status": "ok", **info}
+
+
 @app.get("/wc/playoff/status")
 def wc_playoff_status():
     """Play-off holati: boshlanganmi va 32 jamoa tayyormi (admin tugmasi uchun)."""

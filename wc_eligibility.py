@@ -101,3 +101,66 @@ def wc_eligibility_status(user_id: int) -> dict:
         }
     finally:
         conn.close()
+
+
+# ============================================================
+#  2026-10-10: admin ko'rinishi va QAYTA HISOBLASH (sovrinlarga tegmaydi)
+# ============================================================
+# Sabab: Divizion yakunlangach top-48 ishtirokchi JCh'ga o'ta olmadi (admin xabari).
+# Yo'llanmalar faqat finalize_division_season ichida yozilardi — admin ro'yxatni
+# KO'RA olmasdi va xato bo'lsa qayta yaratolmasdi. Endi ikkalasi mumkin.
+
+def wc_eligible_list() -> dict:
+    """Admin uchun: joriy yo'llanma ro'yxati (o'rin tartibida) + qaysi Divizion mavsumidan."""
+    from division_finalize import _season_context
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT e.place, e.user_id, e.points, e.season_number, u.nickname, u.username "
+            "FROM wc_eligible e LEFT JOIN users u ON u.id = e.user_id ORDER BY e.place"
+        )
+        rows = [dict(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
+    _, prev_number = _season_context("prev")
+    return {
+        "total": len(rows),
+        "slots": wc_slots_count(),
+        "season_number": rows[0]["season_number"] if rows else None,
+        "prev_season_number": prev_number,   # "qayta hisoblash" shu mavsumdan oladi
+        "list": rows,
+    }
+
+
+def rebuild_wc_eligible_from_division(season: str | None = "prev") -> tuple[bool, str, dict]:
+    """
+    Bosh admin: yo'llanmalarni Divizion reytingidan QAYTA yozadi (sovrinlar tegilmaydi).
+    season='prev' (standart) — tugagan mavsum; 'current' — joriy mavsum.
+    Idempotent: rebuild_wc_eligible eski ro'yxatni o'chirib qayta yozadi (qoida #38).
+    Qaytaradi: (ok, reason, {season_number, count}); reason: ok | no_participants | rebuild_failed
+    """
+    from division import div_rating
+    from division_finalize import _season_context
+    day, season_number = _season_context(season)
+    rating = div_rating(day)
+    if not any(p.get("played", 0) > 0 for p in rating):
+        return False, "no_participants", {"season_number": season_number}
+
+    conn = get_connection()
+    conn.isolation_level = None
+    cursor = conn.cursor()
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        count = rebuild_wc_eligible(cursor, season_number, rating)
+        cursor.execute("COMMIT")
+        return True, "ok", {"season_number": season_number, "count": count}
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            logger.exception("rebuild_wc_eligible_from_division: ROLLBACK xatosi")
+        logger.exception("rebuild_wc_eligible_from_division xatosi")
+        return False, "rebuild_failed", {"season_number": season_number}
+    finally:
+        conn.close()
