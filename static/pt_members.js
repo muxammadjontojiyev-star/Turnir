@@ -11,6 +11,9 @@ const PT_ERR_KEYS = {
   not_found: "pt_err_not_found", user_not_found: "pt_err_user_not_found",
   already_member: "pt_err_already", already_approved: "pt_err_already",
   full: "pt_err_full", not_recruiting: "pt_join_closed", team_taken: "pt_err_team_taken", league_locked: "pt_err_league_locked", bad_team: "pt_err_generic",
+  // 2026-10-10: ishtirokchini almashtirish (pt_replace.js)
+  same_user: "pt_err_same_user", cannot_replace_owner: "pt_err_replace_owner", member_not_found: "pt_err_not_found",
+  finished: "pt_err_replace_closed", not_owner: "pt_err_generic",
 };
 function ptErrText(e) { return PTT(PT_ERR_KEYS[e && e.message] || "pt_err_generic"); }
 

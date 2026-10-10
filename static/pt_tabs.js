@@ -128,6 +128,7 @@ function ptTabAdmin(t, p) {
     pm && pm.phase !== "finished" && typeof ptFixCardHtml === "function" ? ptSectionHtml("pt_adm_sec_fix", ptFixCardHtml()) : "",
     typeof ptManageHtml === "function" ? ptSectionHtml("pt_adm_sec_invite", ptManageHtml(t)) : "",
     t.status === "recruiting" && typeof ptMembersHtml === "function" ? ptMembersHtml(t) : "",
+    typeof ptReplaceHtml === "function" ? ptSectionHtml("pt_adm_sec_replace", ptReplaceHtml(t)) : "",   // 2026-10-10
     typeof ptAdminsHtml === "function" ? ptAdminsHtml(t) : "",
     typeof ptSizeEditHtml === "function" ? ptSectionHtml("pt_adm_sec_settings", ptSizeEditHtml(t)) : "",
     typeof ptDeleteHtml === "function" ? ptSectionHtml("pt_adm_sec_delete", ptDeleteHtml(t)) : "",
@@ -192,6 +193,7 @@ function ptBindDetail(t) {
   if (typeof ptBindManage === "function") ptBindManage(t);
   if (typeof ptBindPlay === "function") ptBindPlay(t);
   if (typeof ptBindAdmins === "function") ptBindAdmins(t);
+  if (typeof ptBindReplace === "function") ptBindReplace(t);        // 2026-10-10: ishtirokchini almashtirish
   if (typeof ptBindDelete === "function") ptBindDelete();
   if (typeof ptBindSupport === "function") ptBindSupport(t);         // 2026-10-08: tashkilotchi chati
   if (PT.play && typeof ptBindPlayBody === "function") ptBindPlayBody(t.id);
