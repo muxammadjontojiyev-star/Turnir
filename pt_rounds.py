@@ -79,7 +79,7 @@ def _tx(fn):
 
 
 def _owned_running(cursor, tid: int, owner_id: int):
-    cursor.execute("SELECT id, name, owner_user_id, status, current_round, total_rounds "
+    cursor.execute("SELECT id, name, owner_user_id, status, current_round, total_rounds, rounds_per_day "
                    "FROM pt_tournaments WHERE id = ?", (tid,))
     t = cursor.fetchone()
     if not t:
@@ -94,22 +94,33 @@ def _owned_running(cursor, tid: int, owner_id: int):
 
 
 def _close_round(cursor, t: dict) -> dict:
-    """Joriy turni yopadi (va undan oldingi chala qolganlarni), keyingisini ochadi."""
+    """
+    Ochiq tur(lar)ni yopadi (va undan oldingi chala qolganlarni), keyingisini ochadi.
+    2026-10-10: kunlik rejimda (rounds_per_day=N) N ta ochiq tur birga yopiladi, keyingi N tasi
+    ochiladi va muddat avtomatik ertangi kunlik vaqtga qo'yiladi (pt_daily). Qo'lda rejimda — avvalgidek.
+    """
+    from pt_daily import next_daily_deadline_utc, open_upto, round_label
     tid, cur = t["id"], t["current_round"]
+    rpd = int(t.get("rounds_per_day") or 0)
+    upto = open_upto(cur, t["total_rounds"], rpd)
     cursor.execute(
         "UPDATE pt_matches SET status = 'confirmed' WHERE tournament_id = ? AND stage = 'group' "
-        "AND round <= ? AND status = 'awaiting_confirmation'", (tid, cur))
+        "AND round <= ? AND status = 'awaiting_confirmation'", (tid, upto))
     awaiting = cursor.rowcount or 0
     cursor.execute(
         "UPDATE pt_matches SET score1 = 0, score2 = 0, status = 'confirmed' WHERE tournament_id = ? "
-        "AND stage = 'group' AND round <= ? AND status = 'pending'", (tid, cur))
+        "AND stage = 'group' AND round <= ? AND status = 'pending'", (tid, upto))
     zero = cursor.rowcount or 0
+    nxt = upto + 1
+    finished = nxt > t["total_rounds"]
+    deadline = next_daily_deadline_utc() if rpd > 0 and not finished else None
     cursor.execute(
-        "UPDATE pt_tournaments SET current_round = current_round + 1, round_deadline = NULL, "
-        "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (tid,))
-    finished = cur + 1 > t["total_rounds"]
+        "UPDATE pt_tournaments SET current_round = ?, round_deadline = ?, "
+        "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (nxt, deadline, tid))
     champions = _finish_league(cursor, tid) if finished else None
-    return {"id": tid, "name": t["name"], "closed_round": cur, "next_round": cur + 1,
+    next_upto = open_upto(nxt, t["total_rounds"], rpd) if not finished else nxt
+    return {"id": tid, "name": t["name"], "closed_round": round_label(cur, upto),
+            "next_round": round_label(nxt, next_upto), "next_deadline": utc_to_local_text(deadline),
             "groups_finished": finished, "awaiting": awaiting, "zero": zero,
             "champion_id": champions[0][1] if champions else None, "champions": champions,
             "single_table": _single_table(cursor, tid),
@@ -214,7 +225,7 @@ def pt_tick(now_utc: datetime | None = None) -> list[dict]:
 
     def run(cursor):
         cursor.execute(
-            "SELECT id, name, current_round, total_rounds FROM pt_tournaments "
+            "SELECT id, name, current_round, total_rounds, rounds_per_day FROM pt_tournaments "
             "WHERE status = ? AND round_deadline IS NOT NULL AND round_deadline <= ?", (STATUS_RUNNING, now_s))
         out = []
         for r in cursor.fetchall():

@@ -76,6 +76,24 @@ async def pt_deadline(tournament_id: int, deadline: str = Body(..., embed=True),
     return {"status": "ok", "deadline_local": r["deadline_local"]}
 
 
+@router.post("/pt/{tournament_id}/rounds-per-day")
+async def pt_rounds_per_day(tournament_id: int, n: int = Body(..., embed=True),
+                            user: dict = Depends(get_authenticated_user)):
+    """
+    2026-10-10: kuniga nechta tur ochilishi (0 = qo'lda; 1..4 — har kuni rasmiy ligalar vaqtida
+    avtomatik yopiladi/ochiladi). Xato: bad_value, not_found, not_owner, finished, groups_finished -> 400
+    """
+    from notify import notify_members
+    from pt_daily import pt_set_rounds_per_day
+    ok, r = pt_set_rounds_per_day(tournament_id, user["id"], n)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    if r["members"] and r["round"]:                  # yangi muddat / ko'p tur ochildi — a'zolarga xabar
+        spawn(notify_members(r["members"], "pt_notify_round_open", name=r["name"],
+                             round=r["round"], deadline=r["deadline_local"] or "—"))
+    return {"status": "ok", "rounds_per_day": r["rounds_per_day"], "deadline_local": r["deadline_local"]}
+
+
 @router.post("/pt/{tournament_id}/close-round")
 async def pt_close_round(tournament_id: int, user: dict = Depends(get_authenticated_user)):
     """Tashkilotchi joriy turni hozir yopadi. Xato: not_owner, not_running, groups_finished -> 400"""

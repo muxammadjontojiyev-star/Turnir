@@ -19,10 +19,17 @@ from pt_core import is_manager
 logger = logging.getLogger(__name__)
 
 
+def _group_open(m) -> bool:
+    """2026-10-10: guruh o'yini turi ochiqmi (kunlik rejimda N tur birga ochiq — pt_daily)."""
+    from pt_daily import round_is_open
+    return round_is_open(m["round"], m["current_round"], m["total_rounds"], m["rounds_per_day"])
+
+
 def _load(cursor, match_id: int):
     cursor.execute(
         "SELECT m.id, m.stage, m.round, m.player1_id, m.player2_id, m.score1, m.score2, m.status, "
-        "m.group_label, m.leg, t.owner_user_id, t.status AS t_status, t.current_round, t.id AS tid "
+        "m.group_label, m.leg, t.owner_user_id, t.status AS t_status, t.current_round, t.id AS tid, "
+        "t.total_rounds, t.rounds_per_day "
         "FROM pt_matches m JOIN pt_tournaments t ON t.id = m.tournament_id WHERE m.id = ?", (match_id,))
     r = cursor.fetchone()
     return dict(r) if r else None
@@ -84,7 +91,7 @@ def pt_owner_match_info(match_id: int, owner_id: int) -> tuple[bool, str | dict]
                   "score1": m["score1"], "score2": m["score2"],
                   "player1": names.get(m["player1_id"]), "player2": names.get(m["player2_id"]),
                   "stage": m["stage"], "leg": m["leg"],
-                  "can_cancel": (m["round"] == m["current_round"]) if m["stage"] == "group"
+                  "can_cancel": _group_open(m) if m["stage"] == "group"
                                 else m["status"] in ("awaiting_confirmation", "admin_pending")}
 
 
@@ -121,7 +128,7 @@ def pt_owner_cancel(match_id: int, owner_id: int) -> tuple[bool, str]:
         why = _check(m, owner_id)
         if why:
             return False, why
-        if m["stage"] == "group" and m["round"] != m["current_round"]:
+        if m["stage"] == "group" and not _group_open(m):
             return False, "round_closed"
         if m["stage"] != "group" and m["status"] not in ("awaiting_confirmation", "admin_pending"):
             return False, "wrong_status"     # tasdiqlangan pley-off — faqat tuzatish (set)

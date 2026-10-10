@@ -1056,6 +1056,8 @@ def init_db():
         "ALTER TABLE pt_members ADD COLUMN team_name TEXT",
         # 2026-10-07: pley-off javob o'yini (erkin format, 2 doira): 1 | 2
         "ALTER TABLE pt_matches ADD COLUMN leg INTEGER NOT NULL DEFAULT 1",
+        # 2026-10-10: kuniga N tur (0 = qo'lda, avvalgi xulq) — pt_daily.py
+        "ALTER TABLE pt_tournaments ADD COLUMN rounds_per_day INTEGER NOT NULL DEFAULT 0",
     ]
     for sql in migrations:
         try:

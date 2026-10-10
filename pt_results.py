@@ -86,7 +86,7 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT id, owner_user_id, status, current_round, total_rounds, round_deadline, "
-                       "format, league_name, legs FROM pt_tournaments WHERE id = ?", (tid,))
+                       "format, league_name, legs, rounds_per_day FROM pt_tournaments WHERE id = ?", (tid,))
         t = cursor.fetchone()
         if not t:
             return None
@@ -111,6 +111,9 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
     finally:
         conn.close()
     cur = t["current_round"]
+    from pt_daily import PT_RPD_CHOICES, daily_time_text, open_upto, round_label   # 2026-10-10: kuniga N tur
+    rpd = int(t["rounds_per_day"] or 0)
+    upto = open_upto(cur, t["total_rounds"], rpd)
     fmt = t["format"] or "classic"
     from config import MAX_NORMAL_SCORE
     for x in matches:                                    # 2026-10-07: katta hisob — kim qaror qila oladi
@@ -123,12 +126,14 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
     matches.sort(key=lambda m: (_order.get(m["stage"], 9), m["round"] or 0, m["group_label"] or "", m["leg"] or 1, m["id"]))
     return {
         "status": t["status"], "current_round": cur, "total_rounds": t["total_rounds"],
+        "open_upto": upto, "round_label": round_label(cur, upto),       # 2026-10-10: ochiq turlar oralig'i
+        "rounds_per_day": rpd, "rpd_choices": list(PT_RPD_CHOICES), "daily_time": daily_time_text(),
         "groups_finished": cur > t["total_rounds"] > 0,
         "deadline_local": utc_to_local_text(t["round_deadline"]),
         "is_owner": t["owner_user_id"] == user_id, "is_manager": manager, "me_id": user_id,
         "standings": standings,
         "my_matches": [m for m in matches if user_id in (m["player1_id"], m["player2_id"])],
-        "round_matches": [m for m in matches if m["stage"] == "group" and m["round"] == cur],
+        "round_matches": [m for m in matches if m["stage"] == "group" and cur <= (m["round"] or 0) <= upto],
         # 5-bosqich: pley-off
         "phase": phase,                     # None | ko_ready | r64..final (joriy bosqich) | finished
         "bracket_size": pt_bracket_size(fmt, standings),
@@ -151,7 +156,7 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
 def _match_for_update(cursor, match_id: int):
     cursor.execute(
         "SELECT m.id, m.tournament_id, m.stage, m.round, m.player1_id, m.player2_id, m.status, "
-        "m.submitted_by, t.status AS t_status, t.current_round FROM pt_matches m "
+        "m.submitted_by, t.status AS t_status, t.current_round, t.total_rounds, t.rounds_per_day FROM pt_matches m "
         "JOIN pt_tournaments t ON t.id = m.tournament_id WHERE m.id = ?", (match_id,))
     r = cursor.fetchone()
     return dict(r) if r else None
@@ -186,7 +191,9 @@ def pt_submit_result(match_id: int, user_id: int, score1: int, score2: int) -> t
             return False, "not_participant"
         if m["t_status"] != "running":
             return False, "not_running"
-        if m["stage"] == "group" and m["round"] != m["current_round"]:
+        from pt_daily import round_is_open                   # 2026-10-10: kunlik rejimda N tur ochiq
+        if m["stage"] == "group" and not round_is_open(m["round"], m["current_round"],
+                                                      m["total_rounds"], m["rounds_per_day"]):
             return False, "round_closed"
         if m["stage"] != "group":                            # pley-off: durang yo'q; javob o'yinida — yig'indi
             from pt_legs import ko_draw_check

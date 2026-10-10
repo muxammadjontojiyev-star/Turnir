@@ -21,7 +21,8 @@ _TYPING: dict[tuple[int, int], float] = {}     # (match_id, user_id) -> vaqt
 
 def _match(cursor, match_id: int):
     cursor.execute(
-        "SELECT m.player1_id, m.player2_id, m.stage, m.round, t.current_round, t.status, t.name "
+        "SELECT m.player1_id, m.player2_id, m.stage, m.round, t.current_round, t.status, t.name, "
+        "t.total_rounds, t.rounds_per_day "
         "FROM pt_matches m JOIN pt_tournaments t ON t.id = m.tournament_id WHERE m.id = ?", (match_id,))
     r = cursor.fetchone()
     if r is None or not r["player1_id"] or not r["player2_id"]:
@@ -33,7 +34,9 @@ def _open(m) -> bool:
     """Guruhda joriy/o'tgan tur ochiq; pley-off (5-bosqich) — juftlik to'lgan bo'lsa ochiq."""
     if m["status"] not in ("running", "finished"):
         return False
-    return m["stage"] != "group" or m["round"] <= m["current_round"]
+    from pt_daily import open_upto                      # 2026-10-10: kunlik rejimda N tur ochiq
+    return m["stage"] != "group" or m["round"] <= open_upto(m["current_round"], m["total_rounds"],
+                                                            m["rounds_per_day"])
 
 
 def pt_send_message(match_id: int, sender_id: int, text: str) -> tuple[bool, str, dict | None]:
