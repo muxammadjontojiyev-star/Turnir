@@ -239,6 +239,31 @@ const LEAGUE_CLUBS = {
     { name: "V-Varen Nagasaki",    logo: "https://images.fotmob.com/image_resources/logo/teamlogo/194016.png" },
     { name: "Vissel Kobe",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4688.png" },
     { name: "Yokohama F. Marinos", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6581.png" },
+  ],  // 2026-10-10: LaLiga 2 (22 klub) — so'nggi 2 mavsum Segunda klublaridan bizning LaLiga ro'yxatida
+  // YO'QLARI (nom takrorlanmasin); logolar FotMob CDN (ID — fotmob.com jamoa sahifalari)
+  "LaLiga 2": [
+    { name: "Albacete",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8393.png" },
+    { name: "Andorra",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/494050.png" },
+    { name: "Burgos",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7876.png" },
+    { name: "Castellón",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10279.png" },
+    { name: "Celta Fortuna",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/161743.png" },
+    { name: "Ceuta",               logo: "https://images.fotmob.com/image_resources/logo/teamlogo/357259.png" },
+    { name: "Córdoba",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7869.png" },
+    { name: "Cultural Leonesa",    logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1753.png" },
+    { name: "Deportivo",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9783.png" },
+    { name: "Eibar",               logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8372.png" },
+    { name: "Eldense",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8288.png" },
+    { name: "Huesca",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/96925.png" },
+    { name: "Leganés",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7854.png" },
+    { name: "Málaga",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9864.png" },
+    { name: "Mirandés",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4032.png" },
+    { name: "Oviedo",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8670.png" },
+    { name: "Racing Santander",    logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8696.png" },
+    { name: "Real Sociedad B",     logo: "https://images.fotmob.com/image_resources/logo/teamlogo/161744.png" },
+    { name: "Sabadell",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4033.png" },
+    { name: "Sporting Gijón",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9869.png" },
+    { name: "Tenerife",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9867.png" },
+    { name: "Zaragoza",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8394.png" },
   ],
 };
 
@@ -276,6 +301,7 @@ const LEAGUE_LOGOS = {
   "Saudi Pro Liga": "https://images.fotmob.com/image_resources/logo/leaguelogo/536.png",
   "UAE Pro Liga":   "https://images.fotmob.com/image_resources/logo/leaguelogo/538.png",
   "J1 Liga":        "https://images.fotmob.com/image_resources/logo/leaguelogo/223.png",
+  "LaLiga 2":       "https://images.fotmob.com/image_resources/logo/leaguelogo/140.png",
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
@@ -580,8 +606,23 @@ function renderRatingFilter() {
   const filter = document.getElementById("rating-filter");
   filter.innerHTML = "";
 
+  // 2026-10-10: "1-ligalar | 2-ligalar" guruh tablari (league_tiers.js) — faqat
+  // tanlangan guruh ligalari ko'rsatiladi
+  const tiersOn = typeof leagueTier === "function";
+  if (tiersOn) {
+    const sel = (APP.leagues || []).find(l => l.id === APP.selectedLeagueId);
+    APP.ratingTier = sel ? leagueTier(sel.name) : (APP.ratingTier || 1);  // guruh — tanlangan ligadan
+    renderRatingTierTabs(filter, tier => {
+      APP.ratingTier = tier;
+      const first = (APP.leagues || []).find(l => leagueTier(l.name) === tier);
+      if (first) APP.selectedLeagueId = first.id;
+      APP.ratingTab = "league";
+      void loadRating();
+    });
+  }
+
   // Liga tablari
-  (APP.leagues || []).forEach(league => {
+  (APP.leagues || []).filter(l => !tiersOn || leagueTier(l.name) === APP.ratingTier).forEach(league => {
     const btn = document.createElement("button");
     btn.className = "tab-btn" + (APP.ratingTab === "league" && league.id === APP.selectedLeagueId ? " active" : "");
     btn.innerHTML = renderLeagueLogo(league.name, "tab-league-logo") + `<span>${escHtml(league.name)}</span>`;
@@ -621,6 +662,8 @@ function renderRatingFilter() {
 function showRatingCard(tab) {
   document.getElementById("rating-card").classList.toggle("hidden", tab !== "league");
   document.getElementById("top-scorers-card").classList.toggle("hidden", tab !== "top_scorers");
+  // 2026-10-10: zona izohi faqat liga jadvali bilan ko'rinadi
+  document.getElementById("rating-zone-legend")?.classList.toggle("hidden", tab !== "league");
 }
 
 function renderRatingTable(rating) {
@@ -628,6 +671,11 @@ function renderRatingTable(rating) {
   // O'z qatorimni aniqlash uchun DB user_id kerak (rating.user_id = u.id).
   // APP.currentUser.id — bu Telegram ID, rating'dagi user_id bilan mos kelmaydi.
   const myId  = APP.profileData?.user_id;
+
+  // 2026-10-10: ko'tarilish/tushish zonalari (league_tiers.js)
+  const zones = typeof leagueZones === "function"
+    ? leagueZones((APP.leagues || []).find(l => l.id === APP.selectedLeagueId)) : {};
+  if (typeof renderRatingZoneLegend === "function") renderRatingZoneLegend(zones);
 
   if (!rating || rating.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="empty-state">${APP.t.no_data || "Ma'lumot yo'q"}</td></tr>`;
@@ -665,7 +713,8 @@ function renderRatingTable(rating) {
         </div>
       </div>`;
 
-    const trCls = ["rating-row", isMe ? "is-me" : ""].filter(Boolean).join(" ");
+    const zoneCls = typeof ratingZoneRowClass === "function" ? ratingZoneRowClass(rank, rating.length, zones) : "";
+    const trCls = ["rating-row", isMe ? "is-me" : "", zoneCls].filter(Boolean).join(" ");
 
     const gd = (player.goal_difference >= 0 ? "+" : "") + player.goal_difference;
 

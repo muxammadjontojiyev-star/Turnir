@@ -60,6 +60,7 @@ const APP = {
   chatOpened:       new Set(),  // 💬 bosilgan match'lar (Natija tugmasi ochilishi uchun)
   adminResolveMatchId: null,  // Admin: rad etilgan natijani belgilash uchun
   ratingTab:        "league",  // Reyting bo'limidagi tab: "league" yoki "top_scorers"
+  ratingTier:       1,         // 2026-10-10: reyting liga guruhi: 1 (1-ligalar) | 2 (2-ligalar) — league_tiers.js
   lang:             "uz",   // Joriy til
   t:                {},     // Aktiv tarjimalar
   chatMatchId:      null,   // WebApp chat: ochiq match id
