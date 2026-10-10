@@ -119,6 +119,14 @@ LEAGUE_CLUBS: dict[str, tuple[str, ...]] = {
         "Racing Santander", "Real Sociedad B", "Sabadell", "Sporting Gijón",
         "Tenerife", "Zaragoza",
     ),
+    "Championship": (
+        "Birmingham", "Blackburn", "Bolton", "Bristol City",
+        "Cardiff", "Charlton", "Coventry", "Derby",
+        "Hull City", "Ipswich", "Leicester", "Lincoln City",
+        "Middlesbrough", "Millwall", "Norwich", "Portsmouth",
+        "Preston", "QPR", "Southampton", "Stoke City",
+        "Swansea", "Watford", "West Brom", "Wrexham",
+    ),
 }
 
 WC_TEAMS: tuple[str, ...] = tuple(team for teams in WC_GROUPS.values() for team in teams)

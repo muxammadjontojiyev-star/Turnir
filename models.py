@@ -1323,5 +1323,11 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("LaLiga 2", 22, "open"),
     )
+    # 2026-10-10: Championship (Angliya 2-ligasi, 24 klub) — LaLiga 2'dan keyin navbat bilan (id 13).
+    # Premier Liga'ning 2-ligasi (static/league_tiers.js LEAGUE_SECOND_TIERS).
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Championship", 24, "open"),
+    )
     conn.commit()
     conn.close()
