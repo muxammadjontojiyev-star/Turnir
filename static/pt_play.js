@@ -13,6 +13,7 @@ const PT_PLAY_ERR = {
   wrong_status: "pt_err_wrong_status", not_owner: "pt_err_not_owner", match_not_found: "pt_err_match_404",
   draw_not_allowed: "pt_err_draw", not_ready: "pt_err_not_ready", next_stage_played: "pt_err_next_played",
   first_leg_pending: "pt_err_first_leg", aggregate_draw: "pt_err_aggregate", not_allowed: "pt_err_not_owner",
+  bad_value: "pt_err_rpd", groups_finished: "pt_err_rpd", finished: "pt_err_rpd",
 };
 
 // O'yin bosqichi nomi (guruh turi yoki pley-off bosqichi) — karta va tuzatish oynasi uchun umumiy
@@ -114,7 +115,7 @@ function ptMatchCardHtml(m, p, mine) {
   };
   const names = `<div class="pt-match-row">${side(1)}<span class="pt-score">${score}</span>${side(2)}</div>`;
   let action = "";
-  const open = m.stage === "group" ? m.round === p.current_round : true;   // pley-off: bosqich ochiq
+  const open = m.stage === "group" ? ptRoundOpen(m, p) : true;   // pley-off: bosqich ochiq
   if (mine && m.status === "pending" && open && p.status === "running") {
     action = `<div class="pt-res-form">
       <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-s1-${m.id}">
@@ -135,7 +136,7 @@ function ptMatchCardHtml(m, p, mine) {
            <button class="pt-mini pt-mini--no" data-pt-rejectres="${m.id}">${escHtml(PTT("pt_reject_res"))}</button></div>`;
   }
   let tools = "";
-  if (mine && m.player1_id && m.player2_id && (m.stage !== "group" || m.round <= p.current_round)) {
+  if (mine && m.player1_id && m.player2_id && (m.stage !== "group" || m.round <= (p.open_upto || p.current_round))) {
     const opp = m.player1_id === me ? ptNameOf(m, 2) : ptNameOf(m, 1);
     const n = (PT.unread || {})[m.id] || 0;
     tools = `<div class="pt-match-tools">
@@ -208,9 +209,32 @@ function ptAdminPlayHtml(p) {
   if (p.phase && typeof ptKnockoutAdminHtml === "function") return ptKnockoutAdminHtml(p);
   if (p.groups_finished) return "";
   return `<div class="card pt-pay">
-      <div class="section-label pt-label">${escHtml(PTT("pt_round_title", { round: p.current_round, total: p.total_rounds }))}</div>
+      <div class="section-label pt-label">${escHtml(PTT("pt_round_title", { round: p.round_label || p.current_round, total: p.total_rounds }))}</div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
-        <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>${ptOwnerControlsHtml(false)}</div>`;
+        <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>${ptRoundsPerDayHtml(p)}${ptOwnerControlsHtml(false)}</div>`;
+}
+
+// 2026-10-10: guruh o'yini natija kiritishga ochiqmi (kunlik rejimda N tur birga ochiq — pt_daily.py)
+function ptRoundOpen(m, p) {
+  return m.round >= p.current_round && m.round <= (p.open_upto || p.current_round);
+}
+
+// 2026-10-10: "Kuniga turlar" tanlovi (0 = qo'lda; 1..4 — har kuni p.daily_time da avtomatik)
+function ptRoundsPerDayHtml(p) {
+  const cur = p.rounds_per_day || 0;
+  const chips = (p.rpd_choices || [0, 1, 2, 3, 4]).map(n =>
+    `<button class="pt-chip${n === cur ? " active" : ""}" data-pt-rpd="${n}">${escHtml(n ? String(n) : PTT("pt_rpd_manual"))}</button>`).join("");
+  const hint = cur
+    ? PTT("pt_rpd_hint_on", { n: cur, time: p.daily_time || "" })
+    : PTT("pt_rpd_hint_off", { time: p.daily_time || "" });
+  return `<div class="pt-field-label">${escHtml(PTT("pt_rpd_title"))}</div>
+      <div class="pt-chips">${chips}</div>
+      <div class="pt-hint">${escHtml(hint)}</div>`;
+}
+
+function ptSetRoundsPerDay(tid, n) {
+  if (PT.play && n === (PT.play.rounds_per_day || 0)) return;
+  return ptPlayAction(tid, `/pt/${encodeURIComponent(tid)}/rounds-per-day`, { n }, "pt_rpd_saved");
 }
 
 // O'yinlarim: guruh + pley-off o'yinlarim (natija, tasdiq, chat, xona ID)
@@ -239,6 +263,7 @@ function ptBindPlayBody(tid) {
   q("[data-pt-rejectres]", b => b.addEventListener("click", () => void ptConfirmResult(tid, b.dataset.ptRejectres, false)));
   document.getElementById("pt-deadline-btn")?.addEventListener("click", () => void ptSetDeadline(tid));
   document.getElementById("pt-close-round")?.addEventListener("click", () => void ptCloseRound(tid));
+  q("[data-pt-rpd]", b => b.addEventListener("click", () => void ptSetRoundsPerDay(tid, Number(b.dataset.ptRpd))));
   q("[data-pt-dl]", b => b.addEventListener("click", () => {
     const inp = document.getElementById("pt-deadline-input");
     if (inp) inp.value = ptPresetDeadline(Number(b.dataset.ptDl));

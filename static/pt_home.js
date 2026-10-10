@@ -125,7 +125,7 @@ function ptNextCard(title, body, extra = "") {
 
 function ptMyActionMatch(p) {
   const mine = p.my_matches || [];
-  const open = m => (m.stage === "group" ? m.round === p.current_round : true);
+  const open = m => (m.stage === "group" ? m.round >= p.current_round && m.round <= (p.open_upto || p.current_round) : true);
   // avval men tasdiqlashim kerak bo'lganlar, keyin natija kiritilmaganlar
   return mine.find(m => m.status === "awaiting_confirmation" && m.submitted_by !== p.me_id)
     || mine.find(m => m.status === "admin_pending")
