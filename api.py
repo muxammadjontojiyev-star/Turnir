@@ -56,6 +56,7 @@ from queries import (
     get_open_matchday, set_league_draw_date, delete_league_matches,
     get_played_results, restore_results_to_schedule,
     reopen_matchdays, auto_resolve_matches, get_deadline_passed_matchday,
+    league_total_matchdays,
     get_matchday_entry_locked, reopen_matchday_range, reset_awaiting_in_range,
     is_near_deadline, is_chat_open,
     send_chat_message, get_chat_messages, count_unread_messages,
@@ -3259,7 +3260,7 @@ async def admin_start_league(league_id: int, admin: dict = Depends(get_authentic
     # Qo'lda kiritilgan haqiqiy natijalar (0:0 emas) SAQLANADI.
     # Bugundan boshlanganda faqat MATCHDAYS_PER_UNLOCK ta tur ochiq, qolgani yopiq —
     # shuning uchun butun jadval bo'ylab avtomatik 0:0 larni tozalaymiz.
-    reopened = reopen_matchdays(league_id, TOTAL_MATCHDAYS)
+    reopened = reopen_matchdays(league_id, league_total_matchdays(league))  # 2026-10-10: liga bo'yicha
 
     members = get_league_members_for_notify(league_id)
     await notify_members(members, "notify_matchday_open", matchday=1)
@@ -3341,7 +3342,7 @@ async def admin_reopen_auto(league_id: int, admin: dict = Depends(get_authentica
 
     # Butun jadval bo'ylab avtomatik 0:0 confirmed turlarni qaytaramiz.
     # reopen_matchdays faqat score 0:0 confirmed'larni oladi (qo'lda natijalarga tegmaydi).
-    reopened = reopen_matchdays(league_id, TOTAL_MATCHDAYS)
+    reopened = reopen_matchdays(league_id, league_total_matchdays(league))  # 2026-10-10: liga bo'yicha
 
     return {"status": "ok", "league_id": league_id, "reopened": reopened}
 

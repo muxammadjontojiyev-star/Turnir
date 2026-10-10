@@ -17,6 +17,17 @@ from config import (
 from queries_leagues import _parse_draw_date, _tournament_now, get_league_by_id
 
 
+def league_total_matchdays(league) -> int:
+    """
+    2026-10-10: liganing jami tur soni (2 doira) — chegara sifatida.
+    max(TOTAL_MATCHDAYS, 2*(max_players-1)): 20 va undan kam kishilik ligalarda
+    avvalgidek 38 (xatti-harakat o'zgarmaydi), 22 kishilik ligada (LaLiga 2) 42 —
+    aks holda 39..42-turlar hech qachon ochilmasdi.
+    """
+    players = league["max_players"] if league is not None and "max_players" in league.keys() else 0
+    return max(TOTAL_MATCHDAYS, 2 * (players - 1))
+
+
 def get_deadline_passed_matchday(league_id: int) -> int:
     """
     Deadline (01:00) o'tgan eng yuqori matchday raqamini qaytaradi.
@@ -50,8 +61,9 @@ def get_deadline_passed_matchday(league_id: int) -> int:
     if days_passed < 1:
         return 0
     deadline_passed = days_passed * MATCHDAYS_PER_UNLOCK
-    if deadline_passed > TOTAL_MATCHDAYS:
-        return TOTAL_MATCHDAYS
+    total = league_total_matchdays(league)
+    if deadline_passed > total:
+        return total
     return deadline_passed
 
 
@@ -139,7 +151,7 @@ def get_open_matchday(league_id: int) -> int:
     soatiga moslangan kalendar kun" bo'yicha (Toshkent vaqti).
 
     draw_date yo'q bo'lsa (qur'a o'tkazilmagan) — 0 (hech qaysi tur ochiq emas).
-    Natija 1..TOTAL_MATCHDAYS oralig'ida cheklanadi.
+    Natija 1..league_total_matchdays(league) oralig'ida cheklanadi.
     """
     league = get_league_by_id(league_id)
     if league is None:
@@ -162,8 +174,9 @@ def get_open_matchday(league_id: int) -> int:
 
     if open_count < 1:
         return 0
-    if open_count > TOTAL_MATCHDAYS:
-        return TOTAL_MATCHDAYS
+    total = league_total_matchdays(league)
+    if open_count > total:
+        return total
     return open_count
 
 
@@ -203,7 +216,7 @@ def get_leagues_needing_deadline_notice() -> list[dict]:
     result = []
     for r in rows:
         open_md = get_open_matchday(r["id"])
-        if 1 <= open_md <= TOTAL_MATCHDAYS:
+        if open_md >= 1:  # 2026-10-10: get_open_matchday o'zi liga chegarasida cheklaydi
             result.append({"league_id": r["id"], "name": r["name"]})
     return result
 

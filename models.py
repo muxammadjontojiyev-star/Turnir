@@ -1317,5 +1317,11 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("J1 Liga", 20, "open"),
     )
+    # 2026-10-10: LaLiga 2 (Ispaniya 2-ligasi, 22 klub) — J1 Liga'dan keyin navbat bilan (id 12).
+    # 2-darajali liga: reytingda alohida "2-ligalar" tabida (static/league_tiers.js).
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("LaLiga 2", 22, "open"),
+    )
     conn.commit()
     conn.close()
