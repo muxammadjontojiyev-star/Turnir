@@ -107,6 +107,23 @@ async def pt_member_add(tournament_id: int, query: str = Body(..., embed=True),
     return {"status": "ok", "user_id": r["user_id"]}
 
 
+@router.post("/pt/{tournament_id}/members/{member_user_id}/replace")
+async def pt_member_replace(tournament_id: int, member_user_id: int, query: str = Body(..., embed=True),
+                            user: dict = Depends(get_authenticated_user)):
+    """
+    2026-10-10: a'zoni yangi odamga almashtirish (Telegram ID yoki @username) — o'rin, klub,
+    o'yinlar va natijalar saqlanadi. Xato: user_not_found, already_member, same_user,
+    cannot_replace_owner, member_not_found, finished, not_owner -> 400
+    """
+    from pt_replace import pt_replace_member
+    ok, r = pt_replace_member(tournament_id, user["id"], member_user_id, query)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    await _notify(r["old"]["telegram_id"], r["old"]["language"], "pt_notify_removed", name=r["name"])
+    await _notify(r["new"]["telegram_id"], r["new"]["language"], "pt_notify_added", name=r["name"])
+    return {"status": "ok", "user_id": r["new"]["user_id"]}
+
+
 # ============ Turnir adminlari (faqat tashkilotchi boshqaradi) ============
 
 @router.post("/pt/{tournament_id}/admins/add")
