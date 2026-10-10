@@ -264,6 +264,34 @@ const LEAGUE_CLUBS = {
     { name: "Sporting Gijón",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9869.png" },
     { name: "Tenerife",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9867.png" },
     { name: "Zaragoza",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8394.png" },
+  ],  // 2026-10-10: Championship (24 klub) — 2026/27 tarkibidan bizning Premier Liga ro'yxatida YO'QLARI
+  // (Burnley/Sheffield Utd/West Ham/Wolves o'rniga 2025/26 dan chiqqan Coventry/Ipswich/Hull/Leicester);
+  // logolar FotMob CDN (ID — fotmob.com/leagues/48 jadvali va jamoa sahifalari)
+  "Championship": [
+    { name: "Birmingham",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8658.png" },
+    { name: "Blackburn",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8655.png" },
+    { name: "Bolton",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8559.png" },
+    { name: "Bristol City",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8427.png" },
+    { name: "Cardiff",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8344.png" },
+    { name: "Charlton",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8451.png" },
+    { name: "Coventry",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8669.png" },
+    { name: "Derby",               logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10170.png" },
+    { name: "Hull City",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8667.png" },
+    { name: "Ipswich",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9902.png" },
+    { name: "Leicester",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8197.png" },
+    { name: "Lincoln City",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8430.png" },
+    { name: "Middlesbrough",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8549.png" },
+    { name: "Millwall",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10004.png" },
+    { name: "Norwich",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9850.png" },
+    { name: "Portsmouth",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8462.png" },
+    { name: "Preston",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8411.png" },
+    { name: "QPR",                 logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10172.png" },
+    { name: "Southampton",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8466.png" },
+    { name: "Stoke City",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10194.png" },
+    { name: "Swansea",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10003.png" },
+    { name: "Watford",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9817.png" },
+    { name: "West Brom",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8659.png" },
+    { name: "Wrexham",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9841.png" },
   ],
 };
 
@@ -302,6 +330,7 @@ const LEAGUE_LOGOS = {
   "UAE Pro Liga":   "https://images.fotmob.com/image_resources/logo/leaguelogo/538.png",
   "J1 Liga":        "https://images.fotmob.com/image_resources/logo/leaguelogo/223.png",
   "LaLiga 2":       "https://images.fotmob.com/image_resources/logo/leaguelogo/140.png",
+  "Championship":   "https://images.fotmob.com/image_resources/logo/leaguelogo/48.png",
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)

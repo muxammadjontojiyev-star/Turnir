@@ -14,6 +14,7 @@
 // 2-liga nomi -> uning 1-ligasi (yangi 2-liga qo'shilsa — faqat shu yerga bir qator)
 const LEAGUE_SECOND_TIERS = {
   "LaLiga 2": "LaLiga",
+  "Championship": "Premier Liga",
 };
 const LEAGUE_ZONE_SIZE = 3;   // tushish / ko'tarilish zonasidagi o'rinlar soni
 
