@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20261011q" />
+  <link rel="stylesheet" href="style.css?v=20261011s" />
 </head>
 <body>
 
@@ -175,6 +175,9 @@
           </div>
           <div class="profile-club-badge" id="profile-club-badge"></div>
         </div>
+
+        <!-- 2026-10-11: Mas'ul adminlar (admin_contacts.js; o'z ligasining adminlari) -->
+        <div class="admin-contacts" data-admin-contacts="league"></div>
 
         <!-- Sovrinlarim (async to'ldiriladi — rasm bilan statistika orasida) -->
         <div id="my-prizes-section"></div>
@@ -591,8 +594,10 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20261011a"></script>
-  <script src="api.js?v=20261011n"></script>
+  <script src="app.js?v=20261011s"></script>
+  <script src="api.js?v=20261011r"></script>
+  <script src="chat_images.js?v=20261011r"></script>
+  <script src="admin_contacts.js?v=20261011s"></script>
   <!-- 2026-10-10: liga darajalari (1-/2-ligalar, zonalar) — TEXTS ga tarjima qo'shadi -->
   <script src="league_tiers.js?v=20261010b"></script>
   <script src="admin_stats.js?v=20261008a"></script>
@@ -615,7 +620,7 @@
   <script src="cl_home.js?v=20260803b"></script>
   <script src="cl_chat.js?v=20260922b"></script>
   <script src="cl_player.js?v=20260803b"></script>
-  <script src="cl_profile.js?v=20260803b"></script>
+  <script src="cl_profile.js?v=20261011s"></script>
   <script src="cl_admin.js?v=20261009a"></script>
   <script src="cl_season.js?v=20261009a"></script>
   <script src="cl_playoff.js?v=20261011n"></script>
@@ -624,7 +629,7 @@
   <script src="el_home.js?v=20261002a"></script>
   <script src="el_chat.js?v=20261002a"></script>
   <script src="el_player.js?v=20261002a"></script>
-  <script src="el_profile.js?v=20261002a"></script>
+  <script src="el_profile.js?v=20261011s"></script>
   <script src="el_admin.js?v=20261002a"></script>
   <script src="el_playoff.js?v=20261011n"></script>
   <script src="pt.js?v=20261008c"></script>
@@ -652,12 +657,12 @@
   <script src="pt_tabs.js?v=20261011a"></script>
   <!-- Divizion rejimi -->
   <script src="division_bye.js?v=20260922a"></script>
-  <script src="division.js?v=20260922c"></script>
+  <script src="division.js?v=20261011s"></script>
   <script src="worldcup.js?v=20261011a"></script>
-  <script src="worldcup_matches.js?v=20261011n"></script>
+  <script src="worldcup_matches.js?v=20261011s"></script>
   <script src="worldcup_admin.js?v=20261010a"></script>
   <script src="wc_eligible_admin.js?v=20261011b"></script>
-  <script src="worldcup_chat.js?v=20260922d"></script>
+  <script src="worldcup_chat.js?v=20261011r"></script>
   <script src="worldcup_playoff.js?v=20261011n"></script>
 </body>
 </html>

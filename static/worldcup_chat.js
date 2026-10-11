@@ -181,6 +181,7 @@ function wcOpenWebChat(matchId, opponentLabel, isPlayoff = 0) {
         <div class="webchat-loading">${escHtml(t.webchat_loading || "Yuklanmoqda...")}</div>
       </div>
       <div class="webchat-input-row">
+        ${typeof chatAttachBtnHtml === "function" ? chatAttachBtnHtml("wc") : ""}
         <input type="text" id="wc-webchat-input" class="webchat-input"
                placeholder="${escHtml(t.webchat_placeholder || "Xabar yozing...")}"
                maxlength="2000" autocomplete="off" />
@@ -313,21 +314,26 @@ function wcRenderWebChatMessages(messages) {
     const time = (typeof formatChatTime === "function") ? formatChatTime(msg.created_at) : "";
     const flag = msg.club_name ? wcTeamFlag(msg.club_name) : "";
     const flagSpan = flag ? `<span class="webchat-club-logo" title="${escHtml(msg.club_name || "")}">${flag}</span>` : "";
+    // 2026-10-11: rasm xabari (chat_images.js) — tarjima tugmasi chiqmaydi
+    const isImg = typeof chatImageToken === "function" && !!chatImageToken(msg.text);
     return `
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${flagSpan}
-        <div class="webchat-bubble${mine ? "" : " has-tr"}">
-          <span class="webchat-text">${(typeof chatTextWithCopyableIds === "function") ? chatTextWithCopyableIds(escHtml(msg.text)) : escHtml(msg.text)}</span>
+        <div class="webchat-bubble${mine ? "" : " has-tr"}${isImg ? " webchat-bubble--img" : ""}">
+          ${typeof chatMessageBodyHtml === "function"
+            ? chatMessageBodyHtml(msg, (typeof chatTextWithCopyableIds === "function") ? chatTextWithCopyableIds(escHtml(msg.text)) : escHtml(msg.text))
+            : `<span class="webchat-text">${escHtml(msg.text)}</span>`}
           <span class="webchat-meta">
             ${time ? `<span class="webchat-time">${time}</span>` : ""}
             ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
           </span>
-          ${(typeof webChatTranslateHtml === "function") ? webChatTranslateHtml(msg) : ""}
+          ${!isImg && (typeof webChatTranslateHtml === "function") ? webChatTranslateHtml(msg) : ""}
         </div>
       </div>`;
   }).join("");
 
   if (atBottom) box.scrollTop = box.scrollHeight;
+  if (typeof chatLoadImages === "function") chatLoadImages(box);   // 2026-10-11: rasmlar
 }
 
 async function wcSendWebChatMessage() {

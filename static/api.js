@@ -3093,6 +3093,7 @@ function openWebChat(matchId, opponentLabel, urlPrefix) {
         <div class="webchat-loading">${escHtml(t.webchat_loading || "Yuklanmoqda...")}</div>
       </div>
       <div class="webchat-input-row">
+        ${typeof chatAttachBtnHtml === "function" ? chatAttachBtnHtml("app") : ""}
         <input type="text" id="webchat-input" class="webchat-input"
                placeholder="${escHtml(t.webchat_placeholder || "Xabar yozing...")}"
                maxlength="2000" autocomplete="off" />
@@ -3302,22 +3303,27 @@ function renderWebChatMessages(messages) {
     const clubLogo = logo
       ? `<img class="webchat-club-logo" src="${escHtml(logo)}" alt="${escHtml(msg.club_name || "")}" title="${escHtml(msg.club_name || "")}">`
       : "";
+    // 2026-10-11: rasm xabari (chat_images.js) — tarjima tugmasi chiqmaydi
+    const isImg = typeof chatImageToken === "function" && !!chatImageToken(msg.text);
     return `
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${clubLogo}
-        <div class="webchat-bubble${mine ? "" : " has-tr"}">
-          <span class="webchat-text">${chatTextWithCopyableIds(escHtml(msg.text))}</span>
+        <div class="webchat-bubble${mine ? "" : " has-tr"}${isImg ? " webchat-bubble--img" : ""}">
+          ${typeof chatMessageBodyHtml === "function"
+            ? chatMessageBodyHtml(msg, chatTextWithCopyableIds(escHtml(msg.text)))
+            : `<span class="webchat-text">${chatTextWithCopyableIds(escHtml(msg.text))}</span>`}
           <span class="webchat-meta">
             ${time ? `<span class="webchat-time">${time}</span>` : ""}
             ${mine ? `<span class="${tickCls}">${ticks}</span>` : ""}
           </span>
-          ${webChatTranslateHtml(msg)}
+          ${isImg ? "" : webChatTranslateHtml(msg)}
         </div>
       </div>
     `;
   }).join("");
 
   if (atBottom) box.scrollTop = box.scrollHeight;
+  if (typeof chatLoadImages === "function") chatLoadImages(box);   // 2026-10-11: rasmlar
 }
 
 // ============================================================
