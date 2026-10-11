@@ -1058,6 +1058,8 @@ def init_db():
         "ALTER TABLE pt_matches ADD COLUMN leg INTEGER NOT NULL DEFAULT 1",
         # 2026-10-10: kuniga N tur (0 = qo'lda, avvalgi xulq) — pt_daily.py
         "ALTER TABLE pt_tournaments ADD COLUMN rounds_per_day INTEGER NOT NULL DEFAULT 0",
+        # 2026-10-11: JCh yo'llanmasi qayerdan: division (top-48) | admin (o'rniga qo'shilgan)
+        "ALTER TABLE wc_eligible ADD COLUMN via TEXT NOT NULL DEFAULT 'division'",
     ]
     for sql in migrations:
         try:

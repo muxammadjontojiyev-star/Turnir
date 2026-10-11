@@ -197,6 +197,11 @@ TEXTS = {
         LANGUAGE_RU: "✅ Вас приняли в турнир «{name}»!",
         LANGUAGE_EN: "✅ You've been accepted into «{name}»!",
     },
+    "wc_notify_eligible_added": {
+        LANGUAGE_UZ: "🌍 Sizga Jahon chempionatida qatnashish uchun yo'llanma berildi! Ilovani ochib, JCh bo'limida guruh va davlatingizni tanlang.",
+        LANGUAGE_RU: "🌍 Вам выдана путёвка на Чемпионат мира! Откройте приложение и выберите группу и сборную в разделе ЧМ.",
+        LANGUAGE_EN: "🌍 You've received a World Cup ticket! Open the app and pick your group and national team in the World Cup section.",
+    },
     "pt_notify_added": {
         LANGUAGE_UZ: "🏆 Sizni «{name}» shaxsiy turniriga qo'shishdi!",
         LANGUAGE_RU: "🏆 Вас добавили в частный турнир «{name}»!",

@@ -1217,6 +1217,29 @@ def wc_admin_eligible_rebuild(season: str | None = Body("prev", embed=True),
     return {"status": "ok", **info}
 
 
+@app.post("/wc/admin/eligible/add")
+async def wc_admin_eligible_add(ids: str = Body(..., embed=True),
+                                admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-10-11: bosh admin — bo'sh o'rinlarga Telegram ID'lar bilan JCh yo'llanmasi (bir yo'la).
+    Divizion orqali olib, davlat tanlamaganlarning huquqi bekor bo'ladi. Qo'shilganlarga xabar.
+    Xato: empty, too_many, none_added → 400
+    """
+    from wc_eligibility import parse_telegram_ids, wc_eligible_add_bulk
+    ok, reason, info = wc_eligible_add_bulk(parse_telegram_ids(ids))
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason)   # apiFetch matn kutadi; bo'sh o'rin soni kartada
+    from notify import notify_user
+    for a in info["added"]:
+        try:
+            await notify_user(a["telegram_id"], "wc_notify_eligible_added", a["language"],
+                              open_button_key="btn_open_app")
+        except Exception as exc:
+            logger.warning("JCh yo'llanma xabari yuborilmadi (%s): %s", a["telegram_id"], exc)
+    return {"status": "ok", "added": len(info["added"]), "not_found": info["not_found"],
+            "already": info["already"], "revoked": info["revoked"], "free": info["free"]}
+
+
 @app.get("/wc/playoff/status")
 def wc_playoff_status():
     """Play-off holati: boshlanganmi va 32 jamoa tayyormi (admin tugmasi uchun)."""
