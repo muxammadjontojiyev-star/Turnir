@@ -20,10 +20,10 @@ function ptProfileHtml(view, p, isMe) {
   const name = u.username ? "@" + u.username : (u.nickname || "");
   const letter = ((u.nickname || u.username || "?")[0] || "?").toUpperCase();
   const r = view.row || { played: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, goal_diff: 0, points: 0 };
-  const single = p && p.single_table;                       // 2026-10-07: liga/ChL/YeL — guruhsiz jadval
-  const groupLabel = !view.group ? "" : single && view.group !== "L" ? `${view.group} · #${view.position || "—"}`
-    : PTT(single ? "pt_prof_table" : "pt_prof_group", { g: view.group, pos: view.position || "—" });
-  const team = u.team_name ? `<span class="pt-prof-team">${typeof ptTeamBadge === "function" ? ptTeamBadge(u.team_name) : ""}${escHtml(u.team_name)}</span>` : "";
+  // 2026-10-11: rasmiy profil kartasi kabi — sarlavha: klub nomi; ostida nik + @username;
+  // o'ngda klub logosi (1-o'rin medali va guruh/o'rin yozuvi olib tashlandi — o'rin statistikada)
+  const clubBadge = u.team_name && typeof ptTeamBadge === "function" ? ptTeamBadge(u.team_name, "pt-prof-club") : "";
+  const stars = typeof prizeStarsHtml === "function" ? prizeStarsHtml({ user_id: u.id, username: u.username }) : "";
   const stat = (v, l, cls = "", primary = false) => `<div class="stat-card${primary ? " stat-card--primary" : ""}">
       <span class="stat-card-value ${cls}">${escHtml(String(v))}</span><span class="stat-card-label">${escHtml(PTT(l))}</span></div>`;
   const form = (view.matches || []).map(m => ptWinnerOf(m, u.id)).filter(Boolean).slice(-5);
@@ -35,10 +35,11 @@ function ptProfileHtml(view, p, isMe) {
     <div class="card card--profile pt-profile-card">
       <div class="profile-avatar" data-pt-avatar="${u.id}">${escHtml(letter)}</div>
       <div class="profile-info">
-        <h2 class="profile-nickname">${escHtml(name)}</h2>
-        ${team}<span class="profile-league">${escHtml(groupLabel)}</span>
+        <h2 class="profile-nickname">${escHtml(u.team_name || name)}</h2>
+        <span class="profile-league">${escHtml(u.nickname || "")}${u.username
+          ? `${u.nickname ? "<br>" : ""}<a class="profile-username" href="https://t.me/${escHtml(u.username)}" target="_blank">@${escHtml(u.username)}</a>` : ""}${stars}</span>
       </div>
-      ${view.position === 1 ? `<div class="pt-prof-badge">🥇</div>` : ""}
+      <div class="profile-club-badge">${clubBadge}</div>
     </div>
     <div class="section-label pt-label">${escHtml(PTT("pt_section_stats"))}</div>
     <div class="stats-grid">
