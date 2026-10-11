@@ -313,6 +313,8 @@ const LEAGUE_TROPHIES = {
   "Saudi Pro Liga": "images/saudi-trophy.png",
   "UAE Pro Liga":   "images/uae-trophy.png",
   "J1 Liga":        "images/japan-trophy.png",
+  "LaLiga 2":       "images/laliga2-trophy.png",       // 2026-10-11
+  "Championship":   "images/championship-trophy.png",  // 2026-10-11
 };
 
 // Liga emblemasi (logo) — liga nomi yonida ko'rsatiladi (hero karta + tanlash ro'yxati)
