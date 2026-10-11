@@ -324,8 +324,9 @@ function wcRenderHome() {
         "JCh'ga faqat Divizion reytingida top-{n} ga kirganlar o'ta oladi. Keyingi mavsumda urinib ko'ring.")
         .replace("{n}", elig.slots);
     } else {
-      eligHint = (t.wc_elig_hint_yes || "Divizionda {p}-o'rin — JCh'da o'ynash huquqiga egasiz.")
-        .replace("{p}", elig.place);
+      eligHint = elig.via === "admin"     // 2026-10-11: o'rniga qo'shilgan — Divizion o'rni yo'q
+        ? (t.wc_elig_hint_admin || "Sizga admin tomonidan JCh yo'llanmasi berildi — guruh va davlatingizni tanlang.")
+        : (t.wc_elig_hint_yes || "Divizionda {p}-o'rin — JCh'da o'ynash huquqiga egasiz.").replace("{p}", elig.place);
     }
   }
 
