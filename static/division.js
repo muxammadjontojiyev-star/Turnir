@@ -680,7 +680,7 @@ function divRenderProfile() {
     ${hist.length ? `<div class="card">${histRows}</div>`
                   : `<div class="card" style="opacity:.7;font-size:13px">${DT("div_no_matches")}</div>`}`;
 
-  return meCard + statsGrid
+  return meCard + (typeof adminContactsBoxHtml === "function" ? adminContactsBoxHtml("div") : "") + statsGrid
        + `<div id="div-my-prizes-section"></div>`
        + divCalendarHtml(DIV.calendar, "me") + historyBlock;
 }

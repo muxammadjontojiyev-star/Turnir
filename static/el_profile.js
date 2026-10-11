@@ -42,6 +42,7 @@ function elRenderProfile() {
       </div>
       <div class="profile-club-badge">${elClubBadge(p.club_name, 44)}</div>
     </div>
+    ${typeof adminContactsBoxHtml === "function" ? adminContactsBoxHtml("el") : ""}
 
     <div class="section-label">STATISTIKA</div>
     <div class="stats-grid">

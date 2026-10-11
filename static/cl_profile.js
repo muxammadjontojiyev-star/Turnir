@@ -42,6 +42,7 @@ function clRenderProfile() {
       </div>
       <div class="profile-club-badge">${clClubBadge(p.club_name, 44)}</div>
     </div>
+    ${typeof adminContactsBoxHtml === "function" ? adminContactsBoxHtml("cl") : ""}
 
     <div class="section-label">STATISTIKA</div>
     <div class="stats-grid">

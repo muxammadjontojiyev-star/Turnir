@@ -60,6 +60,7 @@ function wcRenderProfile() {
       </div>
       <div class="profile-club-badge">${clubBadge}</div>
     </div>
+    ${typeof adminContactsBoxHtml === "function" ? adminContactsBoxHtml("wc") : ""}
 
     <!-- Sovrinlarim (async — rasm bilan statistika orasida) -->
     <div id="wc-my-prizes-section"></div>
