@@ -63,6 +63,8 @@ function ptTabProfile(t, p) {
 // ---------------- Sovrinlar: turnir kubogi va chempion ----------------
 
 function ptTabPrizes(t, p) {
+  // 2026-10-11: rasmiy Sovrinlar sahifasi kabi (Oltin butsa, Oltin to'p, liga kubogi) — pt_prizes.js
+  if (typeof ptTabPrizesPage === "function") return ptTabPrizesPage(t, p);
   if (p && (p.champions || []).length > 1) return ptLeagueChampionsHtml(t, p);   // ko'p ligali turnir
   const c = p && p.champion;
   const final = p && (p.knockout || []).find(m => m.stage === "final");
@@ -193,6 +195,7 @@ function ptBindDetail(t) {
   if (typeof ptBindManage === "function") ptBindManage(t);
   if (typeof ptBindPlay === "function") ptBindPlay(t);
   if (typeof ptBindAdmins === "function") ptBindAdmins(t);
+  if (typeof ptBindPrizes === "function") ptBindPrizes();           // 2026-10-11: sovrinlar liga filtri
   if (typeof ptBindReplace === "function") ptBindReplace(t);        // 2026-10-10: ishtirokchini almashtirish
   if (typeof ptBindDelete === "function") ptBindDelete();
   if (typeof ptBindSupport === "function") ptBindSupport(t);         // 2026-10-08: tashkilotchi chati
