@@ -39,6 +39,11 @@ async function wcEligibleLoad() {
       allaqachon JCh'da ro'yxatdan o'tganlar joyida qoladi.
     </div>
 
+    ${d.total > (d.registered ?? 0) ? `
+    <button class="btn btn--danger" id="wc-btn-elig-revoke" style="width:100%;margin-top:12px">
+      ⏳ Davlat tanlamaganlarni chiqarish (${d.total - (d.registered ?? 0)} ta)
+    </button>` : ""}
+
     <div class="admin-player-league" style="margin:14px 2px 6px"><b>O'rniga qo'shish</b> — bo'sh o'rin: <b>${d.free ?? 0}</b> ta.
       Telegram ID'larni yozing (vergul, bo'sh joy yoki yangi qator bilan). Divizion orqali yo'llanma olib,
       hali davlat tanlamaganlarning huquqi bekor bo'ladi; qo'shilganlarga botdan xabar boradi va ular davlatni o'zlari tanlaydi.</div>
@@ -46,6 +51,8 @@ async function wcEligibleLoad() {
     <button class="btn btn--primary" id="wc-btn-elig-add" style="width:100%;margin-top:8px">➕ Yo'llanma berish</button>`;
   document.getElementById("wc-btn-elig-rebuild")
     ?.addEventListener("click", e => void wcEligibleRebuild(e.currentTarget, d.prev_season_number));
+  document.getElementById("wc-btn-elig-revoke")
+    ?.addEventListener("click", e => void wcEligibleRevoke(e.currentTarget, d.total - (d.registered ?? 0)));
   document.getElementById("wc-btn-elig-add")
     ?.addEventListener("click", e => void wcEligibleAdd(e.currentTarget, d.free ?? 0));
 }
@@ -91,6 +98,20 @@ async function wcEligibleAdd(btn, free) {
       none_added: "Hech kim qo'shilmadi: ID'lar topilmadi yoki ular allaqachon ro'yxatda",
     }[e.message] || e.message;
     showToast("❌ " + msg);
+    btn.disabled = false;
+  }
+}
+
+// 2026-10-11: yo'llanma olib, hali davlat tanlamaganlarni (⏳) chiqarish — o'rinlar bo'shaydi
+async function wcEligibleRevoke(btn, count) {
+  if (!confirm(`Davlat tanlamagan ${count} kishining yo'llanmasi bekor qilinsinmi?\n\nUlar JCh'ga ro'yxatdan o'ta olmaydi; bo'shagan o'rinlarga yangi ID qo'shishingiz mumkin.`)) return;
+  btn.disabled = true;
+  try {
+    const r = await apiFetch("/wc/admin/eligible/revoke-unregistered", { method: "POST" });
+    showToast(`✅ ${r.removed} kishi chiqarildi`);
+    await wcEligibleLoad();
+  } catch (e) {
+    showToast("❌ " + e.message);
     btn.disabled = false;
   }
 }
