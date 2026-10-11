@@ -1227,6 +1227,7 @@ function bindMatchActions(listEl) {
       if (action === "confirm") openConfirmModal(matchId);
       if (action === "reject")  confirmMatchResult(matchId, "reject");
       if (action === "chat")    openMatchChat(matchId);
+      if (action === "vs")      openOpponentModal(matchId);   // 2026-10-11: 💬 → VS-oyna
     });
   });
 
@@ -1297,6 +1298,7 @@ function renderMatchItem(m) {
   if (m.status === "admin_pending")         { statusCls = "status--awaiting"; statusText = t.status_admin_pending || "ADMIN TASDIG'I"; }
 
   let actionBtn = "";
+  let showStatus = true;   // 2026-10-11: ochiq turda (Natija + 💬) holat yozuvi chiqmaydi
   if (m.status === "pending") {
     if (m.is_locked) {
       // Tur hali ochilmagan — natija kiritib bo'lmaydi, qulf belgisi
@@ -1308,18 +1310,14 @@ function renderMatchItem(m) {
       // Deadline (01:00) ga 15 daqiqa qoldi — yangi hisob kiritib bo'lmaydi
       actionBtn = `<span class="match-waiting" title="${t.entry_deadline_hint || "Deadline yaqin — hisob kiritish yopiq"}">${ICON.get("lock", 14)}</span>`;
     } else {
-      // Avval raqib bilan chatlashish kerak: 💬 tugmasi. Bosilgandan keyin (chatga
-      // o'tib qaytgach) o'sha match uchun "Natija" tugmasi ochiladi.
-      const chatDone = APP.chatOpened && APP.chatOpened.has(m.id);
-      if (chatDone) {
-        actionBtn = `<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
+      // 2026-10-11: soddalashtirildi — "KUTILMOQDA" o'rniga "Natija" darhol, yonida 💬.
+      // 💬 → VS-oyna (openOpponentModal): xona ID / bot chati / Telegram chati.
+      showStatus = false;
+      actionBtn =`<button class="match-action-btn" data-match-id="${m.id}" data-action="submit">
           ${t.enter_result || "Natija"}
-        </button>`;
-      } else {
-        actionBtn = `<button class="match-action-btn match-chat-btn" data-match-id="${m.id}" data-action="chat" title="${t.chat_first_hint || "Avval raqib bilan kelishing"}">
+        </button><button class="match-action-btn match-chat-btn" data-match-id="${m.id}" data-action="vs" title="${t.chat_first_hint || "Avval raqib bilan kelishing"}">
           ${ICON.get("chat", 18)}
         </button>`;
-      }
     }
   } else if (m.status === "awaiting_confirmation" && m.submitted_by !== myId) {
     // Raqib tasdiqlaydi. Rad etish faqat deadline'dan oldin (00:45 gacha) mumkin.
@@ -1342,7 +1340,7 @@ function renderMatchItem(m) {
       <span class="match-day">${m.matchday}</span>
       <span class="match-names"><span class="match-id">#${m.id}</span></span>
       <span class="${centerCls}" ${centerAttr}>${renderMatchCenter(m)}</span>
-      <span class="match-status ${statusCls}">${statusText}</span>
+      ${showStatus ? `<span class="match-status ${statusCls}">${statusText}</span>` : ""}
       ${actionBtn}
     </div>
   `;

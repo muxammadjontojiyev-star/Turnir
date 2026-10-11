@@ -319,10 +319,9 @@ function elpoMyMatchItem(m) {
 
   let action = "";
   if (m.status === "pending") {
-    // 2026-07-21: guruh oqimi bilan bir xil — avval 💬 chat, chat ochilgach "Natija"
-    action = (ELPO.chatOpened && ELPO.chatOpened.has(m.id))
-      ? `<button class="match-action-btn" data-elpo-result="${m.id}">${ET("el_result")}</button>`
-      : `<button class="match-action-btn match-chat-btn" data-elpo-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
+    // 2026-10-11: soddalashtirildi — "Natija" darhol, yonida 💬 (VS-oyna: xona ID / bot chati / Telegram)
+    action = `<button class="match-action-btn" data-elpo-result="${m.id}">${ET("el_result")}</button>`
+      + `<button class="match-action-btn match-chat-btn" data-elpo-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
   } else if (m.status === "awaiting_confirmation") {
     action = mine
       ? `<span class="match-waiting">${ET("el_pending")}</span>`
@@ -344,7 +343,7 @@ function elpoMyMatchItem(m) {
       <div class="el-match-head">
         <span class="el-match-round">${escHtml(elpoLegLabel(m))}</span><span class="el-match-id">#${m.id}</span>
         ${venue}
-        <span class="match-status ${statusCls}">${statusText}</span>
+        ${m.status === "pending" ? "" : `<span class="match-status ${statusCls}">${statusText}</span>`}
       </div>
       <div class="el-match-body">
         <div class="match-center match-center--clickable" data-elpo-open-match="${m.id}">${center}</div>

@@ -365,12 +365,10 @@ function elRenderMatchItem(m) {
   if (m.status === "pending") {
     if (!isOpenRound) {
       action = `<span class="el-locked" title="${ET("el_round_locked")}">${ICON.get("lock", 16)}</span>`;
-    } else if (EL.chatOpened && EL.chatOpened.has(m.id)) {
-      // Chat ochilgan — endi "Natija" tugmasi
-      action = `<button class="match-action-btn" data-el-result="${m.id}">${ET("el_result")}</button>`;
     } else {
-      // Avval raqib bilan chat: 💬 tugmasi (bosilgach Natija ochiladi)
-      action = `<button class="match-action-btn match-chat-btn" data-el-chat="${m.id}" title="${ET("el_agree_first")}">${ICON.get("chat", 18)}</button>`;
+      // 2026-10-11: soddalashtirildi — "Natija" darhol, yonida 💬 (VS-oyna: xona ID / bot chati / Telegram)
+      action = `<button class="match-action-btn" data-el-result="${m.id}">${ET("el_result")}</button>`
+        + `<button class="match-action-btn match-chat-btn" data-el-chat="${m.id}" title="${ET("el_agree_first")}">${ICON.get("chat", 18)}</button>`;
     }
   } else if (m.status === "awaiting_confirmation") {
     action = (m.submitted_by && !elIsMe(m.submitted_by))
@@ -398,7 +396,7 @@ function elRenderMatchItem(m) {
       <div class="el-match-head">
         <span class="el-match-round">${m.matchday}-tur</span><span class="el-match-id">#${m.id}</span>
         ${venue}
-        <span class="match-status ${statusCls}">${statusText}</span>
+        ${m.status === "pending" && isOpenRound ? "" : `<span class="match-status ${statusCls}">${statusText}</span>`}
       </div>
       <div class="el-match-body">
         <div class="${centerCls}" ${centerAttr}>${center}</div>

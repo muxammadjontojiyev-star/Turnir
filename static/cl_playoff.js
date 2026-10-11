@@ -319,10 +319,9 @@ function clpoMyMatchItem(m) {
 
   let action = "";
   if (m.status === "pending") {
-    // 2026-07-21: guruh oqimi bilan bir xil — avval 💬 chat, chat ochilgach "Natija"
-    action = (CLPO.chatOpened && CLPO.chatOpened.has(m.id))
-      ? `<button class="match-action-btn" data-clpo-result="${m.id}">${CT("cl_result")}</button>`
-      : `<button class="match-action-btn match-chat-btn" data-clpo-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
+    // 2026-10-11: soddalashtirildi — "Natija" darhol, yonida 💬 (VS-oyna: xona ID / bot chati / Telegram)
+    action = `<button class="match-action-btn" data-clpo-result="${m.id}">${CT("cl_result")}</button>`
+      + `<button class="match-action-btn match-chat-btn" data-clpo-chat="${m.id}" title="Avval raqib bilan kelishing">${ICON.get("chat", 18)}</button>`;
   } else if (m.status === "awaiting_confirmation") {
     action = mine
       ? `<span class="match-waiting">${CT("cl_pending")}</span>`
@@ -344,7 +343,7 @@ function clpoMyMatchItem(m) {
       <div class="cl-match-head">
         <span class="cl-match-round">${escHtml(clpoLegLabel(m))}</span><span class="cl-match-id">#${m.id}</span>
         ${venue}
-        <span class="match-status ${statusCls}">${statusText}</span>
+        ${m.status === "pending" ? "" : `<span class="match-status ${statusCls}">${statusText}</span>`}
       </div>
       <div class="cl-match-body">
         <div class="match-center match-center--clickable" data-clpo-open-match="${m.id}">${center}</div>

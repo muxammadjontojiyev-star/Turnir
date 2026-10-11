@@ -80,14 +80,10 @@ function wcPlayoffMatchItem(m) {
     // pending — natija kiritish yoki chat. Markaz (bayroqlar) bosilsa VS modal,
     // o'ngdagi 💬 to'g'ridan-to'g'ri Telegram. Natija chat ochilgach ochiladi.
     if (m.player1_id && m.player2_id) {
-      statusBadge = `<span class="match-status pending">${escHtml(t.pending_short || "Kutilmoqda")}</span>`;
-      const chatDone = WC.chatOpened && WC.chatOpened.has(m.id);
-      if (chatDone) {
-        action = `<button class="match-action-btn wc-po-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
-      } else {
-        // O'ngdagi belgi — to'g'ridan-to'g'ri Telegram chatiga o'tadi
-        action = `<button class="match-action-btn match-chat-btn wc-po-tgchat-btn" data-mid="${m.id}" title="${escHtml(t.opp_write_button || "Raqib chatiga yozish")}">${ICON.get("chat", 18)}</button>`;
-      }
+      // 2026-10-11: soddalashtirildi — "Kutilmoqda" o'rniga "Natija" darhol, yonida 💬
+      // (VS-oyna: xona ID / bot chati / Telegram chati)
+      action = `<button class="match-action-btn wc-po-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`
+        + `<button class="match-action-btn match-chat-btn wc-po-tgchat-btn" data-mid="${m.id}" title="${escHtml(t.opp_write_button || "Raqib chatiga yozish")}">${ICON.get("chat", 18)}</button>`;
     } else {
       statusBadge = `<span class="match-status pending">${escHtml(t.wc_playoff_waiting_opp || "Raqib kutilmoqda")}</span>`;
     }
@@ -122,9 +118,9 @@ function wcBindPlayoffMyMatches() {
   root.querySelectorAll("[data-wc-po-open]").forEach(el => {
     el.addEventListener("click", () => wcOpenPlayoffChat(parseInt(el.dataset.wcPoOpen)));
   });
-  // O'ngdagi 💬 — to'g'ridan-to'g'ri Telegram chatiga o'tadi
+  // O'ngdagi 💬 — 2026-10-11: VS-oyna (xona ID / bot chati / Telegram chati)
   root.querySelectorAll(".wc-po-tgchat-btn").forEach(btn => {
-    btn.addEventListener("click", () => wcOpenPlayoffTelegram(parseInt(btn.dataset.mid)));
+    btn.addEventListener("click", () => wcOpenPlayoffChat(parseInt(btn.dataset.mid)));
   });
 }
 

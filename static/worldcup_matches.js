@@ -273,13 +273,9 @@ function wcRenderMatchItem(m) {
     if (m.is_locked) {
       action = `<span class="match-locked" data-icon="lock"></span>`;
     } else {
-      // Avval raqib bilan chatlashish kerak: 💬 tugmasi. Chat ochilgach "Natija" ochiladi.
-      const chatDone = WC.chatOpened && WC.chatOpened.has(m.id);
-      if (chatDone) {
-        action = `<button class="match-action-btn wc-match-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`;
-      } else {
-        action = `<button class="match-action-btn match-chat-btn wc-match-chat-btn" data-mid="${m.id}" title="${escHtml(t.chat_first_hint || "Avval raqib bilan kelishing")}">${ICON.get("chat", 18)}</button>`;
-      }
+      // 2026-10-11: soddalashtirildi — "Natija" darhol, yonida 💬 (VS-oyna: xona ID / bot chati / Telegram)
+      action = `<button class="match-action-btn wc-match-result-btn" data-mid="${m.id}">${escHtml(t.enter_result || "Natija")}</button>`
+        + `<button class="match-action-btn match-chat-btn wc-match-chat-btn" data-mid="${m.id}" title="${escHtml(t.chat_first_hint || "Avval raqib bilan kelishing")}">${ICON.get("chat", 18)}</button>`;
     }
   } else if (m.status === "awaiting_confirmation") {
     if (iSubmitted) {
@@ -300,7 +296,7 @@ function wcRenderMatchItem(m) {
     <div class="match-item">
       <span class="match-names">#${m.id}</span>
       <div class="${centerCls}" ${centerAttr}>${center}</div>
-      <span class="match-status ${statusCls}">${statusText}</span>
+      ${m.status === "pending" && isOpen ? "" : `<span class="match-status ${statusCls}">${statusText}</span>`}
       ${action}
     </div>`;
 }
@@ -314,9 +310,9 @@ function wcBindMatchActions() {
   root.querySelectorAll(".wc-match-confirm-btn").forEach(btn => {
     btn.addEventListener("click", () => wcOpenConfirmModal(parseInt(btn.dataset.mid, 10)));
   });
-  // Chat tugmasi (💬) — chat oynasini ochadi
+  // Chat tugmasi (💬) — 2026-10-11: VS-oyna (xona ID / bot chati / Telegram chati)
   root.querySelectorAll(".wc-match-chat-btn").forEach(btn => {
-    btn.addEventListener("click", () => wcOpenMatchChat(parseInt(btn.dataset.mid, 10)));
+    btn.addEventListener("click", () => wcOpenOpponentModal(parseInt(btn.dataset.mid, 10)));
   });
   // Markaz bosish (qulfsiz o'yin) — raqib modalini ochadi
   root.querySelectorAll("[data-wc-open-match]").forEach(el => {

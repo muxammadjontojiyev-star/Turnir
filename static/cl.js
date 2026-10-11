@@ -365,12 +365,10 @@ function clRenderMatchItem(m) {
   if (m.status === "pending") {
     if (!isOpenRound) {
       action = `<span class="cl-locked" title="${CT("cl_round_locked")}">${ICON.get("lock", 16)}</span>`;
-    } else if (CL.chatOpened && CL.chatOpened.has(m.id)) {
-      // Chat ochilgan — endi "Natija" tugmasi
-      action = `<button class="match-action-btn" data-cl-result="${m.id}">${CT("cl_result")}</button>`;
     } else {
-      // Avval raqib bilan chat: 💬 tugmasi (bosilgach Natija ochiladi)
-      action = `<button class="match-action-btn match-chat-btn" data-cl-chat="${m.id}" title="${CT("cl_agree_first")}">${ICON.get("chat", 18)}</button>`;
+      // 2026-10-11: soddalashtirildi — "Natija" darhol, yonida 💬 (VS-oyna: xona ID / bot chati / Telegram)
+      action = `<button class="match-action-btn" data-cl-result="${m.id}">${CT("cl_result")}</button>`
+        + `<button class="match-action-btn match-chat-btn" data-cl-chat="${m.id}" title="${CT("cl_agree_first")}">${ICON.get("chat", 18)}</button>`;
     }
   } else if (m.status === "awaiting_confirmation") {
     action = (m.submitted_by && !clIsMe(m.submitted_by))
@@ -398,7 +396,7 @@ function clRenderMatchItem(m) {
       <div class="cl-match-head">
         <span class="cl-match-round">${m.matchday}-tur</span><span class="cl-match-id">#${m.id}</span>
         ${venue}
-        <span class="match-status ${statusCls}">${statusText}</span>
+        ${m.status === "pending" && isOpenRound ? "" : `<span class="match-status ${statusCls}">${statusText}</span>`}
       </div>
       <div class="cl-match-body">
         <div class="${centerCls}" ${centerAttr}>${center}</div>
