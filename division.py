@@ -544,7 +544,9 @@ def div_rating(day: str | None = None) -> list[dict]:
         # (+15/+10/-10) shunga qo'shiladi/ayriladi (profilda ko'rsatiladi).
         p["rating"] = DIV_START_RATING + p["points"]
         p["goal_diff"] = p["goals_for"] - p["goals_against"]
-    table.sort(key=lambda p: p["points"], reverse=True)
+    # 2026-10-11: ochko teng bo'lsa — gol farqi, keyin urilgan gol (liga standarti, admin so'rovi:
+    # 5:0 yutgan 3:1 yutgandan yuqorida bo'lsin). Reyting, sovrinlar va JCh top-48 shu tartibdan oladi.
+    table.sort(key=lambda p: (p["points"], p["goal_diff"], p["goals_for"]), reverse=True)
     return table
 
 
