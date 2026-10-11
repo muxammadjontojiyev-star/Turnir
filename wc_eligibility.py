@@ -273,3 +273,24 @@ def wc_eligible_add_bulk(telegram_ids: list[int]) -> tuple[bool, str, dict]:
         raise
     finally:
         conn.close()
+
+
+# ============================================================
+#  2026-10-11: DAVLAT TANLAMAGANLARNI CHIQARISH (admin)
+# ============================================================
+# Admin so'rovi: o'rniga qo'shilganlarning ham bir qismi ro'yxatdan o'tmadi — ularni chiqarib,
+# o'rinlarni bo'shatish. Divizion va admin orqali olganlarning IKKALASIGA tegishli; davlat tanlab
+# bo'lganlar (wc_registrations) tegilmaydi.
+
+def wc_eligible_revoke_unregistered() -> int:
+    """Yo'llanma olib, hali davlat tanlamaganlarning huquqini bekor qiladi. Qaytaradi: soni."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM wc_eligible WHERE user_id NOT IN (SELECT user_id FROM wc_registrations)")
+        n = cursor.rowcount or 0
+        conn.commit()
+        logger.info("JCh: davlat tanlamagan %s kishining yo'llanmasi bekor qilindi (admin)", n)
+        return n
+    finally:
+        conn.close()

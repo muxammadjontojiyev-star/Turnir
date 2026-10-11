@@ -1217,6 +1217,13 @@ def wc_admin_eligible_rebuild(season: str | None = Body("prev", embed=True),
     return {"status": "ok", **info}
 
 
+@app.post("/wc/admin/eligible/revoke-unregistered")
+def wc_admin_eligible_revoke(admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-10-11: bosh admin — yo'llanma olib, hali davlat tanlamaganlarni chiqaradi (o'rin bo'shaydi)."""
+    from wc_eligibility import wc_eligible_revoke_unregistered
+    return {"status": "ok", "removed": wc_eligible_revoke_unregistered()}
+
+
 @app.post("/wc/admin/eligible/add")
 async def wc_admin_eligible_add(ids: str = Body(..., embed=True),
                                 admin: dict = Depends(get_authenticated_super_admin)):
