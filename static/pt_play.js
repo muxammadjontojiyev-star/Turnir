@@ -116,13 +116,9 @@ function ptMatchCardHtml(m, p, mine) {
   const names = `<div class="pt-match-row">${side(1)}<span class="pt-score">${score}</span>${side(2)}</div>`;
   let action = "";
   const open = m.stage === "group" ? ptRoundOpen(m, p) : true;   // pley-off: bosqich ochiq
-  if (mine && m.status === "pending" && open && p.status === "running") {
-    action = `<div class="pt-res-form">
-      <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-s1-${m.id}">
-      <span>:</span>
-      <input class="modal-input pt-num" type="number" min="0" max="99" inputmode="numeric" id="pt-s2-${m.id}">
-      <button class="pt-mini pt-mini--ok" data-pt-submit="${m.id}">${escHtml(PTT("pt_submit"))}</button></div>`;
-  } else if (m.status === "admin_pending") {          // 2026-10-07: katta hisob — admin tasdig'ida
+  // 2026-10-11: inline forma o'rniga [Natija] tugmasi (pt_match_ui.js — hisob oynasi)
+  const canSubmit = mine && m.status === "pending" && open && p.status === "running";
+  if (m.status === "admin_pending") {          // 2026-10-07: katta hisob — admin tasdig'ida
     action = m.can_decide
       ? `<div class="pt-big-note">${escHtml(PTT("pt_big_decide_hint"))}</div><div class="pt-row-actions pt-big-actions">
            <button class="pt-mini pt-mini--ok" data-pt-big="${m.id}" data-pt-acc="1">${escHtml(PTT("pt_big_ok"))}</button>
@@ -137,11 +133,8 @@ function ptMatchCardHtml(m, p, mine) {
   }
   let tools = "";
   if (mine && m.player1_id && m.player2_id && (m.stage !== "group" || m.round <= (p.open_upto || p.current_round))) {
-    const opp = m.player1_id === me ? ptNameOf(m, 2) : ptNameOf(m, 1);
-    const n = (PT.unread || {})[m.id] || 0;
-    tools = `<div class="pt-match-tools">
-      <button class="pt-mini pt-mini--chat" data-pt-chat="${m.id}" data-pt-opp="${escHtml(opp)}">${escHtml(PTT("pt_chat"))}${n ? ` <span class="pt-badge">${n}</span>` : ""}</button>
-      ${typeof roomCodeBtnHtml === "function" ? roomCodeBtnHtml(m.id, "pt") : ""}</div>`;
+    // 2026-10-11: rasmiy rejimlar kabi — [Natija] [💬]; 💬 → VS-oyna (xona ID / bot chati / Telegram)
+    tools = ptMatchButtonsHtml(m, canSubmit, (PT.unread || {})[m.id] || 0);
   }
   return `<div class="match-item pt-match ${m.status === "confirmed" ? "pt-match--done" : ""}">${head}${names}${ptAggHtml(m, p)}${action}${tools}</div>`;
 }
@@ -269,10 +262,9 @@ function ptBindPlayBody(tid) {
     if (inp) inp.value = ptPresetDeadline(Number(b.dataset.ptDl));
     document.querySelectorAll("#pt-root [data-pt-dl]").forEach(x => x.classList.toggle("active", x === b));
   }));
-  q("[data-pt-chat]", b => b.addEventListener("click", () => {
-    b.querySelector(".pt-badge")?.remove();                 // ochilgach o'qildi deb hisoblanadi
-    openWebChat(Number(b.dataset.ptChat), b.dataset.ptOpp, "/pt/matches");
-  }));
+  // 2026-10-11: [Natija] → hisob oynasi, [💬] → VS-oyna (pt_match_ui.js)
+  q("[data-pt-result]", b => b.addEventListener("click", () => ptOpenResultModal(tid, b.dataset.ptResult)));
+  q("[data-pt-vs]", b => b.addEventListener("click", () => ptOpenVsModal(b.dataset.ptVs)));
   document.getElementById("pt-fix-load")?.addEventListener("click", () => void ptFixLoad(tid));
   document.getElementById("pt-semis-btn")?.addEventListener("click", () => void ptStartSemis(tid));
 }
