@@ -5,7 +5,7 @@
 //  guruh va o'rin, statistika (2 qator), so'nggi o'yinlar shakli, keyingi o'yin, o'yinlar.
 //  Mening profilim — PT.play'dan; boshqa ishtirokchi — GET /pt/{id}/player/{uid}
 //  (Reyting jadvalidagi qatorni bosganda). Global: PT, PTT, apiFetch, escHtml, API_BASE,
-//  ptMatchCardHtml, ptRenderDetailTabs, showToast.
+//  ptMatchRowHtml (pt_match_ui.js — 2026-10-11: o'yinlar rasmiy qator ko'rinishida), ptRenderDetailTabs, showToast.
 // =============================================================
 
 function ptWinnerOf(m, uid) {
@@ -50,9 +50,11 @@ function ptProfileHtml(view, p, isMe) {
       ${stat(`${r.goals_for}:${r.goals_against}`, "pt_stat_goals")}${stat((r.goal_diff > 0 ? "+" : "") + r.goal_diff, "pt_stat_gd")}
     </div>
     <div class="section-label pt-label">${escHtml(PTT("pt_form_title"))}</div>${formHtml}
-    ${next ? `<div class="section-label pt-label">${escHtml(PTT("pt_next_match"))}</div>${ptMatchCardHtml(next, p, isMe)}` : ""}
+    ${next ? `<div class="section-label pt-label">${escHtml(PTT("pt_next_match"))}</div><div class="matches-list">${ptMatchRowHtml(next, p, isMe)}</div>` : ""}
     <div class="section-label pt-label">${escHtml(PTT(isMe ? "pt_my_matches" : "pt_player_matches"))}</div>
-    ${(view.matches || []).map(m => ptMatchCardHtml(m, p, isMe)).join("") || `<div class="empty-state">${escHtml(PTT("pt_no_my_matches"))}</div>`}`;
+    ${(view.matches || []).length
+      ? `<div class="matches-list">${view.matches.map(m => ptMatchRowHtml(m, p, isMe)).join("")}</div>`
+      : `<div class="empty-state">${escHtml(PTT("pt_no_my_matches"))}</div>`}`;
 }
 
 // Mening profilim (Profil sahifasi) — PT.play'dagi standings va my_matches'dan
