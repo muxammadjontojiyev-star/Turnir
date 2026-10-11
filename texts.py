@@ -162,6 +162,12 @@ TEXTS = {
         LANGUAGE_RU: "💬 Ваш соперник ({mode}) отправил вам сообщение:\n«{preview}»\nОткройте приложение, чтобы ответить.",
         LANGUAGE_EN: "💬 Your {mode} opponent sent you a message:\n«{preview}»\nOpen the app to reply.",
     },
+    # 2026-10-11: bot chatida rasm — rasmning o'zi bildirishnoma bilan keladi (caption)
+    "notify_chat_image": {
+        LANGUAGE_UZ: "📷 {mode} raqibingiz sizga bot chatida rasm yubordi.\nJavob berish uchun ilovani oching.",
+        LANGUAGE_RU: "📷 Ваш соперник ({mode}) отправил вам фото в чате бота.\nОткройте приложение, чтобы ответить.",
+        LANGUAGE_EN: "📷 Your {mode} opponent sent you a photo in the bot chat.\nOpen the app to reply.",
+    },
     # 2026-08-28: eFootball xona ID si — kod BILDIRISHNOMANING O'ZIDA ko'rinadi,
     # raqib ilovani ochmasdan nusxa ola oladi (maqsad: qadamni kamaytirish)
     "notify_room_code": {

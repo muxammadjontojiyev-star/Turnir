@@ -3497,6 +3497,14 @@ app.include_router(pt_router)
 app.include_router(pt_members_router)
 app.include_router(pt_play_router)
 
+# ============ BOT CHATIDA RASM (2026-10-11, router — chat_images_api.py; barcha rejim) ============
+from chat_images_api import router as chat_images_router  # noqa: E402
+app.include_router(chat_images_router)
+
+# ============ MAS'UL ADMINLAR KONTAKTI (2026-10-11, router — admin_contacts_api.py) ============
+from admin_contacts_api import router as admin_contacts_router  # noqa: E402
+app.include_router(admin_contacts_router)
+
 # ============ BOT STATISTIKASI (2026-10-08, router — stats_api.py; faqat bosh admin) ============
 from stats_api import router as stats_router  # noqa: E402
 app.include_router(stats_router)

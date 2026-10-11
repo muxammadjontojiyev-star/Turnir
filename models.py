@@ -976,6 +976,28 @@ def init_db():
         )
     """)
 
+    # === chat_images (2026-10-11) — bot chatidagi rasmlar (barcha rejim) ===
+    # Baytlar alohida jadvalda (xabarlar so'rovi og'irlashmasin, qoida #32);
+    # chatda xabar matni "📷 [img:<token>]" ko'rinishida (chat_images.py).
+    # token — tasodifiy 32 hex (UNIQUE → avtomatik indeks); rasm faqat o'yin
+    # ishtirokchisiga yoki shu rejim adminiga beriladi (qoida #34).
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT NOT NULL UNIQUE,
+            mode TEXT NOT NULL,
+            match_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            mime TEXT NOT NULL,
+            data BLOB NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (sender_id) REFERENCES users(id)
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_chat_images_match ON chat_images(mode, match_id, sender_id)"
+    )
+
     conn.commit()
 
     # === MIGRATSIYALAR ===
