@@ -349,7 +349,7 @@ async function wcSubmitResult() {
     const res = await apiFetch(`/wc/match/submit-result?match_id=${matchId}&score1=${s1}&score2=${s2}`, { method: "POST" });
     wcCloseResultModal();
     if (res && res.reason === "ok_admin_pending") {
-      if (typeof openBigScoreModal === "function") openBigScoreModal();
+      if (typeof openBigScoreModal === "function") openBigScoreModal("wc");
       else showToast(t.result_admin_pending || "✅ Natija yuborildi");
     } else {
       showToast(t.result_submitted || "✅ Natija yuborildi");

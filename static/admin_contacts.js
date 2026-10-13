@@ -86,3 +86,29 @@ if (!window._adminContactsBound) {
   const start = () => { obs.observe(document.body, { childList: true, subtree: true }); adminContactsFill(); };
   if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 }
+
+// -------------------------------------------------------------
+//  2026-10-13: KATTA HISOB — skrinshotni SHU rejim/ligaga mas'ul adminga yuborish.
+//  api.js openBigScoreModal(mode) chaqiradi. Ligada — o'yinchining o'z ligasi admini
+//  (GET /admins/contacts?mode=league). Admin tayinlanmagan bo'lsa yoki yuklanmasa —
+//  avvalgi umumiy tugma (fallbackBtn, ADMIN_CONTACT_USERNAME) ko'rinadi.
+// -------------------------------------------------------------
+async function bigScoreShowAdmins(mode, fallbackBtn) {
+  const box = document.getElementById("big-score-admins");
+  if (!box) return;
+  const t = APP.t || {};
+  box.innerHTML = "";
+  if (fallbackBtn) fallbackBtn.classList.remove("hidden");
+  const list = await adminContactsFetch(mode);
+  if (!list || !list.length) return;                      // umumiy tugma qoladi
+  box.innerHTML = list.map(a => {
+    const name = a.username ? "@" + a.username : (a.nickname || "Admin");
+    const href = a.username ? `https://t.me/${encodeURIComponent(a.username)}` : `tg://user?id=${encodeURIComponent(a.telegram_id)}`;
+    return `<button class="admin-contact-row" data-admin-contact="${escHtml(href)}">
+        <span class="admin-contact-icon">📷</span>
+        <span class="admin-contact-info"><b>${escHtml(name)}</b><span>${escHtml(t.big_score_send_to || "Skrinshotni shu adminga yuboring")}</span></span>
+        <span class="admin-contact-go">${escHtml(t.admin_contact_write || "Yozish")} ›</span>
+      </button>`;
+  }).join("");
+  if (fallbackBtn) fallbackBtn.classList.add("hidden");
+}

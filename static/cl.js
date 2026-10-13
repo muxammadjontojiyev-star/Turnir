@@ -519,11 +519,13 @@ async function clSubmitResultFromModal() {
   const s1 = Number(document.getElementById("input-score1").value || 0);
   const s2 = Number(document.getElementById("input-score2").value || 0);
   try {
-    await apiFetch(`/cl/match/submit-result?match_id=${id}&score1=${s1}&score2=${s2}`,
+    const res = await apiFetch(`/cl/match/submit-result?match_id=${id}&score1=${s1}&score2=${s2}`,
                    { method: "POST" });
     document.getElementById("modal-result").classList.add("hidden");
     CL._resultMatchId = null;
-    showToast(CT("cl_toast_result_sent"));
+    // 2026-10-13: katta hisob — skrinshotni shu rejim adminiga yuborish oynasi
+    if (typeof isBigScoreResponse === "function" && isBigScoreResponse(res)) openBigScoreModal("cl");
+    else showToast(CT("cl_toast_result_sent"));
     await clLoadMatches();
   } catch (e) {
     const msg = { matchday_locked: CT("cl_round_locked"),

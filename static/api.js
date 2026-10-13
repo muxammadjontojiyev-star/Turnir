@@ -3386,8 +3386,11 @@ async function sendWebChatMessage() {
   }
 }
 
-// Katta hisob (admin_pending) modali — to'liq xabar + adminga yozish tugmasi
-function openBigScoreModal() {
+// Katta hisob (admin_pending) modali — to'liq xabar + adminga yozish tugmasi.
+// 2026-10-13: mode (league|cl|el|div|wc) — skrinshot SHU rejimga (ligada — o'z ligasiga)
+// mas'ul adminlarga yuboriladi (admin_contacts.js bigScoreShowAdmins). Mas'ul admin
+// tayinlanmagan bo'lsa — avvalgidek umumiy kontakt (ADMIN_CONTACT_USERNAME).
+function openBigScoreModal(mode) {
   const modal = document.getElementById("modal-big-score");
   if (!modal) { showToast(APP.t.result_admin_pending || "✅ Natija yuborildi"); return; }
   const textEl = document.getElementById("big-score-text");
@@ -3408,7 +3411,14 @@ function openBigScoreModal() {
     closeBtn._bound = true;
     closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
   }
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);   // boshqa rejim sahifasida ham ko'rinsin
+  if (typeof bigScoreShowAdmins === "function") void bigScoreShowAdmins(mode || "league", contactBtn);
   modal.classList.remove("hidden");
+}
+
+// 2026-10-13: submit javobi katta hisobmi? (liga/JCh: reason, ChL/YeL/Divizion: status)
+function isBigScoreResponse(res) {
+  return !!res && (res.reason === "ok_admin_pending" || res.status === "ok_admin_pending");
 }
 
 async function submitMatchResult() {
@@ -3437,8 +3447,8 @@ async function submitMatchResult() {
       { method: "POST" }
     );
     closeResultModal();
-    if (res && res.reason === "ok_admin_pending") {
-      openBigScoreModal();
+    if (isBigScoreResponse(res)) {
+      openBigScoreModal("league");
     } else {
       showToast(APP.t.result_submitted || "✅ Natija yuborildi");
     }

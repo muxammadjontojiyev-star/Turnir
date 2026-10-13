@@ -833,9 +833,11 @@ function divOpenResultModal() {
     // score1, o'ng katakcha score2. Almashtirish (swap) KERAK EMAS.
     e.target.disabled = true;
     try {
-      await apiFetch(`/div/match/submit-result?match_id=${m.id}&score1=${s1}&score2=${s2}`, { method: "POST" });
+      const res = await apiFetch(`/div/match/submit-result?match_id=${m.id}&score1=${s1}&score2=${s2}`, { method: "POST" });
       close();
-      showToast(DT("div_toast_result_sent"));
+      // 2026-10-13: katta hisob — skrinshotni Divizion adminiga yuborish oynasi
+      if (typeof isBigScoreResponse === "function" && isBigScoreResponse(res)) openBigScoreModal("div");
+      else showToast(DT("div_toast_result_sent"));
       await divLoadStatus();
     } catch (err) {
       e.target.disabled = false;
