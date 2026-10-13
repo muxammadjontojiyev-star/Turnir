@@ -316,6 +316,31 @@ const LEAGUE_CLUBS = {
     { name: "Schalke 04",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10189.png" },
     { name: "St. Pauli",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8152.png" },
   ],
+  // 2026-10-13: Serie B (20 klub) — 2026/27 tarkibidan bizning Serie A ro'yxatida YO'QLARI
+  // (Empoli/Hellas Verona o'rniga 2025/26 da 2-ligani tark etgan Venezia va Bari);
+  // logolar FotMob CDN (ID — fotmob.com/leagues/86 jadvali va jamoa sahifalari)
+  "Serie B": [
+    { name: "Arezzo",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9849.png" },
+    { name: "Ascoli",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8522.png" },
+    { name: "Avellino",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6722.png" },
+    { name: "Bari",                logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9976.png" },
+    { name: "Benevento",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6266.png" },
+    { name: "Carrarese",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6488.png" },
+    { name: "Catanzaro",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10168.png" },
+    { name: "Cesena",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/584022.png" },
+    { name: "Cremonese",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7801.png" },
+    { name: "Juve Stabia",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6106.png" },
+    { name: "Mantova",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9889.png" },
+    { name: "Modena",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9887.png" },
+    { name: "Padova",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/583944.png" },
+    { name: "Palermo",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8540.png" },
+    { name: "Pisa",                logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6479.png" },
+    { name: "Sampdoria",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9882.png" },
+    { name: "Südtirol",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/189475.png" },
+    { name: "Venezia",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7881.png" },
+    { name: "Vicenza",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/145007.png" },
+    { name: "Virtus Entella",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/208932.png" },
+  ],
 };
 
 // ============================================================
@@ -357,6 +382,7 @@ const LEAGUE_LOGOS = {
   "LaLiga 2":       "https://images.fotmob.com/image_resources/logo/leaguelogo/140.png",
   "Championship":   "https://images.fotmob.com/image_resources/logo/leaguelogo/48.png",
   "2. Bundesliga":  "https://images.fotmob.com/image_resources/logo/leaguelogo/146.png",  // 2026-10-13
+  "Serie B":        "https://images.fotmob.com/image_resources/logo/leaguelogo/86.png",   // 2026-10-13
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
