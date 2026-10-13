@@ -2600,18 +2600,26 @@ def div_admin_cancel(match_id: int,
 
 @app.post("/div/admin/ban")
 async def div_admin_ban(
-    user_id: int = Body(..., embed=True),
     days: int = Body(..., embed=True),
+    user_id: int | None = Body(None, embed=True),
+    query: str | None = Body(None, embed=True),
     admin: dict = Depends(get_authenticated_super_admin),
 ):
     """
     2026-07-17: Admin qoidabuzar ishtirokchiga KUNLIK ban beradi (faqat bosh
     admin). Ban davomida ishtirokchi Divizion ro'yxatidan o'ta olmaydi;
     kalendarida ban kunlari qizil ko'rinadi; telegramiga xabar boradi.
+    2026-10-13: ishtirokchi Telegram ID yoki @username bilan (query) ko'rsatiladi;
+    eski user_id ham qabul qilinadi (orqaga moslik).
     Xatolar: invalid_days, user_not_found.
     """
-    from division_bans import div_ban_user
-    success, result = div_ban_user(user_id, days)
+    from division_bans import div_ban_by_query, div_ban_user
+    if query:
+        success, result = div_ban_by_query(query, days)
+    elif user_id:
+        success, result = div_ban_user(user_id, days)
+    else:
+        success, result = False, "user_not_found"
     if not success:
         raise HTTPException(status_code=400, detail=result)
 

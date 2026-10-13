@@ -71,6 +71,22 @@ def div_ban_user(user_id: int, days: int) -> tuple[bool, str | dict]:
         conn.close()
 
 
+def div_ban_by_query(query: str, days: int) -> tuple[bool, str | dict]:
+    """
+    2026-10-13: ban Telegram ID (raqam) yoki @username bo'yicha (admin so'rovi).
+    Qidiruv pt_members._find_user bilan bir xil (qoida #26). Topilmasa — user_not_found.
+    """
+    from pt_members import _find_user
+    conn = get_connection()
+    try:
+        u = _find_user(conn.cursor(), query)
+    finally:
+        conn.close()
+    if not u:
+        return False, "user_not_found"
+    return div_ban_user(u["id"], days)
+
+
 def div_is_banned(telegram_id: int, day: str | None = None) -> bool:
     """Berilgan kunda (None -> bugun) ishtirokchi ban ostidami?"""
     day = day or _tournament_now().strftime("%Y-%m-%d")
