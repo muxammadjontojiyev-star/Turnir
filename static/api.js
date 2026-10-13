@@ -293,6 +293,29 @@ const LEAGUE_CLUBS = {
     { name: "West Brom",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8659.png" },
     { name: "Wrexham",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9841.png" },
   ],
+  // 2026-10-13: 2. Bundesliga (18 klub) — 2026/27 tarkibidan bizning Bundesliga ro'yxatida YO'QLARI
+  // (Bochum/Darmstadt/Heidenheim/Wolfsburg o'rniga 2025/26 da 2-ligani tark etgan Schalke 04/Elversberg/
+  // Paderborn/Fortuna Düsseldorf); logolar FotMob CDN (ID — fotmob.com/leagues/146 jadvali va jamoa sahifalari)
+  "2. Bundesliga": [
+    { name: "Arminia Bielefeld",   logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9912.png" },
+    { name: "Braunschweig",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9776.png" },
+    { name: "Dynamo Dresden",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8480.png" },
+    { name: "Elversberg",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8232.png" },
+    { name: "Energie Cottbus",     logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8398.png" },
+    { name: "Fortuna Düsseldorf",  logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8194.png" },
+    { name: "Greuther Fürth",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8357.png" },
+    { name: "Hannover 96",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9904.png" },
+    { name: "Hertha BSC",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8177.png" },
+    { name: "Holstein Kiel",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8150.png" },
+    { name: "Kaiserslautern",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8350.png" },
+    { name: "Karlsruher SC",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8295.png" },
+    { name: "Magdeburg",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8188.png" },
+    { name: "Nürnberg",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8165.png" },
+    { name: "Osnabrück",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9775.png" },
+    { name: "Paderborn",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8460.png" },
+    { name: "Schalke 04",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10189.png" },
+    { name: "St. Pauli",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8152.png" },
+  ],
 };
 
 // ============================================================
@@ -333,6 +356,7 @@ const LEAGUE_LOGOS = {
   "J1 Liga":        "https://images.fotmob.com/image_resources/logo/leaguelogo/223.png",
   "LaLiga 2":       "https://images.fotmob.com/image_resources/logo/leaguelogo/140.png",
   "Championship":   "https://images.fotmob.com/image_resources/logo/leaguelogo/48.png",
+  "2. Bundesliga":  "https://images.fotmob.com/image_resources/logo/leaguelogo/146.png",  // 2026-10-13
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
