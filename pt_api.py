@@ -203,6 +203,22 @@ async def pt_delete(tournament_id: int, user: dict = Depends(get_authenticated_u
     return {"status": "ok"}
 
 
+@router.post("/pt/admin/delete-bulk")
+async def pt_admin_delete_bulk(ids: list[int] = Body(..., embed=True),
+                               admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-10-13: bosh admin — tanlangan turnirlarni bir yo'la o'chirish. Xato: empty / too_many -> 400."""
+    from pt_delete import pt_delete_many
+    ok, r = pt_delete_many(ids, admin["id"])
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    if r["notify"]:
+        from notify import notify_members
+        from pt_notify import spawn
+        for n in r["notify"]:
+            spawn(notify_members(n["members"], "pt_notify_deleted", name=n["name"]))
+    return {"status": "ok", "deleted": len(r["deleted"]), "failed": r["failed"]}
+
+
 @router.get("/pt/admin/all")
 def pt_admin_all(q: str = "", status: str = "", admin: dict = Depends(get_authenticated_super_admin)):
     """2026-10-07: bosh admin — barcha shaxsiy turnirlar (qidiruv: nom, tashkilotchi, #id; holat filtri)."""

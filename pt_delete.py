@@ -51,3 +51,35 @@ def pt_delete_tournament(tid: int, user_id: int, is_super: bool = False) -> tupl
         conn.close()
     logger.info("PT #%s '%s' o'chirildi (holat %s, user %s, super=%s)", tid, t["name"], t["status"], user_id, is_super)
     return True, {"name": t["name"], "status": t["status"], "members": members}
+
+
+# 2026-10-13: bosh admin — bir yo'la ko'p turnirni o'chirish (Barcha turnirlar ro'yxatida tanlab).
+# Har turnir ALOHIDA tranzaksiyada (bittasi yiqilsa qolganlari to'xtamaydi, qoida #37).
+PT_BULK_DELETE_MAX = 300   # pt_admin_all.PT_ADMIN_LIST_LIMIT bilan bir xil — ro'yxatda ko'ringanicha
+
+
+def pt_delete_many(ids: list[int], user_id: int) -> tuple[bool, str | dict]:
+    """
+    FAQAT bosh admin chaqiradi (endpoint himoyalangan). Sabablar: empty, too_many.
+    Qaytaradi (ok): {deleted: [id], failed: [id], notify: [{name, members}]}.
+    """
+    uniq = list(dict.fromkeys(int(i) for i in (ids or []) if int(i) > 0))
+    if not uniq:
+        return False, "empty"
+    if len(uniq) > PT_BULK_DELETE_MAX:
+        return False, "too_many"
+    deleted, failed, notify = [], [], []
+    for tid in uniq:
+        try:
+            ok, r = pt_delete_tournament(tid, user_id, is_super=True)
+        except Exception:
+            logger.exception("pt_delete_many: #%s o'chirilmadi", tid)
+            ok, r = False, "error"
+        if ok:
+            deleted.append(tid)
+            if r["members"]:
+                notify.append({"name": r["name"], "members": r["members"]})
+        else:
+            failed.append(tid)
+    logger.info("PT bulk delete: %d o'chirildi, %d xato (user %s)", len(deleted), len(failed), user_id)
+    return True, {"deleted": deleted, "failed": failed, "notify": notify}
