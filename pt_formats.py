@@ -135,6 +135,14 @@ LEAGUE_CLUBS: dict[str, tuple[str, ...]] = {
         "Magdeburg", "Nürnberg", "Osnabrück", "Paderborn",
         "Schalke 04", "St. Pauli",
     ),
+    # 2026-10-13: Serie B — static/api.js LEAGUE_CLUBS bilan bir xil
+    "Serie B": (
+        "Arezzo", "Ascoli", "Avellino", "Bari",
+        "Benevento", "Carrarese", "Catanzaro", "Cesena",
+        "Cremonese", "Juve Stabia", "Mantova", "Modena",
+        "Padova", "Palermo", "Pisa", "Sampdoria",
+        "Südtirol", "Venezia", "Vicenza", "Virtus Entella",
+    ),
 }
 
 WC_TEAMS: tuple[str, ...] = tuple(team for teams in WC_GROUPS.values() for team in teams)

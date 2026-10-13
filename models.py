@@ -1361,5 +1361,11 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("2. Bundesliga", 18, "open"),
     )
+    # 2026-10-13: Serie B (Italiya 2-ligasi, 20 klub) — 2. Bundesliga'dan keyin navbat bilan (id 15).
+    # Serie A'ning 2-ligasi (static/league_tiers.js LEAGUE_SECOND_TIERS).
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Serie B", 20, "open"),
+    )
     conn.commit()
     conn.close()
