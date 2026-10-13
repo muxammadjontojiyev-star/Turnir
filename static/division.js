@@ -415,13 +415,21 @@ function divRenderRating() {
     const label = p.username ? "@" + p.username : (p.nickname || "—");
     // Umumiy ball (1500 + achkolar) — profildagi ball bilan bir xil
     const ball = (p.rating !== undefined && p.rating !== null) ? p.rating : 1500;
+    // 2026-10-13: liga jadvali kabi — G/D/M va gollar (urgan, o'tkazgan, farq)
+    const gf = p.goals_for || 0, ga = p.goals_against || 0;
+    const gd = p.goal_diff !== undefined ? p.goal_diff : gf - ga;
     return `
       <tr class="${isMe ? "is-me" : ""} div-rating-row" id="${isMe ? "div-my-rating-row" : ""}"
           data-uid="${p.user_id}" style="cursor:pointer">
         <td class="rank-${i + 1}">${i + 1}</td>
         <td class="div-rating-user">${escHtml(label)}${prizeStarsHtml(p)}</td>
-        <td>${p.played}</td>
-        <td><b class="neon-cyan">${ball}</b></td>
+        <td class="pts"><b class="neon-cyan">${ball}</b></td>
+        <td>${p.wins || 0}</td>
+        <td>${p.draws || 0}</td>
+        <td>${p.losses || 0}</td>
+        <td>${gf}</td>
+        <td>${ga}</td>
+        <td>${gd > 0 ? "+" : ""}${gd}</td>
       </tr>`;
   }).join("");
 
@@ -441,8 +449,10 @@ function divRenderRating() {
     <div class="card div-rating-legend">${DT("div_legend")}</div>
     <div class="card card--table">
       <table class="rating-table">
-        <thead><tr><th>#</th><th>${DT("div_col_player")}</th><th>${DT("div_col_played")}</th><th>${DT("div_points")}</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="4">${DT("div_no_results")}</td></tr>`}</tbody>
+        <thead><tr><th>#</th><th>${DT("div_col_player")}</th><th>${DT("div_points")}</th>
+          <th>${escHtml(APP.t.th_w || "G")}</th><th>${escHtml(APP.t.th_d || "D")}</th><th>${escHtml(APP.t.th_l || "M")}</th>
+          <th>${escHtml(APP.t.th_gf || "GF")}</th><th>${escHtml(APP.t.th_ga || "GA")}</th><th>${escHtml(APP.t.th_gd || "GD")}</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="9">${DT("div_no_results")}</td></tr>`}</tbody>
       </table>
     </div>`;
 }

@@ -6358,3 +6358,7 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .adm-pp-act-title { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
 .adm-pp-hint { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 8px; }
 .adm-pp-remove { width: 100%; }
+/* 2026-10-13: Divizion reytingi — 9 ustun (liga jadvali kabi); uzun username kesiladi */
+#div-root .rating-table .div-rating-user { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#div-root .rating-table th, #div-root .rating-table td { padding-left: 4px; padding-right: 4px; }
+#div-root .rating-table .div-rating-user { max-width: 104px; }
