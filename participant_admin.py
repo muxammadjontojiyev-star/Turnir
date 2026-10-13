@@ -61,13 +61,14 @@ def league_list_participants() -> list[dict]:
     """
     Barcha liga ishtirokchilari (admin dropdown uchun).
     orphan=1 — user_id users'da yo'q (o'chirilgan akkount).
-    [{user_id, nickname, username, club_name, league_name, orphan}, ...]
+    [{user_id, telegram_id, nickname, username, club_name, league_name, orphan}, ...]
+    2026-10-13: telegram_id qo'shildi (admin qidiruvi ID bo'yicha ham topsin).
     """
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT r.user_id, u.nickname, u.username, r.club_name, l.name AS league_name, "
+            "SELECT r.user_id, u.telegram_id, u.nickname, u.username, r.club_name, l.name AS league_name, "
             "CASE WHEN u.id IS NULL THEN 1 ELSE 0 END AS orphan "
             "FROM registrations r "
             "LEFT JOIN users u ON u.id = r.user_id "
@@ -75,6 +76,20 @@ def league_list_participants() -> list[dict]:
             "ORDER BY l.name, u.nickname"
         )
         return [dict(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def resolve_telegram_id(query: str) -> int | None:
+    """
+    2026-10-13: Telegram ID (raqam) yoki @username -> bazadagi telegram_id (yo'q -> None).
+    Qidiruv pt_members._find_user bilan bir xil (qoida #26).
+    """
+    from pt_members import _find_user
+    conn = get_connection()
+    try:
+        u = _find_user(conn.cursor(), query)
+        return u["telegram_id"] if u else None
     finally:
         conn.close()
 

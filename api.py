@@ -1686,11 +1686,21 @@ def league_participants_all(admin: dict = Depends(get_authenticated_super_admin)
 @app.post("/league/participant/reassign")
 def league_participant_reassign(
     old_user_id: int = Body(..., embed=True),
-    new_telegram_id: int = Body(..., embed=True),
+    new_telegram_id: int | None = Body(None, embed=True),
+    new_query: str | None = Body(None, embed=True),
     admin: dict = Depends(get_authenticated_super_admin),
 ):
-    """Liga ishtirokchisini yangi akkountga bog'laydi (faqat bosh admin)."""
+    """
+    Liga ishtirokchisini yangi akkountga bog'laydi (faqat bosh admin).
+    2026-10-13: yangi akkount Telegram ID yoki @username bilan ham (new_query);
+    topilmasa new_user_not_found (frontend matni mavjud).
+    """
     from participant_admin import league_reassign_participant
+    if new_query:
+        from participant_admin import resolve_telegram_id
+        new_telegram_id = resolve_telegram_id(new_query)
+    if not new_telegram_id:
+        raise HTTPException(status_code=400, detail="new_user_not_found")
     success, result = league_reassign_participant(old_user_id, new_telegram_id)
     if not success:
         raise HTTPException(status_code=400, detail=result)
