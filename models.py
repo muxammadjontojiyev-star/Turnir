@@ -1355,5 +1355,11 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("Championship", 24, "open"),
     )
+    # 2026-10-13: 2. Bundesliga (Germaniya 2-ligasi, 18 klub) — Championship'dan keyin navbat bilan (id 14).
+    # Bundesliga'ning 2-ligasi (static/league_tiers.js LEAGUE_SECOND_TIERS).
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("2. Bundesliga", 18, "open"),
+    )
     conn.commit()
     conn.close()
