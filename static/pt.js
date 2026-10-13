@@ -61,11 +61,12 @@ async function ptLoadList() {
   }
 }
 
-async function ptOpenDetail(id) {
+// opts.silent — "Yuklanmoqda" oraliq ekrani chizilmaydi (sahifa o'chib-yonmaydi, 2026-10-13)
+async function ptOpenDetail(id, opts = {}) {
   if (String(PT.detailId) !== String(id)) { PT.tab = "home"; PT.playerView = null; PT.rulesEdit = false; PT.rulesOpen = false; PT.teamEdit = false; PT.lgTab = null; PT.ratingTab = null; }   // boshqa turnir — Asosiy sahifadan
   PT.view = "detail";
   PT.detailId = id;
-  ptRender(`<div class="empty-state">${escHtml(PTT("pt_loading"))}</div>`);
+  if (!opts.silent) ptRender(`<div class="empty-state">${escHtml(PTT("pt_loading"))}</div>`);
   try {
     if (!PT.config) PT.config = await apiFetch("/pt/config");
     PT.detail = await apiFetch(`/pt/${encodeURIComponent(id)}`);
@@ -84,6 +85,21 @@ async function ptOpenDetail(id) {
     console.error("PT chizish xatosi:", e);
     ptRender(`<div class="empty-state">${escHtml(PTT("pt_load_err"))}<br><small class="pt-muted">${escHtml(String(e && e.message || e))}</small></div>`);
   }
+}
+
+// 2026-10-13: amaldan keyin sahifani JIM yangilash — oraliq "Yuklanmoqda" ekrani yo'q
+// (ekran o'chib-yonmaydi) va skroll joyi saqlanadi (sahifa yuqoriga sakramaydi).
+async function ptRefreshDetailKeepScroll(id) {
+  const body = document.querySelector("#pt-root .pt-body");
+  const winY = window.scrollY, bodyY = body ? body.scrollTop : 0;
+  await ptOpenDetail(id, { silent: true });
+  const restore = () => {
+    window.scrollTo(0, winY);
+    const b = document.querySelector("#pt-root .pt-body");
+    if (b) b.scrollTop = bodyY;
+  };
+  restore();
+  requestAnimationFrame(restore);   // rasmlar/ikonkalar joylashgach yana bir bor
 }
 
 // --- Chizish -------------------------------------------------------------

@@ -123,7 +123,7 @@ function ptManageHtml(t) {
     <div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_invite_title"))}</div>
       <div class="pt-hint">${escHtml(PTT("pt_invite_hint"))}</div>
-      <div class="pt-link-box" id="pt-invite-link">${escHtml(PTT("pt_loading"))}</div>
+      <div class="pt-link-box" id="pt-invite-link">${escHtml((PT.inviteLinks || {})[t.id] || PTT("pt_loading"))}</div>
       <div class="pt-pay-actions">
         <button class="btn btn--ghost" id="pt-link-copy" disabled>${escHtml(PTT("pt_copy"))}</button>
         <button class="btn btn--primary" id="pt-link-share" disabled>${escHtml(PTT("pt_share"))}</button>
@@ -179,18 +179,21 @@ function ptBindManage(t) {
   if (document.getElementById("pt-invite-link")) void ptLoadInviteLink(t);   // faqat Admin sahifasida
   document.getElementById("pt-add-btn")?.addEventListener("click", () => void ptAddMember(t.id));
   document.querySelectorAll("#pt-root [data-pt-mapprove]").forEach(b =>
-    b.addEventListener("click", () => void ptMemberAction(t.id, b.dataset.ptMapprove, "approve")));
+    b.addEventListener("click", () => void ptMemberAction(t.id, b.dataset.ptMapprove, "approve", b)));
   document.querySelectorAll("#pt-root [data-pt-mremove]").forEach(b =>
     b.addEventListener("click", () => {
       if (b.dataset.ptConfirm && !window.confirm(PTT("pt_remove_ask", { who: b.dataset.ptWho || "" }))) return;
-      void ptMemberAction(t.id, b.dataset.ptMremove, "remove");
+      void ptMemberAction(t.id, b.dataset.ptMremove, "remove", b);
     }));
 }
 
 async function ptLoadInviteLink(t) {
   const box = document.getElementById("pt-invite-link");
   try {
-    const { link } = await apiFetch(`/pt/${encodeURIComponent(t.id)}/invite-link`);
+    // 2026-10-13: havola keshlanadi — qayta chizishda "Yuklanmoqda…" miltillamaydi
+    const cached = (PT.inviteLinks || {})[t.id];
+    const link = cached || (await apiFetch(`/pt/${encodeURIComponent(t.id)}/invite-link`)).link;
+    PT.inviteLinks = Object.assign(PT.inviteLinks || {}, { [t.id]: link });
     if (!box) return;
     box.textContent = link;
     const copy = document.getElementById("pt-link-copy");
@@ -220,7 +223,7 @@ async function ptAddMember(tid) {
     await apiFetch(`/pt/${encodeURIComponent(tid)}/members/add`, { method: "POST", body: JSON.stringify({ query }) });
     showToast(PTT("pt_added_toast"));
     PT.busy = false;
-    await ptOpenDetail(tid);
+    await ptRefreshDetailKeepScroll(tid);   // 2026-10-13: jim yangilash
   } catch (e) {
     showToast(ptErrText(e));
   } finally {
@@ -228,9 +231,10 @@ async function ptAddMember(tid) {
   }
 }
 
-async function ptMemberAction(tid, userId, action) {
+async function ptMemberAction(tid, userId, action, btn) {
   if (PT.busy) return;
   PT.busy = true;
+  if (btn) { btn.disabled = true; btn.textContent = "⏳"; }   // darhol ko'rinadigan javob (qoida #40)
   try {
     await apiFetch(`/pt/${encodeURIComponent(tid)}/members/${encodeURIComponent(userId)}/${action}`, { method: "POST" });
   } catch (e) {
@@ -238,5 +242,6 @@ async function ptMemberAction(tid, userId, action) {
   } finally {
     PT.busy = false;
   }
-  await ptOpenDetail(tid);
+  // 2026-10-13: jim yangilash — ekran o'chib-yonmaydi, sahifa yuqoriga sakramaydi
+  await ptRefreshDetailKeepScroll(tid);
 }
