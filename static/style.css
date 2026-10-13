@@ -6310,3 +6310,51 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .admin-contact-info b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-contact-info span { font-size: 12px; color: var(--cyan); }
 .admin-contact-go { font-size: 12px; color: var(--cyan); flex-shrink: 0; }
+
+/* 2026-10-13: Bosh admin paneli — ochiladigan guruhlar (index.html #section-admin) */
+.adm-group {
+  margin: 0 0 12px; border-radius: 16px; overflow: hidden;
+  background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.adm-group > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; font-size: 12.5px; font-weight: 700; letter-spacing: 1.2px;
+  color: var(--text-heading); user-select: none;
+}
+.adm-group > summary::-webkit-details-marker { display: none; }
+.adm-group > summary::after {
+  content: "›"; margin-left: auto; font-size: 20px; line-height: 1; color: var(--text-secondary);
+  transition: transform .2s ease;
+}
+.adm-group[open] > summary::after { transform: rotate(90deg); }
+.adm-group[open] > summary { border-bottom: 1px solid rgba(255,255,255,0.06); }
+.adm-group-ic { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
+.adm-group-sub { font-size: 11px; font-weight: 500; letter-spacing: .3px; color: var(--text-secondary); }
+.adm-group > *:not(summary) { margin: 12px 14px; }
+.adm-group .admin-fix-form { background: transparent; border: none; padding: 0; box-shadow: none; }
+
+/* Ishtirokchilar qidiruvi (admin_participants.js) */
+.adm-pp .modal-input { margin-bottom: 8px; }
+.adm-pp-results { display: flex; flex-direction: column; gap: 6px; }
+.adm-pp-card {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer;
+  padding: 10px 12px; border-radius: 12px; color: var(--text-primary);
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+}
+.adm-pp-card:active { transform: scale(.99); }
+.adm-pp-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.adm-pp-info b { font-size: 14px; color: var(--cyan); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-pp-info span { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-pp-empty { font-size: 12.5px; color: var(--text-secondary); padding: 6px 2px; }
+.adm-pp-selected { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
+.adm-pp-selected .adm-pp-card { border-color: rgba(0,240,255,.35); background: var(--cyan-dim); cursor: default; }
+.adm-pp-x {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text-secondary);
+}
+.adm-pp-act { padding: 12px; margin-bottom: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
+.adm-pp-act .btn { width: 100%; }
+.adm-pp-act-title { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+.adm-pp-hint { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 8px; }
+.adm-pp-remove { width: 100%; }

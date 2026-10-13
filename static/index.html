@@ -13,7 +13,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20261011s" />
+  <link rel="stylesheet" href="style.css?v=20261013d" />
 </head>
 <body>
 
@@ -217,63 +217,49 @@
       <section id="section-admin" class="section">
         <!-- Admin panel (faqat adminga ko'rinadi, JS orqali boshqariladi) -->
         <div id="admin-panel" class="admin-panel hidden">
+          <!-- 2026-10-13: bosh admin paneli guruhlarga ajratildi (ochiladigan bo'limlar).
+               Barcha ID'lar avvalgidek — JS (api.js loadAdminPanel) o'zgarishsiz ishlaydi. -->
           <div class="section-label" data-i18n="admin_panel_title">ADMIN PANEL</div>
 
-          <!-- Katta hisob (admin_pending) — barcha liga adminlariga ko'rinadi -->
-          <div class="section-label" data-i18n="admin_pending_title">ADMIN TASDIG'INI KUTAYOTGAN (KATTA HISOB)</div>
-          <div id="admin-pending-list" class="admin-players-list">
-            <!-- JS tomonidan to'ldiriladi -->
-          </div>
+          <!-- Katta hisob (admin_pending) — barcha liga adminlariga -->
+          <details class="adm-group" open>
+            <summary><span class="adm-group-ic">⏳</span><span data-i18n="admin_pending_title">ADMIN TASDIG'INI KUTAYOTGAN (KATTA HISOB)</span></summary>
+            <div id="admin-pending-list" class="admin-players-list"></div>
+          </details>
 
-          <!-- Faqat bosh adminga: qur'a, o'yinchilar, rad etilgan natijalar -->
+          <!-- Faqat bosh adminga -->
           <div id="admin-super-only" class="hidden">
-            <!-- 2026-10-08: bot statistikasi (admin_stats.js) -->
-            <div class="section-label" id="admin-stats-title">📊 STATISTIKA</div>
-            <div id="admin-stats-box" class="admin-stats-box"></div>
-            <div class="section-label" data-i18n="admin_draw_title">QUR'A</div>
-            <div id="admin-draw-list" class="admin-players-list">
-              <!-- JS tomonidan to'ldiriladi -->
-            </div>
+            <details class="adm-group" open>
+              <summary><span class="adm-group-ic">👥</span><span>ISHTIROKCHILAR</span><span class="adm-group-sub" id="adm-pp-count"></span></summary>
+              <!-- admin_participants.js: klub / @username / ID bo'yicha qidiruv + amallar -->
+              <div id="adm-pp" class="adm-pp">
+                <input id="adm-pp-q" class="modal-input" type="text" autocomplete="off"
+                       placeholder="🔎 Klub, @username yoki Telegram ID" />
+                <div id="adm-pp-results" class="adm-pp-results"></div>
+                <div id="adm-pp-panel"></div>
+              </div>
+            </details>
 
-            <div id="admin-players-list" class="admin-players-list">
-              <!-- JS tomonidan to'ldiriladi -->
-            </div>
+            <details class="adm-group">
+              <summary><span class="adm-group-ic">🎲</span><span data-i18n="admin_draw_title">QUR'A</span></summary>
+              <div id="admin-draw-list" class="admin-players-list"></div>
+            </details>
 
-            <div class="section-label" data-i18n="admin_rejected_title">RAD ETILGAN NATIJALAR</div>
-            <div id="admin-rejected-list" class="admin-players-list">
-              <!-- JS tomonidan to'ldiriladi -->
-            </div>
+            <details class="adm-group">
+              <summary><span class="adm-group-ic">❌</span><span data-i18n="admin_rejected_title">RAD ETILGAN NATIJALAR</span></summary>
+              <div id="admin-rejected-list" class="admin-players-list"></div>
+            </details>
 
-            <!-- 2026-07-16: ishtirokchini yangi akkountga almashtirish (faqat bosh admin).
-                 Qur'a natijasiga ta'sir qilmaydi — jadval joyida qoladi. -->
-            <div class="section-label">ISHTIROKCHINI ALMASHTIRISH</div>
-            <div class="admin-fix-form">
-              <div id="league-reassign-box" style="margin-bottom:6px"></div>
-              <input id="league-reassign-new-tg" class="modal-input" type="number" inputmode="numeric"
-                     placeholder="Yangi Telegram ID" style="margin-bottom:8px" />
-              <button class="btn" id="btn-league-reassign">👤 Akkountni almashtirish</button>
-            </div>
-
-            <!-- 2026-07-16: ikki liga ishtirokchisini O'ZARO almashtirish
-                 (masalan LaLiga <-> Bundesliga). Qur'aga ta'sir qilmaydi:
-                 o'rin (liga, klub, jadval, natijalar) joyida — odamlar almashadi. -->
-            <div class="section-label">ISHTIROKCHILARNI O'ZARO ALMASHTIRISH</div>
-            <div class="admin-fix-form">
-              <div id="league-swap-a-box" style="margin-bottom:6px"></div>
-              <div style="text-align:center;font-size:14px;opacity:.6;margin-bottom:6px">⇅</div>
-              <div id="league-swap-b-box" style="margin-bottom:8px"></div>
-              <button class="btn" id="btn-league-swap">🔄 O'zaro almashtirish</button>
-            </div>
-
-            <div class="section-label" data-i18n="season_title">LIGA MAVSUMI</div>
-            <div class="admin-player-league" id="season-current-hint" style="margin:0 2px 8px">—</div>
+            <details class="adm-group">
+              <summary><span class="adm-group-ic">🏁</span><span data-i18n="season_title">LIGA MAVSUMI</span></summary>
+              <div class="admin-player-league" id="season-current-hint" style="margin:0 2px 8px">—</div>
             <button class="btn btn--danger" id="btn-finalize-season" style="width:100%" data-i18n="season_finalize_btn">Liga mavsumini yakunlash</button>
             <div class="admin-player-league" style="margin:6px 2px 0" data-i18n="season_finalize_hint">Liga sovrinlari hisoblanadi, liga mavsumi oshadi</div>
+            </details>
 
-            <!-- 2026-08: Oltin to'p/butsa sovrinini to'g'ri egaga ko'chirish (bosh
-                 admin). Liga sovrinlari liga yakunidan chiqqani uchun shu bo'limda. -->
-            <div class="section-label">SOVRINNI KO'CHIRISH</div>
-            <div class="admin-fix-form">
+            <details class="adm-group">
+              <summary><span class="adm-group-ic">🏆</span><span>SOVRINNI KO'CHIRISH</span></summary>
+              <div class="admin-fix-form">
               <div id="league-prize-transfer-list" style="margin-bottom:8px">
                 <div class="wc-loading-row">Yuklanmoqda...</div>
               </div>
@@ -282,32 +268,18 @@
               <button class="btn" id="btn-league-prize-transfer">🏆 Sovrinni ko'chirish</button>
               <div class="admin-player-league" style="margin:6px 2px 0">Kubok va individual sovrinlar. Sovrinni tanlang, yangi egani Telegram ID yoki @username bilan kiriting. Kubok ko'chirilsa ⭐ yulduzcha ham avtomatik o'tadi.</div>
             </div>
+            </details>
 
-            <!-- 2026-08: ChL 2-mavsum kubogini QO'LDA berish (bosh admin).
-                 Final o'ynalgan, lekin mavsum yakunlanmasdan yangi mavsum
-                 boshlangani uchun kubok yozilmay qolgan holat uchun. -->
-            <div class="section-label">CHL 2-MAVSUM KUBOGINI BERISH</div>
+            <details class="adm-group">
+              <summary><span id="admin-stats-title">📊 STATISTIKA</span></summary>
+              <div id="admin-stats-box" class="admin-stats-box"></div>
+            </details>
+          </div>
+
+          <!-- Natijalar — barcha liga adminlariga -->
+          <details class="adm-group">
+            <summary><span class="adm-group-ic">✏️</span><span data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</span></summary>
             <div class="admin-fix-form">
-              <input id="cl-cup-award-tg" class="modal-input" type="number" inputmode="numeric"
-                     placeholder="G'olibning Telegram ID raqami" style="margin-bottom:8px" />
-              <button class="btn" id="btn-cl-cup-award">🏆 ChL 2-mavsum kubogini berish</button>
-              <div class="admin-player-league" style="margin:6px 2px 0">Faqat 2-mavsum uchun. Kubok berilishi bilan ⭐ yulduzcha ham avtomatik paydo bo'ladi. Bir marta beriladi — 2-mavsumda kubok bo'lsa xato chiqadi.</div>
-            </div>
-          </div>
-
-          <!-- 2026-09-22: nizolarni skrinshotsiz hal qilish. Rejim TANLANMAYDI —
-               bu liga tabi, shuning uchun data-cr-mode="league" qat'iy.
-               ChL/Divizion/JCh panellarida o'z bloklari bor (chatReportBoxHtml). -->
-          <div class="section-label">O'YIN YOZISHMALARI (NIZO UCHUN)</div>
-          <div class="admin-fix-form chat-report-box" data-cr-mode="league">
-            <input class="modal-input cr-id" type="number" min="1"
-                   placeholder="Match ID" style="margin-bottom:8px" />
-            <button class="btn cr-go">🔎 Yozishmalarni ko'rish</button>
-            <div class="chat-report-out"></div>
-          </div>
-
-          <div class="section-label" data-i18n="admin_fix_title">TASDIQLANGAN NATIJANI TUZATISH</div>
-          <div class="admin-fix-form">
             <input
               id="admin-fix-match-id"
               class="modal-input"
@@ -335,11 +307,24 @@
                     style="color:var(--red-neon);border-color:rgba(255,69,96,.3)"
                     data-i18n="admin_reset_btn">Natijani bekor qilish</button>
           </div>
+          </details>
 
-          <!-- Admin tayinlash (faqat bosh adminga ko'rinadi, JS boshqaradi) -->
+          <!-- 2026-09-22: nizolarni skrinshotsiz hal qilish (liga tabi — data-cr-mode="league") -->
+          <details class="adm-group">
+            <summary><span class="adm-group-ic">💬</span><span>O'YIN YOZISHMALARI (NIZO UCHUN)</span></summary>
+            <div class="admin-fix-form chat-report-box" data-cr-mode="league">
+            <input class="modal-input cr-id" type="number" min="1"
+                   placeholder="Match ID" style="margin-bottom:8px" />
+            <button class="btn cr-go">🔎 Yozishmalarni ko'rish</button>
+            <div class="chat-report-out"></div>
+          </div>
+          </details>
+
+          <!-- Admin tayinlash (faqat bosh adminga, JS boshqaradi) -->
           <div id="admin-manage-section" class="hidden">
-            <div class="section-label" data-i18n="admin_manage_title">ADMIN TAYINLASH</div>
-            <div class="admin-fix-form">
+            <details class="adm-group">
+              <summary><span class="adm-group-ic">🛡</span><span data-i18n="admin_manage_title">ADMIN TAYINLASH</span></summary>
+              <div class="admin-fix-form">
               <input
                 id="admin-new-id"
                 class="modal-input"
@@ -351,6 +336,7 @@
               <button class="btn btn--primary btn--glow" id="btn-admin-add" data-i18n="admin_add_btn">Admin qo'shish</button>
             </div>
             <div id="admin-roles-list" class="admin-players-list"></div>
+            </details>
           </div>
         </div>
 
@@ -595,9 +581,10 @@
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
   <script src="app.js?v=20261011s"></script>
-  <script src="api.js?v=20261013b"></script>
+  <script src="api.js?v=20261013d"></script>
   <script src="chat_images.js?v=20261011r"></script>
   <script src="admin_contacts.js?v=20261011s"></script>
+  <script src="admin_participants.js?v=20261013d"></script>
   <!-- 2026-10-10: liga darajalari (1-/2-ligalar, zonalar) — TEXTS ga tarjima qo'shadi -->
   <script src="league_tiers.js?v=20261013b"></script>
   <script src="admin_stats.js?v=20261008a"></script>

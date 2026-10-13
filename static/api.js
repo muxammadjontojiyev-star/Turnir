@@ -1522,38 +1522,6 @@ async function reassignSubmit(url, boxId, tgInputId, btn, onDone) {
   }
 }
 
-// 2026-07-16: Ikki liga ishtirokchisini O'ZARO almashtirish (SWAP).
-// O'rin (liga, klub, jadval, natijalar) joyida qoladi — odamlar almashadi.
-// Qur'aga ta'sir qilmaydi. Faqat bosh admin (backend himoyalangan).
-async function submitLeagueSwap(btn, onDone) {
-  const selA = document.getElementById("league-swap-a-box-select");
-  const selB = document.getElementById("league-swap-b-box-select");
-  const a = selA ? Number(selA.value || 0) : 0;
-  const b = selB ? Number(selB.value || 0) : 0;
-  if (!a || !b) { showToast("Ikkala ishtirokchini ham tanlang"); return; }
-  if (a === b) { showToast("Bir xil ishtirokchi tanlandi — ikkitasi har xil bo'lsin"); return; }
-  const nameA = selA.options[selA.selectedIndex]?.text || "A";
-  const nameB = selB.options[selB.selectedIndex]?.text || "B";
-  if (!confirm(`Quyidagilar O'ZARO almashtirilsinmi?\n\n${nameA}\n⇅\n${nameB}\n\nQur'a natijasi o'zgarmaydi — faqat o'yinchilar almashadi.`)) return;
-  btn.disabled = true;
-  try {
-    const r = await apiFetch("/league/participants/swap", {
-      method: "POST",
-      body: JSON.stringify({ user_id_a: a, user_id_b: b }),
-    });
-    showToast(`✅ Almashtirildi: ${r.matches_updated || 0} o'yin ustuni yangilandi`);
-    if (onDone) await onDone();
-  } catch (e) {
-    const msg = {
-      same_user: "bir xil ishtirokchi tanlandi",
-      participant_not_found: "ishtirokchi(lar) topilmadi",
-    }[e.message] || e.message;
-    showToast("Xato: " + msg);
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 // ============================================================
 //  ADMIN PANEL
 // ============================================================
@@ -1598,40 +1566,18 @@ async function loadAdminPanel() {
     // Bosh admin — hamma narsa
     superOnly?.classList.remove("hidden");
     if (typeof adminLoadStats === "function") void adminLoadStats();   // 2026-10-08: 📊 Statistika
+    // 2026-10-13: ligalar bo'yicha ishtirokchilar ro'yxati (Chiqarish tugmalari bilan)
+    // olib tashlandi — o'rniga "Ishtirokchilar" qidiruvi (admin_participants.js)
     try {
-      const players = await apiFetch("/admin/players");
       renderAdminDraw();
-      renderAdminPlayers(players);
       await loadRejectedMatches();
     } catch (_) { /* xato — bu qism bo'sh qoladi */ }
     await loadLeagueAdminRoles();
     await loadSeasonInfo();
 
-    // Ishtirokchini almashtirish (2026-07-16) — ro'yxat + tugma
-    const leagueReassignLabel =
-      (o) => `${o.league_name || "?"} · ${o.club_name || o.nickname || "—"}${o.username ? " · @" + o.username : ""}`;
-    void reassignLoadList("/league/participants/all", "league-reassign-box", leagueReassignLabel);
-    const reassignBtn = document.getElementById("btn-league-reassign");
-    if (reassignBtn && !reassignBtn._bound) {
-      reassignBtn._bound = true;
-      reassignBtn.addEventListener("click", () =>
-        void reassignSubmit("/league/participant/reassign", "league-reassign-box",
-          "league-reassign-new-tg", reassignBtn,
-          () => reassignLoadList("/league/participants/all", "league-reassign-box", leagueReassignLabel)));
-    }
-
-    // Ishtirokchilarni O'ZARO almashtirish (SWAP, 2026-07-16) — ikkita ro'yxat + tugma.
-    // O'rin (liga, klub, jadval, natijalar) joyida qoladi — odamlar almashadi.
-    const reloadSwapLists = () => Promise.all([
-      reassignLoadList("/league/participants/all", "league-swap-a-box", leagueReassignLabel),
-      reassignLoadList("/league/participants/all", "league-swap-b-box", leagueReassignLabel),
-    ]);
-    void reloadSwapLists();
-    const swapBtn = document.getElementById("btn-league-swap");
-    if (swapBtn && !swapBtn._bound) {
-      swapBtn._bound = true;
-      swapBtn.addEventListener("click", () => void submitLeagueSwap(swapBtn, reloadSwapLists));
-    }
+    // 2026-10-13: ishtirokchini almashtirish / o'zaro almashtirish / chiqarish —
+    // bitta qidiruv bloki (klub, @username yoki Telegram ID) — admin_participants.js
+    if (typeof admPpInit === "function") void admPpInit();
 
     // 2026-08: sovrinni to'g'ri egaga ko'chirish (Oltin to'p/butsa)
     void leagueLoadPrizeTransfer();
@@ -1641,12 +1587,6 @@ async function loadAdminPanel() {
       prizeBtn.addEventListener("click", () => void leaguePrizeTransferSubmit(prizeBtn));
     }
 
-    // 2026-08: ChL 2-mavsum kubogini qo'lda berish
-    const clCupBtn = document.getElementById("btn-cl-cup-award");
-    if (clCupBtn && !clCupBtn._bound) {
-      clCupBtn._bound = true;
-      clCupBtn.addEventListener("click", () => void clCupAwardSubmit(clCupBtn));
-    }
   } else {
     // Oddiy liga admin — faqat natija tuzatish (fix-form doim ko'rinadi)
     superOnly?.classList.add("hidden");
@@ -1965,42 +1905,6 @@ function bindChatReportTabs(root) {
   });
 }
 
-// ---- ChL 2-mavsum kubogini QO'LDA berish — bosh admin liga panelida (2026-08) ----
-// Sabab: final o'ynalgan, lekin "ChL mavsumini yakunlash" bosilmasdan yangi
-// mavsum boshlangan — kubok va ★ yozilmay qolgan. Mavsum raqami backendda
-// qat'iy (prize_award.CL_CUP_SEASON = 2), frontenddan yuborilmaydi.
-async function clCupAwardSubmit(btn) {
-  const input = document.getElementById("cl-cup-award-tg");
-  const tg = (input?.value || "").trim();
-  if (!tg) {
-    window.alert("G'olibning Telegram ID raqamini kiriting.");
-    return;
-  }
-  if (!window.confirm(`ChL 2-mavsum kubogi ${tg} egasiga berilsinmi? Bu amal bir martalik.`)) return;
-  if (btn) btn.disabled = true;
-  try {
-    const r = await apiFetch("/admin/prizes/cl-cup/award", {
-      method: "POST",
-      body: JSON.stringify({ telegram_id: Number(tg) }),
-    });
-    const who = r.username ? "@" + r.username : (r.nickname || ("#" + r.user_id));
-    window.alert(`✅ ChL ${r.season_number}-mavsum kubogi ${who} ga berildi.\n\n⭐ Yulduzcha ham paydo bo'ldi.`);
-    if (input) input.value = "";
-    // Yangi kubok ko'chirish ro'yxatida ham ko'rinsin + ★ keshi yangilansin
-    void leagueLoadPrizeTransfer();
-    if (typeof loadPrizeStars === "function") { try { await loadPrizeStars(); } catch (_) {} }
-  } catch (err) {
-    const reason = (err && err.message) || "";
-    const msg = {
-      user_not_found: "Bu Telegram ID bo'yicha o'yinchi topilmadi.",
-      season_already_has_cup: "2-mavsum kubogi allaqachon berilgan.",
-      invalid_telegram_id: "Telegram ID noto'g'ri.",
-    }[reason] || "Kubok berishda xatolik.";
-    window.alert("❌ " + msg);
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
 
 // Liga admin tayinlash bo'limi — faqat bosh adminga ko'rinadi
 async function loadLeagueAdminRoles() {
@@ -2357,100 +2261,6 @@ async function undoResolveMatches(leagueId) {
   } catch (e) {
     showToast("❌ " + e.message);
   }
-}
-
-function renderAdminPlayers(players) {
-  const t = APP.t;
-  const list = document.getElementById("admin-players-list");
-
-  if (players.length === 0) {
-    list.innerHTML = `<div class="empty-state">${t.no_data || "Ma'lumot yo'q"}</div>`;
-    return;
-  }
-
-  // O'yinchilarni liga bo'yicha guruhlaymiz.
-  // 2026-07-23 (talab 2): "Ro'yxatdan o'tilmagan" tabi OLIB TASHLANDI — u yuzlab
-  // (184+) ligaga yozilmagan foydalanuvchini DOM'ga chizardi, ortiqcha yuk edi.
-  // Endi faqat ligaga yozilgan o'yinchilar guruhlanadi.
-  const groups = {};            // league_id -> [players]
-  players.forEach(p => {
-    if (p.league_id) {
-      (groups[p.league_id] = groups[p.league_id] || []).push(p);
-    }
-  });
-
-  // Bitta o'yinchi qatorini yasaydi (klub logosi bilan)
-  const renderRow = (p) => {
-    // Faqat @username ko'rsatamiz (nickname o'chirildi). Username yo'q bo'lsa nickname zaxira.
-    const nameDisplay = p.username
-      ? `<span class="admin-player-username">@${escHtml(p.username)}</span>`
-      : escHtml(p.nickname || "—");
-    const clubPart = p.club_name ? ` · ${escHtml(p.club_name)}` : "";
-    const leagueName = p.league_id
-      ? ((APP.leagues || []).find(l => l.id === p.league_id)?.name || `Liga #${p.league_id}`)
-      : (t.not_registered || "Ro'yxatdan o'tilmagan");
-    // Klub logosi (bor bo'lsa) — topishni osonlashtiradi
-    const logo = p.club_name ? findClubLogo(p.club_name) : null;
-    const logoHtml = logo
-      ? `<img class="admin-player-logo" src="${escHtml(logo)}" alt="${escHtml(p.club_name)}">`
-      : `<span class="admin-player-logo admin-player-logo--empty"></span>`;
-    return `
-      <div class="admin-player-item">
-        ${logoHtml}
-        <div class="admin-player-info">
-          ${nameDisplay}
-          <div class="admin-player-league">${escHtml(leagueName)}${clubPart}</div>
-        </div>
-        <button class="admin-remove-btn" data-user-id="${p.id}">
-          ${t.admin_remove_player || "Chiqarish"}
-        </button>
-      </div>
-    `;
-  };
-
-  // Ligalarni nom bo'yicha tartiblab chiqaramiz
-  const leagueIds = Object.keys(groups).map(Number).sort((a, b) => {
-    const na = (APP.leagues || []).find(l => l.id === a)?.name || "";
-    const nb = (APP.leagues || []).find(l => l.id === b)?.name || "";
-    return na.localeCompare(nb);
-  });
-
-  // Tanlangan filter (birinchi marta — birinchi liga, yoki avval tanlangani).
-  // 2026-07-23: "none" (ro'yxatdan o'tilmagan) filtri olib tashlandi.
-  const validFilters = leagueIds.map(String);
-  if (!APP.adminFilter || !validFilters.includes(String(APP.adminFilter))) {
-    APP.adminFilter = validFilters[0];
-  }
-  const filter = String(APP.adminFilter);
-
-  // Tab tugmalari (faqat ligalar)
-  let tabs = `<div class="admin-filter">`;
-  leagueIds.forEach(lid => {
-    const name = (APP.leagues || []).find(l => l.id === lid)?.name || `Liga #${lid}`;
-    const active = filter === String(lid) ? " active" : "";
-    tabs += `<button class="admin-filter-btn${active}" data-filter="${lid}">${escHtml(name)} <span class="admin-league-count">${groups[lid].length}</span></button>`;
-  });
-  tabs += `</div>`;
-
-  // Faqat tanlangan ligadagi o'yinchilar
-  const rowsHtml = (groups[Number(filter)] || []).map(renderRow).join("");
-
-  list.innerHTML = tabs + `<div class="admin-filter-rows">${rowsHtml}</div>`;
-
-  // Tab tugmalariga hodisa — bosilganda o'sha liga ko'rsatiladi
-  list.querySelectorAll(".admin-filter-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      APP.adminFilter = btn.dataset.filter;
-      renderAdminPlayers(players);   // qayta render (tanlangan filter bilan)
-    });
-  });
-
-  list.querySelectorAll(".admin-remove-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const userId = parseInt(btn.dataset.userId);
-      removePlayer(userId);
-    });
-  });
 }
 
 async function removePlayer(userId) {
