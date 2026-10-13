@@ -1109,11 +1109,8 @@ function divBindSectionEvents(root) {
   // Admin panel eventlari
   // 2026-07-17: "Bugungi/Barcha kunlar" tablari olib tashlandi (o'rniga ban formasi)
 
-  // KUNLIK BAN formasi — ishtirokchi tanlash + kun soni + tugma
-  if (document.getElementById("div-ban-box")) {
-    const banLabel = (o) =>
-      `${o.username ? "@" + o.username : (o.nickname || "—")}${o.last_day ? " · " + o.last_day : ""}`;
-    void reassignLoadList("/div/participants/all", "div-ban-box", banLabel);
+  // KUNLIK BAN formasi — 2026-10-13: Telegram ID yoki @username + kun soni + tugma
+  if (document.getElementById("div-ban-query")) {
     const banBtn = document.getElementById("div-btn-ban");
     banBtn?.addEventListener("click", () => void divAdminBanSubmit(banBtn));
   }
@@ -1355,22 +1352,24 @@ async function divFinalizeSubmit(btn) {
 }
 
 async function divAdminBanSubmit(btn) {
-  const sel = document.getElementById("div-ban-box-select");
-  const uid = sel ? Number(sel.value || 0) : 0;
+  // 2026-10-13: ishtirokchi Telegram ID yoki @username bilan (ro'yxatdan tanlash o'rniga)
+  const qInp = document.getElementById("div-ban-query");
+  const query = (qInp?.value || "").trim();
   const days = Math.floor(Number(document.getElementById("div-ban-days")?.value || 0));
-  if (!uid) { showToast(DT("div_admin_ban_pick")); return; }
+  if (!query) { showToast(DT("div_admin_ban_pick")); return; }
   if (!days || days < 1) { showToast(DT("div_admin_ban_days")); return; }
-  const name = sel.options[sel.selectedIndex]?.text || "ishtirokchi";
+  const name = /^\d+$/.test(query) ? `ID ${query}` : "@" + query.replace(/^@/, "");
   if (!confirm(`${name} ga ${days} kunlik BAN berilsinmi?\n\nU shu muddat davomida Divizion ro'yxatidan o'ta olmaydi va telegramiga xabar boradi.`)) return;
   btn.disabled = true;
   try {
     const r = await apiFetch("/div/admin/ban", {
       method: "POST",
-      body: JSON.stringify({ user_id: uid, days }),
+      body: JSON.stringify({ query, days }),
     });
     showToast(`🚫 Ban berildi: ${r.until_day} gacha (${days} kun)`);
     const inp = document.getElementById("div-ban-days");
     if (inp) inp.value = "";
+    if (qInp) qInp.value = "";
   } catch (e) {
     const msg = {
       invalid_days: DT("div_admin_ban_bad"),
@@ -1449,7 +1448,8 @@ function divAdminBanForm() {
   return `
     <div class="section-label">KUNLIK BAN BERISH</div>
     <div class="admin-fix-form">
-      <div id="div-ban-box" style="margin-bottom:6px"></div>
+      <input id="div-ban-query" class="modal-input" type="text" autocomplete="off"
+             placeholder="${DT("div_admin_ban_query_ph")}" style="margin-bottom:8px" />
       <input id="div-ban-days" class="modal-input" type="number" min="1" inputmode="numeric"
              placeholder="${DT("div_admin_ban_days_ph")}" style="margin-bottom:8px" />
       <button class="btn btn--danger" id="div-btn-ban">${DT("div_admin_ban_title")}</button>
