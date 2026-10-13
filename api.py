@@ -3185,8 +3185,15 @@ def admin_match_info(
 
 @app.get("/admin/match/pending")
 def admin_pending_list(admin: dict = Depends(get_authenticated_league_admin)):
-    """Katta hisob (admin_pending) tufayli admin tasdig'ini kutayotgan liga o'yinlari."""
-    return {"matches": get_admin_pending_matches()}
+    """
+    Katta hisob (admin_pending) tufayli admin tasdig'ini kutayotgan liga o'yinlari.
+    2026-10-13: tayinlangan liga admini FAQAT o'ziga biriktirilgan ligalarnikini ko'radi;
+    bosh admin — hammasini.
+    """
+    if is_super_admin(admin["telegram_id"]):
+        return {"matches": get_admin_pending_matches()}
+    from admin_roles import get_admin_league_ids
+    return {"matches": get_admin_pending_matches(get_admin_league_ids(admin["telegram_id"]))}
 
 
 @app.post("/admin/match/pending/resolve")
@@ -3198,7 +3205,12 @@ def admin_pending_resolve(
     """
     Bosh/liga admin katta hisobli o'yinni tasdiqlaydi (confirm) yoki rad etadi (reject).
     Query params: match_id, action ('confirm'|'reject').
+    2026-10-13: liga admini faqat O'Z ligasidagi o'yinni hal qiladi (aks holda 403 not_your_league).
     """
+    from admin_roles import can_manage_league
+    m = get_match_by_id(match_id)
+    if m is not None and not can_manage_league(admin["telegram_id"], m["league_id"]):
+        raise HTTPException(status_code=403, detail="not_your_league")
     success, reason = admin_resolve_pending(match_id, action)
     if not success:
         raise HTTPException(status_code=400, detail=reason)

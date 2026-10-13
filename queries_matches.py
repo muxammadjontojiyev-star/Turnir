@@ -183,11 +183,19 @@ def admin_resolve_pending(match_id: int, action: str) -> tuple[bool, str]:
     return True, "ok"
 
 
-def get_admin_pending_matches() -> list[dict]:
+def get_admin_pending_matches(league_ids: list[int] | None = None) -> list[dict]:
     """
     Barcha liga bo'ylab admin tasdig'ini kutayotgan (admin_pending) o'yinlar.
     Admin panelda ro'yxat sifatida ko'rsatish uchun. Eng yangisi (id DESC) birinchi.
+    2026-10-13: league_ids berilsa — FAQAT shu ligalar (tayinlangan liga admini o'z
+    ligasini ko'radi); None — hammasi (bosh admin). Bo'sh ro'yxat -> [].
     """
+    if league_ids is not None and not league_ids:
+        return []
+    league_filter, args = "", ()
+    if league_ids is not None:
+        league_filter = f" AND m.league_id IN ({','.join('?' * len(league_ids))})"
+        args = tuple(int(x) for x in league_ids)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -204,9 +212,10 @@ def get_admin_pending_matches() -> list[dict]:
         LEFT JOIN users u2 ON u2.id = m.player2_id
         LEFT JOIN registrations r1 ON r1.user_id = m.player1_id AND r1.league_id = m.league_id
         LEFT JOIN registrations r2 ON r2.user_id = m.player2_id AND r2.league_id = m.league_id
-        WHERE m.status = 'admin_pending'
+        WHERE m.status = 'admin_pending'""" + league_filter + """
         ORDER BY m.id DESC
-        """
+        """,
+        args,
     )
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
