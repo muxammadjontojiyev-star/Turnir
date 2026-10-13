@@ -2347,7 +2347,9 @@ async function resolvePendingMatch(matchId, action) {
     await loadPendingMatches();
     await refreshMatchViews();
   } catch (e) {
-    showToast("❌ " + e.message);
+    // 2026-10-13: liga admini faqat o'z ligasini hal qiladi
+    const msg = { not_your_league: "Bu o'yin sizga biriktirilgan ligada emas" }[e.message] || e.message;
+    showToast("❌ " + msg);
   }
 }
 
