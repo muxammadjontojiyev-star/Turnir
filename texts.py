@@ -168,6 +168,12 @@ TEXTS = {
         LANGUAGE_RU: "📷 Ваш соперник ({mode}) отправил вам фото в чате бота.\nОткройте приложение, чтобы ответить.",
         LANGUAGE_EN: "📷 Your {mode} opponent sent you a photo in the bot chat.\nOpen the app to reply.",
     },
+    # 2026-10-14: liga ishtirokchisi majburiy kanalni tark etdi — adminlarga (channel_leavers.py)
+    "notify_channel_leave": {
+        LANGUAGE_UZ: "🚪 Kanalni tark etdi: {who}\nLiga: {league}\nKlub: {club}\nTelegram ID: {tg}\n\nKlubni boshqa ishtirokchiga o'tkazish: Admin → KANALNI TARK ETGANLAR.",
+        LANGUAGE_RU: "🚪 Покинул канал: {who}\nЛига: {league}\nКлуб: {club}\nTelegram ID: {tg}\n\nПередать клуб другому участнику: Админ → KANALNI TARK ETGANLAR.",
+        LANGUAGE_EN: "🚪 Left the channel: {who}\nLeague: {league}\nClub: {club}\nTelegram ID: {tg}\n\nReassign the club: Admin → KANALNI TARK ETGANLAR.",
+    },
     # 2026-08-28: eFootball xona ID si — kod BILDIRISHNOMANING O'ZIDA ko'rinadi,
     # raqib ilovani ochmasdan nusxa ola oladi (maqsad: qadamni kamaytirish)
     "notify_room_code": {
@@ -389,6 +395,12 @@ TEXTS = {
         LANGUAGE_UZ: "Yevropa ligasi",
         LANGUAGE_RU: "Лига Европы",
         LANGUAGE_EN: "Europa League",
+    },
+    # 2026-10-15
+    "mode_name_ac": {
+        LANGUAGE_UZ: "Osiyo Chempionlar ligasi",
+        LANGUAGE_RU: "Азиатская лига чемпионов",
+        LANGUAGE_EN: "Asian Champions League",
     },
     "mode_name_pt": {
         LANGUAGE_UZ: "Shaxsiy turnir",

@@ -56,6 +56,8 @@ MODE_NAME_KEYS = {
     "wc_po": "mode_name_worldcup",
     "el": "mode_name_el",
     "el_po": "mode_name_el",
+    "ac": "mode_name_ac",       # 2026-10-15
+    "ac_po": "mode_name_ac",
     "pt": "mode_name_pt",
 }
 

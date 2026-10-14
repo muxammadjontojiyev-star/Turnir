@@ -18,7 +18,8 @@ SCOPE_WC = "wc"
 SCOPE_CL = "cl"              # 2026-07-22: Chempionlar ligasi admin scope'i
 SCOPE_DIVISION = "division"  # 2026-07-22: Divizion admin scope'i
 SCOPE_EL = "el"              # 2026-10-02: Yevropa ligasi admin scope'i (bosh admin YeL tabidan tayinlaydi)
-VALID_SCOPES = (SCOPE_LEAGUE, SCOPE_WC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL)
+SCOPE_AC = "ac"              # 2026-10-15: Osiyo Chempionlar ligasi admin scope'i (OChL tabidan tayinlanadi)
+VALID_SCOPES = (SCOPE_LEAGUE, SCOPE_WC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, SCOPE_AC)
 
 
 def is_super_admin(telegram_id: int) -> bool:

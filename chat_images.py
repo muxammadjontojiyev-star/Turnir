@@ -23,7 +23,7 @@ import logging
 import re
 import secrets
 
-from admin_roles import (SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, SCOPE_LEAGUE,
+from admin_roles import (SCOPE_AC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, SCOPE_LEAGUE,
                          SCOPE_WC, is_scope_admin, is_super_admin)
 from chat_report import MODES
 from models import get_connection
@@ -45,6 +45,7 @@ _MODE_SCOPES = {
     "div": SCOPE_DIVISION,
     "wc": SCOPE_WC, "wc_po": SCOPE_WC,
     "el": SCOPE_EL, "el_po": SCOPE_EL,
+    "ac": SCOPE_AC, "ac_po": SCOPE_AC,   # 2026-10-15
     "pt": None,
 }
 

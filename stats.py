@@ -67,6 +67,8 @@ def get_bot_stats() -> dict:
                           "(SELECT cl_season FROM season_state WHERE id = 1)"),
             "el": _one(c, "SELECT COUNT(*) FROM el_participants WHERE season = "
                           "(SELECT el_season FROM season_state WHERE id = 1)"),
+            "ac": _one(c, "SELECT COUNT(*) FROM ac_participants WHERE season = "
+                          "(SELECT ac_season FROM season_state WHERE id = 1)"),
             "division_today": _one(c, f"SELECT COUNT(*) FROM div_registrations WHERE day = {today}"),
         }
         leagues = [{"name": r[0], "players": r[1], "max": r[2]} for r in c.execute(
@@ -100,21 +102,21 @@ _LABELS = {
            "d7": "7 kunda yangi", "d30": "30 kunda yangi", "active": "🔥 Faollik", "online": "Hozir onlayn",
            "act_today": "Bugun kirgan", "act7": "7 kunda kirgan", "act30": "30 kunda kirgan",
            "modes": "🏆 Rasmiy turnirlar", "league": "Ligalar", "wc": "Jahon chempionati", "cl": "Chempionlar ligasi",
-           "el": "Yevropa ligasi", "div": "Divizion (bugun)", "pt": "⚔️ Shaxsiy turnirlar", "pt_total": "Jami turnir",
+           "el": "Yevropa ligasi", "ac": "Osiyo Chempionlar ligasi", "div": "Divizion (bugun)", "pt": "⚔️ Shaxsiy turnirlar", "pt_total": "Jami turnir",
            "pt_live": "Yig'ilmoqda / davom etmoqda", "pt_players": "Ishtirokchilar", "pt_org": "Tashkilotchilar",
            "pt_subs": "Faol obunalar", "pt_paid": "Tushum (so'm)", "langs": "🌐 Til", "at": "Holat"},
     "ru": {"title": "📊 Статистика бота", "users": "👥 Пользователи", "total": "Всего", "today": "Новых сегодня",
            "d7": "Новых за 7 дней", "d30": "Новых за 30 дней", "active": "🔥 Активность", "online": "Сейчас онлайн",
            "act_today": "Заходили сегодня", "act7": "Заходили за 7 дней", "act30": "Заходили за 30 дней",
            "modes": "🏆 Официальные турниры", "league": "Лиги", "wc": "Чемпионат мира", "cl": "Лига чемпионов",
-           "el": "Лига Европы", "div": "Дивизион (сегодня)", "pt": "⚔️ Частные турниры", "pt_total": "Всего турниров",
+           "el": "Лига Европы", "ac": "Азиатская лига чемпионов", "div": "Дивизион (сегодня)", "pt": "⚔️ Частные турниры", "pt_total": "Всего турниров",
            "pt_live": "Набор / идут", "pt_players": "Участники", "pt_org": "Организаторы",
            "pt_subs": "Активные подписки", "pt_paid": "Выручка (сум)", "langs": "🌐 Язык", "at": "Данные на"},
     "en": {"title": "📊 Bot statistics", "users": "👥 Users", "total": "Total", "today": "New today",
            "d7": "New in 7 days", "d30": "New in 30 days", "active": "🔥 Activity", "online": "Online now",
            "act_today": "Opened today", "act7": "Opened in 7 days", "act30": "Opened in 30 days",
            "modes": "🏆 Official tournaments", "league": "Leagues", "wc": "World Cup", "cl": "Champions League",
-           "el": "Europa League", "div": "Division (today)", "pt": "⚔️ Private tournaments", "pt_total": "Tournaments",
+           "el": "Europa League", "ac": "Asian Champions League", "div": "Division (today)", "pt": "⚔️ Private tournaments", "pt_total": "Tournaments",
            "pt_live": "Gathering / running", "pt_players": "Players", "pt_org": "Organizers",
            "pt_subs": "Active subscriptions", "pt_paid": "Revenue (UZS)", "langs": "🌐 Language", "at": "As of"},
 }
@@ -136,7 +138,8 @@ def format_stats_text(s: dict, lang: str | None = "uz") -> str:
         L["active"], f"• {L['online']}: {_n(u['online'])}", f"• {L['act_today']}: {_n(u['active_today'])}",
         f"• {L['act7']}: {_n(u['active_7d'])}", f"• {L['act30']}: {_n(u['active_30d'])}", "",
         L["modes"], f"• {L['league']}: {_n(m['league'])}", f"• {L['wc']}: {_n(m['wc'])}",
-        f"• {L['cl']}: {_n(m['cl'])}", f"• {L['el']}: {_n(m['el'])}", f"• {L['div']}: {_n(m['division_today'])}", "",
+        f"• {L['cl']}: {_n(m['cl'])}", f"• {L['el']}: {_n(m['el'])}",
+        f"• {L['ac']}: {_n(m['ac'])}", f"• {L['div']}: {_n(m['division_today'])}", "",
         L["pt"], f"• {L['pt_total']}: {_n(p['total'])}", f"• {L['pt_live']}: {_n(p['recruiting'])} / {_n(p['running'])}",
         f"• {L['pt_players']}: {_n(p['players'])}", f"• {L['pt_org']}: {_n(p['organizers'])}",
         f"• {L['pt_subs']}: {_n(p['subs_active'])}", f"• {L['pt_paid']}: {_n(p['paid_uzs'])}", "",

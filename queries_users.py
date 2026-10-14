@@ -144,6 +144,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         by_user_id = [
             "registrations", "chat_typing", "wc_chat_typing",
             "cl_qualifiers", "el_qualifiers", "cl_participants", "el_participants",
+            "ac_qualifiers", "ac_participants",   # 2026-10-15
             "div_registrations",
             "div_bans", "wc_registrations",
         ]
@@ -167,7 +168,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         match_tables = [
             "matches", "cl_matches", "div_matches", "wc_matches",
             "wc_playoff_matches", "cl_playoff_matches", "el_matches",
-            "el_playoff_matches",
+            "el_playoff_matches", "ac_matches", "ac_playoff_matches",
         ]
         # YeL: o'chiriladigan o'yinlardagi RAQIB xabarlari ham (el_messages.match_id
         # FK el_matches'ga) — aks holda el_matches DELETE "FOREIGN KEY failed" beradi.
@@ -193,7 +194,9 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
             "(SELECT id FROM pt_tournaments WHERE owner_user_id = ?)", (user_id,))
         cursor.execute("DELETE FROM pt_tournaments WHERE owner_user_id = ?", (user_id,))
         for msg_t, match_t in (("el_messages", "el_matches"),
-                               ("el_po_messages", "el_playoff_matches")):
+                               ("el_po_messages", "el_playoff_matches"),
+                               ("ac_messages", "ac_matches"),
+                               ("ac_po_messages", "ac_playoff_matches")):
             cursor.execute(
                 f"DELETE FROM {msg_t} WHERE match_id IN "
                 f"(SELECT id FROM {match_t} WHERE player1_id = ? OR player2_id = ?)",
@@ -207,8 +210,11 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
 
         # Chat xabarlari (sender_id)
         for t in ["messages", "cl_messages", "div_messages", "wc_messages",
-                  "cl_po_messages", "el_messages", "el_po_messages"]:
+                  "cl_po_messages", "el_messages", "el_po_messages",
+                  "ac_messages", "ac_po_messages"]:
             cursor.execute(f"DELETE FROM {t} WHERE sender_id = ?", (user_id,))
+        # 2026-10-11: chat rasmlari (sender_id FK users) — userdan OLDIN
+        cursor.execute("DELETE FROM chat_images WHERE sender_id = ?", (user_id,))
 
         # prizes (eski jadval): top_scorer_user_id / winner_user_id
         cursor.execute(

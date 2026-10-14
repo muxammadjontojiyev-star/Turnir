@@ -57,6 +57,12 @@ _EL_TABLES = [
     "el_playoff_matches", "el_matches", "el_participants", "el_qualifiers",
 ]
 
+# 2026-10-15: Osiyo Chempionlar ligasi kontenti (users, season_prizes TEGILMAYDI).
+_AC_TABLES = [
+    "ac_po_messages", "ac_messages",
+    "ac_playoff_matches", "ac_matches", "ac_participants", "ac_qualifiers",
+]
+
 
 def reset_league_data() -> dict:
     """
@@ -204,6 +210,34 @@ def reset_el_data() -> dict:
             logger.exception("reset_el_data: ROLLBACK xatosi")
         conn.close()
         logger.exception("reset_el_data xatosi")
+        raise
+    conn.close()
+    return {"tables": counts}
+
+
+def reset_ac_data() -> dict:
+    """
+    2026-10-15: OChL ma'lumotlarini tozalaydi (mavsum yakunlangach) — reset_cl_data naqshi.
+    O'chiriladi: _AC_TABLES + ac_state, ac_playoff_state (barcha mavsum qatorlari).
+    users, season_prizes — TEGILMAYDI (kubok tarixi saqlanadi).
+    Qaytaradi: {"tables": {jadval: o'chirilgan_qatorlar}}
+    """
+    conn = _reset_connection()
+    cursor = conn.cursor()
+    counts = {}
+    try:
+        cursor.execute("BEGIN")
+        for tbl in _AC_TABLES + ["ac_state", "ac_playoff_state"]:
+            cursor.execute(f"DELETE FROM {tbl}")   # nomlar KODDAN (qoida #29)
+            counts[tbl] = cursor.rowcount
+        cursor.execute("COMMIT")
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            logger.exception("reset_ac_data: ROLLBACK xatosi")
+        conn.close()
+        logger.exception("reset_ac_data xatosi")
         raise
     conn.close()
     return {"tables": counts}

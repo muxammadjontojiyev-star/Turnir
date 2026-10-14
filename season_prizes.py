@@ -292,6 +292,11 @@ def _finalize_league_locked(conn, cursor) -> dict:
     from el_qualification import save_el_qualifiers
     counts["el_qualifiers"] = save_el_qualifiers(cursor, season)
 
+    # 2026-10-15: Osiyo Chempionlar ligasi — 4 ta Osiyo ligasidan top-8 (Yevropa
+    # ro'yxatlari bilan kesishmaydi), shu tranzaksiya ichida.
+    from ac_qualification import save_ac_qualifiers
+    counts["ac_qualifiers"] = save_ac_qualifiers(cursor, season)
+
     cursor.execute(
         "UPDATE season_state SET current_season = current_season + 1, "
         "last_finalized_at = datetime('now') WHERE id = 1"

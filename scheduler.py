@@ -160,6 +160,19 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: YeL tur siljitishda xato: %s", exc)
 
+    # === OSIYO CHEMPIONLAR LIGASI (2026-10-15): YeL bilan bir xil tur siljitish ===
+    try:
+        from ac_rounds import ac_tick
+        ac_res = ac_tick()
+        if ac_res:
+            logger.info(
+                "Scheduler: OChL %d-tur yopildi (awaiting: %d, 0:0: %d) → %d-tur ochildi.",
+                ac_res["closed_matchday"], ac_res["awaiting_resolved"],
+                ac_res["pending_resolved"], ac_res["opened_matchday"],
+            )
+    except Exception as exc:
+        logger.warning("Scheduler: OChL tur siljitishda xato: %s", exc)
+
     # === SHAXSIY TURNIRLAR: tashkilotchi belgilagan tur muddati o'tgan bo'lsa yopiladi ===
     try:
         from pt_rounds import pt_tick
@@ -198,6 +211,15 @@ async def _check_and_notify_once() -> None:
                                 elp["confirmed"], elp["advanced"])
             except Exception as exc:
                 logger.warning("Scheduler: YeL play-off auto-confirmda xato: %s", exc)
+            # OChL play-off (2026-10-15, YeL bilan bir xil)
+            try:
+                from ac_playoff_results import ac_po_auto_confirm_awaiting
+                acp = ac_po_auto_confirm_awaiting()
+                if acp["confirmed"]:
+                    logger.info("Scheduler: OChL play-off deadline — %d awaiting → confirmed, %d advance.",
+                                acp["confirmed"], acp["advanced"])
+            except Exception as exc:
+                logger.warning("Scheduler: OChL play-off auto-confirmda xato: %s", exc)
             # WC play-off
             try:
                 from queries_wc_playoff_results import wc_playoff_auto_confirm_awaiting

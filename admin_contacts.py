@@ -13,7 +13,7 @@ Bosh adminlar (config.py) ro'yxatga kirmaydi — ular "tayinlangan" emas.
 Faqat o'qiydi. Qaytaradi: [{"nickname", "username", "telegram_id"}, ...]
 """
 
-from admin_roles import (SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, SCOPE_LEAGUE,
+from admin_roles import (SCOPE_AC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, SCOPE_LEAGUE,
                          SCOPE_WC, list_admins)
 from models import get_connection
 
@@ -21,6 +21,7 @@ from models import get_connection
 CONTACT_MODE_SCOPES = {
     "cl": SCOPE_CL,
     "el": SCOPE_EL,
+    "ac": SCOPE_AC,    # 2026-10-15
     "div": SCOPE_DIVISION,
     "wc": SCOPE_WC,
 }

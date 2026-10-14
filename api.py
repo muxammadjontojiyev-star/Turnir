@@ -2803,7 +2803,7 @@ def admin_whoami(x_telegram_init_data: str = Header(...)):
     """
     telegram_user = verify_telegram_init_data(x_telegram_init_data)
     tid = telegram_user["id"]
-    from admin_roles import SCOPE_CL, SCOPE_DIVISION, SCOPE_EL
+    from admin_roles import SCOPE_AC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL
     return {
         "is_super": is_super_admin(tid),
         "is_league_admin": is_scope_admin(tid, SCOPE_LEAGUE),
@@ -2811,6 +2811,7 @@ def admin_whoami(x_telegram_init_data: str = Header(...)):
         "is_cl_admin": is_scope_admin(tid, SCOPE_CL),
         "is_div_admin": is_scope_admin(tid, SCOPE_DIVISION),
         "is_el_admin": is_scope_admin(tid, SCOPE_EL),
+        "is_ac_admin": is_scope_admin(tid, SCOPE_AC),   # 2026-10-15
     }
 
 
@@ -2959,6 +2960,7 @@ CHAT_REPORT_SCOPES = {
     "div": SCOPE_DIVISION,
     "wc": SCOPE_WC, "wc_po": SCOPE_WC,
     "el": SCOPE_EL, "el_po": SCOPE_EL,
+    "ac": "ac", "ac_po": "ac",   # 2026-10-15: admin_roles.SCOPE_AC
 }
 
 
@@ -3562,3 +3564,11 @@ app.include_router(stats_router)
 # ============ KANALNI TARK ETGANLAR (2026-10-14, router — channel_leavers_api.py) ============
 from channel_leavers_api import router as channel_leavers_router  # noqa: E402
 app.include_router(channel_leavers_router)
+
+# ============ OSIYO CHEMPIONLAR LIGASI (2026-10-15, router — ac_api*.py; YeL nusxasi) ============
+from ac_api import router as ac_router  # noqa: E402
+from ac_api_playoff import router as ac_playoff_router  # noqa: E402
+from ac_api_admin import router as ac_admin_router  # noqa: E402
+app.include_router(ac_router)
+app.include_router(ac_playoff_router)
+app.include_router(ac_admin_router)
