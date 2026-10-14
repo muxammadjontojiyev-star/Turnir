@@ -6563,3 +6563,14 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .leagues-list.lc .league-item-count { font-size: 13px; margin-top: 4px; }
 .leagues-list.lc .league-item--locked { cursor: pointer; }
 .leagues-list.lc .league-item.lc-center:not(.selected) { border-color: rgba(255,255,255,.18); }
+
+/* 2026-10-14: KANALNI TARK ETGANLAR (channel_leavers.js) */
+.chl-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.chl-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border: 1px solid rgba(255,69,96,.25); border-radius: 12px; background: rgba(255,69,96,.06);
+}
+.chl-row .adm-pp-info { flex: 1; min-width: 0; }
+.chl-league { font-weight: 500; color: var(--text-secondary); }
+.chl-fix { width: auto; flex-shrink: 0; padding: 8px 12px; font-size: 12px; border: 1px solid var(--border-accent); border-radius: 10px; color: var(--cyan); background: var(--cyan-dim); }
+#chl-scan { width: 100%; }
