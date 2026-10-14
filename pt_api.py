@@ -203,6 +203,13 @@ async def pt_delete(tournament_id: int, user: dict = Depends(get_authenticated_u
     return {"status": "ok"}
 
 
+@router.get("/users/{user_id}/pt-prizes")
+def pt_user_prizes_get(user_id: int):
+    """2026-10-14: shaxsiy turnirlarda yutilgan kuboklar (profilda ALOHIDA bo'lim; rasmiy /prizes kabi ochiq)."""
+    from pt_user_prizes import pt_user_prizes
+    return {"prizes": pt_user_prizes(user_id)}
+
+
 @router.post("/pt/admin/delete-bulk")
 async def pt_admin_delete_bulk(ids: list[int] = Body(..., embed=True),
                                admin: dict = Depends(get_authenticated_super_admin)):
