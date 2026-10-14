@@ -27,7 +27,7 @@ CL_BEST_EIGHTH = 1    # eng yaxshi (CL_TOP_N+1)-o'rinlar soni — hozir eng yaxs
 CL_TOTAL = 36
 # 2026-10-14: ChL/YeL faqat Yevropa mintaqasining 1-ligalaridan (DB liga nomlari).
 # Osiyo ligalari (Superliga, Saudi, UAE, J1) va 2-ligalar (LaLiga 2, Championship,
-# 2. Bundesliga, Serie B) kirmaydi. Yangi Yevropa 1-ligasi qo'shilsa — shu yerga.
+# 2. Bundesliga, Serie B, Ligue 2) kirmaydi. Yangi Yevropa 1-ligasi qo'shilsa — shu yerga.
 CL_LEAGUES = ("LaLiga", "Premier Liga", "Bundesliga", "Serie A", "Ligue 1",
               "Liga Portugal", "Süper Lig")
 CL_VIA_TOP = "top5"
