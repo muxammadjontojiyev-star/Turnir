@@ -341,6 +341,29 @@ const LEAGUE_CLUBS = {
     { name: "Vicenza",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/145007.png" },
     { name: "Virtus Entella",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/208932.png" },
   ],
+  // 2026-10-14: Ligue 2 (18 klub) — 2026/27 tarkibidan bizning Ligue 1 ro'yxatida YO'QLARI
+  // (Metz/Nantes o'rniga 2025/26 da 2-ligani tark etgan Troyes va Le Mans);
+  // logolar FotMob CDN (ID — fotmob.com/leagues/110 jadvali va jamoa sahifalari)
+  "Ligue 2": [
+    { name: "Annecy",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/293352.png" },
+    { name: "Boulogne",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4170.png" },
+    { name: "Clermont",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8311.png" },
+    { name: "Dijon",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9836.png" },
+    { name: "Dunkerque",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/47214.png" },
+    { name: "Grenoble",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9855.png" },
+    { name: "Guingamp",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9747.png" },
+    { name: "Laval",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7853.png" },
+    { name: "Le Mans",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8682.png" },
+    { name: "Montpellier",        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10249.png" },
+    { name: "Nancy",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8481.png" },
+    { name: "Pau",                logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6355.png" },
+    { name: "Red Star",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6390.png" },
+    { name: "Reims",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9837.png" },
+    { name: "Rodez",              logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4120.png" },
+    { name: "Saint-Étienne",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9853.png" },
+    { name: "Sochaux",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9874.png" },
+    { name: "Troyes",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10242.png" },
+  ],
 };
 
 // ============================================================
@@ -383,6 +406,7 @@ const LEAGUE_LOGOS = {
   "Championship":   "https://images.fotmob.com/image_resources/logo/leaguelogo/48.png",
   "2. Bundesliga":  "https://images.fotmob.com/image_resources/logo/leaguelogo/146.png",  // 2026-10-13
   "Serie B":        "https://images.fotmob.com/image_resources/logo/leaguelogo/86.png",   // 2026-10-13
+  "Ligue 2":        "https://images.fotmob.com/image_resources/logo/leaguelogo/110.png",  // 2026-10-14
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)

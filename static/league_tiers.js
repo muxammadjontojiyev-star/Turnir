@@ -17,6 +17,7 @@ const LEAGUE_SECOND_TIERS = {
   "Championship": "Premier Liga",
   "2. Bundesliga": "Bundesliga",   // 2026-10-13
   "Serie B": "Serie A",            // 2026-10-13
+  "Ligue 2": "Ligue 1",            // 2026-10-14
 };
 const LEAGUE_ZONE_SIZE = 3;   // tushish / ko'tarilish zonasidagi o'rinlar soni
 
