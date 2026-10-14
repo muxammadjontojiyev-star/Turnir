@@ -21,12 +21,23 @@ const LEAGUE_SECOND_TIERS = {
 };
 const LEAGUE_ZONE_SIZE = 3;   // tushish / ko'tarilish zonasidagi o'rinlar soni
 
+// 2026-10-14: Yevropa kuboklariga yo'llanma zonalari (o'rin raqami rangli belgi bilan).
+// Backend bilan bir xil: cl_qualification.CL_LEAGUES / CL_TOP_N, el_qualification.EL_*_POS.
+const EURO_QUAL_LEAGUES = ["LaLiga", "Premier Liga", "Bundesliga", "Serie A", "Ligue 1", "Liga Portugal", "Süper Lig"];
+const EQ_CL_TOP  = 5;    // 1–5: Chempionlar ligasi
+const EQ_CL_BEST = 6;    // 6-o'rin: 7 liga ichida eng yaxshisi — ChL, qolganlari — YeL
+const EQ_EL_LAST = 10;   // 6–10: Yevropa ligasi
+const EQ_EL_BEST = 11;   // 11-o'rin: 7 liga ichida eng yaxshi 2 tasi — YeL
+
 const TIER_TEXTS = {
-  uz: { tier1_tab: "1-ligalar", tier2_tab: "2-ligalar",
+  uz: { zone_cl: "Chempionlar ligasi", zone_clx: "6-o'rin: eng yaxshisi ChL, qolganlari YeL", zone_el: "Yevropa ligasi", zone_elx: "11-o'rin: eng yaxshi 2 tasi YeL",
+        tier1_tab: "1-ligalar", tier2_tab: "2-ligalar",
         zone_releg: "Quyi ligaga tushish zonasi", zone_promo: "Yuqori ligaga ko'tarilish zonasi" },
-  ru: { tier1_tab: "Высшие лиги", tier2_tab: "Вторые лиги",
+  ru: { zone_cl: "Лига чемпионов", zone_clx: "6-е место: лучшее — ЛЧ, остальные — ЛЕ", zone_el: "Лига Европы", zone_elx: "11-е место: 2 лучших — ЛЕ",
+        tier1_tab: "Высшие лиги", tier2_tab: "Вторые лиги",
         zone_releg: "Зона вылета", zone_promo: "Зона повышения" },
-  en: { tier1_tab: "Top divisions", tier2_tab: "Second divisions",
+  en: { zone_cl: "Champions League", zone_clx: "6th: best one UCL, others UEL", zone_el: "Europa League", zone_elx: "11th: best two UEL",
+        tier1_tab: "Top divisions", tier2_tab: "Second divisions",
         zone_releg: "Relegation zone", zone_promo: "Promotion zone" },
 };
 if (typeof TEXTS !== "undefined") {
@@ -47,11 +58,23 @@ function hasSecondTierLeagues() {
 function leagueZones(league) {
   if (!league) return {};
   if (leagueTier(league.name) === 2) return { promo: LEAGUE_ZONE_SIZE };
+  const zones = {};
+  if (EURO_QUAL_LEAGUES.includes(league.name)) zones.euro = true;   // 2026-10-14
   const hasLower = Object.values(LEAGUE_SECOND_TIERS).includes(league.name);
   if (hasLower && league.max_players > LEAGUE_ZONE_SIZE) {
-    return { releg: league.max_players - LEAGUE_ZONE_SIZE + 1 };
+    zones.releg = league.max_players - LEAGUE_ZONE_SIZE + 1;
   }
-  return {};
+  return zones;
+}
+
+// 2026-10-14: o'rin raqami belgisi klassi (Yevropa ligalarida) — yo'q bo'lsa ""
+function ratingRankBadgeClass(rank, zones) {
+  if (!zones || !zones.euro) return "";
+  if (rank <= EQ_CL_TOP) return "rk rk--cl";
+  if (rank === EQ_CL_BEST) return "rk rk--clx";
+  if (rank <= EQ_EL_LAST) return "rk rk--el";
+  if (rank === EQ_EL_BEST) return "rk rk--elx";
+  return "";
 }
 
 // Qator uchun chegara klassi: chiziq qatorning PASTKI chetida chiziladi —
@@ -75,6 +98,12 @@ function renderRatingZoneLegend(zones) {
   }
   const t = APP.t || {};
   const items = [];
+  if (zones.euro) {
+    items.push(`<span class="zl-item"><i class="rk rk--cl zl-rk">1</i>${escHtml(t.zone_cl || "")} (1–${EQ_CL_TOP})</span>`);
+    items.push(`<span class="zl-item"><i class="rk rk--el zl-rk">${EQ_CL_BEST + 1}</i>${escHtml(t.zone_el || "")} (${EQ_CL_BEST}–${EQ_EL_LAST})</span>`);
+    items.push(`<span class="zl-item"><i class="rk rk--clx zl-rk">${EQ_CL_BEST}</i>${escHtml(t.zone_clx || "")}</span>`);
+    items.push(`<span class="zl-item"><i class="rk rk--elx zl-rk">${EQ_EL_BEST}</i>${escHtml(t.zone_elx || "")}</span>`);
+  }
   if (zones.promo) items.push(`<span class="zl-item"><i class="zl-sw zl-sw--promo"></i>${escHtml(t.zone_promo || "")} (1–${zones.promo})</span>`);
   if (zones.releg) items.push(`<span class="zl-item"><i class="zl-sw zl-sw--releg"></i>${escHtml(t.zone_releg || "")}</span>`);
   el.innerHTML = items.join("");

@@ -819,13 +819,15 @@ function renderRatingTable(rating) {
       </div>`;
 
     const zoneCls = typeof ratingZoneRowClass === "function" ? ratingZoneRowClass(rank, rating.length, zones) : "";
+    // 2026-10-14: ChL/YeL yo'llanma zonasi — o'rin raqami rangli belgida (league_tiers.js)
+    const rankBadge = typeof ratingRankBadgeClass === "function" ? ratingRankBadgeClass(rank, zones) : "";
     const trCls = ["rating-row", isMe ? "is-me" : "", zoneCls].filter(Boolean).join(" ");
 
     const gd = (player.goal_difference >= 0 ? "+" : "") + player.goal_difference;
 
     return `
       <tr class="${trCls}" data-user-id="${player.user_id}">
-        <td${rankCls ? ` class="${rankCls}"` : ""}>${rank}</td>
+        <td${rankCls ? ` class="${rankCls}"` : ""}>${rankBadge ? `<span class="${rankBadge}">${rank}</span>` : rank}</td>
         <td>${playerCell}</td>
         <td class="pts">${player.points}</td>
         <td>${player.wins}</td>
