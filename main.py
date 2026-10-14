@@ -9,11 +9,13 @@ import os
 import threading
 
 import uvicorn
+from telegram import Update
 from telegram.ext import Application
 
 from config import BOT_TOKEN
 from models import init_db, seed_leagues
 from main_menu import register_main_menu_handlers
+from channel_leave_bot import register_channel_leave_handler
 from scheduler import start_scheduler
 
 logging.basicConfig(
@@ -64,9 +66,12 @@ def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
     register_main_menu_handlers(application)
+    # 2026-10-14: kanalni tark etgan liga ishtirokchisi — adminlarga xabar
+    register_channel_leave_handler(application)
 
     logger.info("Bot ishga tushdi.")
-    application.run_polling()
+    # chat_member update'lari standart holatda kelmaydi — barcha turlarni so'raymiz
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":

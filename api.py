@@ -3538,3 +3538,7 @@ app.include_router(admin_contacts_router)
 # ============ BOT STATISTIKASI (2026-10-08, router — stats_api.py; faqat bosh admin) ============
 from stats_api import router as stats_router  # noqa: E402
 app.include_router(stats_router)
+
+# ============ KANALNI TARK ETGANLAR (2026-10-14, router — channel_leavers_api.py) ============
+from channel_leavers_api import router as channel_leavers_router  # noqa: E402
+app.include_router(channel_leavers_router)
