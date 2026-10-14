@@ -6254,6 +6254,7 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .rk--cl  { background: rgba(59, 130, 246, .24); color: #7cb4ff; }
 .rk--el  { background: rgba(249, 115, 22, .22); color: #fb923c; }
 .rk--clx { background: linear-gradient(135deg, rgba(59,130,246,.45) 0 50%, rgba(249,115,22,.45) 50% 100%); color: #fff; }
+.rk--acl { background: rgba(56, 132, 255, .26); color: #9cc6ff; box-shadow: inset 0 0 0 1px rgba(255, 170, 60, .55); }   /* 2026-10-15: OChL (AFC ko'k + to'q sariq) */
 .rk--elx { background: transparent; color: #fb923c; box-shadow: inset 0 0 0 1.5px rgba(251, 146, 60, .75); }
 .rating-zone-legend .zl-rk { min-width: 20px; height: 20px; font-size: 11px; border-radius: 6px; }
 

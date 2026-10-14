@@ -28,15 +28,19 @@ const EQ_CL_TOP  = 5;    // 1–5: Chempionlar ligasi
 const EQ_CL_BEST = 6;    // 6-o'rin: 7 liga ichida eng yaxshisi — ChL, qolganlari — YeL
 const EQ_EL_LAST = 10;   // 6–10: Yevropa ligasi
 const EQ_EL_BEST = 11;   // 11-o'rin: 7 liga ichida eng yaxshi 2 tasi — YeL
+// 2026-10-15: Osiyo Chempionlar ligasi — 4 ta Osiyo ligasidan top-8
+// (backend: ac_qualification.AC_LEAGUES / AC_TOP_N)
+const ASIA_QUAL_LEAGUES = ["Superliga", "Saudi Pro Liga", "UAE Pro Liga", "J1 Liga"];
+const AQ_TOP = 8;
 
 const TIER_TEXTS = {
-  uz: { zone_cl: "Chempionlar ligasi", zone_clx: "6-o'rin: eng yaxshisi ChL, qolganlari YeL", zone_el: "Yevropa ligasi", zone_elx: "11-o'rin: eng yaxshi 2 tasi YeL",
+  uz: { zone_cl: "Chempionlar ligasi", zone_clx: "6-o'rin: eng yaxshisi ChL, qolganlari YeL", zone_el: "Yevropa ligasi", zone_elx: "11-o'rin: eng yaxshi 2 tasi YeL", zone_acl: "Osiyo Chempionlar ligasi",
         tier1_tab: "1-ligalar", tier2_tab: "2-ligalar",
         zone_releg: "Quyi ligaga tushish zonasi", zone_promo: "Yuqori ligaga ko'tarilish zonasi" },
-  ru: { zone_cl: "Лига чемпионов", zone_clx: "6-е место: лучшее — ЛЧ, остальные — ЛЕ", zone_el: "Лига Европы", zone_elx: "11-е место: 2 лучших — ЛЕ",
+  ru: { zone_cl: "Лига чемпионов", zone_clx: "6-е место: лучшее — ЛЧ, остальные — ЛЕ", zone_el: "Лига Европы", zone_elx: "11-е место: 2 лучших — ЛЕ", zone_acl: "Азиатская лига чемпионов",
         tier1_tab: "Высшие лиги", tier2_tab: "Вторые лиги",
         zone_releg: "Зона вылета", zone_promo: "Зона повышения" },
-  en: { zone_cl: "Champions League", zone_clx: "6th: best one UCL, others UEL", zone_el: "Europa League", zone_elx: "11th: best two UEL",
+  en: { zone_cl: "Champions League", zone_clx: "6th: best one UCL, others UEL", zone_el: "Europa League", zone_elx: "11th: best two UEL", zone_acl: "Asian Champions League",
         tier1_tab: "Top divisions", tier2_tab: "Second divisions",
         zone_releg: "Relegation zone", zone_promo: "Promotion zone" },
 };
@@ -60,6 +64,7 @@ function leagueZones(league) {
   if (leagueTier(league.name) === 2) return { promo: LEAGUE_ZONE_SIZE };
   const zones = {};
   if (EURO_QUAL_LEAGUES.includes(league.name)) zones.euro = true;   // 2026-10-14
+  if (ASIA_QUAL_LEAGUES.includes(league.name)) zones.asia = true;   // 2026-10-15
   const hasLower = Object.values(LEAGUE_SECOND_TIERS).includes(league.name);
   if (hasLower && league.max_players > LEAGUE_ZONE_SIZE) {
     zones.releg = league.max_players - LEAGUE_ZONE_SIZE + 1;
@@ -69,6 +74,7 @@ function leagueZones(league) {
 
 // 2026-10-14: o'rin raqami belgisi klassi (Yevropa ligalarida) — yo'q bo'lsa ""
 function ratingRankBadgeClass(rank, zones) {
+  if (zones && zones.asia) return rank <= AQ_TOP ? "rk rk--acl" : "";   // 2026-10-15
   if (!zones || !zones.euro) return "";
   if (rank <= EQ_CL_TOP) return "rk rk--cl";
   if (rank === EQ_CL_BEST) return "rk rk--clx";
@@ -98,6 +104,9 @@ function renderRatingZoneLegend(zones) {
   }
   const t = APP.t || {};
   const items = [];
+  if (zones.asia) {   // 2026-10-15
+    items.push(`<span class="zl-item"><i class="rk rk--acl zl-rk">1</i>${escHtml(t.zone_acl || "")} (1–${AQ_TOP})</span>`);
+  }
   if (zones.euro) {
     items.push(`<span class="zl-item"><i class="rk rk--cl zl-rk">1</i>${escHtml(t.zone_cl || "")} (1–${EQ_CL_TOP})</span>`);
     items.push(`<span class="zl-item"><i class="rk rk--el zl-rk">${EQ_CL_BEST + 1}</i>${escHtml(t.zone_el || "")} (${EQ_CL_BEST}–${EQ_EL_LAST})</span>`);
