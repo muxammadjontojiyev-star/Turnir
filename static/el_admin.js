@@ -111,7 +111,7 @@ async function elLoadAdminPanel() {
         <b>Mavsumni yakunlash:</b> final g'olibi YeL kubogini oladi — kubok
         profil sahifasida va useri oldida yulduzcha (★) bo'lib doimiy qoladi.
         So'ng YeL ma'lumoti tozalanadi (keyingi mavsum ishtirokchilari
-        ligalardagi 8–15-o'rinlar orqali tanlanadi). Qaytarib bo'lmaydi!
+        7 ta Yevropa ligasidagi 6–11-o'rinlar orqali tanlanadi). Qaytarib bo'lmaydi!
       </div>
       <button class="btn" id="el-admin-finalize"
               style="border-color:rgba(245,197,66,.55);color:#f5c542">

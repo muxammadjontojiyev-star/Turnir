@@ -57,7 +57,7 @@ const EL_TEXTS = {
     el_you_in:            "Siz ishtirokchisiz",
     el_you_out:           "Siz ishtirokchi emassiz",
     el_group_empty:       "Bu guruhda ishtirokchi yo'q.",
-    el_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 5 liga bo'yicha 8–14-o'rin egalari (ChL'ga o'tgan eng yaxshi 8-o'rindan tashqari) va eng yaxshi ikkita 15-o'rin qo'shiladi.",
+    el_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 7 ta Yevropa ligasi bo'yicha 6–10-o'rin egalari (ChL'ga o'tgan eng yaxshi 6-o'rindan tashqari) va eng yaxshi ikkita 11-o'rin qo'shiladi.",
     el_six_matches:       "6 o'yin",
     el_auto_confirm:      "avtomatik tasdiqlanadi",
 
@@ -168,7 +168,7 @@ const EL_TEXTS = {
     el_you_in:            "Вы участвуете",
     el_you_out:           "Вы не участвуете",
     el_group_empty:       "В этой группе нет участников.",
-    el_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся участники с 8–14 мест 5 лиг (кроме лучшего 8-го места, ушедшего в ЛЧ) и два лучших 15-х места.",
+    el_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся участники с 6–10 мест 7 европейских лиг (кроме лучшего 6-го места, ушедшего в ЛЧ) и два лучших 11-х места.",
     el_six_matches:       "6 матчей",
     el_auto_confirm:      "подтверждается автоматически",
 
@@ -276,7 +276,7 @@ const EL_TEXTS = {
     el_you_in:            "You are playing",
     el_you_out:           "You are not playing",
     el_group_empty:       "No players in this group.",
-    el_qual_pending:      "Qualification is not decided yet. After the league season ends, players finishing 8th–14th in the 5 leagues (except the best 8th place, who goes to the CL) and the two best 15th places will be added.",
+    el_qual_pending:      "Qualification is not decided yet. After the league season ends, players finishing 6th–10th in the 7 European leagues (except the best 6th place, who goes to the CL) and the two best 11th places will be added.",
     el_six_matches:       "6 matches",
     el_auto_confirm:      "confirmed automatically",
 

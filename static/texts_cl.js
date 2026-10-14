@@ -57,7 +57,7 @@ const CL_TEXTS = {
     cl_you_in:            "Siz ishtirokchisiz",
     cl_you_out:           "Siz ishtirokchi emassiz",
     cl_group_empty:       "Bu guruhda ishtirokchi yo'q.",
-    cl_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 5 liga bo'yicha top-6 va eng yaxshi ikkinchi o'rinlar qo'shiladi.",
+    cl_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 7 ta Yevropa ligasi (LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1, Liga Portugal, Süper Lig) bo'yicha top-5 va eng yaxshi bitta 6-o'rin qo'shiladi.",
     cl_six_matches:       "6 o'yin",
     cl_auto_confirm:      "avtomatik tasdiqlanadi",
 
@@ -168,7 +168,7 @@ const CL_TEXTS = {
     cl_you_in:            "Вы участвуете",
     cl_you_out:           "Вы не участвуете",
     cl_group_empty:       "В этой группе нет участников.",
-    cl_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся топ-6 из 5 лиг и лучшие вторые места.",
+    cl_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся топ-5 из 7 европейских лиг (LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1, Liga Portugal, Süper Lig) и одно лучшее 6-е место.",
     cl_six_matches:       "6 матчей",
     cl_auto_confirm:      "подтверждается автоматически",
 
@@ -276,7 +276,7 @@ const CL_TEXTS = {
     cl_you_in:            "You are playing",
     cl_you_out:           "You are not playing",
     cl_group_empty:       "No players in this group.",
-    cl_qual_pending:      "Qualification is not decided yet. After the league season ends, the top 6 from 5 leagues plus the best runners-up will be added.",
+    cl_qual_pending:      "Qualification is not decided yet. After the league season ends, the top 5 from the 7 European leagues (LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1, Liga Portugal, Süper Lig) plus the single best 6th place will be added.",
     cl_six_matches:       "6 matches",
     cl_auto_confirm:      "confirmed automatically",
 

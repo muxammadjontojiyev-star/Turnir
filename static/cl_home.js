@@ -89,7 +89,8 @@ function clRenderRules() {
   ].map(x => `<li>${x}</li>`).join("");
 
   const general = [
-    `Liga mavsumi bo'yicha eng ko'p ochko to'plagan ${key(CL_TOTAL + " ta")} ishtirokchi qatnashadi.`,
+    // 2026-10-14: yangi kvalifikatsiya — 7 ta Yevropa 1-ligasi (cl_qualification.CL_LEAGUES)
+    `${key("7 ta Yevropa ligasi")} (LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1, Liga Portugal, Süper Lig) bo'yicha ${key("top-5")} va eng yaxshi ${key("bitta 6-o'rin")} — jami ${key(CL_TOTAL + " ta")} ishtirokchi qatnashadi. 2-ligalar va Osiyo ligalari kirmaydi.`,
     `Guruhlar ${key("yo'q")}: barcha ishtirokchi yagona liga bosqichida.`,
     `Har ishtirokchi ${key(CL_ROUNDS + " ta turli raqib")} bilan ${key("1 martadan")} (mehmon o'yinisiz) o'ynaydi.`,
     `Kuniga ${key("bitta tur")} o'ynaladi. Turlar admin ruxsatidan keyin ochiladi.`,

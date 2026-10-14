@@ -89,7 +89,8 @@ function elRenderRules() {
   ].map(x => `<li>${x}</li>`).join("");
 
   const general = [
-    `Ligalarda ${key("8–14-o'rin")} egallaganlar (ChL'ga o'tgan eng yaxshi 8-o'rindan tashqari) va eng yaxshi ${key("ikkita 15-o'rin")} — jami ${key(EL_TOTAL + " ta")} ishtirokchi qatnashadi.`,
+    // 2026-10-14: ChL bilan bir xil 7 ta Yevropa 1-ligasi (el_qualification)
+    `${key("7 ta Yevropa ligasi")}da ${key("6–10-o'rin")} egallaganlar (ChL'ga o'tgan eng yaxshi 6-o'rindan tashqari) va eng yaxshi ${key("ikkita 11-o'rin")} — jami ${key(EL_TOTAL + " ta")} ishtirokchi qatnashadi. 2-ligalar va Osiyo ligalari kirmaydi.`,
     `Qatnashish huquqi ${key("Telegram akkauntingizga")} beriladi — yangi mavsumda boshqa klub tanlasangiz ham saqlanadi.`,
     `Guruhlar ${key("yo'q")}: barcha ishtirokchi yagona liga bosqichida.`,
     `Har ishtirokchi ${key(EL_ROUNDS + " ta turli raqib")} bilan ${key("1 martadan")} (mehmon o'yinisiz) o'ynaydi.`,
