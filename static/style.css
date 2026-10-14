@@ -6379,3 +6379,19 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .pt-bulk-bar .btn:disabled { opacity: .45; }
 .pt-all-item { align-items: center; }
 .pt-all-check { height: 34px; }
+/* 2026-10-14: profil — shaxsiy turnir sovrinlari (pt_profile_prizes.js), rasmiydan ajralib turadi */
+.my-prize-card--pt {
+  position: relative;
+  background: linear-gradient(160deg, rgba(150,90,255,.16), rgba(150,90,255,.04) 60%), var(--bg-card);
+  border-color: rgba(170,120,255,.35);
+}
+.my-prize-pt-badge {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px; color: #e7dcff;
+  background: rgba(140,80,255,.45); border: 1px solid rgba(190,150,255,.5);
+}
+.my-prize-card--pt .my-prize-season { color: #c9b3ff; }
+.my-prize-pt-sub { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.my-prizes-grid--pt { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.my-prize-card--pt .my-prize-icon { margin-top: 10px; }

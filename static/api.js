@@ -1073,14 +1073,16 @@ function prizeStarsHtml(ref) {
 async function loadPrizesInto(userId, containerId) {
   const box = document.getElementById(containerId);
   if (!box || !userId) return;
-  try {
-    const data = await apiFetch(`/users/${userId}/prizes`);
-    const prizes = data.prizes || [];
-    if (prizes.length === 0) { box.innerHTML = ""; return; }
-    box.innerHTML = renderMyPrizes(prizes);
-  } catch (_) {
-    box.innerHTML = "";
-  }
+  // 2026-10-14: rasmiy sovrinlar + ALOHIDA "Shaxsiy turnir sovrinlari" (pt_profile_prizes.js).
+  // Shaxsiy turnir kuboklari ★ bermaydi va rasmiy ro'yxatga aralashmaydi.
+  const [official, pt] = await Promise.all([
+    apiFetch(`/users/${userId}/prizes`).then(d => d.prizes || []).catch(() => []),
+    typeof ptProfilePrizesSectionHtml === "function"
+      ? apiFetch(`/users/${userId}/pt-prizes`).then(d => d.prizes || []).catch(() => [])
+      : Promise.resolve([]),
+  ]);
+  box.innerHTML = (official.length ? renderMyPrizes(official) : "")
+    + (pt.length ? ptProfilePrizesSectionHtml(pt) : "");
 }
 
 // Sovrin turini rasm + nomga aylantirish
