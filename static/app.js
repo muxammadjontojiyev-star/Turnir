@@ -1445,7 +1445,7 @@ function showModeSelect() {
              onerror="this.style.display='none'">
       </div>
       <div class="mode-card mode-card--ac mode-card--photo" id="mode-card-ac">
-        <img class="mode-banner" src="ac-banner.jpg?v=1" alt="${escHtml(t.mode_ac || "Osiyo Chempionlar ligasi")}"
+        <img class="mode-banner" src="ac-banner.jpg?v=2" alt="${escHtml(t.mode_ac || "Osiyo Chempionlar ligasi")}"
              onerror="this.style.display='none'">
       </div>
       <div class="mode-card mode-card--division mode-card--photo" id="mode-card-division">
