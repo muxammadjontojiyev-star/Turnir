@@ -1753,6 +1753,26 @@ def wc_admin_playoff_swap(
     return {"status": "ok", **result}
 
 
+@app.get("/wc/admin/playoff/qualify-check")
+def wc_admin_playoff_qualify_check(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-10-14: setkadagi (1/16) ishtirokchilar hozirgi guruh jadvallariga mosmi.
+    wrong — setkada bor, lekin chiqmasligi kerak; missing — chiqishi kerak, lekin yo'q.
+    """
+    from wc_playoff_qualify import wc_playoff_qualify_diff
+    return wc_playoff_qualify_diff()
+
+
+@app.post("/wc/admin/playoff/qualify-fix")
+def wc_admin_playoff_qualify_fix(admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-10-14: noto'g'ri chiqqanlarni o'z 1/16 o'rnida to'g'risi bilan almashtiradi."""
+    from wc_playoff_qualify import wc_playoff_qualify_fix
+    success, result = wc_playoff_qualify_fix()
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"status": "ok", **result}
+
+
 @app.post("/wc/participant/reassign")
 def wc_participant_reassign(
     old_user_id: int = Body(..., embed=True),

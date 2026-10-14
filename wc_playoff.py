@@ -41,6 +41,14 @@ def wc_get_qualified_teams() -> dict:
                 "ready": False,
                 "reason": f"group_{letter}_incomplete",
             }
+        # 2026-10-14: guruhda tasdiqlanmagan o'yin qolgan bo'lsa — jadval hali yakuniy emas
+        # (aks holda setka oraliq jadval bo'yicha tuzilib, 4-o'rin play-off'ga tushib qolardi)
+        if _group_has_unfinished(letter):
+            return {
+                "winners": [], "runners_up": [], "best_thirds": [],
+                "ready": False,
+                "reason": f"group_{letter}_incomplete",
+            }
         # rating allaqachon points -> goal_diff -> ... bo'yicha saralangan
         for pos, team in enumerate(rating):
             team = dict(team)
@@ -67,6 +75,21 @@ def wc_get_qualified_teams() -> dict:
         "ready": ready,
         "reason": "ok" if ready else "not_enough_teams",
     }
+
+
+def _group_has_unfinished(group_letter: str) -> bool:
+    """2026-10-14: guruhda 'confirmed' bo'lmagan o'yin bormi."""
+    from config import MATCH_STATUS_CONFIRMED
+    from models import get_connection
+    conn = get_connection()
+    try:
+        row = conn.cursor().execute(
+            "SELECT 1 FROM wc_matches WHERE group_letter = ? AND status != ? LIMIT 1",
+            (group_letter, MATCH_STATUS_CONFIRMED),
+        ).fetchone()
+        return row is not None
+    finally:
+        conn.close()
 
 
 def wc_build_r32_pairings(qualified: dict) -> list[dict]:
