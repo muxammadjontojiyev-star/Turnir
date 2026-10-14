@@ -1,11 +1,13 @@
 """
 Chempionlar ligasi (ChL) kvalifikatsiyasi.
 
-Qoida (loyiha egasi): liga mavsumi yakunlanganda 5 ta liga reytingidan:
-  - har ligadan TOP-7 (5 × 7 = 35 ta), qualified_via='top7'
-  - qolgan 8-o'rin egalaridan ENG YAXSHI 1 tasi (achko > gol farqi > urilgan gol),
-    qualified_via='best8'
-Jami 36 ishtirokchi. Ular telegram_id orqali eslab qolinadi — keyingi mavsumda
+Qoida (loyiha egasi, 2026-10-14): liga mavsumi yakunlanganda YEVROPA mintaqasining
+7 ta 1-ligasi reytingidan (CL_LEAGUES — Osiyo ligalari va 2-ligalar KIRMAYDI):
+  - har ligadan TOP-5 (7 × 5 = 35 ta), qualified_via='top5'
+  - 6-o'rin egalaridan ENG YAXSHI 1 tasi (achko > gol farqi > urilgan gol),
+    qualified_via='best6'
+Jami 36 ishtirokchi. (Avval: 5 liga × TOP-7 + eng yaxshi 8-o'rin — 'top7'/'best8';
+eski mavsum yozuvlarida shu kodlar qoladi.) Ular telegram_id orqali eslab qolinadi — keyingi mavsumda
 boshqa klub tanlasalar ham ChL'da qatnashish huquqi SHU odamda qoladi.
 
 MUHIM: hisoblash reset'dan OLDIN bo'lishi shart (registrations/matches o'chadi),
@@ -20,9 +22,23 @@ from rating import calculate_league_rating
 
 logger = logging.getLogger(__name__)
 
-CL_TOP_N = 7          # har ligadan to'g'ridan-to'g'ri o'tadiganlar
-CL_BEST_EIGHTH = 1    # eng yaxshi 8-o'rinlar soni
+CL_TOP_N = 5          # har ligadan to'g'ridan-to'g'ri o'tadiganlar (2026-10-14: 7 -> 5)
+CL_BEST_EIGHTH = 1    # eng yaxshi (CL_TOP_N+1)-o'rinlar soni — hozir eng yaxshi 6-o'rin
 CL_TOTAL = 36
+# 2026-10-14: ChL/YeL faqat Yevropa mintaqasining 1-ligalaridan (DB liga nomlari).
+# Osiyo ligalari (Superliga, Saudi, UAE, J1) va 2-ligalar (LaLiga 2, Championship,
+# 2. Bundesliga, Serie B) kirmaydi. Yangi Yevropa 1-ligasi qo'shilsa — shu yerga.
+CL_LEAGUES = ("LaLiga", "Premier Liga", "Bundesliga", "Serie A", "Ligue 1",
+              "Liga Portugal", "Süper Lig")
+CL_VIA_TOP = "top5"
+CL_VIA_BEST = "best6"
+
+
+def euro_leagues(cursor) -> list[dict]:
+    """Kvalifikatsiya beradigan ligalar (CL_LEAGUES), id tartibida. YeL ham shundan oladi."""
+    q = ",".join("?" * len(CL_LEAGUES))
+    cursor.execute(f"SELECT id, name FROM leagues WHERE name IN ({q}) ORDER BY id", CL_LEAGUES)
+    return [dict(r) for r in cursor.fetchall()]
 
 
 def compute_cl_qualifiers() -> list[dict]:
@@ -36,8 +52,7 @@ def compute_cl_qualifiers() -> list[dict]:
     """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM leagues ORDER BY id")
-    leagues = [dict(r) for r in cursor.fetchall()]
+    leagues = euro_leagues(cursor)   # 2026-10-14: faqat Yevropa 1-ligalari
 
     # user_id -> telegram_id xaritasi (bitta so'rov, qoida #24/#49)
     cursor.execute("SELECT id, telegram_id FROM users")
@@ -67,13 +82,13 @@ def compute_cl_qualifiers() -> list[dict]:
                 logger.warning("ChL: user_id=%s uchun telegram_id topilmadi, tashlab ketildi", p["user_id"])
                 continue
             if pos <= CL_TOP_N:
-                entry["qualified_via"] = "top7"
+                entry["qualified_via"] = CL_VIA_TOP
                 qualifiers.append(entry)
-            else:  # pos == 8
-                entry["qualified_via"] = "best8"
+            else:  # pos == CL_TOP_N + 1 (6-o'rin)
+                entry["qualified_via"] = CL_VIA_BEST
                 eighths.append(entry)
 
-    # Eng yaxshi 8-o'rinlar: achko > gol farqi > urilgan gol
+    # Eng yaxshi 6-o'rin(lar): achko > gol farqi > urilgan gol
     eighths.sort(
         key=lambda e: (e["points"], e["goal_difference"], e["goals_for"]),
         reverse=True,
@@ -132,7 +147,7 @@ def get_cl_qualifiers(from_season: int | None = None) -> dict:
             "SELECT telegram_id, nickname, league_id, league_name, position, "
             "points, goal_difference, goals_for, qualified_via "
             "FROM cl_qualifiers WHERE from_season = ? "
-            "ORDER BY qualified_via = 'best8', league_id, position",
+            "ORDER BY qualified_via IN ('best8', 'best6'), league_id, position",
             (from_season,),
         )
         return {"from_season": from_season,

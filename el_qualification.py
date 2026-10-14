@@ -1,13 +1,15 @@
 """
 Yevropa ligasi (YeL) kvalifikatsiyasi.
 
-Qoida (loyiha egasi): liga mavsumi yakunlanganda 5 ta liga reytingidan:
-  - har ligadan 8..14-o'rinlar, qualified_via='top14'
-    (ChL'ga ketgan ENG YAXSHI 8-o'rin bundan CHIQARILADI — u ChL'da)
-  - 15-o'rin egalaridan ENG YAXSHI 2 tasi (achko > gol farqi > urilgan gol),
-    qualified_via='best15'
-Jami: 4 (qolgan 8-o'rinlar) + 30 (9..14) + 2 = 36 ishtirokchi (ChL bilan teng —
+Qoida (loyiha egasi, 2026-10-14): liga mavsumi yakunlanganda ChL bilan BIR XIL
+7 ta Yevropa 1-ligasi reytingidan (cl_qualification.CL_LEAGUES):
+  - har ligadan 6..10-o'rinlar, qualified_via='top10'
+    (ChL'ga ketgan ENG YAXSHI 6-o'rin bundan CHIQARILADI — u ChL'da)
+  - 11-o'rin egalaridan ENG YAXSHI 2 tasi (achko > gol farqi > urilgan gol),
+    qualified_via='best11'
+Jami: 6 (qolgan 6-o'rinlar) + 28 (7..10) + 2 = 36 ishtirokchi (ChL bilan teng —
 Swiss formatida juft son, hech kim o'yinsiz qolmaydi).
+(Avval: 5 liga, 8..14 + eng yaxshi 2 ta 15-o'rin — 'top14'/'best15'.)
 
 Kirish huquqi ODAMGA (telegram_id) tegishli: keyingi mavsumda boshqa klub
 tanlasa ham YeL'da qatnashadi (el_core.el_sync_participants).
@@ -23,16 +25,18 @@ dan KEYIN chaqiriladi (season_prizes._finalize_league_locked).
 
 import logging
 
-from cl_qualification import CL_TOP_N, compute_cl_qualifiers
+from cl_qualification import CL_TOP_N, compute_cl_qualifiers, euro_leagues
 from models import get_connection
 from rating import calculate_league_rating
 
 logger = logging.getLogger(__name__)
 
-EL_FIRST_POS = CL_TOP_N + 1   # 8 — ChL'ning to'g'ridan-to'g'ri chegarasidan keyin
-EL_LAST_POS = 14              # har ligadan oxirgi to'g'ridan-to'g'ri o'rin
-EL_BEST_POS = EL_LAST_POS + 1 # 15 — eng yaxshilari saralanadigan o'rin
-EL_BEST_COUNT = 2             # eng yaxshi 15-o'rinlar soni
+EL_FIRST_POS = CL_TOP_N + 1   # 6 — ChL'ning to'g'ridan-to'g'ri chegarasidan keyin
+EL_LAST_POS = 10              # har ligadan oxirgi to'g'ridan-to'g'ri o'rin (2026-10-14: 14 -> 10)
+EL_BEST_POS = EL_LAST_POS + 1 # 11 — eng yaxshilari saralanadigan o'rin
+EL_BEST_COUNT = 2             # eng yaxshi 11-o'rinlar soni
+EL_VIA_TOP = "top10"
+EL_VIA_BEST = "best11"
 EL_TOTAL = 36
 
 
@@ -51,8 +55,7 @@ def compute_el_qualifiers(exclude_telegram_ids: set[int] | None = None) -> list[
 
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM leagues ORDER BY id")
-    leagues = [dict(r) for r in cursor.fetchall()]
+    leagues = euro_leagues(cursor)   # 2026-10-14: ChL bilan bir xil 7 ta Yevropa 1-ligasi
 
     # user_id -> telegram_id xaritasi (bitta so'rov, qoida #24/#49)
     cursor.execute("SELECT id, telegram_id FROM users")
@@ -84,15 +87,15 @@ def compute_el_qualifiers(exclude_telegram_ids: set[int] | None = None) -> list[
                 logger.warning("YeL: user_id=%s uchun telegram_id topilmadi, tashlab ketildi", p["user_id"])
                 continue
             if entry["telegram_id"] in exclude_telegram_ids:
-                continue  # ChL'ga o'tgan (eng yaxshi 8-o'rin)
+                continue  # ChL'ga o'tgan (eng yaxshi 6-o'rin)
             if pos <= EL_LAST_POS:
-                entry["qualified_via"] = "top14"
+                entry["qualified_via"] = EL_VIA_TOP
                 qualifiers.append(entry)
-            else:  # pos == 15
-                entry["qualified_via"] = "best15"
+            else:  # pos == EL_BEST_POS (11-o'rin)
+                entry["qualified_via"] = EL_VIA_BEST
                 best_pool.append(entry)
 
-    # Eng yaxshi 15-o'rinlar: achko > gol farqi > urilgan gol
+    # Eng yaxshi 11-o'rinlar: achko > gol farqi > urilgan gol
     best_pool.sort(
         key=lambda e: (e["points"], e["goal_difference"], e["goals_for"]),
         reverse=True,
@@ -160,7 +163,7 @@ def get_el_qualifiers(from_season: int | None = None) -> dict:
             "SELECT telegram_id, nickname, league_id, league_name, position, "
             "points, goal_difference, goals_for, qualified_via "
             "FROM el_qualifiers WHERE from_season = ? "
-            "ORDER BY qualified_via = 'best15', league_id, position",
+            "ORDER BY qualified_via IN ('best15', 'best11'), league_id, position",
             (from_season,),
         )
         return {"from_season": from_season,
