@@ -1194,19 +1194,30 @@ function showToast(msg) {
 //  LOADING SCREEN
 // ============================================================
 
-// 2026-10-14: premium kirish animatsiyasi (style.css ".ls") — ssenariy ~1.5 s, keyin
-// ekran yaqinlashib so'nadi (.ls--out). Vaqtlar CSS animatsiyalari bilan mos.
-const LOADING_MIN_MS = 1550;   // to'p tushishi + harflar + progress tugashi
-const LOADING_OUT_MS = 450;    // chiqish (scale + blur + fade)
+// 2026-10-14 (v2): premium kirish animatsiyasi (style.css ".ls"). Animatsiyalar
+// skriptlar yuklanib bo'lgach (init) 2 kadrdan keyin boshlanadi (.ls--play) — aks holda
+// band asosiy oqimda kadrlar tashlanib, qotish/pir-pirash bo'lardi. Vaqtlar CSS bilan mos.
+const LOADING_MIN_MS = 1600;   // play'dan: to'p + harflar + progress tugashi
+const LOADING_OUT_MS = 450;    // chiqish (faqat opacity + scale)
+
+function nextFrames(n, cb) {
+  if (n <= 0) { cb(); return; }
+  requestAnimationFrame(() => nextFrames(n - 1, cb));
+}
 
 function hideLoadingScreen() {
   const screen = document.getElementById("loading-screen");
   const appEl  = document.getElementById("app");
-  setTimeout(() => {
-    appEl.classList.remove("hidden");          // ilova orqada tayyor turadi — chiqish paytida ko'rinadi
-    screen.classList.add("ls--out");
-    setTimeout(() => { screen.style.display = "none"; }, LOADING_OUT_MS);
-  }, LOADING_MIN_MS);
+  nextFrames(2, () => {
+    screen.classList.add("ls--play");
+    setTimeout(() => {
+      appEl.classList.remove("hidden");        // ilova avval orqada chiziladi...
+      nextFrames(2, () => {                     // ...so'ng ekran silliq so'nadi
+        screen.classList.add("ls--out");
+        setTimeout(() => { screen.style.display = "none"; }, LOADING_OUT_MS);
+      });
+    }, LOADING_MIN_MS);
+  });
 }
 
 // ============================================================

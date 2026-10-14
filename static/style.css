@@ -6397,129 +6397,126 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .my-prize-card--pt .my-prize-icon { margin-top: 10px; }
 
 /* ============================================================
-   2026-10-14: PREMIUM KIRISH EKRANI (#loading-screen.ls)
-   Ssenariy (~1.5 s): qorong'ulik → ikki projektor nuri yonadi → maydon chiziqlari
-   chiziladi → to'p yuqoridan tushib, aylanib to'xtaydi → nurli halqa aylanadi →
-   "eFOOTBALL" harflari birma-bir ko'tariladi → shimmer → chiqishda yaqinlashib so'nadi.
-   Faqat transform/opacity (GPU) — sekin telefonlarda ham silliq. Reduced-motion hurmat qilinadi.
+   2026-10-14 (v2): PREMIUM KIRISH EKRANI (#loading-screen.ls)
+   v1 telefonda qotdi/pir-piradi — sabablari va tuzatish:
+   1) animatsiya skriptlar (60+ fayl) yuklanayotganda boshlanardi — asosiy oqim band,
+      kadrlar tashlab ketilardi → endi DOMContentLoaded'dan keyin (.ls--play, app.js);
+   2) og'ir effektlar (katta blur filtrlar, animatsiyali shovqin, drop-shadow'li
+      aylanish, harflarda blur) → olib tashlandi; FAQAT transform/opacity (GPU);
+   3) chiqishda butun ekran blur + ilova bir vaqtda chizilardi → ilova avval chiziladi,
+      2 kadrdan keyin faqat opacity/scale bilan so'nadi.
+   Ssenariy (play'dan): nurlar 0–.6s → chiziqlar → to'p .25–1.05s → halqa → harflar
+   .85–1.4s → yozuv → progress 1.5s → ~1.9s chiqish.
    ============================================================ */
 .loading-screen.ls {
-  overflow: hidden; gap: 0;
-  background:
-    radial-gradient(120% 70% at 50% 42%, #0e1a2b 0%, #080b14 55%, #05060b 100%);
-  transition: opacity .45s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .45s ease;
+  overflow: hidden; gap: 0; contain: strict;
+  background: radial-gradient(120% 70% at 50% 42%, #0e1a2b 0%, #080b14 55%, #05060b 100%);
+  transition: opacity .4s ease, transform .45s cubic-bezier(.2,.8,.2,1);
+  will-change: opacity, transform;
 }
-.loading-screen.ls.ls--out { opacity: 0; transform: scale(1.06); filter: blur(6px); }
+.loading-screen.ls.ls--out { opacity: 0; transform: scale(1.04); }
+.ls *, .ls *::after { animation-play-state: paused; }          /* play'gacha birinchi kadrda turadi */
+.ls.ls--play *, .ls.ls--play *::after { animation-play-state: running; }
 
-/* Projektor nurlari */
+/* Projektor nurlari — blur filtrsiz, yumshoq gradient bilan */
 .ls-beam {
-  position: absolute; top: -20%; width: 70vmax; height: 120vmax; pointer-events: none;
-  background: linear-gradient(180deg, rgba(160,230,255,.22), rgba(120,200,255,.06) 45%, transparent 75%);
-  filter: blur(18px); opacity: 0; transform-origin: 50% 0;
-  animation: ls-beam-on .9s .05s ease-out forwards, ls-beam-sway 4s 1s ease-in-out infinite alternate;
-  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  position: absolute; top: -10%; width: 64vmax; height: 110vmax; pointer-events: none;
+  background: linear-gradient(180deg, rgba(160,230,255,.20) 0%, rgba(120,200,255,.07) 40%, rgba(120,200,255,0) 72%);
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  opacity: 0; transform-origin: 50% 0; will-change: opacity;
+  animation: ls-beam-on .7s ease-out forwards;
 }
-.ls-beam--l { left: -32vmax; transform: rotate(-28deg); }
-.ls-beam--r { right: -32vmax; transform: rotate(28deg); animation-delay: .18s, 1.1s; }
-@keyframes ls-beam-on { 0% { opacity: 0; } 30% { opacity: 1; } 45% { opacity: .55; } 100% { opacity: .9; } }
-@keyframes ls-beam-sway { from { opacity: .9; } to { opacity: .6; } }
+.ls-beam--l { left: -30vmax; transform: rotate(-28deg); }
+.ls-beam--r { right: -30vmax; transform: rotate(28deg); animation-delay: .12s; }
+@keyframes ls-beam-on { 0% { opacity: 0; } 35% { opacity: 1; } 50% { opacity: .6; } 100% { opacity: .85; } }
 
-/* Maydon chiziqlari (markaziy doira + o'rta chiziq) */
+/* Maydon chiziqlari */
 .ls-pitch {
   position: absolute; width: min(92vw, 440px); top: 50%; left: 50%;
   transform: translate(-50%, -58%) perspective(600px) rotateX(58deg);
-  fill: none; stroke: rgba(120,220,255,.22); stroke-width: 1.4; opacity: .9;
+  fill: none; stroke: rgba(120,220,255,.22); stroke-width: 1.4;
 }
-.ls-pitch circle:first-child { stroke-dasharray: 760; stroke-dashoffset: 760; animation: ls-draw 1s .25s cubic-bezier(.6,0,.2,1) forwards; }
-.ls-pitch line { stroke-dasharray: 480; stroke-dashoffset: 480; animation: ls-draw .9s .35s cubic-bezier(.6,0,.2,1) forwards; }
-.ls-pitch-dot { fill: rgba(120,220,255,.6); stroke: none; opacity: 0; animation: ls-fade .3s .9s forwards; }
+.ls-pitch circle:first-child { stroke-dasharray: 760; stroke-dashoffset: 760; animation: ls-draw .9s .15s cubic-bezier(.6,0,.2,1) forwards; }
+.ls-pitch line { stroke-dasharray: 480; stroke-dashoffset: 480; animation: ls-draw .8s .25s cubic-bezier(.6,0,.2,1) forwards; }
+.ls-pitch-dot { fill: rgba(120,220,255,.6); stroke: none; opacity: 0; animation: ls-fade .3s .8s forwards; }
 @keyframes ls-draw { to { stroke-dashoffset: 0; } }
 @keyframes ls-fade { to { opacity: 1; } }
+.ls-grain { display: none; }   /* v2: animatsiyali shovqin olib tashlandi (og'ir) */
 
-/* Mayda shovqin (premium "plyonka" hissi) */
-.ls-grain {
-  position: absolute; inset: -50%; pointer-events: none; opacity: .07;
-  background-image: radial-gradient(rgba(255,255,255,.9) .6px, transparent .6px);
-  background-size: 3px 3px; animation: ls-grain 1.2s steps(6) infinite;
-}
-@keyframes ls-grain { 0% { transform: translate(0,0); } 50% { transform: translate(-1%,1%); } 100% { transform: translate(1%,-1%); } }
-
-/* Markaz: to'p + halqa + nur */
+/* Markaz */
 .ls-core { position: relative; width: 120px; height: 120px; margin-bottom: 26px; z-index: 2; }
 .ls-halo {
   position: absolute; inset: -60px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(0,240,255,.28) 0%, rgba(123,47,255,.12) 38%, transparent 68%);
-  opacity: 0; transform: scale(.6); animation: ls-halo .8s .55s ease-out forwards, ls-breathe 2.4s 1.4s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(0,240,255,.26) 0%, rgba(123,47,255,.10) 40%, rgba(0,0,0,0) 68%);
+  opacity: 0; transform: scale(.7); will-change: transform, opacity;
+  animation: ls-halo .7s .6s ease-out forwards;
 }
 @keyframes ls-halo { to { opacity: 1; transform: scale(1); } }
-@keyframes ls-breathe { 50% { transform: scale(1.08); opacity: .8; } }
-.ls-ring {
-  position: absolute; inset: -14px; border-radius: 50%; opacity: 0;
-  background: conic-gradient(from 0deg, transparent 0 55%, rgba(0,240,255,.0) 55%, var(--cyan) 80%, #fff 84%, var(--violet) 92%, transparent 100%);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
-          mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
-  animation: ls-fade .4s .75s forwards, ls-spin 1.6s .75s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(0,240,255,.8));
+.ls-ring {                                  /* oddiy border — maska/filtrsiz, faqat aylanadi */
+  position: absolute; inset: -12px; border-radius: 50%; opacity: 0;
+  border: 2px solid rgba(255,255,255,0); border-top-color: var(--cyan); border-right-color: rgba(123,47,255,.9);
+  will-change: transform, opacity;
+  animation: ls-fade .35s .8s forwards, ls-spin 1.2s .8s linear infinite;
 }
 @keyframes ls-spin { to { transform: rotate(360deg); } }
+.ls-core::after {                           /* to'p soyasi (filtr o'rniga gradient) */
+  content: ""; position: absolute; left: 18%; right: 18%; bottom: -16px; height: 14px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,.55), rgba(0,0,0,0)); opacity: 0;
+  animation: ls-fade .3s .95s forwards;
+}
 .ls-ball {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  filter: drop-shadow(0 14px 18px rgba(0,0,0,.55)) drop-shadow(0 0 18px rgba(0,240,255,.25));
-  transform: translateY(-120vh) rotate(-540deg) scale(.7);
-  animation: ls-drop .85s .35s cubic-bezier(.22,1.3,.36,1) forwards;
+  position: absolute; inset: 0; width: 100%; height: 100%; will-change: transform;
+  transform: translateY(-75vh) rotate(-420deg);
+  animation: ls-drop .8s .25s cubic-bezier(.3,1.25,.45,1) forwards;
 }
 @keyframes ls-drop {
-  70% { transform: translateY(6px) rotate(-20deg) scale(1.02); }
-  100% { transform: translateY(0) rotate(0) scale(1); }
+  75% { transform: translateY(4px) rotate(-12deg); }
+  100% { transform: translateY(0) rotate(0); }
 }
 
-/* So'z belgisi: harflar birma-bir */
+/* So'z belgisi — harflar birma-bir (blur'siz) */
 .ls-word {
   position: relative; z-index: 2; display: flex; gap: .06em;
   font-family: var(--font-display); font-weight: 700; font-size: 34px; letter-spacing: .18em;
   color: #fff; text-shadow: 0 0 22px rgba(0,240,255,.35);
 }
 .ls-word span {
-  display: inline-block; opacity: 0; transform: translateY(14px); filter: blur(6px);
-  animation: ls-letter .5s calc(.8s + var(--i) * .045s) cubic-bezier(.2,.8,.2,1) forwards;
+  display: inline-block; opacity: 0; transform: translateY(16px); will-change: transform, opacity;
+  animation: ls-letter .45s calc(.85s + var(--i) * .05s) cubic-bezier(.2,.8,.2,1) forwards;
 }
 .ls-word span:first-child { color: var(--cyan); }
-@keyframes ls-letter { to { opacity: 1; transform: none; filter: blur(0); } }
-.ls-word span {                         /* harflar ustidan nur to'lqini (paydo bo'lgach) */
-  animation: ls-letter .5s calc(.8s + var(--i) * .045s) cubic-bezier(.2,.8,.2,1) forwards,
-             ls-glint .6s calc(1.3s + var(--i) * .05s) ease-in-out;
-}
-@keyframes ls-glint {
-  50% { color: #fff; text-shadow: 0 0 14px #fff, 0 0 28px rgba(0,240,255,.9); transform: translateY(-2px); }
-}
+@keyframes ls-letter { to { opacity: 1; transform: none; } }
 
 .ls-tag {
   position: relative; z-index: 2; margin-top: 10px;
   font-family: var(--font-display); font-size: 10px; font-weight: 600; letter-spacing: .22em; white-space: nowrap;
-  color: rgba(190,225,255,.6); opacity: 0; animation: ls-fade .5s 1.15s forwards;
+  color: rgba(190,225,255,.6); opacity: 0; animation: ls-fade .45s 1.25s forwards;
 }
 
-/* Progress: ingichka chiziq + nurli bosh */
+/* Progress — kenglik emas, scaleX (layout'siz) */
 .ls-progress {
   position: relative; z-index: 2; width: 150px; height: 2px; margin-top: 30px;
-  border-radius: 2px; background: rgba(255,255,255,.08); overflow: visible;
+  border-radius: 2px; background: rgba(255,255,255,.08);
 }
 .ls-progress-fill {
-  height: 100%; width: 0; border-radius: 2px;
-  background: linear-gradient(90deg, var(--violet), var(--cyan));
-  box-shadow: 0 0 10px rgba(0,240,255,.7);
-  animation: ls-progress 1.35s .15s cubic-bezier(.65,0,.35,1) forwards;
-  position: relative;
+  position: absolute; inset: 0; border-radius: 2px; transform-origin: 0 50%; transform: scaleX(0);
+  background: linear-gradient(90deg, var(--violet), var(--cyan)); will-change: transform;
+  animation: ls-progress 1.45s .1s cubic-bezier(.65,0,.35,1) forwards;
 }
-.ls-progress-fill::after {
-  content: ""; position: absolute; right: -3px; top: 50%; width: 8px; height: 8px; margin-top: -4px;
-  border-radius: 50%; background: #fff; box-shadow: 0 0 12px 3px rgba(0,240,255,.9);
+.ls-progress::after {                       /* nurli bosh — chiziq bilan birga yuradi */
+  content: ""; position: absolute; left: -4px; top: 50%; width: 8px; height: 8px; margin-top: -4px;
+  border-radius: 50%; background: #fff; box-shadow: 0 0 10px 3px rgba(0,240,255,.85);
+  will-change: transform; animation: ls-head 1.45s .1s cubic-bezier(.65,0,.35,1) forwards;
 }
-@keyframes ls-progress { to { width: 100%; } }
+@keyframes ls-progress { to { transform: scaleX(1); } }
+@keyframes ls-head { to { transform: translateX(150px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .ls-beam, .ls-grain, .ls-ring { animation: none; opacity: .6; }
-  .ls-ball, .ls-word span, .ls-halo, .ls-tag, .ls-pitch-dot { animation: none; opacity: 1; transform: none; filter: none; }
-  .ls-pitch circle, .ls-pitch line { animation: none; stroke-dashoffset: 0; }
-  .ls-progress-fill { animation-duration: .01s; }
+  .ls *, .ls *::after { animation: none !important; }
+  .ls-beam { opacity: .7; }
+  .ls-ball, .ls-word span { transform: none; opacity: 1; }
+  .ls-halo, .ls-ring, .ls-tag, .ls-pitch-dot, .ls-core::after { opacity: 1; transform: none; }
+  .ls-pitch circle, .ls-pitch line { stroke-dashoffset: 0; }
+  .ls-progress-fill { transform: scaleX(1); }
+  .ls-progress::after { transform: translateX(150px); }
 }
