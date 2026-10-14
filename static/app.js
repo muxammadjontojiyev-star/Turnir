@@ -1194,17 +1194,19 @@ function showToast(msg) {
 //  LOADING SCREEN
 // ============================================================
 
+// 2026-10-14: premium kirish animatsiyasi (style.css ".ls") — ssenariy ~1.5 s, keyin
+// ekran yaqinlashib so'nadi (.ls--out). Vaqtlar CSS animatsiyalari bilan mos.
+const LOADING_MIN_MS = 1550;   // to'p tushishi + harflar + progress tugashi
+const LOADING_OUT_MS = 450;    // chiqish (scale + blur + fade)
+
 function hideLoadingScreen() {
   const screen = document.getElementById("loading-screen");
   const appEl  = document.getElementById("app");
   setTimeout(() => {
-    screen.style.opacity = "0";
-    screen.style.transition = "opacity 0.35s";
-    setTimeout(() => {
-      screen.style.display = "none";
-      appEl.classList.remove("hidden");
-    }, 350);
-  }, 1200); // loading bar animatsiyasi tugashini kutish
+    appEl.classList.remove("hidden");          // ilova orqada tayyor turadi — chiqish paytida ko'rinadi
+    screen.classList.add("ls--out");
+    setTimeout(() => { screen.style.display = "none"; }, LOADING_OUT_MS);
+  }, LOADING_MIN_MS);
 }
 
 // ============================================================

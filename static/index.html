@@ -13,19 +13,62 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=20261014a" />
+  <link rel="stylesheet" href="style.css?v=20261014c" />
 </head>
 <body>
 
   <!-- ========== LOADING SCREEN ========== -->
-  <div id="loading-screen" class="loading-screen">
-    <div class="loading-logo">
-      <span class="loading-icon">⚽</span>
-      <span class="loading-title">eFOOTBALL</span>
+  <!-- 2026-10-14: PREMIUM kirish animatsiyasi — tungi stadion: projektor nurlari,
+       maydon chiziqlari chiziladi, vektor to'p tushib aylanadi, nurli halqa,
+       harflar birma-bir paydo bo'ladi. Faqat CSS/SVG (rasm yuklanmaydi — tez ochiladi).
+       Vaqt: app.js hideLoadingScreen (LOADING_MIN_MS). -->
+  <div id="loading-screen" class="loading-screen ls" aria-label="eFOOTBALL">
+    <div class="ls-beam ls-beam--l"></div>
+    <div class="ls-beam ls-beam--r"></div>
+    <svg class="ls-pitch" viewBox="0 0 400 400" aria-hidden="true">
+      <circle cx="200" cy="200" r="120" />
+      <line x1="-40" y1="200" x2="440" y2="200" />
+      <circle cx="200" cy="200" r="3" class="ls-pitch-dot" />
+    </svg>
+    <div class="ls-grain"></div>
+
+    <div class="ls-core">
+      <div class="ls-halo"></div>
+      <div class="ls-ring"></div>
+      <svg class="ls-ball" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <radialGradient id="lsBallShade" cx="38%" cy="32%" r="70%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="55%" stop-color="#e9eef5"/>
+            <stop offset="100%" stop-color="#8f9bb0"/>
+          </radialGradient>
+          <radialGradient id="lsBallGloss" cx="34%" cy="26%" r="30%">
+            <stop offset="0%" stop-color="#fff" stop-opacity=".95"/>
+            <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+          </radialGradient>
+          <clipPath id="lsBallClip"><circle cx="50" cy="50" r="46"/></clipPath>
+        </defs>
+        <circle cx="50" cy="50" r="46" fill="url(#lsBallShade)"/>
+        <g class="ls-ball-panels" clip-path="url(#lsBallClip)" fill="#121826">
+          <polygon points="50,35 64,45 59,62 41,62 36,45"/>
+          <polygon points="50,4 62,12 58,24 42,24 38,12"/>
+          <polygon points="88,34 96,46 92,60 82,54 80,40"/>
+          <polygon points="76,82 70,95 56,96 58,84 68,76"/>
+          <polygon points="24,82 32,76 42,84 44,96 30,95"/>
+          <polygon points="12,34 20,40 18,54 8,60 4,46"/>
+        </g>
+        <g clip-path="url(#lsBallClip)" stroke="#121826" stroke-width="1.6" fill="none" opacity=".55">
+          <path d="M50 35 L50 24 M64 45 L80 40 M59 62 L68 76 M41 62 L32 76 M36 45 L20 40"/>
+        </g>
+        <circle cx="50" cy="50" r="46" fill="url(#lsBallGloss)"/>
+        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/>
+      </svg>
     </div>
-    <div class="loading-bar">
-      <div class="loading-bar-fill"></div>
-    </div>
+
+    <div class="ls-word"><span style="--i:0">e</span><span style="--i:1">F</span><span style="--i:2">O</span><span style="--i:3">O</span><span style="--i:4">T</span><span style="--i:5">B</span><span style="--i:6">A</span><span style="--i:7">L</span><span style="--i:8">L</span></div>
+    <div class="ls-tag">LIGA · CHEMPIONLAR LIGASI · JAHON CHEMPIONATI</div>
+
+    <div class="ls-progress"><div class="ls-progress-fill"></div></div>
   </div>
 
   <!-- ========== MAIN APP ========== -->
@@ -582,7 +625,7 @@
   </div><!-- /#app -->
 
   <!-- app.js avval yuklanadi (APP global ob'ektini yaratadi) -->
-  <script src="app.js?v=20261013g"></script>
+  <script src="app.js?v=20261014c"></script>
   <script src="api.js?v=20261014a"></script>
   <script src="chat_images.js?v=20261011r"></script>
   <script src="admin_contacts.js?v=20261013g"></script>
