@@ -6574,3 +6574,10 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .chl-league { font-weight: 500; color: var(--text-secondary); }
 .chl-fix { width: auto; flex-shrink: 0; padding: 8px 12px; font-size: 12px; border: 1px solid var(--border-accent); border-radius: 10px; color: var(--cyan); background: var(--cyan-dim); }
 #chl-scan { width: 100%; }
+
+/* 2026-10-14: JCh setkani tekshirish (wc_playoff_qualify_admin.js) */
+.wcq-result { margin-top: 10px; }
+.wcq-row { display: flex; align-items: center; justify-content: flex-start; text-align: left; gap: 8px; padding: 8px 10px; margin-bottom: 6px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card); font-size: 13px; }
+.wcq-row > * { flex: 0 0 auto; }
+.wcq-row .wcq-meta { flex: 1; font-size: 11.5px; color: var(--text-secondary); text-align: right; }
