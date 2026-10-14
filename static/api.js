@@ -556,6 +556,9 @@ function renderLeagues(leagues) {
     list.appendChild(item);
   });
 
+  // 2026-10-14: 3D karusel (league_carousel.js) — chapga/o'ngga surish
+  if (typeof leagueCarouselInit === "function") leagueCarouselInit(list);
+
   // Birinchi tanlangan liga uchun klublarni ko'rsat — faqat ro'yxatdan o'tmagan bo'lsa
   const selected = leagues.find(l => l.id === APP.selectedLeagueId);
   if (selected && !APP.profileData?.league_id) {

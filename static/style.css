@@ -6531,3 +6531,35 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
   .ls-progress-fill { transform: scaleX(1); }
   .ls-progress::after { transform: translateX(150px); }
 }
+
+/* ============================================================
+   2026-10-14: LIGA TANLASH — 3D KARUSEL (league_carousel.js)
+   Gorizontal scroll + scroll-snap; 3D transform/opacity JS'da har kadrda.
+   ============================================================ */
+.leagues-list.lc {
+  flex-direction: row; gap: 0; align-items: center;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain; scrollbar-width: none;
+  padding: 18px 0 22px;
+  position: relative;                      /* offsetLeft ro'yxatga nisbatan */
+  margin: 0 -16px; touch-action: pan-x pan-y;
+}
+.leagues-list.lc::-webkit-scrollbar { display: none; }
+/* Chetki bo'shliqlar: birinchi/oxirgi karta ham markazga kela olsin ((100-56)/2 + 6 = 28%) */
+.leagues-list.lc::before, .leagues-list.lc::after { content: ""; flex: 0 0 28%; height: 1px; }
+.leagues-list.lc .league-item {
+  flex: 0 0 56%; scroll-snap-align: center; position: relative;
+  margin: 0 -6%;                              /* qo'shnilar markaziy karta ortiga kiradi */
+  flex-direction: column; justify-content: center; gap: 10px; text-align: center;
+  min-height: 210px; padding: 22px 14px 18px;
+  transition: border-color .2s, background .2s, box-shadow .25s;   /* transform JS'da — o'tishsiz */
+  will-change: transform, opacity; backface-visibility: hidden;
+}
+.leagues-list.lc .league-item:active { transform: none; }
+.leagues-list.lc .league-item.selected { padding-left: 14px; }
+.leagues-list.lc .league-item-logo { width: 84px; height: 84px; margin: 0; }
+.leagues-list.lc .league-item-name { font-size: 19px; }
+.leagues-list.lc .league-item-count { font-size: 13px; margin-top: 4px; }
+.leagues-list.lc .league-item--locked { cursor: pointer; }
+.leagues-list.lc .league-item.lc-center:not(.selected) { border-color: rgba(255,255,255,.18); }
