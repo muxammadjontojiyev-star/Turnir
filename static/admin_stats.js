@@ -10,21 +10,21 @@ const ADMIN_STATS_T = {
   uz: { title: "📊 STATISTIKA", refresh: "↻ Yangilash", total: "Jami foydalanuvchi", online: "Hozir onlayn",
         today: "Bugun yangi", act_today: "Bugun kirgan", d7: "7 kunda yangi", act7: "7 kunda faol",
         d30: "30 kunda yangi", act30: "30 kunda faol", growth: "Yangi foydalanuvchilar — so'nggi 14 kun",
-        modes: "RASMIY TURNIRLAR", league: "Ligalar", wc: "Jahon ch.", cl: "ChL", el: "YeL", div: "Divizion (bugun)",
+        modes: "RASMIY TURNIRLAR", league: "Ligalar", wc: "Jahon ch.", cl: "ChL", el: "YeL", ac: "OChL", div: "Divizion (bugun)",
         pt: "SHAXSIY TURNIRLAR", pt_total: "Turnirlar", pt_live: "Yig'ilmoqda / davom", pt_players: "Ishtirokchilar",
         pt_org: "Tashkilotchilar", pt_subs: "Faol obunalar", pt_paid: "Tushum, so'm", langs: "TIL", at: "Holat",
         hint: "Faol — shu davrda ilovani ochgan. Botda ham: /stats", err: "Statistikani yuklab bo'lmadi" },
   ru: { title: "📊 СТАТИСТИКА", refresh: "↻ Обновить", total: "Всего пользователей", online: "Сейчас онлайн",
         today: "Новых сегодня", act_today: "Заходили сегодня", d7: "Новых за 7 дней", act7: "Активных за 7 дней",
         d30: "Новых за 30 дней", act30: "Активных за 30 дней", growth: "Новые пользователи — последние 14 дней",
-        modes: "ОФИЦИАЛЬНЫЕ ТУРНИРЫ", league: "Лиги", wc: "ЧМ", cl: "ЛЧ", el: "ЛЕ", div: "Дивизион (сегодня)",
+        modes: "ОФИЦИАЛЬНЫЕ ТУРНИРЫ", league: "Лиги", wc: "ЧМ", cl: "ЛЧ", el: "ЛЕ", ac: "АЛЧ", div: "Дивизион (сегодня)",
         pt: "ЧАСТНЫЕ ТУРНИРЫ", pt_total: "Турниры", pt_live: "Набор / идут", pt_players: "Участники",
         pt_org: "Организаторы", pt_subs: "Активные подписки", pt_paid: "Выручка, сум", langs: "ЯЗЫК", at: "Данные на",
         hint: "Активные — открывали приложение за период. В боте: /stats", err: "Не удалось загрузить статистику" },
   en: { title: "📊 STATISTICS", refresh: "↻ Refresh", total: "Total users", online: "Online now",
         today: "New today", act_today: "Opened today", d7: "New in 7 days", act7: "Active in 7 days",
         d30: "New in 30 days", act30: "Active in 30 days", growth: "New users — last 14 days",
-        modes: "OFFICIAL TOURNAMENTS", league: "Leagues", wc: "World Cup", cl: "UCL", el: "UEL", div: "Division (today)",
+        modes: "OFFICIAL TOURNAMENTS", league: "Leagues", wc: "World Cup", cl: "UCL", el: "UEL", ac: "ACL", div: "Division (today)",
         pt: "PRIVATE TOURNAMENTS", pt_total: "Tournaments", pt_live: "Gathering / running", pt_players: "Players",
         pt_org: "Organizers", pt_subs: "Active subscriptions", pt_paid: "Revenue, UZS", langs: "LANGUAGE", at: "As of",
         hint: "Active — opened the app in the period. In the bot: /stats", err: "Could not load statistics" },
@@ -73,7 +73,7 @@ function adminStatsHtml(s) {
     <div class="ast-sub">${escHtml(adminStatsT("modes"))}</div>
     <div class="stats-grid ast-grid ast-grid--5">
       ${adminStatsCell(m.league, "league")}${adminStatsCell(m.wc, "wc")}${adminStatsCell(m.cl, "cl")}
-      ${adminStatsCell(m.el, "el")}${adminStatsCell(m.division_today, "div")}
+      ${adminStatsCell(m.el, "el")}${adminStatsCell(m.ac ?? 0, "ac")}${adminStatsCell(m.division_today, "div")}
     </div>
     ${leagues ? `<div class="ast-chips">${leagues}</div>` : ""}
     <div class="ast-sub">${escHtml(adminStatsT("pt"))}</div>

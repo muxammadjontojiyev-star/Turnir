@@ -1444,6 +1444,10 @@ function showModeSelect() {
         <img class="mode-banner" src="el-banner.jpg?v=1" alt="${escHtml(t.mode_el || "Yevropa ligasi")}"
              onerror="this.style.display='none'">
       </div>
+      <div class="mode-card mode-card--ac mode-card--photo" id="mode-card-ac">
+        <img class="mode-banner" src="ac-banner.jpg?v=1" alt="${escHtml(t.mode_ac || "Osiyo Chempionlar ligasi")}"
+             onerror="this.style.display='none'">
+      </div>
       <div class="mode-card mode-card--division mode-card--photo" id="mode-card-division">
         <img class="mode-banner" src="division-banner.jpg?v=6" alt=""
              onerror="this.style.display='none'">
@@ -1462,6 +1466,8 @@ function showModeSelect() {
     .addEventListener("click", enterDivisionMode);
   document.getElementById("mode-card-el")
     .addEventListener("click", enterEuropaLeagueMode);
+  document.getElementById("mode-card-ac")
+    .addEventListener("click", enterAsianChampionsLeagueMode);
   document.getElementById("mode-hub-back")
     .addEventListener("click", showHubSelect);
 }
@@ -1573,6 +1579,15 @@ function enterEuropaLeagueMode() {
     showEuropaLeague();
   } else {
     showToast("Yevropa ligasi tez orada ishga tushadi!");
+  }
+}
+
+// 2026-10-15: Osiyo Chempionlar ligasi rejimini ochadi (ac.js — YeL nusxasi)
+function enterAsianChampionsLeagueMode() {
+  if (typeof showAsianChampionsLeague === "function") {
+    showAsianChampionsLeague();
+  } else {
+    showToast("Osiyo Chempionlar ligasi tez orada ishga tushadi!");
   }
 }
 
