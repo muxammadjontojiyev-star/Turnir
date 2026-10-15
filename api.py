@@ -3575,4 +3575,6 @@ app.include_router(ac_admin_router)
 
 # ============ TEAMLAR JANGI (2026-10-15, 1-bosqich — router: tb_api.py) ============
 from tb_api import router as tb_router  # noqa: E402
+from tb_api_season import router as tb_season_router  # noqa: E402  (2026-10-16, 2-bosqich)
 app.include_router(tb_router)
+app.include_router(tb_season_router)

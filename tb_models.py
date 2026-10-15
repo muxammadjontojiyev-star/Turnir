@@ -9,6 +9,7 @@ models.init_db() oxirida init_tb_tables() chaqiriladi (CREATE IF NOT EXISTS — 
                 sardor, taklif kodi, holat (pending -> approved | rejected).
   tb_members  — a'zolik: bir kishi FAQAT bitta teamda (UNIQUE user_id);
                 role: captain | member; in_lineup/lineup_pos — sardor tuzgan asosiy tarkib.
+  2-bosqich: tb_seasons, tb_season_teams, tb_fixtures (team bahsi), tb_games (1v1).
 """
 
 from models import get_connection
@@ -48,6 +49,83 @@ def init_tb_tables() -> None:
             )
         """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_members_team ON tb_members(team_id)")
+
+        # ---- 2-bosqich (2026-10-16): mavsum, divizionlar, team bahslari, 1v1 o'yinlar ----
+        # tb_seasons: bir vaqtda bitta faol mavsum (status != 'finished').
+        #   drawn -> running -> finished; current_round — ochiq tur; last_advance_date — kunlik siljish.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tb_seasons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                number INTEGER NOT NULL UNIQUE,
+                status TEXT NOT NULL DEFAULT 'drawn',
+                division_size INTEGER NOT NULL,
+                total_rounds INTEGER NOT NULL DEFAULT 0,
+                current_round INTEGER NOT NULL DEFAULT 0,
+                last_advance_date TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                started_at TIMESTAMP,
+                finished_at TIMESTAMP
+            )
+        """)
+        # tb_season_teams: qaysi team qaysi divizionda (mavsum boshida qotadi)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tb_season_teams (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                season_id INTEGER NOT NULL,
+                team_id INTEGER NOT NULL,
+                division INTEGER NOT NULL,
+                UNIQUE (season_id, team_id),
+                FOREIGN KEY (season_id) REFERENCES tb_seasons(id),
+                FOREIGN KEY (team_id) REFERENCES tb_teams(id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_st_div ON tb_season_teams(season_id, division)")
+        # tb_fixtures: ikki team bahsi (divizion ichida bir martalik aylanma).
+        #   scheduled -> open (tur ochilganda 1v1 juftliklar yaratiladi) -> finished.
+        #   technical: 'home' | 'away' | 'both' — tarkibi yetmagan tomon (texnik mag'lubiyat).
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tb_fixtures (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                season_id INTEGER NOT NULL,
+                division INTEGER NOT NULL,
+                round INTEGER NOT NULL,
+                home_team_id INTEGER NOT NULL,
+                away_team_id INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'scheduled',
+                home_wins INTEGER NOT NULL DEFAULT 0,
+                away_wins INTEGER NOT NULL DEFAULT 0,
+                draws INTEGER NOT NULL DEFAULT 0,
+                home_goals INTEGER NOT NULL DEFAULT 0,
+                away_goals INTEGER NOT NULL DEFAULT 0,
+                technical TEXT,
+                FOREIGN KEY (season_id) REFERENCES tb_seasons(id),
+                FOREIGN KEY (home_team_id) REFERENCES tb_teams(id),
+                FOREIGN KEY (away_team_id) REFERENCES tb_teams(id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_fx_round ON tb_fixtures(season_id, round)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_fx_div ON tb_fixtures(season_id, division, round)")
+        # tb_games: bahs ichidagi 1v1 o'yin (score1 — home o'yinchi, score2 — away o'yinchi)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tb_games (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fixture_id INTEGER NOT NULL,
+                slot INTEGER NOT NULL,
+                home_user_id INTEGER NOT NULL,
+                away_user_id INTEGER NOT NULL,
+                score1 INTEGER,
+                score2 INTEGER,
+                submitted_by INTEGER,
+                status TEXT NOT NULL DEFAULT 'pending',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (fixture_id) REFERENCES tb_fixtures(id),
+                FOREIGN KEY (home_user_id) REFERENCES users(id),
+                FOREIGN KEY (away_user_id) REFERENCES users(id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_games_fx ON tb_games(fixture_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_games_home ON tb_games(home_user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_games_away ON tb_games(away_user_id)")
         conn.commit()
     finally:
         conn.close()

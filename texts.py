@@ -260,6 +260,17 @@ TEXTS = {
         LANGUAGE_RU: "✅ Ваша команда «{name}» одобрена администратором! Теперь вы участвуете в Битве команд.",
         LANGUAGE_EN: "✅ Your team «{name}» was approved by the admin! You can now take part in Team Battle.",
     },
+    # 2026-10-16: Teamlar jangi — 1v1 natija (2-bosqich)
+    "tb_notify_result": {
+        LANGUAGE_UZ: "⚔️ Teamlar jangi: raqibingiz natija kiritdi — {score} (sizning hisobingiz birinchi).\nIlovada tasdiqlang yoki rad eting.",
+        LANGUAGE_RU: "⚔️ Битва команд: соперник ввёл результат — {score} (ваш счёт первым).\nПодтвердите или отклоните в приложении.",
+        LANGUAGE_EN: "⚔️ Team Battle: your opponent submitted a result — {score} (your score first).\nConfirm or reject it in the app.",
+    },
+    "tb_notify_rejected_result": {
+        LANGUAGE_UZ: "⚠️ Teamlar jangi: raqibingiz kiritgan natijangizni rad etdi. Kelishib, qayta kiriting.",
+        LANGUAGE_RU: "⚠️ Битва команд: соперник отклонил ваш результат. Договоритесь и введите заново.",
+        LANGUAGE_EN: "⚠️ Team Battle: your opponent rejected your result. Agree and submit again.",
+    },
     "tb_notify_rejected": {
         LANGUAGE_UZ: "❌ «{name}» teamingiz rad etildi.\nSabab: {reason}",
         LANGUAGE_RU: "❌ Ваша команда «{name}» отклонена.\nПричина: {reason}",

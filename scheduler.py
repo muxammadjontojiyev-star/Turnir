@@ -173,6 +173,17 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: OChL tur siljitishda xato: %s", exc)
 
+    # === TEAMLAR JANGI (2026-10-16): 23:30 da joriy tur yopiladi, keyingisi ochiladi ===
+    try:
+        from tb_rounds import tb_tick
+        tb_res = tb_tick()
+        if tb_res:
+            logger.info("Scheduler: Teamlar jangi %s-tur yopildi (awaiting: %d, 0:0: %d) → %s-tur ochildi (%d o'yin).",
+                        tb_res["closed_round"], tb_res["awaiting_resolved"], tb_res["pending_resolved"],
+                        tb_res["opened_round"], tb_res["games_created"])
+    except Exception as exc:
+        logger.warning("Scheduler: Teamlar jangi tur siljitishda xato: %s", exc)
+
     # === SHAXSIY TURNIRLAR: tashkilotchi belgilagan tur muddati o'tgan bo'lsa yopiladi ===
     try:
         from pt_rounds import pt_tick

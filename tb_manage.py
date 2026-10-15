@@ -154,6 +154,15 @@ def tb_regen_invite(captain_id: int) -> tuple[bool, str | dict]:
         conn.close()
 
 
+def _in_active_season(cur, team_id: int) -> bool:
+    """
+    2026-10-16: team biror mavsum qur'asida qatnashganmi. Qatnashgan team o'chirilmaydi —
+    bahslar va jadval tarixi unga bog'langan (FK).
+    """
+    cur.execute("SELECT 1 FROM tb_season_teams WHERE team_id = ? LIMIT 1", (team_id,))
+    return cur.fetchone() is not None
+
+
 def _delete_team(cur, team_id: int) -> None:
     cur.execute("DELETE FROM tb_members WHERE team_id = ?", (team_id,))
     cur.execute("DELETE FROM tb_teams WHERE id = ?", (team_id,))
@@ -168,6 +177,9 @@ def tb_dissolve(captain_id: int) -> tuple[bool, str | dict]:
         if not team_id:
             _finish(cur, False)
             return False, "not_captain"
+        if _in_active_season(cur, team_id):          # 2026-10-16: mavsum davomida tarqatib bo'lmaydi
+            _finish(cur, False)
+            return False, "in_active_season"
         _delete_team(cur, team_id)
         _finish(cur, True)
         logger.info("TB: team tarqatildi id=%s (sardor user=%s)", team_id, captain_id)
@@ -216,6 +228,9 @@ def tb_admin_delete(team_id: int) -> tuple[bool, str | dict]:
         if not cur.fetchone():
             _finish(cur, False)
             return False, "not_found"
+        if _in_active_season(cur, team_id):
+            _finish(cur, False)
+            return False, "in_active_season"
         _delete_team(cur, team_id)
         _finish(cur, True)
         return True, {"team_id": team_id}
