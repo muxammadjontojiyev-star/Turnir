@@ -10,6 +10,7 @@ models.init_db() oxirida init_tb_tables() chaqiriladi (CREATE IF NOT EXISTS — 
   tb_members  — a'zolik: bir kishi FAQAT bitta teamda (UNIQUE user_id);
                 role: captain | member; in_lineup/lineup_pos — sardor tuzgan asosiy tarkib.
   2-bosqich: tb_seasons, tb_season_teams, tb_fixtures (team bahsi), tb_games (1v1).
+  3-bosqich: tb_messages (1v1 chat), tb_games_v (ko'rinish), tb_titles (divizion chempionlari).
 """
 
 from models import get_connection
@@ -126,6 +127,44 @@ def init_tb_tables() -> None:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_games_fx ON tb_games(fixture_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_games_home ON tb_games(home_user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_games_away ON tb_games(away_user_id)")
+
+        # ---- 3-bosqich (2026-10-16): 1v1 chat, umumiy chat modullari uchun ko'rinish, unvonlar ----
+        # tb_messages: o'yin chati (match_id = tb_games.id) — pt_messages bilan bir xil tuzilma
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tb_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                match_id INTEGER NOT NULL,
+                sender_id INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                is_read INTEGER NOT NULL DEFAULT 0,
+                read_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (match_id) REFERENCES tb_games(id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_messages_match ON tb_messages(match_id)")
+        # tb_games_v: chat_report / chat_images / room_code kutgan ustun nomlari (player1_id, player2_id, round)
+        cursor.execute("""
+            CREATE VIEW IF NOT EXISTS tb_games_v AS
+            SELECT g.id, g.home_user_id AS player1_id, g.away_user_id AS player2_id,
+                   f.round AS round, g.score1, g.score2, g.status
+            FROM tb_games g JOIN tb_fixtures f ON f.id = g.fixture_id
+        """)
+        # tb_titles: mavsum yakunida divizion g'oliblari (1-o'rin) — team sahifasida kubok
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tb_titles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                season_id INTEGER NOT NULL,
+                season_number INTEGER NOT NULL,
+                division INTEGER NOT NULL,
+                team_id INTEGER NOT NULL,
+                team_name TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (season_id, division),
+                FOREIGN KEY (team_id) REFERENCES tb_teams(id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_titles_team ON tb_titles(team_id)")
         conn.commit()
     finally:
         conn.close()

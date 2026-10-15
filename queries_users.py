@@ -229,6 +229,8 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
                 cursor.execute("DELETE FROM tb_teams WHERE id = ?", (tr["id"],))
         cursor.execute("DELETE FROM tb_members WHERE user_id = ?", (user_id,))
         # 2026-10-16: 1v1 o'yinlar (FK users) — bahs natijalari tb_fixtures'da saqlanib qoladi
+        cursor.execute("DELETE FROM tb_messages WHERE sender_id = ? OR match_id IN (SELECT id FROM tb_games "
+                       "WHERE home_user_id = ? OR away_user_id = ?)", (user_id, user_id, user_id))
         cursor.execute("DELETE FROM tb_games WHERE home_user_id = ? OR away_user_id = ?", (user_id, user_id))
         # 2026-10-11: chat rasmlari (sender_id FK users) — userdan OLDIN
         cursor.execute("DELETE FROM chat_images WHERE sender_id = ?", (user_id,))

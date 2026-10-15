@@ -131,7 +131,7 @@ def tb_start_rounds() -> tuple[bool, str | dict]:
         info = open_round(cur, s["id"], 1)
         cur.execute("UPDATE tb_seasons SET status = 'running', current_round = 1, started_at = datetime('now'), "
                     "last_advance_date = ? WHERE id = ?", (_now_local().date().isoformat(), s["id"]))
-        return True, {"round": 1, **info}
+        return True, {"round": 1, "season_id": s["id"], **info}
     return _tx(run)
 
 
@@ -142,7 +142,7 @@ def _advance(cur, s: dict, today: str) -> dict:
     opened = open_round(cur, s["id"], nxt) if nxt <= s["total_rounds"] else {"fixtures": 0, "games": 0}
     cur.execute("UPDATE tb_seasons SET current_round = ?, last_advance_date = ? WHERE id = ?",
                 (nxt, today, s["id"]))
-    return {"closed_round": cur_round, "opened_round": nxt if nxt <= s["total_rounds"] else None,
+    return {"season_id": s["id"], "closed_round": cur_round, "opened_round": nxt if nxt <= s["total_rounds"] else None,
             **closed, "games_created": opened["games"]}
 
 
@@ -187,5 +187,16 @@ def tb_finish_season() -> tuple[bool, str | dict]:
         # o'ynalmagan (scheduled) bahslar shundayligicha qoladi — jadvalga kirmaydi
         cur.execute("UPDATE tb_seasons SET status = 'finished', finished_at = datetime('now') WHERE id = ?",
                     (s["id"],))
-        return True, {"season": s["number"], **closed}
+        # 3-bosqich: har divizion g'olibi — tb_titles (team sahifasida 🏆)
+        from tb_season import _standings_cur
+        cur.execute("SELECT DISTINCT division FROM tb_season_teams WHERE season_id = ? ORDER BY division", (s["id"],))
+        champions = []
+        for d in [r["division"] for r in cur.fetchall()]:
+            table = _standings_cur(cur, s["id"], d)
+            if table and table[0]["played"] > 0:
+                top = table[0]
+                cur.execute("INSERT OR IGNORE INTO tb_titles (season_id, season_number, division, team_id, team_name) "
+                            "VALUES (?, ?, ?, ?, ?)", (s["id"], s["number"], d, top["team_id"], top["name"]))
+                champions.append({"division": d, "team_id": top["team_id"], "name": top["name"]})
+        return True, {"season": s["number"], "champions": champions, **closed}
     return _tx(run)

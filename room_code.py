@@ -59,6 +59,7 @@ MODE_NAME_KEYS = {
     "ac": "mode_name_ac",       # 2026-10-15
     "ac_po": "mode_name_ac",
     "pt": "mode_name_pt",
+    "tb": "mode_name_tb",    # 2026-10-16
 }
 
 

@@ -266,6 +266,11 @@ TEXTS = {
         LANGUAGE_RU: "⚔️ Битва команд: соперник ввёл результат — {score} (ваш счёт первым).\nПодтвердите или отклоните в приложении.",
         LANGUAGE_EN: "⚔️ Team Battle: your opponent submitted a result — {score} (your score first).\nConfirm or reject it in the app.",
     },
+    "tb_notify_round": {
+        LANGUAGE_UZ: "⚔️ Teamlar jangi: {round}-tur ochildi!\n{my_team} — {opp_team}\nRaqibingiz: {opp}\nDeadline — bugun 23:30. Ilovada natijani kiriting.",
+        LANGUAGE_RU: "⚔️ Битва команд: открыт {round}-й тур!\n{my_team} — {opp_team}\nВаш соперник: {opp}\nДедлайн — сегодня 23:30. Введите результат в приложении.",
+        LANGUAGE_EN: "⚔️ Team Battle: round {round} is open!\n{my_team} — {opp_team}\nYour opponent: {opp}\nDeadline — today 23:30. Submit the result in the app.",
+    },
     "tb_notify_rejected_result": {
         LANGUAGE_UZ: "⚠️ Teamlar jangi: raqibingiz kiritgan natijangizni rad etdi. Kelishib, qayta kiriting.",
         LANGUAGE_RU: "⚠️ Битва команд: соперник отклонил ваш результат. Договоритесь и введите заново.",
@@ -438,6 +443,11 @@ TEXTS = {
         LANGUAGE_UZ: "Osiyo Chempionlar ligasi",
         LANGUAGE_RU: "Азиатская лига чемпионов",
         LANGUAGE_EN: "Asian Champions League",
+    },
+    "mode_name_tb": {        # 2026-10-16
+        LANGUAGE_UZ: "Teamlar jangi",
+        LANGUAGE_RU: "Битва команд",
+        LANGUAGE_EN: "Team Battle",
     },
     "mode_name_pt": {
         LANGUAGE_UZ: "Shaxsiy turnir",

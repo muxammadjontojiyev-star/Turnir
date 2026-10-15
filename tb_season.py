@@ -27,6 +27,7 @@ TB_DIV_SIZE_MIN = 4     # admin kiritishi mumkin bo'lgan eng kichik hajm
 TB_DIV_SIZE_MAX = 20
 TB_DIV_TAIL_MIN = 6     # oxirgi divizion bundan kichik bo'lsa — oldingisiga qo'shiladi
 TB_PTS_WIN, TB_PTS_DRAW = 3, 1
+TB_PROMO = 2            # har divizion juftida ko'tariladigan/tushadigan teamlar soni (3-bosqich)
 
 _SEASON_COLS = ("id, number, status, division_size, total_rounds, current_round, "
                 "last_advance_date, created_at, started_at, finished_at")
@@ -92,10 +93,28 @@ def split_divisions(team_ids: list[int], size: int) -> list[list[int]]:
     return chunks
 
 
+def apply_promotion(tables: list[list[int]], n: int = None) -> list[list[int]]:
+    """
+    3-bosqich (2026-10-16): ko'tarilish/tushish. Har qo'shni divizion juftida yuqori
+    divizionning oxirgi n tasi pastga, pastkisining birinchi n tasi yuqoriga almashadi
+    (asl jadvallar bo'yicha — bir vaqtda). Kichik divizionda (< 2n) almashinuv yo'q.
+    """
+    n = TB_PROMO if n is None else n
+    out = [list(t) for t in tables]
+    for d in range(len(tables) - 1):
+        up, low = tables[d], tables[d + 1]
+        if len(up) < 2 * n or len(low) < 2 * n:
+            continue
+        down_ids, up_ids = up[-n:], low[:n]
+        out[d] = [t for t in out[d] if t not in down_ids] + up_ids
+        out[d + 1] = down_ids + [t for t in out[d + 1] if t not in up_ids]
+    return out
+
+
 def _ordered_for_draw(cur, team_ids: list[int]) -> list[int]:
     """
-    Oldingi mavsum yakuniy o'rinlari bo'yicha (divizion, o'rin) tartib; yangi teamlar
-    oxirida tasodifiy. Oldingi mavsum bo'lmasa — hammasi tasodifiy.
+    Oldingi mavsum yakuniy o'rinlari bo'yicha (divizion, o'rin) tartib — ko'tarilish/tushish
+    (apply_promotion) bilan; yangi teamlar oxirida tasodifiy. Oldingi mavsum bo'lmasa — tasodifiy.
     """
     cur.execute("SELECT id FROM tb_seasons WHERE status = 'finished' ORDER BY id DESC LIMIT 1")
     prev = cur.fetchone()
@@ -103,10 +122,12 @@ def _ordered_for_draw(cur, team_ids: list[int]) -> list[int]:
     if prev:
         cur.execute("SELECT DISTINCT division FROM tb_season_teams WHERE season_id = ? ORDER BY division",
                     (prev["id"],))
+        tables = [[row["team_id"] for row in _standings_cur(cur, prev["id"], r["division"])]
+                  for r in cur.fetchall()]
         order = 0
-        for d in [r["division"] for r in cur.fetchall()]:
-            for row in _standings_cur(cur, prev["id"], d):
-                rank[row["team_id"]] = order
+        for tbl in apply_promotion(tables):
+            for tid in tbl:
+                rank[tid] = order
                 order += 1
     known = sorted([t for t in team_ids if t in rank], key=lambda t: rank[t])
     new = [t for t in team_ids if t not in rank]
@@ -251,5 +272,17 @@ def tb_team_in_active_season(team_id: int) -> bool:
             return False
         cur.execute("SELECT 1 FROM tb_season_teams WHERE season_id = ? AND team_id = ?", (s["id"], team_id))
         return cur.fetchone() is not None
+    finally:
+        conn.close()
+
+
+def tb_team_titles(team_id: int) -> list[dict]:
+    """3-bosqich: teamning divizion chempionliklari (eng yangisi birinchi)."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT season_number, division FROM tb_titles WHERE team_id = ? ORDER BY season_id DESC",
+                    (team_id,))
+        return [dict(r) for r in cur.fetchall()]
     finally:
         conn.close()

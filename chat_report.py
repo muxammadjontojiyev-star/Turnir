@@ -74,6 +74,10 @@ MODES = {
     "ac_po":  {"msg_table": "ac_po_messages",  "match_table": "ac_playoff_matches",
                "round_col": "round",    "round_label": "bosqich",
                "playoff": None, "has_club": False, "title": "OChL play-off"},
+    # 2026-10-16: Teamlar jangi 1v1 (tb_games_v — player1_id/player2_id/round ko'rinishi)
+    "tb":     {"msg_table": "tb_messages",     "match_table": "tb_games_v",
+               "round_col": "round",    "round_label": "tur",
+               "playoff": None, "has_club": False, "title": "Teamlar jangi"},
     # 2026-10-02: shaxsiy turnir (xona ID uchun; hisobot faqat bosh admin — scope yo'q)
     "pt":     {"msg_table": "pt_messages",     "match_table": "pt_matches",
                "round_col": "round",    "round_label": "tur",

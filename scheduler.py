@@ -178,6 +178,8 @@ async def _check_and_notify_once() -> None:
         from tb_rounds import tb_tick
         tb_res = tb_tick()
         if tb_res:
+            from tb_notify import tb_spawn_round_notify          # 3-bosqich: raqib haqida xabar (fonda)
+            tb_spawn_round_notify(tb_res["season_id"], tb_res["opened_round"])
             logger.info("Scheduler: Teamlar jangi %s-tur yopildi (awaiting: %d, 0:0: %d) → %s-tur ochildi (%d o'yin).",
                         tb_res["closed_round"], tb_res["awaiting_resolved"], tb_res["pending_resolved"],
                         tb_res["opened_round"], tb_res["games_created"])

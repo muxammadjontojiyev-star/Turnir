@@ -28,7 +28,8 @@ def tb_season_info(user: dict = Depends(get_authenticated_user)):
     if not s:
         return {"season": None}
     team_id = tb_my_team_id(user["id"])
-    return {"season": s, "divisions": tb_divisions(s["id"]),
+    from tb_season import TB_PROMO
+    return {"season": s, "divisions": tb_divisions(s["id"]), "promo": TB_PROMO,
             "my_team_id": team_id, "my_division": tb_team_division(s["id"], team_id)}
 
 
@@ -108,15 +109,21 @@ def tb_admin_create(division_size: int | None = Body(None, embed=True),
 
 
 @router.post("/tb/admin/season/start")
-def tb_admin_start(admin: dict = Depends(get_authenticated_super_admin)):
+async def tb_admin_start(admin: dict = Depends(get_authenticated_super_admin)):
+    from tb_notify import tb_spawn_round_notify
     from tb_rounds import tb_start_rounds
-    return _ok(tb_start_rounds())
+    res = _ok(tb_start_rounds())
+    tb_spawn_round_notify(res["season_id"], res["round"])      # 2026-10-16: raqib haqida xabar (fonda)
+    return res
 
 
 @router.post("/tb/admin/season/advance")
-def tb_admin_advance(admin: dict = Depends(get_authenticated_super_admin)):
+async def tb_admin_advance(admin: dict = Depends(get_authenticated_super_admin)):
+    from tb_notify import tb_spawn_round_notify
     from tb_rounds import tb_force_advance
-    return _ok(tb_force_advance())
+    res = _ok(tb_force_advance())
+    tb_spawn_round_notify(res["season_id"], res["opened_round"])
+    return res
 
 
 @router.post("/tb/admin/season/finish")

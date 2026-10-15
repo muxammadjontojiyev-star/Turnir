@@ -110,6 +110,9 @@ def tb_team_detail(team_id: int, viewer_id: int, viewer_is_admin: bool = False) 
         team["is_captain"] = is_captain
         team["is_member"] = any(m["user_id"] == viewer_id for m in members)
         team["lineup_count"] = sum(1 for m in members if m["in_lineup"])
+        cur.execute("SELECT season_number, division FROM tb_titles WHERE team_id = ? ORDER BY season_id DESC",
+                    (team_id,))
+        team["titles"] = [dict(r) for r in cur.fetchall()]      # 2026-10-16 (3-bosqich)
         if is_captain or viewer_is_admin:
             cur.execute("SELECT invite_code FROM tb_teams WHERE id = ?", (team_id,))
             team["invite_code"] = cur.fetchone()["invite_code"]
@@ -135,7 +138,8 @@ def tb_list_teams(status: str | None = STATUS_APPROVED) -> list[dict]:
         sql = ("SELECT t.id, t.name, t.emoji, t.status, t.reject_reason, t.created_at, "
                "u.nickname AS captain_nickname, u.username AS captain_username, "
                "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id) AS members_count, "
-               "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id AND m.in_lineup = 1) AS lineup_count "
+               "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id AND m.in_lineup = 1) AS lineup_count, "
+               "(SELECT COUNT(*) FROM tb_titles x WHERE x.team_id = t.id) AS titles_count "
                "FROM tb_teams t JOIN users u ON u.id = t.captain_user_id ")
         if status:
             cur.execute(sql + "WHERE t.status = ? ORDER BY members_count DESC, t.name", (status,))
