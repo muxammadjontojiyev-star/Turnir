@@ -17,6 +17,7 @@ const CHAT_IMG_MODES = {
   "/matches": "league", "/cl/matches": "cl", "/cl/playoff/matches": "cl_po",
   "/el/matches": "el", "/el/playoff/matches": "el_po", "/div/matches": "div",
   "/ac/matches": "ac", "/ac/playoff/matches": "ac_po",   // 2026-10-15
+  "/tb/matches": "tb",                                   // 2026-10-16: Teamlar jangi
   "/pt/matches": "pt",
 };
 

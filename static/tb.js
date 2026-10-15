@@ -122,6 +122,7 @@ function tbRender(bodyHtml) {
         `<button class="tb-tab${TB.tab === k ? " active" : ""}" data-tb-tab="${k}">${escHtml(l)}</button>`).join("")}</div>`}
       <div class="tb-body">${bodyHtml}</div>
     </div>`;
+  tbI18nApply(root);                    // 2026-10-16 (3-bosqich): ru/en
 }
 
 function tbRenderTab() {
@@ -143,9 +144,9 @@ function tbNoTeamHtml() {
       <div class="tb-hero-kicker">${ICON.get("swords", 16)} TEAMLAR JANGI</div>
       <div class="tb-hero-title">Jamoangizni yig'ing va jangga kiring</div>
       <ul class="tb-hero-list">
-        <li>Team ochasiz yoki do'stingiz teamiga <b>taklif havolasi</b> orqali qo'shilasiz.</li>
-        <li>Sardor <b>asosiy tarkib</b>ni tuzadi (${TB.me.lineup_min}–${TB.me.lineup_max} kishi).</li>
-        <li>Ikki team bahsida o'yinchilar <b>1v1</b> o'ynaydi — ko'p g'alaba olgan team yutadi.</li>
+        <li>Team ochasiz yoki do'stingiz teamiga taklif havolasi orqali qo'shilasiz.</li>
+        <li>Sardor asosiy tarkibni tuzadi (${TB.me.lineup_min}–${TB.me.lineup_max} kishi).</li>
+        <li>Ikki team bahsida o'yinchilar 1v1 o'ynaydi — ko'p g'alaba olgan team yutadi.</li>
         <li>Teamlar divizionlarda liga formatida bellashadi.</li>
       </ul>
     </div>
@@ -176,6 +177,8 @@ function tbTeamHeadHtml(t) {
         <div><b>${t.members_count}</b><span>A'ZO</span></div>
         <div><b>${t.lineup_count ?? "—"}</b><span>ASOSIY TARKIB</span></div>
       </div>
+      ${(t.titles || []).length ? `<div class="tb-titles">${t.titles.map(x =>
+        `<span>🏆 ${x.season_number}-mavsum · ${x.division}-divizion chempioni</span>`).join("")}</div>` : ""}
       ${t.status === "rejected" && t.reject_reason ? `<div class="tb-warn">Sabab: ${escHtml(t.reject_reason)}</div>` : ""}
     </div>`;
 }
@@ -228,7 +231,7 @@ async function tbLoadTeams() {
     <button class="tb-team-row" data-tb-team="${t.id}">
       <span class="tb-row-n">${i + 1}</span>
       <span class="tb-row-emoji">${escHtml(t.emoji || "⚔️")}</span>
-      <span class="tb-row-info"><b>${escHtml(t.name)}</b><span>Sardor: ${escHtml(tbWho({ username: t.captain_username, nickname: t.captain_nickname }))}</span></span>
+      <span class="tb-row-info"><b>${escHtml(t.name)}${t.titles_count ? ` <i class="tb-title-cnt">🏆${t.titles_count > 1 ? "×" + t.titles_count : ""}</i>` : ""}</b><span>Sardor: ${escHtml(tbWho({ username: t.captain_username, nickname: t.captain_nickname }))}</span></span>
       <span class="tb-row-count">${t.members_count}<small>a'zo</small></span>
     </button>`).join("");
   tbRender(`<div class="section-label">TASDIQLANGAN TEAMLAR (${TB.teams.length})</div>
@@ -275,13 +278,13 @@ async function tbAction(path, body, okMsg, btn) {
   if (btn) btn.disabled = true;
   try {
     await apiFetch(path, { method: "POST", body: JSON.stringify(body || {}) });
-    if (okMsg) showToast(okMsg);
+    if (okMsg) tbToast(okMsg);
     TB.me = await apiFetch("/tb/me");
     TB.lineupSel = null;
     tbRenderTab();
     return true;
   } catch (e) {
-    showToast("❌ " + tbErr(e));
+    tbToast("❌ " + tbErr(e));
     if (btn) btn.disabled = false;
     return false;
   }
@@ -301,9 +304,9 @@ function tbHandleClick(e) {
   const team = t.closest("[data-tb-team]");
   if (team) { void tbOpenTeam(team.dataset.tbTeam); return; }
   const kick = t.closest("[data-tb-kick]");
-  if (kick && confirm("A'zo teamdan chiqarilsinmi?")) { void tbAction("/tb/members/remove", { user_id: +kick.dataset.tbKick }, "✅ Chiqarildi", kick); return; }
+  if (kick && tbConfirm("A'zo teamdan chiqarilsinmi?")) { void tbAction("/tb/members/remove", { user_id: +kick.dataset.tbKick }, "✅ Chiqarildi", kick); return; }
   const cap = t.closest("[data-tb-cap]");
-  if (cap && confirm("Sardorlik shu a'zoga topshirilsinmi? Siz oddiy a'zo bo'lib qolasiz.")) {
+  if (cap && tbConfirm("Sardorlik shu a'zoga topshirilsinmi? Siz oddiy a'zo bo'lib qolasiz.")) {
     void tbAction("/tb/captain/transfer", { user_id: +cap.dataset.tbCap }, "✅ Sardorlik topshirildi", cap); return;
   }
   const act = t.closest("[data-tb]");
@@ -318,8 +321,8 @@ function tbHandleClick(e) {
     const code = TB.joinCode;
     TB.joinCode = null;
     void tbAction("/tb/join", { code }, "✅ Teamga qo'shildingiz", act);
-  } else if (a === "leave" && confirm("Teamdan chiqasizmi?")) void tbAction("/tb/leave", {}, "Teamdan chiqdingiz", act);
-  else if (a === "dissolve" && confirm("Team butunlay tarqatilsinmi? Barcha a'zolar chiqariladi. Qaytarib bo'lmaydi!")) {
+  } else if (a === "leave" && tbConfirm("Teamdan chiqasizmi?")) void tbAction("/tb/leave", {}, "Teamdan chiqdingiz", act);
+  else if (a === "dissolve" && tbConfirm("Team butunlay tarqatilsinmi? Barcha a'zolar chiqariladi. Qaytarib bo'lmaydi!")) {
     void tbAction("/tb/dissolve", {}, "Team tarqatildi", act);
   } else if (typeof tbCaptainClick === "function") tbCaptainClick(a, act);
 }

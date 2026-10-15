@@ -31,6 +31,7 @@ async function tbBattleLoad() {
     const [info, my] = await Promise.all([tbsLoadInfo(), apiFetch("/tb/my-games")]);
     TBS.games = my.games || [];
     TBS.me = my.user_id;
+    try { TBS.unread = (await apiFetch("/tb/matches/unread")).by_match || {}; } catch (_) { TBS.unread = {}; }
     let fixtureHtml = "";
     const s = info.season;
     if (s && s.status === "running" && info.my_division && s.current_round <= s.total_rounds) {
@@ -76,7 +77,12 @@ function tbsGameCardHtml(g) {
       </div>
       <button class="btn btn--primary" data-tbs-submit="${g.id}">Natijani yuborish</button>`;
   }
-  const tg = opUser ? `<button class="tb-mini" data-tbs-tg="${escHtml(opUser)}">💬 Raqibga yozish</button>` : "";
+  // 3-bosqich: ilova ichidagi chat (rasm yuborish bilan) + Telegram'da yozish
+  const unread = (TBS.unread || {})[g.id] || 0;
+  const tg = `<span class="tb-g-btns">
+      <button class="tb-mini" data-tbs-chat="${g.id}" data-name="${escHtml(opName || "Raqib")}">💬 Chat${unread ? ` <i class="tb-unread">${unread}</i>` : ""}</button>
+      ${opUser ? `<button class="tb-mini" data-tbs-tg="${escHtml(opUser)}">✈️ Telegram</button>` : ""}
+    </span>`;
   return `<div class="card tb-game">
       <div class="tb-g-head"><span>${g.round}-tur · ${g.slot}-juftlik</span>${tg}</div>
       <div class="tb-g-vs">
@@ -130,8 +136,17 @@ async function tbsRenderTable() {
     apiFetch(`/tb/season/fixtures?division=${TBS.division}&round=${TBS.round}`),
   ]);
   const myTeam = TBS.info.my_team_id;
+  // 3-bosqich: ko'tarilish (yashil) / tushish (qizil) zonalari
+  const promo = TBS.info.promo || 0, lastDiv = divs.length ? divs[divs.length - 1].division : 1;
+  const nRows = (t.table || []).length;
+  const zone = (i) => {
+    if (!promo || nRows < 2 * promo) return "";
+    if (TBS.division > 1 && i < promo) return " tb-zone-up";
+    if (TBS.division < lastDiv && i >= nRows - promo) return " tb-zone-down";
+    return "";
+  };
   const rows = (t.table || []).map((r, i) => `
-    <tr class="${r.team_id === myTeam ? "is-me" : ""}">
+    <tr class="${r.team_id === myTeam ? "is-me" : ""}${zone(i)}">
       <td>${i + 1}</td>
       <td class="tb-tt-name">${tbsTeam(r.name, r.emoji)}</td>
       <td>${r.played}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td>
@@ -149,6 +164,8 @@ async function tbsRenderTable() {
       </table>
     </div>
     <div class="tb-hint">Ochko: g'alaba 3 · durang 1. Teng bo'lsa: 1v1 g'alabalar farqi → gol farqi.</div>
+    ${divs.length > 1 ? `<div class="tb-zone-legend">${TBS.division > 1 ? `<span><i class="tb-zl tb-zl--up"></i>Yuqori divizionga ko'tariladi (${promo})</span>` : ""}
+      ${TBS.division < lastDiv ? `<span><i class="tb-zl tb-zl--down"></i>Quyi divizionga tushadi (${promo})</span>` : ""}</div>` : ""}
     <div class="tb-round-nav">
       <button class="tb-mini" data-tbs-round="-1" ${TBS.round <= 1 ? "disabled" : ""}>◀</button>
       <b>${TBS.round}-tur</b>
@@ -162,10 +179,10 @@ async function tbsPost(path, body, okMsg, btn) {
   if (btn) btn.disabled = true;
   try {
     await apiFetch(path, { method: "POST", body: JSON.stringify(body) });
-    if (okMsg) showToast(okMsg);
+    if (okMsg) tbToast(okMsg);
     await tbBattleLoad();
   } catch (e) {
-    showToast("❌ " + tbErr(e));
+    tbToast("❌ " + tbErr(e));
     if (btn) btn.disabled = false;
   }
 }
@@ -178,16 +195,21 @@ document.addEventListener("click", (e) => {
   if (sub) {
     const id = +sub.dataset.tbsSubmit;
     const m = document.getElementById(`tbs-m-${id}`)?.value, o = document.getElementById(`tbs-o-${id}`)?.value;
-    if (m === "" || o === "") { showToast("Hisobni kiriting"); return; }
-    if (!confirm(`Natija: Siz ${m} : ${o} Raqib. Yuborilsinmi?`)) return;
+    if (m === "" || o === "") { tbToast("Hisobni kiriting"); return; }
+    if (!tbConfirm(`Natija: Siz ${m} : ${o} Raqib. Yuborilsinmi?`)) return;
     void tbsPost("/tb/game/submit", { game_id: id, my_score: +m, opp_score: +o }, "✅ Yuborildi — raqib tasdiqlaydi", sub);
     return;
   }
   const cf = e.target.closest("[data-tbs-confirm]");
   if (cf) {
     const accept = cf.dataset.accept === "1";
-    if (!accept && !confirm("Natija rad etilsinmi? Raqib qayta kiritadi.")) return;
+    if (!accept && !tbConfirm("Natija rad etilsinmi? Raqib qayta kiritadi.")) return;
     void tbsPost("/tb/game/confirm", { game_id: +cf.dataset.tbsConfirm, accept }, accept ? "✅ Tasdiqlandi" : "Rad etildi", cf);
+    return;
+  }
+  const ch = e.target.closest("[data-tbs-chat]");
+  if (ch) {
+    if (typeof openWebChat === "function") openWebChat(+ch.dataset.tbsChat, ch.dataset.name || "Raqib", "/tb/matches");
     return;
   }
   const tg = e.target.closest("[data-tbs-tg]");
@@ -198,7 +220,7 @@ document.addEventListener("click", (e) => {
     return;
   }
   const dv = e.target.closest("[data-tbs-div]");
-  if (dv) { TBS.division = +dv.dataset.tbsDiv; void tbsRenderTable().catch(err => showToast("❌ " + tbErr(err))); return; }
+  if (dv) { TBS.division = +dv.dataset.tbsDiv; void tbsRenderTable().catch(err => tbToast("❌ " + tbErr(err))); return; }
   const rn = e.target.closest("[data-tbs-round]");
-  if (rn) { TBS.round += +rn.dataset.tbsRound; void tbsRenderTable().catch(err => showToast("❌ " + tbErr(err))); }
+  if (rn) { TBS.round += +rn.dataset.tbsRound; void tbsRenderTable().catch(err => tbToast("❌ " + tbErr(err))); }
 });

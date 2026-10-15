@@ -47,7 +47,7 @@ async function tbAdminSeasonAct(a, btn) {
   const ask = { create: "Qur'a o'tkazilsinmi? Tasdiqlangan, tarkibi to'liq teamlar divizionlarga bo'linadi.",
                 start: "Turlar boshlansinmi? 1-tur hozir ochiladi va o'yinchilar juftlanadi.",
                 advance: "Joriy tur hozir yopilsinmi? Kiritilmagan o'yinlar 0:0 bo'ladi, keyingi tur ochiladi.",
-                finish: "Mavsum yakunlansinmi? Ochiq o'yinlar yopiladi. Qaytarib bo'lmaydi!" }[a];
+                finish: "Mavsum yakunlansinmi? Ochiq o'yinlar yopiladi, har divizion g'olibi 🏆 oladi. Keyingi qur'ada har divizionning top-2 tasi ko'tariladi, oxirgi 2 tasi tushadi. Qaytarib bo'lmaydi!" }[a];
   let path, body = {};
   if (a === "setgame") {
     const g = +document.getElementById("tbs-gid").value, s1 = document.getElementById("tbs-s1").value,
@@ -65,7 +65,8 @@ async function tbAdminSeasonAct(a, btn) {
     const msg = a === "create" ? `✅ ${r.number}-mavsum: ${r.teams} team, ${r.divisions} divizion, ${r.total_rounds} tur`
       : a === "start" ? `✅ 1-tur ochildi: ${r.games} ta 1v1 o'yin`
       : a === "advance" ? `✅ ${r.closed_round}-tur yopildi`
-      : a === "finish" ? "🏁 Mavsum yakunlandi" : "✅ Natija qo'yildi";
+      : a === "finish" ? `🏁 Mavsum yakunlandi. Chempionlar: ${(r.champions || []).map(c => c.division + "-div: " + c.name).join(", ") || "—"}`
+      : "✅ Natija qo'yildi";
     showToast(msg);
     if (typeof tbAdminLoad === "function") await tbAdminLoad();
   } catch (e) {

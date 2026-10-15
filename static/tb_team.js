@@ -48,6 +48,7 @@ function tbRerenderMyTeam() {
   if (body && TB.me && TB.me.team) {
     body.innerHTML = tbMyTeamHtml(TB.me.team);
     if (TB._inviteLink) tbShowInvite(TB._inviteLink);
+    tbI18nApply(body);
     window.scrollTo(0, scroll);
   }
 }
@@ -63,14 +64,15 @@ function tbShowInvite(link) {
       <button class="btn btn--ghost" data-tb="invite-copy">📋 Nusxalash</button>
     </div>
     <button class="tb-mini" data-tb="invite-regen">↻ Yangi havola (eskisi ishlamay qoladi)</button>`;
+  tbI18nApply(box);
 }
 
 async function tbCopy(text) {
-  try { await navigator.clipboard.writeText(text); showToast("✅ Nusxalandi"); }
+  try { await navigator.clipboard.writeText(text); tbToast("✅ Nusxalandi"); }
   catch (_) {
     const ta = document.createElement("textarea");
     ta.value = text; document.body.appendChild(ta); ta.select();
-    try { document.execCommand("copy"); showToast("✅ Nusxalandi"); } catch (__) { showToast(text); }
+    try { document.execCommand("copy"); tbToast("✅ Nusxalandi"); } catch (__) { tbToast(text); }
     ta.remove();
   }
 }
@@ -79,11 +81,11 @@ async function tbCopy(text) {
 function tbCaptainClick(a, btn) {
   const luBtn = btn.closest("[data-tb-lu]");
   if (a === "invite" || a === "invite-regen") {
-    if (a === "invite-regen" && !confirm("Yangi havola yaratilsinmi? Eski havola ishlamay qoladi.")) return;
+    if (a === "invite-regen" && !tbConfirm("Yangi havola yaratilsinmi? Eski havola ishlamay qoladi.")) return;
     btn.disabled = true;
     apiFetch(a === "invite" ? "/tb/invite-link" : "/tb/invite/regen", a === "invite" ? undefined : { method: "POST" })
-      .then(d => { tbShowInvite(d.link); if (a === "invite-regen") showToast("✅ Yangi havola tayyor"); })
-      .catch(e => { showToast("❌ " + tbErr(e)); btn.disabled = false; });
+      .then(d => { tbShowInvite(d.link); if (a === "invite-regen") tbToast("✅ Yangi havola tayyor"); })
+      .catch(e => { tbToast("❌ " + tbErr(e)); btn.disabled = false; });
   } else if (a === "invite-copy" && TB._inviteLink) {
     void tbCopy(TB._inviteLink);
   } else if (a === "invite-share" && TB._inviteLink) {
@@ -108,6 +110,6 @@ document.addEventListener("click", (e) => {
   const i = TB.lineupSel.indexOf(id);
   if (i >= 0) TB.lineupSel.splice(i, 1);
   else if (TB.lineupSel.length < TB.me.lineup_max) TB.lineupSel.push(id);
-  else { showToast(`Ko'pi bilan ${TB.me.lineup_max} kishi`); return; }
+  else { tbToast(`Ko'pi bilan ${TB.me.lineup_max} kishi`); return; }
   tbRerenderMyTeam();
 });
