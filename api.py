@@ -3572,3 +3572,7 @@ from ac_api_admin import router as ac_admin_router  # noqa: E402
 app.include_router(ac_router)
 app.include_router(ac_playoff_router)
 app.include_router(ac_admin_router)
+
+# ============ TEAMLAR JANGI (2026-10-15, 1-bosqich — router: tb_api.py) ============
+from tb_api import router as tb_router  # noqa: E402
+app.include_router(tb_router)

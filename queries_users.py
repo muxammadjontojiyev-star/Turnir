@@ -213,6 +213,21 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
                   "cl_po_messages", "el_messages", "el_po_messages",
                   "ac_messages", "ac_po_messages"]:
             cursor.execute(f"DELETE FROM {t} WHERE sender_id = ?", (user_id,))
+        # 2026-10-15: Teamlar jangi — sardor bo'lsa sardorlik eng eski a'zoga o'tadi,
+        # a'zo qolmasa team o'chiriladi; so'ng a'zolik o'chiriladi (FK users).
+        cursor.execute("SELECT id FROM tb_teams WHERE captain_user_id = ?", (user_id,))
+        for tr in cursor.fetchall():
+            cursor.execute("SELECT user_id FROM tb_members WHERE team_id = ? AND user_id != ? "
+                           "ORDER BY joined_at, id LIMIT 1", (tr["id"], user_id))
+            heir = cursor.fetchone()
+            if heir:
+                cursor.execute("UPDATE tb_members SET role = 'captain' WHERE team_id = ? AND user_id = ?",
+                               (tr["id"], heir["user_id"]))
+                cursor.execute("UPDATE tb_teams SET captain_user_id = ? WHERE id = ?", (heir["user_id"], tr["id"]))
+            else:
+                cursor.execute("DELETE FROM tb_members WHERE team_id = ?", (tr["id"],))
+                cursor.execute("DELETE FROM tb_teams WHERE id = ?", (tr["id"],))
+        cursor.execute("DELETE FROM tb_members WHERE user_id = ?", (user_id,))
         # 2026-10-11: chat rasmlari (sender_id FK users) — userdan OLDIN
         cursor.execute("DELETE FROM chat_images WHERE sender_id = ?", (user_id,))
 

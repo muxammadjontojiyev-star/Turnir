@@ -239,6 +239,32 @@ TEXTS = {
         LANGUAGE_RU: "🏆 Открыть турнир",
         LANGUAGE_EN: "🏆 View tournament",
     },
+    # 2026-10-15: TEAMLAR JANGI (tb_*) — taklif va admin qarori
+    "tb_invite_message": {
+        LANGUAGE_UZ: "⚔️ Sizni «{name}» teamiga taklif qilishdi (Teamlar jangi)!\nSardor: {captain}\nQo'shilish uchun quyidagi tugmani bosing.",
+        LANGUAGE_RU: "⚔️ Вас пригласили в команду «{name}» (Битва команд)!\nКапитан: {captain}\nНажмите кнопку ниже, чтобы вступить.",
+        LANGUAGE_EN: "⚔️ You've been invited to team «{name}» (Team Battle)!\nCaptain: {captain}\nTap the button below to join.",
+    },
+    "tb_invite_invalid": {
+        LANGUAGE_UZ: "❌ Taklif havolasi yaroqsiz yoki team topilmadi.",
+        LANGUAGE_RU: "❌ Ссылка-приглашение недействительна или команда не найдена.",
+        LANGUAGE_EN: "❌ The invite link is invalid or the team was not found.",
+    },
+    "tb_invite_button": {
+        LANGUAGE_UZ: "⚔️ Teamni ko'rish",
+        LANGUAGE_RU: "⚔️ Открыть команду",
+        LANGUAGE_EN: "⚔️ View team",
+    },
+    "tb_notify_approved": {
+        LANGUAGE_UZ: "✅ «{name}» teamingiz admin tomonidan tasdiqlandi! Endi Teamlar jangida qatnasha olasiz.",
+        LANGUAGE_RU: "✅ Ваша команда «{name}» одобрена администратором! Теперь вы участвуете в Битве команд.",
+        LANGUAGE_EN: "✅ Your team «{name}» was approved by the admin! You can now take part in Team Battle.",
+    },
+    "tb_notify_rejected": {
+        LANGUAGE_UZ: "❌ «{name}» teamingiz rad etildi.\nSabab: {reason}",
+        LANGUAGE_RU: "❌ Ваша команда «{name}» отклонена.\nПричина: {reason}",
+        LANGUAGE_EN: "❌ Your team «{name}» was rejected.\nReason: {reason}",
+    },
     # 2026-10-02: shaxsiy turnir o'yinlari (4-bosqich)
     "pt_notify_started": {
         LANGUAGE_UZ: "🏁 «{name}» turniri boshlandi! Siz {group}-guruhdasiz. O'yinlaringizni ilovada ko'ring.",

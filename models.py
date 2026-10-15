@@ -1288,6 +1288,9 @@ def init_db():
     # 2026-10-15: Osiyo Chempionlar ligasi jadvallari (ac_models.py — models.py shishmasin)
     from ac_models import init_ac_tables  # lokal import — circular oldini olish
     init_ac_tables()
+    # 2026-10-15: Teamlar jangi jadvallari (tb_models.py)
+    from tb_models import init_tb_tables
+    init_tb_tables()
     # db_migrations.py'da, oddiy ALTER'lardan KEYIN ishlashi shart
     # (is_playoff ustuni allaqachon qo'shilgan bo'ladi).
     from db_migrations import run_migrations  # lokal import — circular oldini olish
