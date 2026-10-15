@@ -1139,7 +1139,7 @@ function prizeVisual(p) {
   }
   // 2026-10-15: Osiyo Chempionlar ligasi kubogi
   if (p.prize_type === "ac_cup") {
-    return { img: "ac-trophy.png", name: t.ac_trophy_name || "OChL Kubogi" };
+    return { img: "ac-trophy.png?v=2", name: t.ac_trophy_name || "OChL Kubogi" };
   }
   if (p.prize_type === "league_cup") {
     const trophyFile = LEAGUE_TROPHIES[p.league_name] || null;

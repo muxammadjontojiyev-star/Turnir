@@ -87,7 +87,7 @@ function acBindProfile(root) {
 function acRenderPrizes() {
   return `
     <div class="ac-trophy-hero">
-      <img src="ac-trophy.png" alt="${ACT("ac_cup_title")}" class="ac-trophy-img">
+      <img src="ac-trophy.png?v=2" alt="${ACT("ac_cup_title")}" class="ac-trophy-img">
       <div class="ac-trophy-caption">${ACT("ac_cup_title")}</div>
       <div id="ac-cup-holder" class="ac-trophy-sub">${ACT("ac_cup_sub")}</div>
     </div>

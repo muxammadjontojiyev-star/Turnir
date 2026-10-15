@@ -17,7 +17,7 @@ const ACPO_SIDE_ROUNDS = ["r16", "r8", "r4"];
 // 2026-07-21: kubok — Sovrinlar sahifasidagi RASM (ac-trophy.png, acRenderPrizes
 // bilan bir xil fayl); .wc-bracket-trophy klassi o'lcham/animatsiya beradi.
 function acpoTrophySvg() {
-  return `<img src="ac-trophy.png" alt="${ACT("ac_cup_title")}" class="wc-bracket-trophy" />`;
+  return `<img src="ac-trophy.png?v=2" alt="${ACT("ac_cup_title")}" class="wc-bracket-trophy" />`;
 }
 
 // ---- SETKA (Reyting sahifasi) ----
