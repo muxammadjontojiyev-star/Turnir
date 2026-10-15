@@ -11,6 +11,7 @@ async function tbAdminLoad() {
   tbRender(`<div class="empty-state">Yuklanmoqda…</div>`);
   try {
     TB.adminTeams = (await apiFetch("/tb/admin/teams")).teams || [];
+    if (typeof tbAdminSeasonLoad === "function") await tbAdminSeasonLoad();   // 2026-10-16
   } catch (e) {
     tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
     return;
@@ -40,7 +41,8 @@ function tbAdminRender() {
         <button class="tb-mini tb-mini--danger" data-tb-adm="delete" data-id="${t.id}">🗑 O'chirish</button>
       </div>
     </div>`).join("");
-  tbRender(`<div class="tb-chips">${chips}</div>
+  const season = typeof tbAdminSeasonHtml === "function" ? tbAdminSeasonHtml() : "";
+  tbRender(`${season}<div class="tb-chips">${chips}</div>
     ${rows || `<div class="empty-state">Bu bo'limda team yo'q</div>`}`);
 }
 

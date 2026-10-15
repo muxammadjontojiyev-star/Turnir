@@ -31,6 +31,22 @@ const TB_ERR = {
   lineup_not_member: "Tarkibda teamga a'zo bo'lmagan o'yinchi bor",
   bot_username_missing: "Bot nomi sozlanmagan (BOT_USERNAME)",
   too_many_requests: "Juda tez — biroz kuting",
+  // 2026-10-16 (2-bosqich)
+  in_active_season: "Team mavsumda qatnashgan — tarqatib/o'chirib bo'lmaydi",
+  bad_score: "Hisob 0–30 oralig'ida bo'lsin",
+  game_not_found: "O'yin topilmadi",
+  not_your_game: "Bu sizning o'yiningiz emas",
+  round_closed: "Tur yopilgan — natija kiritib bo'lmaydi",
+  already_confirmed: "Natija allaqachon tasdiqlangan",
+  nothing_to_confirm: "Tasdiqlanadigan natija yo'q",
+  own_submission: "O'zingiz kiritgan natijani raqib tasdiqlaydi",
+  no_season: "Faol mavsum yo'q",
+  active_exists: "Faol mavsum bor — avval uni yakunlang",
+  not_enough_teams: "Qatnasha oladigan team kamida 2 ta bo'lishi kerak",
+  bad_division_size: "Divizion hajmi 4–20 oralig'ida bo'lsin",
+  already_started: "Turlar allaqachon boshlangan",
+  not_running: "Mavsum hali boshlanmagan",
+  all_rounds_done: "Barcha turlar o'tib bo'lgan",
 };
 function tbErr(e) { return TB_ERR[e && e.message] || ("Xato: " + (e && e.message || "")); }
 
@@ -93,7 +109,9 @@ function tbRender(bodyHtml) {
   const root = document.getElementById("tb-root");
   if (!root) return;
   const admin = TB.me && TB.me.is_admin;
-  const tabs = [["my", "Mening teamim"], ["teams", "Teamlar"]].concat(admin ? [["admin", "Admin"]] : []);
+  // 2026-10-16 (2-bosqich): + "Jang" (mening 1v1 o'yinim) va "Jadval" (divizionlar, turlar)
+  const tabs = [["my", "Teamim"], ["battle", "Jang"], ["table", "Jadval"], ["teams", "Teamlar"]]
+    .concat(admin ? [["admin", "Admin"]] : []);
   root.innerHTML = `
     <div class="wc-header">
       <button class="wc-back" data-tb="exit" aria-label="Ortga">←</button>
@@ -109,6 +127,8 @@ function tbRender(bodyHtml) {
 function tbRenderTab() {
   TB.view = null;
   if (TB.tab === "teams") { void tbLoadTeams(); return; }
+  if (TB.tab === "battle" && typeof tbBattleLoad === "function") { void tbBattleLoad(); return; }
+  if (TB.tab === "table" && typeof tbTableLoad === "function") { void tbTableLoad(); return; }
   if (TB.tab === "admin" && typeof tbAdminLoad === "function") { void tbAdminLoad(); return; }
   tbRender(TB.me.team ? tbMyTeamHtml(TB.me.team) : tbNoTeamHtml());
   if (TB.me.team && TB.me.team.is_captain && typeof tbBindCaptain === "function") tbBindCaptain();

@@ -7134,3 +7134,48 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .tb-adm-row { display: flex; flex-direction: column; gap: 8px; }
 .tb-adm-top { display: flex; align-items: center; gap: 10px; }
 .tb-adm-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* 2026-10-16: TEAMLAR JANGI 2-bosqich — Jang / Jadval / admin mavsum */
+.tb-tabs { overflow-x: auto; scrollbar-width: none; }
+.tb-tabs::-webkit-scrollbar { display: none; }
+.tb-tab { flex: 1 0 auto; padding: 9px 12px; }
+.tb-season-line { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ffe6c7;
+  background: linear-gradient(90deg, rgba(179,32,46,.22), rgba(224,120,42,.12)); border: 1px solid rgba(255,140,90,.3); }
+.tb-game { display: flex; flex-direction: column; gap: 12px; border: 1px solid rgba(255,140,90,.35);
+  background: radial-gradient(100% 80% at 50% 0%, rgba(255,90,60,.14), transparent 60%), var(--bg-card); }
+.tb-g-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.tb-g-vs { display: flex; align-items: center; gap: 8px; }
+.tb-g-side { flex: 1; min-width: 0; text-align: center; display: flex; flex-direction: column; gap: 3px; }
+.tb-g-side b { font-size: 15px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-g-side span { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-g-x { font-family: var(--font-display); font-weight: 800; color: var(--tb-accent); text-shadow: 0 0 12px rgba(255,120,60,.6); }
+.tb-g-score { display: flex; align-items: flex-end; justify-content: center; gap: 12px; }
+.tb-g-score > div { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); }
+.tb-g-score .score-input { width: 74px; }
+.tb-g-score > b { font-size: 28px; padding-bottom: 10px; }
+.tb-g-final { font-family: var(--font-display); font-size: 34px; font-weight: 800; text-align: center; color: #fff; }
+.tb-g-acts { display: flex; gap: 8px; }
+.tb-g-acts .btn { flex: 1; }
+.tb-fx { padding: 0; margin-bottom: 8px; overflow: hidden; }
+.tb-fx-head { list-style: none; display: flex; align-items: center; gap: 8px; padding: 12px; cursor: pointer; }
+.tb-fx-head::-webkit-details-marker { display: none; }
+.tb-fx-team { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-fx-team--away { text-align: right; }
+.tb-fx-score { font-family: var(--font-display); font-weight: 800; font-size: 16px; padding: 4px 10px; border-radius: 8px;
+  background: rgba(255,255,255,.05); color: var(--text-secondary); }
+.tb-fx-score.done { color: #fff; background: linear-gradient(135deg, #b3202e, #e0782a); }
+.tb-pairs { border-top: 1px solid rgba(255,255,255,.06); padding: 6px 12px 10px; }
+.tb-pair { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 5px 0; }
+.tb-pair span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-pair span:last-child { text-align: right; }
+.tb-pair b { min-width: 40px; text-align: center; color: #ffe6c7; }
+.tb-pair-id { font-style: normal; font-size: 10px; color: var(--text-secondary); }
+.tb-table-card { padding: 0; overflow-x: auto; }
+.tb-table td, .tb-table th { padding: 10px 6px; font-size: 13px; }
+.tb-tt-name { text-align: left !important; white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.tb-round-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 16px 0 10px; font-family: var(--font-display); }
+.tb-adm-season { display: flex; flex-direction: column; gap: 10px; }
+.tb-adm-line { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.tb-adm-line .modal-input { margin: 0; }
+.tb-adm-line span { white-space: nowrap; color: var(--text-secondary); }
+.tb-adm-fix .modal-input { flex: 1; min-width: 0; padding-left: 10px; padding-right: 10px; }

@@ -1,0 +1,204 @@
+// =============================================================
+//  tb_season.js — "TEAMLAR JANGI": Jang va Jadval tablari (2026-10-16, 2-bosqich)
+//  Jang  — mening ochiq 1v1 o'yinim: natija kiritish / raqib natijasini tasdiqlash,
+//          raqibga Telegram'da yozish, teamimning shu turdagi bahsi (barcha juftliklar).
+//  Jadval — divizion tanlash, jadval (O·G·D·M·1v1·Ochko), turlar bo'yicha bahslar.
+//  Backend: /tb/season, /tb/my-games, /tb/season/table, /tb/season/fixtures, /tb/game/*.
+//  tb.js dan KEYIN ulanadi. Global: TB, tbRender, tbErr, apiFetch, escHtml, showToast.
+// =============================================================
+
+const TBS = { info: null, games: null, division: null, round: null };
+
+function tbsTeam(name, emoji) { return `${escHtml(emoji || "⚔️")} ${escHtml(name || "?")}`; }
+
+function tbsSeasonLine(s) {
+  if (!s) return "Mavsum hali e'lon qilinmagan";
+  if (s.status === "drawn") return `${s.number}-mavsum · qur'a o'tkazildi, turlar tez orada boshlanadi`;
+  if (s.status === "finished") return `${s.number}-mavsum yakunlangan`;
+  const r = Math.min(s.current_round, s.total_rounds);
+  return `${s.number}-mavsum · ${r}/${s.total_rounds}-tur · deadline 23:30`;
+}
+
+async function tbsLoadInfo() {
+  TBS.info = await apiFetch("/tb/season");
+  return TBS.info;
+}
+
+// ------------------------------------------------------------------ JANG
+async function tbBattleLoad() {
+  tbRender(`<div class="empty-state">Yuklanmoqda…</div>`);
+  try {
+    const [info, my] = await Promise.all([tbsLoadInfo(), apiFetch("/tb/my-games")]);
+    TBS.games = my.games || [];
+    TBS.me = my.user_id;
+    let fixtureHtml = "";
+    const s = info.season;
+    if (s && s.status === "running" && info.my_division && s.current_round <= s.total_rounds) {
+      const d = await apiFetch(`/tb/season/fixtures?division=${info.my_division}&round=${s.current_round}`);
+      const mine = (d.fixtures || []).find(f => f.home_team_id === info.my_team_id || f.away_team_id === info.my_team_id);
+      fixtureHtml = mine ? `<div class="section-label">TEAMIMNING BAHSI (${s.current_round}-TUR)</div>${tbsFixtureHtml(mine, true)}`
+        : `<div class="tb-note">Bu turda teamingiz dam oladi (raqib yo'q).</div>`;
+    }
+    const gamesHtml = TBS.games.length ? TBS.games.map(tbsGameCardHtml).join("")
+      : `<div class="card tb-hint tb-hint--center">${s && s.status === "running"
+          ? "Hozir ochiq o'yiningiz yo'q. Asosiy tarkibga kirgan o'yinchilar juftlanadi."
+          : "O'yinlar mavsum boshlangach shu yerda chiqadi."}</div>`;
+    tbRender(`<div class="card tb-season-line">${ICON.get("swords", 16)} ${escHtml(tbsSeasonLine(s))}</div>
+      <div class="section-label">MENING O'YINIM</div>${gamesHtml}${fixtureHtml}`);
+  } catch (e) {
+    tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
+  }
+}
+
+function tbsGameCardHtml(g) {
+  const iAmHome = g.home_user_id === TBS.me;
+  const myTeam = iAmHome ? tbsTeam(g.home_team, g.home_emoji) : tbsTeam(g.away_team, g.away_emoji);
+  const opTeam = iAmHome ? tbsTeam(g.away_team, g.away_emoji) : tbsTeam(g.home_team, g.home_emoji);
+  const opUser = iAmHome ? g.away_username : g.home_username;
+  const opName = opUser ? "@" + opUser : (iAmHome ? g.away_nick : g.home_nick);
+  const mine = iAmHome ? g.score1 : g.score2, theirs = iAmHome ? g.score2 : g.score1;
+  let body;
+  if (g.status === "confirmed") {
+    body = `<div class="tb-g-final">${mine} : ${theirs}</div><div class="tb-hint tb-hint--center">✅ Tasdiqlangan</div>`;
+  } else if (g.status === "awaiting_confirmation" && g.submitted_by === TBS.me) {
+    body = `<div class="tb-g-final">${mine} : ${theirs}</div><div class="tb-hint tb-hint--center">⏳ Raqib tasdig'i kutilmoqda</div>`;
+  } else if (g.status === "awaiting_confirmation") {
+    body = `<div class="tb-note">Raqib natija kiritdi: <b>${mine} : ${theirs}</b> (sizning hisobingiz birinchi)</div>
+      <div class="tb-g-acts">
+        <button class="btn btn--primary" data-tbs-confirm="${g.id}" data-accept="1">✅ Tasdiqlash</button>
+        <button class="btn btn--ghost" data-tbs-confirm="${g.id}" data-accept="0">❌ Rad etish</button>
+      </div>`;
+  } else {
+    body = `<div class="tb-g-score">
+        <div><span>Siz</span><input class="score-input" type="number" inputmode="numeric" min="0" max="30" value="0" id="tbs-m-${g.id}"></div>
+        <b>:</b>
+        <div><span>Raqib</span><input class="score-input" type="number" inputmode="numeric" min="0" max="30" value="0" id="tbs-o-${g.id}"></div>
+      </div>
+      <button class="btn btn--primary" data-tbs-submit="${g.id}">Natijani yuborish</button>`;
+  }
+  const tg = opUser ? `<button class="tb-mini" data-tbs-tg="${escHtml(opUser)}">💬 Raqibga yozish</button>` : "";
+  return `<div class="card tb-game">
+      <div class="tb-g-head"><span>${g.round}-tur · ${g.slot}-juftlik</span>${tg}</div>
+      <div class="tb-g-vs">
+        <div class="tb-g-side"><b>Siz</b><span>${myTeam}</span></div>
+        <div class="tb-g-x">VS</div>
+        <div class="tb-g-side"><b>${escHtml(opName || "—")}</b><span>${opTeam}</span></div>
+      </div>
+      ${body}
+    </div>`;
+}
+
+function tbsFixtureHtml(f, open) {
+  const score = f.status === "scheduled" ? "—" : `${f.home_wins} : ${f.away_wins}`;
+  const tech = f.technical ? `<div class="tb-hint tb-hint--center">Texnik natija: ${
+    f.technical === "both" ? "ikkala teamning tarkibi yetmadi" : (f.technical === "home" ? f.home_team : f.away_team) + " tarkibi yetmadi"}</div>` : "";
+  const games = (f.games || []).map(g => {
+    const sc = g.status === "confirmed" ? `${g.score1}:${g.score2}` : g.status === "awaiting_confirmation" ? "⏳" : "–";
+    const gid = TB.me && TB.me.is_admin ? `<i class="tb-pair-id">#${g.id}</i>` : "";
+    return `<div class="tb-pair">${gid}<span>${escHtml(g.home)}</span><b>${sc}</b><span>${escHtml(g.away)}</span></div>`;
+  }).join("");
+  return `<details class="card tb-fx"${open ? " open" : ""}>
+      <summary class="tb-fx-head">
+        <span class="tb-fx-team">${tbsTeam(f.home_team, f.home_emoji)}</span>
+        <span class="tb-fx-score${f.status === "finished" ? " done" : ""}">${score}</span>
+        <span class="tb-fx-team tb-fx-team--away">${tbsTeam(f.away_team, f.away_emoji)}</span>
+      </summary>
+      ${tech}${games ? `<div class="tb-pairs">${games}</div>` : (f.status === "scheduled" ? `<div class="tb-hint tb-hint--center">Juftliklar tur ochilganda tuziladi</div>` : "")}
+    </details>`;
+}
+
+// ------------------------------------------------------------------ JADVAL
+async function tbTableLoad() {
+  tbRender(`<div class="empty-state">Yuklanmoqda…</div>`);
+  try {
+    const info = await tbsLoadInfo();
+    const s = info.season;
+    if (!s) { tbRender(`<div class="empty-state">Mavsum hali e'lon qilinmagan</div>`); return; }
+    const divs = info.divisions || [];
+    if (!TBS.division || !divs.some(d => d.division === TBS.division)) TBS.division = info.my_division || (divs[0] && divs[0].division);
+    if (!TBS.round) TBS.round = Math.max(1, Math.min(s.current_round || 1, s.total_rounds || 1));
+    await tbsRenderTable();
+  } catch (e) {
+    tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
+  }
+}
+
+async function tbsRenderTable() {
+  const s = TBS.info.season, divs = TBS.info.divisions || [];
+  const [t, fx] = await Promise.all([
+    apiFetch(`/tb/season/table?division=${TBS.division}`),
+    apiFetch(`/tb/season/fixtures?division=${TBS.division}&round=${TBS.round}`),
+  ]);
+  const myTeam = TBS.info.my_team_id;
+  const rows = (t.table || []).map((r, i) => `
+    <tr class="${r.team_id === myTeam ? "is-me" : ""}">
+      <td>${i + 1}</td>
+      <td class="tb-tt-name">${tbsTeam(r.name, r.emoji)}</td>
+      <td>${r.played}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td>
+      <td>${r.gw - r.gl >= 0 ? "+" : ""}${r.gw - r.gl}</td>
+      <td class="pts">${r.points}</td>
+    </tr>`).join("");
+  const chips = divs.map(d => `<button class="tb-chip${d.division === TBS.division ? " active" : ""}" data-tbs-div="${d.division}">${d.division}-divizion <b>${d.teams}</b></button>`).join("");
+  tbRender(`
+    <div class="card tb-season-line">${ICON.get("swords", 16)} ${escHtml(tbsSeasonLine(s))}</div>
+    <div class="tb-chips">${chips}</div>
+    <div class="card card--table tb-table-card">
+      <table class="rating-table tb-table">
+        <thead><tr><th>#</th><th>Team</th><th>O</th><th>G</th><th>D</th><th>M</th><th title="1v1 g'alabalar farqi">1v1</th><th>Och</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="tb-hint">Ochko: g'alaba 3 · durang 1. Teng bo'lsa: 1v1 g'alabalar farqi → gol farqi.</div>
+    <div class="tb-round-nav">
+      <button class="tb-mini" data-tbs-round="-1" ${TBS.round <= 1 ? "disabled" : ""}>◀</button>
+      <b>${TBS.round}-tur</b>
+      <button class="tb-mini" data-tbs-round="1" ${TBS.round >= (s.total_rounds || 1) ? "disabled" : ""}>▶</button>
+    </div>
+    ${(fx.fixtures || []).map(f => tbsFixtureHtml(f, false)).join("") || `<div class="tb-hint tb-hint--center">Bu turda bahs yo'q</div>`}`);
+}
+
+// ------------------------------------------------------------------ amallar
+async function tbsPost(path, body, okMsg, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await apiFetch(path, { method: "POST", body: JSON.stringify(body) });
+    if (okMsg) showToast(okMsg);
+    await tbBattleLoad();
+  } catch (e) {
+    showToast("❌ " + tbErr(e));
+    if (btn) btn.disabled = false;
+  }
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest) return;
+  const root = e.target.closest("#tb-root");
+  if (!root) return;
+  const sub = e.target.closest("[data-tbs-submit]");
+  if (sub) {
+    const id = +sub.dataset.tbsSubmit;
+    const m = document.getElementById(`tbs-m-${id}`)?.value, o = document.getElementById(`tbs-o-${id}`)?.value;
+    if (m === "" || o === "") { showToast("Hisobni kiriting"); return; }
+    if (!confirm(`Natija: Siz ${m} : ${o} Raqib. Yuborilsinmi?`)) return;
+    void tbsPost("/tb/game/submit", { game_id: id, my_score: +m, opp_score: +o }, "✅ Yuborildi — raqib tasdiqlaydi", sub);
+    return;
+  }
+  const cf = e.target.closest("[data-tbs-confirm]");
+  if (cf) {
+    const accept = cf.dataset.accept === "1";
+    if (!accept && !confirm("Natija rad etilsinmi? Raqib qayta kiritadi.")) return;
+    void tbsPost("/tb/game/confirm", { game_id: +cf.dataset.tbsConfirm, accept }, accept ? "✅ Tasdiqlandi" : "Rad etildi", cf);
+    return;
+  }
+  const tg = e.target.closest("[data-tbs-tg]");
+  if (tg) {
+    const url = `https://t.me/${encodeURIComponent(tg.dataset.tbsTg)}`;
+    const w = window.Telegram?.WebApp;
+    if (w?.openTelegramLink) w.openTelegramLink(url); else window.open(url, "_blank");
+    return;
+  }
+  const dv = e.target.closest("[data-tbs-div]");
+  if (dv) { TBS.division = +dv.dataset.tbsDiv; void tbsRenderTable().catch(err => showToast("❌ " + tbErr(err))); return; }
+  const rn = e.target.closest("[data-tbs-round]");
+  if (rn) { TBS.round += +rn.dataset.tbsRound; void tbsRenderTable().catch(err => showToast("❌ " + tbErr(err))); }
+});
