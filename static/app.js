@@ -1487,6 +1487,13 @@ function showEntryScreen() {
     showPrivateTournaments(code);
     return;
   }
+  // 2026-10-15: Teamlar jangi taklif havolasi (?tb_join=<kod> / startapp tb_<kod>)
+  const tbCode = typeof tbConsumeInviteParam === "function" ? tbConsumeInviteParam() : null;
+  if (tbCode && typeof showTeamBattle === "function") {
+    document.getElementById("hub-select")?.classList.add("hidden");
+    showTeamBattle(tbCode);
+    return;
+  }
   showHubSelect();
 }
 
@@ -1498,6 +1505,7 @@ function showHubSelect() {
   document.getElementById("league-back-btn")?.classList.add("hidden");
   document.getElementById("mode-select")?.classList.add("hidden");
   document.getElementById("pt-root")?.classList.add("hidden");
+  document.getElementById("tb-root")?.classList.add("hidden");   // 2026-10-15
 
   let screen = document.getElementById("hub-select");
   if (!screen) {
@@ -1519,10 +1527,20 @@ function showHubSelect() {
         <span class="hub-card-name">${escHtml(t.hub_private || "Shaxsiy turnirlar")}</span>
         <span class="hub-card-sub">${escHtml(t.hub_private_sub || "")}</span>
       </button>
+      <button class="hub-card hub-card--teams" id="hub-card-teams">
+        <span class="hub-card-icon">${ICON.get("shield", 34)}</span>
+        <span class="hub-card-name">${escHtml(t.hub_teams || "Teamlar jangi")}</span>
+        <span class="hub-card-sub">${escHtml(t.hub_teams_sub || "Team tuzing va boshqa teamlar bilan 1v1 bellashing")}</span>
+      </button>
     </div>`;
   document.getElementById("hub-card-official").addEventListener("click", showModeSelect);
   document.getElementById("hub-card-private").addEventListener("click", () => {
     if (typeof showPrivateTournaments === "function") showPrivateTournaments();
+    else showToast("Tez orada!");
+  });
+  // 2026-10-15: 3-bo'lim — Teamlar jangi (tb.js)
+  document.getElementById("hub-card-teams").addEventListener("click", () => {
+    if (typeof showTeamBattle === "function") showTeamBattle();
     else showToast("Tez orada!");
   });
 }
