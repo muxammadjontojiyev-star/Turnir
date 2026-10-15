@@ -364,6 +364,28 @@ const LEAGUE_CLUBS = {
     { name: "Sochaux",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9874.png" },
     { name: "Troyes",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10242.png" },
   ],
+  // 2026-10-15: Liga Portugal 2 (18 klub) — 2026/27 tarkibi (bizning Liga Portugal ro'yxati
+  // bilan kesishmaydi); logolar FotMob CDN (ID — fotmob.com/leagues/185 jadvali)
+  "Liga Portugal 2": [
+    { name: "Académica",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10215.png" },
+    { name: "Amarante",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/280216.png" },
+    { name: "AVS",                logo: "https://images.fotmob.com/image_resources/logo/teamlogo/1889.png" },
+    { name: "Benfica B",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/338302.png" },
+    { name: "Chaves",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9774.png" },
+    { name: "Farense",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6004.png" },
+    { name: "Feirense",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4064.png" },
+    { name: "Felgueiras",         logo: "https://images.fotmob.com/image_resources/logo/teamlogo/474326.png" },
+    { name: "Leixões",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6421.png" },
+    { name: "Lusitânia Lourosa",  logo: "https://images.fotmob.com/image_resources/logo/teamlogo/188154.png" },
+    { name: "Penafiel",           logo: "https://images.fotmob.com/image_resources/logo/teamlogo/6547.png" },
+    { name: "Portimonense",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9765.png" },
+    { name: "Porto B",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/338304.png" },
+    { name: "Sporting CP B",      logo: "https://images.fotmob.com/image_resources/logo/teamlogo/338301.png" },
+    { name: "Tondela",            logo: "https://images.fotmob.com/image_resources/logo/teamlogo/188163.png" },
+    { name: "Torreense",          logo: "https://images.fotmob.com/image_resources/logo/teamlogo/212820.png" },
+    { name: "União Leiria",       logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9771.png" },
+    { name: "Vizela",             logo: "https://images.fotmob.com/image_resources/logo/teamlogo/4531.png" },
+  ],
 };
 
 // ============================================================
@@ -407,6 +429,7 @@ const LEAGUE_LOGOS = {
   "2. Bundesliga":  "https://images.fotmob.com/image_resources/logo/leaguelogo/146.png",  // 2026-10-13
   "Serie B":        "https://images.fotmob.com/image_resources/logo/leaguelogo/86.png",   // 2026-10-13
   "Ligue 2":        "https://images.fotmob.com/image_resources/logo/leaguelogo/110.png",  // 2026-10-14
+  "Liga Portugal 2": "https://images.fotmob.com/image_resources/logo/leaguelogo/185.png", // 2026-10-15
 };
 
 // Liga logosi HTML (topilmasa bo'sh — joy egallamaydi)
