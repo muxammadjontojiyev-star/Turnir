@@ -277,6 +277,7 @@ Foydalanuvchi tanlagan til DB'da saqlanadi (`users.language` maydoni) va WebApp 
 
 | Sana | O'zgarish |
 |---|---|
+| 2026-10-15 | Liga Portugal 2 (Portugaliya 2-ligasi, 18 klub, id 17) qo'shildi: models.seed_leagues, pt_formats.LEAGUE_CLUBS, static/api.js LEAGUE_CLUBS (FotMob logolari) + LEAGUE_LOGOS (leaguelogo/185), static/league_tiers.js LEAGUE_SECOND_TIERS ('Liga Portugal 2' → 'Liga Portugal'). 2026/27 tarkibi (Tondela, AVS — Liga Portugal'dan tushganlar). ChL/YeL/OChL saralashiga kirmaydi. index.html: api.js, league_tiers.js v=20261015e |
 | 2026-10-15 | OChL kubogi: static/ac-trophy.png — egasi yuborgan kubok rasmi (qora fon shaffof qilindi, 298x520). Kesh: ac_playoff.js, ac_profile.js, api.js da ac-trophy.png?v=2; index.html v=20261015d |
 | 2026-10-15 | Liga reytingida Osiyo ligalari (Superliga, Saudi Pro Liga, UAE Pro Liga, J1 Liga) uchun OChL zonasi: 1–8-o'rin raqami ko'k belgida (to'q sariq hoshiya) + jadval ostida izoh. league_tiers.js ASIA_QUAL_LEAGUES / AQ_TOP (= ac_qualification.AC_LEAGUES / AC_TOP_N), leagueZones().asia, ratingRankBadgeClass; style.css .rk--acl; index.html v=20261015c |
 | 2026-10-15 | OChL rasmi: ac-banner.jpg — egasi yuborgan AFC Champions League logosi (900x380, yon tomonlari xiralashtirilgan fon bilan to'ldirilgan); OChL mavzusi zumraddan AFC ko'k rangiga o'tkazildi (style.css #ac-root bloki). app.js ac-banner.jpg?v=2, index.html v=20261015b. Kubok rasmi (ac-trophy.png) — hozircha vaqtinchalik |

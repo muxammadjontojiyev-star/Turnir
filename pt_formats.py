@@ -151,6 +151,14 @@ LEAGUE_CLUBS: dict[str, tuple[str, ...]] = {
         "Red Star", "Reims", "Rodez", "Saint-Étienne",
         "Sochaux", "Troyes",
     ),
+    # 2026-10-15: Liga Portugal 2 — static/api.js LEAGUE_CLUBS bilan bir xil
+    "Liga Portugal 2": (
+        "Académica", "Amarante", "AVS", "Benfica B",
+        "Chaves", "Farense", "Feirense", "Felgueiras",
+        "Leixões", "Lusitânia Lourosa", "Penafiel", "Portimonense",
+        "Porto B", "Sporting CP B", "Tondela", "Torreense",
+        "União Leiria", "Vizela",
+    ),
 }
 
 WC_TEAMS: tuple[str, ...] = tuple(team for teams in WC_GROUPS.values() for team in teams)

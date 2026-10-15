@@ -1376,5 +1376,11 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("Ligue 2", 18, "open"),
     )
+    # 2026-10-15: Liga Portugal 2 (Portugaliya 2-ligasi, 18 klub) — Ligue 2'dan keyin navbat bilan (id 17).
+    # Liga Portugal'ning 2-ligasi (static/league_tiers.js LEAGUE_SECOND_TIERS).
+    cursor.execute(
+        "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
+        ("Liga Portugal 2", 18, "open"),
+    )
     conn.commit()
     conn.close()
