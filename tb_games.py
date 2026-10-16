@@ -4,7 +4,8 @@ tb_games.py — "TEAMLAR JANGI": 1v1 o'yin natijalari va bahslar ko'rinishi (202
   tb_my_games(user_id)                — mening joriy (ochiq) o'yinim(lar) + bahs ma'lumoti
   tb_submit(user_id, game_id, mine, opp) — natija kiritish (o'z nuqtai nazaridan) -> awaiting
   tb_confirm(user_id, game_id, accept)   — raqib tasdiqlaydi (confirmed) yoki rad etadi (pending)
-  tb_admin_set(game_id, s1, s2)          — bosh admin natijani qo'yadi (confirmed)
+  tb_admin_set(game_id, s1, s2)          — liga admini / bosh admin natijani qo'yadi (confirmed)
+  tb_game_league(game_id)                — o'yin ligasi (ruxsat tekshiruvi)
   tb_round_fixtures(season_id, division, round) — tur bahslari + 1v1 juftliklar
 Faqat OCHIQ bahsda (status='open') natija kiritiladi. Bahsdagi barcha o'yinlar
 tasdiqlansa — bahs darhol yakunlanadi (tb_rounds.aggregate_fixture).
@@ -185,5 +186,17 @@ def tb_round_fixtures(season_id: int, division: int, rnd: int) -> list[dict]:
             for f in fixtures:
                 f["games"] = by_fx.get(f["id"], [])
         return fixtures
+    finally:
+        conn.close()
+
+
+def tb_game_league(game_id: int) -> int | None:
+    """2026-10-16: o'yin qaysi ligada (admin ruxsatini tekshirish uchun)."""
+    conn = get_connection()
+    try:
+        r = conn.cursor().execute(
+            "SELECT s.league_id FROM tb_games g JOIN tb_fixtures f ON f.id = g.fixture_id "
+            "JOIN tb_seasons s ON s.id = f.season_id WHERE g.id = ?", (game_id,)).fetchone()
+        return r["league_id"] if r else None
     finally:
         conn.close()

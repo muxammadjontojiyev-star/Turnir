@@ -3581,3 +3581,5 @@ from tb_api_chat import router as tb_chat_router  # noqa: E402  (2026-10-16, 3-b
 app.include_router(tb_chat_router)   # /tb/matches/unread — aniq yo'l
 app.include_router(tb_router)
 app.include_router(tb_season_router)
+from tb_api_league import router as tb_league_router  # noqa: E402  (2026-10-16, ligalar)
+app.include_router(tb_league_router)

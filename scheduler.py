@@ -176,13 +176,12 @@ async def _check_and_notify_once() -> None:
     # === TEAMLAR JANGI (2026-10-16): 23:30 da joriy tur yopiladi, keyingisi ochiladi ===
     try:
         from tb_rounds import tb_tick
-        tb_res = tb_tick()
-        if tb_res:
+        for tb_res in tb_tick():                                # 2026-10-16: har liga alohida
             from tb_notify import tb_spawn_round_notify          # 3-bosqich: raqib haqida xabar (fonda)
             tb_spawn_round_notify(tb_res["season_id"], tb_res["opened_round"])
-            logger.info("Scheduler: Teamlar jangi %s-tur yopildi (awaiting: %d, 0:0: %d) → %s-tur ochildi (%d o'yin).",
-                        tb_res["closed_round"], tb_res["awaiting_resolved"], tb_res["pending_resolved"],
-                        tb_res["opened_round"], tb_res["games_created"])
+            logger.info("Scheduler: Teamlar jangi (liga %s) %s-tur yopildi (awaiting: %d, 0:0: %d) → %s-tur ochildi (%d o'yin).",
+                        tb_res["league_id"], tb_res["closed_round"], tb_res["awaiting_resolved"],
+                        tb_res["pending_resolved"], tb_res["opened_round"], tb_res["games_created"])
     except Exception as exc:
         logger.warning("Scheduler: Teamlar jangi tur siljitishda xato: %s", exc)
 

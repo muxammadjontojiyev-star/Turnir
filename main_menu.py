@@ -127,6 +127,20 @@ async def _send_tb_invite(update: Update, user: dict, code: str) -> None:
     await update.message.reply_text(text, reply_markup=keyboard)
 
 
+async def _send_tb_league_invite(update: Update, user: dict, code: str) -> None:
+    """2026-10-16: Teamlar jangi LIGA havolasi (/start tbl_<kod>) — liga nomi + WebApp tugmasi (?tbl_join=<kod>)."""
+    from tb_leagues import tb_league_by_code
+    lang = user.get("language") or LANGUAGE_UZ
+    league = tb_league_by_code(code)
+    if league is None:
+        await update.message.reply_text(t("tb_league_invite_invalid", lang))
+        return
+    text = t("tb_league_invite_message", lang).format(name=league["name"], emoji=league.get("emoji") or "")
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(
+        t("tb_league_invite_button", lang), web_app=WebAppInfo(url=_webapp_url_with("tbl_join", code)))]])
+    await update.message.reply_text(text, reply_markup=keyboard)
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """/start buyrug'i — foydalanuvchini DB'ga yozadi va til tanlashni so'raydi.
     2026-10-02: '/start pt_<kod>' — shaxsiy turnir taklifi (til tanlash o'tkazib yuboriladi)."""
@@ -144,6 +158,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     tb_code = parse_tb_invite_payload(context.args[0] if context.args else None)
     if tb_code:
         await _send_tb_invite(update, user, tb_code)
+        return
+
+    # 2026-10-16: '/start tbl_<kod>' — Teamlar jangi liga havolasi
+    from tb_leagues import parse_tb_league_payload
+    tbl_code = parse_tb_league_payload(context.args[0] if context.args else None)
+    if tbl_code:
+        await _send_tb_league_invite(update, user, tbl_code)
         return
 
     await update.message.reply_text(

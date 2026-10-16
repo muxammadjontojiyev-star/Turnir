@@ -9,8 +9,8 @@ import secrets
 
 from models import get_connection
 from tb_core import (
-    ROLE_CAPTAIN, ROLE_MEMBER, STATUS_APPROVED, STATUS_REJECTED, TB_LINEUP_MAX, TB_LINEUP_MIN,
-    _INVITE_CODE_BYTES, _begin, _finish, _my_membership,
+    ROLE_CAPTAIN, ROLE_MEMBER, STATUS_APPROVED, STATUS_REJECTED,
+    _INVITE_CODE_BYTES, _begin, _finish, _league_limits, _my_membership,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,8 +105,6 @@ def tb_set_lineup(captain_id: int, user_ids: list[int]) -> tuple[bool, str | dic
     Asosiy tarkib (tartib bilan). Sabablar: not_captain, lineup_size, lineup_duplicate, lineup_not_member.
     """
     ids = [int(x) for x in (user_ids or [])]
-    if len(ids) < TB_LINEUP_MIN or len(ids) > TB_LINEUP_MAX:
-        return False, "lineup_size"
     if len(set(ids)) != len(ids):
         return False, "lineup_duplicate"
     conn = get_connection()
@@ -116,6 +114,10 @@ def tb_set_lineup(captain_id: int, user_ids: list[int]) -> tuple[bool, str | dic
         if not team_id:
             _finish(cur, False)
             return False, "not_captain"
+        lmin, lmax = _league_limits(cur, team_id)          # 2026-10-16: liga sozlamasi
+        if len(ids) < lmin or len(ids) > lmax:
+            _finish(cur, False)
+            return False, "lineup_size"
         cur.execute("SELECT user_id FROM tb_members WHERE team_id = ?", (team_id,))
         members = {r["user_id"] for r in cur.fetchall()}
         if not set(ids) <= members:
@@ -191,7 +193,7 @@ def tb_dissolve(captain_id: int) -> tuple[bool, str | dict]:
         conn.close()
 
 
-# ------------------------------------------------------------------ bosh admin
+# ------------------------------------------------------------------ liga admini / bosh admin
 
 def tb_admin_review(team_id: int, admin_tg: int, approve: bool, reason: str | None = None
                     ) -> tuple[bool, str | dict]:
@@ -218,6 +220,12 @@ def tb_admin_review(team_id: int, admin_tg: int, approve: bool, reason: str | No
         raise
     finally:
         conn.close()
+
+
+def tb_team_league(team_id: int) -> int | None:
+    """Admin amallarida ruxsat tekshiruvi uchun: team ligasi."""
+    from tb_core import tb_team_league_id
+    return tb_team_league_id(team_id)
 
 
 def tb_admin_delete(team_id: int) -> tuple[bool, str | dict]:

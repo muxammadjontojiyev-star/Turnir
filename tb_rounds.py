@@ -11,6 +11,8 @@ Qoida (rasmiy rejimlar bilan bir xil ritm):
     har bahs natijasi hisoblanadi (1v1 g'alabalar soni), keyingi tur ochiladi.
   • Bahsdagi barcha o'yinlar tasdiqlansa — bahs darhol yakunlanadi (tb_games.py).
 Idempotent: kuniga bir marta (last_advance_date), BEGIN IMMEDIATE (qoida #38).
+2026-10-16: har LIGA o'z mavsumi bilan; tarkib minimumi — liga sozlamasi (tb_leagues.lineup_min);
+tb_tick() barcha ligalarni aylanib chiqadi.
 """
 
 import logging
@@ -38,14 +40,21 @@ def _lineup(cur, team_id: int) -> list[int]:
     return [r["user_id"] for r in cur.fetchall()]
 
 
-def _open_fixture(cur, f) -> int:
+def _season_lineup_min(cur, season_id: int) -> int:
+    cur.execute("SELECT l.lineup_min FROM tb_seasons s JOIN tb_leagues l ON l.id = s.league_id WHERE s.id = ?",
+                (season_id,))
+    r = cur.fetchone()
+    return r["lineup_min"] if r else TB_LINEUP_MIN
+
+
+def _open_fixture(cur, f, lmin: int) -> int:
     """Bahs uchun 1v1 juftliklar (yoki texnik natija). Qaytaradi: yaratilgan o'yinlar soni."""
     home, away = _lineup(cur, f["home_team_id"]), _lineup(cur, f["away_team_id"])
-    h_ok, a_ok = len(home) >= TB_LINEUP_MIN, len(away) >= TB_LINEUP_MIN
+    h_ok, a_ok = len(home) >= lmin, len(away) >= lmin
     if not (h_ok and a_ok):
         tech = "both" if not (h_ok or a_ok) else ("home" if not h_ok else "away")
-        hw = TB_LINEUP_MIN if tech == "away" else 0
-        aw = TB_LINEUP_MIN if tech == "home" else 0
+        hw = lmin if tech == "away" else 0
+        aw = lmin if tech == "home" else 0
         cur.execute("UPDATE tb_fixtures SET status = 'finished', technical = ?, home_wins = ?, away_wins = ?, "
                     "draws = 0, home_goals = 0, away_goals = 0 WHERE id = ?", (tech, hw, aw, f["id"]))
         return 0
@@ -62,7 +71,8 @@ def open_round(cur, season_id: int, rnd: int) -> dict:
     cur.execute("SELECT id, home_team_id, away_team_id FROM tb_fixtures "
                 "WHERE season_id = ? AND round = ? AND status = 'scheduled'", (season_id, rnd))
     fixtures = cur.fetchall()
-    games = sum(_open_fixture(cur, f) for f in fixtures)
+    lmin = _season_lineup_min(cur, season_id)
+    games = sum(_open_fixture(cur, f, lmin) for f in fixtures)
     return {"fixtures": len(fixtures), "games": games}
 
 
@@ -120,10 +130,10 @@ def _tx(fn):
         conn.close()
 
 
-def tb_start_rounds() -> tuple[bool, str | dict]:
-    """Admin: 1-turni ochadi. Sabablar: no_season, already_started."""
+def tb_start_rounds(league_id: int) -> tuple[bool, str | dict]:
+    """Liga admini: 1-turni ochadi. Sabablar: no_season, already_started."""
     def run(cur):
-        s = tb_active_season(cur)
+        s = tb_active_season(league_id, cur)
         if not s:
             return False, "no_season"
         if s["status"] != "drawn":
@@ -146,10 +156,10 @@ def _advance(cur, s: dict, today: str) -> dict:
             **closed, "games_created": opened["games"]}
 
 
-def tb_force_advance() -> tuple[bool, str | dict]:
-    """Admin: joriy turni hozir yopib, keyingisini ochadi. Sabablar: no_season, not_running, all_rounds_done."""
+def tb_force_advance(league_id: int) -> tuple[bool, str | dict]:
+    """Liga admini: joriy turni hozir yopib, keyingisini ochadi. Sabablar: no_season, not_running, all_rounds_done."""
     def run(cur):
-        s = tb_active_season(cur)
+        s = tb_active_season(league_id, cur)
         if not s:
             return False, "no_season"
         if s["status"] != "running":
@@ -160,27 +170,45 @@ def tb_force_advance() -> tuple[bool, str | dict]:
     return _tx(run)
 
 
-def tb_tick() -> dict | None:
-    """Scheduler (daqiqada bir): 23:30 dan keyin, bugun hali siljimagan bo'lsa — tur almashadi."""
+def tb_tick() -> list[dict]:
+    """
+    Scheduler (daqiqada bir): 23:30 dan keyin, bugun hali siljimagan har liga mavsumida tur almashadi.
+    Qaytaradi: siljigan mavsumlar natijalari ro'yxati (bo'sh — hech narsa).
+    """
     now = _now_local()
     if now < now.replace(hour=MATCHDAY_UNLOCK_HOUR, minute=TB_DEADLINE_MINUTE, second=0, microsecond=0):
-        return None
+        return []
     today = now.date().isoformat()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT DISTINCT league_id FROM tb_seasons WHERE status = 'running' "
+                    "AND (last_advance_date IS NULL OR last_advance_date != ?) AND current_round <= total_rounds",
+                    (today,))
+        leagues = [r["league_id"] for r in cur.fetchall()]
+    finally:
+        conn.close()
+    out = []
+    for lid in leagues:
+        def run(cur, lid=lid):
+            s = tb_active_season(lid, cur)
+            if (not s or s["status"] != "running" or s["last_advance_date"] == today
+                    or s["current_round"] > s["total_rounds"]):
+                return False, None
+            return True, _advance(cur, s, today)
+        try:
+            ok, res = _tx(run)
+            if ok:
+                out.append({"league_id": lid, **res})
+        except Exception:                      # bir liga xatosi boshqalarini to'xtatmasin (qoida #37)
+            logger.exception("TB: liga %s turini almashtirishda xato", lid)
+    return out
 
+
+def tb_finish_season(league_id: int) -> tuple[bool, str | dict]:
+    """Liga admini: mavsumni yakunlaydi (ochiq bahslar yopiladi). Sabab: no_season."""
     def run(cur):
-        s = tb_active_season(cur)
-        if (not s or s["status"] != "running" or s["last_advance_date"] == today
-                or s["current_round"] > s["total_rounds"]):
-            return False, None
-        return True, _advance(cur, s, today)
-    ok, res = _tx(run)
-    return res if ok else None
-
-
-def tb_finish_season() -> tuple[bool, str | dict]:
-    """Admin: mavsumni yakunlaydi (ochiq bahslar yopiladi). Sabab: no_season."""
-    def run(cur):
-        s = tb_active_season(cur)
+        s = tb_active_season(league_id, cur)
         if not s:
             return False, "no_season"
         closed = close_round(cur, s["id"], s["total_rounds"])

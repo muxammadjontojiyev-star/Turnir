@@ -228,6 +228,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
                 cursor.execute("DELETE FROM tb_members WHERE team_id = ?", (tr["id"],))
                 cursor.execute("DELETE FROM tb_teams WHERE id = ?", (tr["id"],))
         cursor.execute("DELETE FROM tb_members WHERE user_id = ?", (user_id,))
+        cursor.execute("UPDATE tb_leagues SET admin_user_id = NULL WHERE admin_user_id = ?", (user_id,))  # 2026-10-16
         # 2026-10-16: 1v1 o'yinlar (FK users) — bahs natijalari tb_fixtures'da saqlanib qoladi
         cursor.execute("DELETE FROM tb_messages WHERE sender_id = ? OR match_id IN (SELECT id FROM tb_games "
                        "WHERE home_user_id = ? OR away_user_id = ?)", (user_id, user_id, user_id))

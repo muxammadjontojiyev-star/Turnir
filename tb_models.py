@@ -11,6 +11,9 @@ models.init_db() oxirida init_tb_tables() chaqiriladi (CREATE IF NOT EXISTS — 
                 role: captain | member; in_lineup/lineup_pos — sardor tuzgan asosiy tarkib.
   2-bosqich: tb_seasons, tb_season_teams, tb_fixtures (team bahsi), tb_games (1v1).
   3-bosqich: tb_messages (1v1 chat), tb_games_v (ko'rinish), tb_titles (divizion chempionlari).
+  2026-10-16 (ligalar): tb_leagues — har liga o'z admini, havolasi, sozlamalari bilan;
+                tb_teams.league_id, tb_seasons.league_id (mavsum raqami liga ichida).
+                Eski ma'lumot (league_id NULL) — tb_models_league.migrate_leagues() "asosiy" ligaga o'tkazadi.
 """
 
 from models import get_connection
@@ -52,22 +55,12 @@ def init_tb_tables() -> None:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_members_team ON tb_members(team_id)")
 
         # ---- 2-bosqich (2026-10-16): mavsum, divizionlar, team bahslari, 1v1 o'yinlar ----
-        # tb_seasons: bir vaqtda bitta faol mavsum (status != 'finished').
+        # tb_seasons: har ligada bir vaqtda bitta faol mavsum (status != 'finished').
         #   drawn -> running -> finished; current_round — ochiq tur; last_advance_date — kunlik siljish.
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS tb_seasons (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                number INTEGER NOT NULL UNIQUE,
-                status TEXT NOT NULL DEFAULT 'drawn',
-                division_size INTEGER NOT NULL,
-                total_rounds INTEGER NOT NULL DEFAULT 0,
-                current_round INTEGER NOT NULL DEFAULT 0,
-                last_advance_date TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                started_at TIMESTAMP,
-                finished_at TIMESTAMP
-            )
-        """)
+        #   2026-10-16: league_id + UNIQUE(league_id, number) — eski jadval tb_models_league'da qayta quriladi.
+        from tb_models_league import TB_SEASONS_DDL, create_league_table
+        create_league_table(cursor)
+        cursor.execute(TB_SEASONS_DDL.format(name="tb_seasons", if_not="IF NOT EXISTS"))
         # tb_season_teams: qaysi team qaysi divizionda (mavsum boshida qotadi)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS tb_season_teams (
@@ -168,3 +161,5 @@ def init_tb_tables() -> None:
         conn.commit()
     finally:
         conn.close()
+    from tb_models_league import migrate_leagues
+    migrate_leagues()                       # 2026-10-16: ligalar (idempotent)

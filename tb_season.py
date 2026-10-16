@@ -6,9 +6,10 @@ o'z ichida bir martalik aylanma liga; bahsda o'yinchilar 1v1 (tasodifiy juftlash
 tb_rounds.py), ko'p g'alaba olgan team yutadi. Ochko: g'alaba 3, durang 1.
 Jadval saralash: ochko -> 1v1 g'alabalar farqi -> gol farqi -> 1v1 g'alabalar.
 
-  tb_active_season()              — faol (tugamagan) mavsum yoki None
-  tb_season_preview()             — qatnasha oladigan teamlar soni (admin uchun)
-  tb_create_season(div_size)      — qur'a: divizionlar + barcha turlar jadvali
+  2026-10-16: hammasi LIGA ichida (league_id) — har ligada o'z mavsumi, raqamlash ham liga ichida.
+  tb_active_season(league_id)     — ligadagi faol (tugamagan) mavsum yoki None
+  tb_season_preview(league_id)    — qatnasha oladigan teamlar soni (admin uchun)
+  tb_create_season(league_id, div_size) — qur'a: divizionlar + barcha turlar jadvali
   tb_standings(season_id, div)    — divizion jadvali
   tb_team_division(season_id, team_id)
 """
@@ -29,17 +30,17 @@ TB_DIV_TAIL_MIN = 6     # oxirgi divizion bundan kichik bo'lsa — oldingisiga q
 TB_PTS_WIN, TB_PTS_DRAW = 3, 1
 TB_PROMO = 2            # har divizion juftida ko'tariladigan/tushadigan teamlar soni (3-bosqich)
 
-_SEASON_COLS = ("id, number, status, division_size, total_rounds, current_round, "
+_SEASON_COLS = ("id, league_id, number, status, division_size, total_rounds, current_round, "
                 "last_advance_date, created_at, started_at, finished_at")
 
 
-def tb_active_season(cursor=None) -> dict | None:
+def tb_active_season(league_id: int | None, cursor=None) -> dict | None:
     own = cursor is None
     conn = get_connection() if own else None
     cur = conn.cursor() if own else cursor
     try:
-        cur.execute(f"SELECT {_SEASON_COLS} FROM tb_seasons WHERE status != 'finished' "
-                    "ORDER BY id DESC LIMIT 1")
+        cur.execute(f"SELECT {_SEASON_COLS} FROM tb_seasons WHERE league_id = ? AND status != 'finished' "
+                    "ORDER BY id DESC LIMIT 1", (league_id,))
         r = cur.fetchone()
         return dict(r) if r else None
     finally:
@@ -47,40 +48,50 @@ def tb_active_season(cursor=None) -> dict | None:
             conn.close()
 
 
-def tb_last_season() -> dict | None:
-    """Faol mavsum, bo'lmasa oxirgi tugagani (jadvalni ko'rsatish uchun)."""
+def tb_last_season(league_id: int | None) -> dict | None:
+    """Ligadagi faol mavsum, bo'lmasa oxirgi tugagani (jadvalni ko'rsatish uchun)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
-        s = tb_active_season(cur)
+        s = tb_active_season(league_id, cur)
         if s:
             return s
-        cur.execute(f"SELECT {_SEASON_COLS} FROM tb_seasons ORDER BY id DESC LIMIT 1")
+        cur.execute(f"SELECT {_SEASON_COLS} FROM tb_seasons WHERE league_id = ? ORDER BY id DESC LIMIT 1",
+                    (league_id,))
         r = cur.fetchone()
         return dict(r) if r else None
     finally:
         conn.close()
 
 
-def _eligible_teams(cur) -> list[int]:
-    """Tasdiqlangan va asosiy tarkibi kamida TB_LINEUP_MIN bo'lgan teamlar."""
+def _league_settings(cur, league_id: int) -> dict:
+    cur.execute("SELECT lineup_min, division_size FROM tb_leagues WHERE id = ?", (league_id,))
+    r = cur.fetchone()
+    return dict(r) if r else {"lineup_min": TB_LINEUP_MIN, "division_size": TB_DIV_SIZE}
+
+
+def _eligible_teams(cur, league_id: int) -> list[int]:
+    """Ligadagi tasdiqlangan va asosiy tarkibi kamida liga lineup_min bo'lgan teamlar."""
+    lmin = _league_settings(cur, league_id)["lineup_min"]
     cur.execute(
-        "SELECT t.id FROM tb_teams t WHERE t.status = ? AND "
+        "SELECT t.id FROM tb_teams t WHERE t.league_id = ? AND t.status = ? AND "
         "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id AND m.in_lineup = 1) >= ?",
-        (STATUS_APPROVED, TB_LINEUP_MIN),
+        (league_id, STATUS_APPROVED, lmin),
     )
     return [r["id"] for r in cur.fetchall()]
 
 
-def tb_season_preview() -> dict:
+def tb_season_preview(league_id: int) -> dict:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        eligible = _eligible_teams(cur)
-        cur.execute("SELECT COUNT(*) AS c FROM tb_teams WHERE status = ?", (STATUS_APPROVED,))
+        eligible = _eligible_teams(cur, league_id)
+        cur.execute("SELECT COUNT(*) AS c FROM tb_teams WHERE league_id = ? AND status = ?",
+                    (league_id, STATUS_APPROVED))
         approved = cur.fetchone()["c"]
-        return {"eligible": len(eligible), "approved": approved, "lineup_min": TB_LINEUP_MIN,
-                "division_size": TB_DIV_SIZE, "active": tb_active_season(cur)}
+        st = _league_settings(cur, league_id)
+        return {"eligible": len(eligible), "approved": approved, "lineup_min": st["lineup_min"],
+                "division_size": st["division_size"], "active": tb_active_season(league_id, cur)}
     finally:
         conn.close()
 
@@ -111,12 +122,13 @@ def apply_promotion(tables: list[list[int]], n: int = None) -> list[list[int]]:
     return out
 
 
-def _ordered_for_draw(cur, team_ids: list[int]) -> list[int]:
+def _ordered_for_draw(cur, team_ids: list[int], league_id: int) -> list[int]:
     """
     Oldingi mavsum yakuniy o'rinlari bo'yicha (divizion, o'rin) tartib — ko'tarilish/tushish
     (apply_promotion) bilan; yangi teamlar oxirida tasodifiy. Oldingi mavsum bo'lmasa — tasodifiy.
     """
-    cur.execute("SELECT id FROM tb_seasons WHERE status = 'finished' ORDER BY id DESC LIMIT 1")
+    cur.execute("SELECT id FROM tb_seasons WHERE league_id = ? AND status = 'finished' ORDER BY id DESC LIMIT 1",
+                (league_id,))
     prev = cur.fetchone()
     rank = {}
     if prev:
@@ -137,31 +149,32 @@ def _ordered_for_draw(cur, team_ids: list[int]) -> list[int]:
     return known + new
 
 
-def tb_create_season(division_size: int | None = None) -> tuple[bool, str | dict]:
+def tb_create_season(league_id: int, division_size: int | None = None) -> tuple[bool, str | dict]:
     """
-    Qur'a. Sabablar: active_exists, bad_division_size, not_enough_teams.
+    Ligada qur'a. division_size berilmasa — liga sozlamasi.
+    Sabablar: active_exists, bad_division_size, not_enough_teams.
     Qaytaradi: {season_id, number, divisions, teams, fixtures, total_rounds}
     """
-    size = int(division_size or TB_DIV_SIZE)
-    if size < TB_DIV_SIZE_MIN or size > TB_DIV_SIZE_MAX:
-        return False, "bad_division_size"
     conn = get_connection()
     conn.isolation_level = None
     cur = conn.cursor()
     try:
+        size = int(division_size or _league_settings(cur, league_id)["division_size"])
+        if size < TB_DIV_SIZE_MIN or size > TB_DIV_SIZE_MAX:
+            return False, "bad_division_size"
         cur.execute("BEGIN IMMEDIATE")
-        if tb_active_season(cur):
+        if tb_active_season(league_id, cur):
             cur.execute("ROLLBACK")
             return False, "active_exists"
-        teams = _eligible_teams(cur)
+        teams = _eligible_teams(cur, league_id)
         if len(teams) < 2:
             cur.execute("ROLLBACK")
             return False, "not_enough_teams"
-        divisions = split_divisions(_ordered_for_draw(cur, teams), size)
-        cur.execute("SELECT COALESCE(MAX(number), 0) + 1 AS n FROM tb_seasons")
+        divisions = split_divisions(_ordered_for_draw(cur, teams, league_id), size)
+        cur.execute("SELECT COALESCE(MAX(number), 0) + 1 AS n FROM tb_seasons WHERE league_id = ?", (league_id,))
         number = cur.fetchone()["n"]
-        cur.execute("INSERT INTO tb_seasons (number, status, division_size) VALUES (?, 'drawn', ?)",
-                    (number, size))
+        cur.execute("INSERT INTO tb_seasons (league_id, number, status, division_size) VALUES (?, ?, 'drawn', ?)",
+                    (league_id, number, size))
         sid = cur.lastrowid
         fixtures = 0
         total_rounds = 0
@@ -180,8 +193,8 @@ def tb_create_season(division_size: int | None = None) -> tuple[bool, str | dict
                     fixtures += 1
         cur.execute("UPDATE tb_seasons SET total_rounds = ? WHERE id = ?", (total_rounds, sid))
         cur.execute("COMMIT")
-        logger.info("TB: %s-mavsum qur'asi — %s team, %s divizion, %s bahs, %s tur",
-                    number, len(teams), len(divisions), fixtures, total_rounds)
+        logger.info("TB: liga %s, %s-mavsum qur'asi — %s team, %s divizion, %s bahs, %s tur",
+                    league_id, number, len(teams), len(divisions), fixtures, total_rounds)
         return True, {"season_id": sid, "number": number, "divisions": len(divisions),
                       "teams": len(teams), "fixtures": fixtures, "total_rounds": total_rounds}
     except Exception:
@@ -267,7 +280,8 @@ def tb_team_in_active_season(team_id: int) -> bool:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        s = tb_active_season(cur)
+        r = cur.execute("SELECT league_id FROM tb_teams WHERE id = ?", (team_id,)).fetchone()
+        s = tb_active_season(r["league_id"], cur) if r else None
         if not s:
             return False
         cur.execute("SELECT 1 FROM tb_season_teams WHERE season_id = ? AND team_id = ?", (s["id"], team_id))

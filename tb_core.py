@@ -2,6 +2,7 @@
 tb_core.py — "TEAMLAR JANGI": teamlar va a'zolar mantig'i (2026-10-15, 1-bosqich).
 
 Egasi qarorlari:
+  - 2026-10-16: team LIGA ichida ochiladi (liga taklif havolasi, tb_leagues.py);
   - teamni istalgan foydalanuvchi ochadi (sardor), a'zolarni taklif havolasi bilan
     yig'adi (t.me/<bot>?start=tb_<kod>); bosh admin teamni tasdiqlaydi yoki rad etadi;
   - team hajmi cheklanmagan; ASOSIY TARKIBni sardor tuzadi (TB_LINEUP_MIN..TB_LINEUP_MAX);
@@ -57,6 +58,14 @@ def _my_membership(cursor, user_id: int):
     return cursor.fetchone()
 
 
+def _league_limits(cursor, team_id: int) -> tuple[int, int]:
+    """2026-10-16: team ligasining asosiy tarkib chegaralari (liga yo'q bo'lsa — standart)."""
+    cursor.execute("SELECT l.lineup_min, l.lineup_max FROM tb_teams t JOIN tb_leagues l ON l.id = t.league_id "
+                   "WHERE t.id = ?", (team_id,))
+    r = cursor.fetchone()
+    return (r["lineup_min"], r["lineup_max"]) if r else (TB_LINEUP_MIN, TB_LINEUP_MAX)
+
+
 def _begin(conn):
     conn.isolation_level = None
     cur = conn.cursor()
@@ -74,8 +83,10 @@ def _team_row(cursor, team_id: int):
     cursor.execute(
         "SELECT t.id, t.name, t.emoji, t.status, t.reject_reason, t.captain_user_id, t.created_at, "
         "u.nickname AS captain_nickname, u.username AS captain_username, "
+        "t.league_id, l.name AS league_name, l.emoji AS league_emoji, "
         "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id) AS members_count "
-        "FROM tb_teams t JOIN users u ON u.id = t.captain_user_id WHERE t.id = ?",
+        "FROM tb_teams t JOIN users u ON u.id = t.captain_user_id "
+        "LEFT JOIN tb_leagues l ON l.id = t.league_id WHERE t.id = ?",
         (team_id,),
     )
     r = cursor.fetchone()
@@ -130,8 +141,20 @@ def tb_my_team_id(user_id: int) -> int | None:
         conn.close()
 
 
-def tb_list_teams(status: str | None = STATUS_APPROVED) -> list[dict]:
-    """Teamlar ro'yxati (status=None — hammasi, admin uchun)."""
+def tb_team_league_id(team_id: int | None) -> int | None:
+    """2026-10-16: team qaysi ligada."""
+    if not team_id:
+        return None
+    conn = get_connection()
+    try:
+        r = conn.cursor().execute("SELECT league_id FROM tb_teams WHERE id = ?", (team_id,)).fetchone()
+        return r["league_id"] if r else None
+    finally:
+        conn.close()
+
+
+def tb_list_teams(status: str | None = STATUS_APPROVED, league_id: int | None = None) -> list[dict]:
+    """Liga teamlari (status=None — hammasi, admin uchun). 2026-10-16: league_id bo'yicha."""
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -140,11 +163,11 @@ def tb_list_teams(status: str | None = STATUS_APPROVED) -> list[dict]:
                "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id) AS members_count, "
                "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id AND m.in_lineup = 1) AS lineup_count, "
                "(SELECT COUNT(*) FROM tb_titles x WHERE x.team_id = t.id) AS titles_count "
-               "FROM tb_teams t JOIN users u ON u.id = t.captain_user_id ")
+               "FROM tb_teams t JOIN users u ON u.id = t.captain_user_id WHERE t.league_id = ? ")
         if status:
-            cur.execute(sql + "WHERE t.status = ? ORDER BY members_count DESC, t.name", (status,))
+            cur.execute(sql + "AND t.status = ? ORDER BY members_count DESC, t.name", (league_id, status))
         else:
-            cur.execute(sql + "ORDER BY t.status = 'pending' DESC, t.created_at DESC")
+            cur.execute(sql + "ORDER BY t.status = 'pending' DESC, t.created_at DESC", (league_id,))
         return [dict(r) for r in cur.fetchall()]
     finally:
         conn.close()
@@ -172,8 +195,16 @@ def tb_invite_preview(code: str, user_id: int | None = None) -> dict | None:
 
 # ------------------------------------------------------------------ yaratish / qo'shilish
 
-def tb_create_team(user_id: int, name: str, emoji: str | None) -> tuple[bool, str | dict]:
-    """Sabablar: bad_name_*, bad_emoji, already_in_team, name_taken."""
+def tb_create_team(user_id: int, name: str, emoji: str | None, league_code: str | None = None
+                   ) -> tuple[bool, str | dict]:
+    """
+    Team faqat liga taklif havolasi orqali ochiladi (2026-10-16): league_code -> liga.
+    Sabablar: league_not_found, bad_name_*, bad_emoji, already_in_team, name_taken.
+    """
+    from tb_leagues import tb_league_by_code
+    league = tb_league_by_code(league_code) if league_code else None
+    if not league:
+        return False, "league_not_found"
     clean, why = _clean_name(name)
     if not clean:
         return False, why
@@ -191,15 +222,16 @@ def tb_create_team(user_id: int, name: str, emoji: str | None) -> tuple[bool, st
             return False, "name_taken"
         code = secrets.token_urlsafe(_INVITE_CODE_BYTES)
         cur.execute(
-            "INSERT INTO tb_teams (name, emoji, captain_user_id, invite_code, status) VALUES (?, ?, ?, ?, ?)",
-            (clean, emoji or TB_EMOJIS[0], user_id, code, STATUS_PENDING),
+            "INSERT INTO tb_teams (name, emoji, captain_user_id, invite_code, status, league_id) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (clean, emoji or TB_EMOJIS[0], user_id, code, STATUS_PENDING, league["id"]),
         )
         team_id = cur.lastrowid
         cur.execute("INSERT INTO tb_members (team_id, user_id, role) VALUES (?, ?, ?)",
                     (team_id, user_id, ROLE_CAPTAIN))
         _finish(cur, True)
-        logger.info("TB: team yaratildi id=%s '%s' (sardor user=%s)", team_id, clean, user_id)
-        return True, {"team_id": team_id}
+        logger.info("TB: team yaratildi id=%s '%s' (sardor user=%s, liga=%s)", team_id, clean, user_id, league["id"])
+        return True, {"team_id": team_id, "league_id": league["id"], "name": clean}
     except Exception:
         _finish(cur, False)
         raise

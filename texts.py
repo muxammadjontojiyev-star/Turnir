@@ -240,6 +240,32 @@ TEXTS = {
         LANGUAGE_EN: "🏆 View tournament",
     },
     # 2026-10-15: TEAMLAR JANGI (tb_*) — taklif va admin qarori
+    # 2026-10-16: Teamlar jangi — ligalar
+    "tb_league_invite_message": {
+        LANGUAGE_UZ: "⚔️ {emoji} «{name}» ligasi (Teamlar jangi)\nTeam ochib, shu ligada bellashing. Team liga admini tasdig'idan keyin qatnashadi.",
+        LANGUAGE_RU: "⚔️ {emoji} Лига «{name}» (Битва команд)\nСоздайте команду и соревнуйтесь в этой лиге. Команда участвует после одобрения админом лиги.",
+        LANGUAGE_EN: "⚔️ {emoji} League «{name}» (Team Battle)\nCreate a team and compete in this league. The team plays after the league admin approves it.",
+    },
+    "tb_league_invite_invalid": {
+        LANGUAGE_UZ: "❌ Liga havolasi yaroqsiz yoki liga topilmadi.",
+        LANGUAGE_RU: "❌ Ссылка на лигу недействительна или лига не найдена.",
+        LANGUAGE_EN: "❌ The league link is invalid or the league was not found.",
+    },
+    "tb_league_invite_button": {
+        LANGUAGE_UZ: "⚔️ Team ochish",
+        LANGUAGE_RU: "⚔️ Создать команду",
+        LANGUAGE_EN: "⚔️ Create a team",
+    },
+    "tb_notify_league_new_team": {
+        LANGUAGE_UZ: "🆕 «{league}» ligasida yangi team: «{name}». Tasdiqlash uchun Teamlar jangi → Admin bo'limiga kiring.",
+        LANGUAGE_RU: "🆕 Новая команда в лиге «{league}»: «{name}». Одобрите её в Битва команд → Админ.",
+        LANGUAGE_EN: "🆕 New team in league «{league}»: «{name}». Approve it in Team Battle → Admin.",
+    },
+    "tb_notify_league_admin": {
+        LANGUAGE_UZ: "🛡 Siz «{league}» ligasining admini etib tayinlandingiz (Teamlar jangi). Boshqaruv — Admin bo'limida.",
+        LANGUAGE_RU: "🛡 Вы назначены админом лиги «{league}» (Битва команд). Управление — в разделе Админ.",
+        LANGUAGE_EN: "🛡 You've been appointed admin of league «{league}» (Team Battle). Manage it in the Admin tab.",
+    },
     "tb_invite_message": {
         LANGUAGE_UZ: "⚔️ Sizni «{name}» teamiga taklif qilishdi (Teamlar jangi)!\nSardor: {captain}\nQo'shilish uchun quyidagi tugmani bosing.",
         LANGUAGE_RU: "⚔️ Вас пригласили в команду «{name}» (Битва команд)!\nКапитан: {captain}\nНажмите кнопку ниже, чтобы вступить.",
