@@ -74,6 +74,13 @@ const TB_I18N = {
     "Tur yopilgan — natija kiritib bo'lmaydi": "Тур закрыт — ввести результат нельзя", "Natija allaqachon tasdiqlangan": "Результат уже подтверждён",
     "Tasdiqlanadigan natija yo'q": "Нет результата для подтверждения", "O'zingiz kiritgan natijani raqib tasdiqlaydi": "Ваш результат подтверждает соперник",
     "Faol mavsum yo'q": "Нет активного сезона", "Mavsum hali boshlanmagan": "Сезон ещё не начался",
+    // 2026-10-16: ligalar
+    "Team ochish uchun liga adminidan liga havolasini oling.": "Чтобы создать команду, получите ссылку на лигу у её админа.",
+    "LIGA": "ЛИГА", "Liga:": "Лига:",
+    "Siz allaqachon teamdasiz — yangi team ochish uchun avval undan chiqing": "Вы уже в команде — чтобы создать новую, сначала выйдите из неё",
+    "Siz hali hech qaysi ligada emassiz": "Вы пока не состоите ни в одной лиге",
+    "Liga topilmadi yoki havola eskirgan": "Лига не найдена или ссылка устарела",
+    "Bu amal faqat liga adminiga ruxsat etilgan": "Это действие доступно только админу лиги",
   },
   en: {
     "Yuklanmoqda…": "Loading…", "Teamim": "My team", "Jang": "Battle", "Jadval": "Table",
@@ -138,6 +145,12 @@ const TB_I18N = {
     "Tur yopilgan — natija kiritib bo'lmaydi": "Round closed — result can't be entered", "Natija allaqachon tasdiqlangan": "Result already confirmed",
     "Tasdiqlanadigan natija yo'q": "Nothing to confirm", "O'zingiz kiritgan natijani raqib tasdiqlaydi": "Your opponent confirms your submission",
     "Faol mavsum yo'q": "No active season", "Mavsum hali boshlanmagan": "Season hasn't started yet",
+    "Team ochish uchun liga adminidan liga havolasini oling.": "To create a team, get the league link from its admin.",
+    "LIGA": "LEAGUE", "Liga:": "League:",
+    "Siz allaqachon teamdasiz — yangi team ochish uchun avval undan chiqing": "You're already in a team — leave it first to create a new one",
+    "Siz hali hech qaysi ligada emassiz": "You're not in any league yet",
+    "Liga topilmadi yoki havola eskirgan": "League not found or link expired",
+    "Bu amal faqat liga adminiga ruxsat etilgan": "Only the league admin can do this",
   },
 };
 
@@ -150,6 +163,7 @@ const TB_I18N_PATTERNS = [
   [/^🏆 (\d+)-mavsum · (\d+)-divizion chempioni$/, "🏆 Сезон $1 · чемпион $2-го дивизиона", "🏆 Season $1 · Division $2 champion"],
   [/^Sabab: (.*)$/s, "Причина: $1", "Reason: $1"],
   [/^Sardor: (.*)$/s, "Капитан: $1", "Captain: $1"],
+  [/^Liga admini: (.*)$/s, "Админ лиги: $1", "League admin: $1"],
   [/^Asosiy tarkib to'liq emas: (\d+)\/(\d+)\. Tarkibni tuzing\.$/, "Состав неполный: $1/$2. Составьте состав.", "Lineup incomplete: $1/$2. Set the lineup."],
   [/^Asosiy tarkib to'liq emas: (\d+)\/(\d+)\. Sardor tarkibni tuzishi kerak\.$/, "Состав неполный: $1/$2. Капитан должен составить состав.", "Lineup incomplete: $1/$2. The captain must set it."],
   [/^ASOSIY TARKIB \((\d+)\)$/, "ОСНОВНОЙ СОСТАВ ($1)", "STARTING LINEUP ($1)"],
@@ -210,3 +224,50 @@ function tbI18nApply(root) {
 
 function tbToast(msg) { showToast(tbT(msg)); }
 function tbConfirm(msg) { return window.confirm(tbT(msg)); }
+
+// ---- Xato kodlari -> o'zbekcha matn (tb.js dan ko'chirildi, 2026-10-16); tbT ularni tarjima qiladi ----
+const TB_ERR = {
+  bad_name_len: "Nom 3–24 belgidan iborat bo'lsin",
+  bad_name_chars: "Nomda faqat harf, raqam, probel va - . ' bo'lishi mumkin",
+  bad_name_profanity: "Nomda nomaqbul so'z bor",
+  bad_emoji: "Belgini ro'yxatdan tanlang",
+  already_in_team: "Siz allaqachon boshqa teamdasiz",
+  already_member: "Siz allaqachon shu teamdasiz",
+  name_taken: "Bu nom band — boshqasini tanlang",
+  not_found: "Team topilmadi yoki havola eskirgan",
+  rejected: "Bu team admin tomonidan rad etilgan",
+  not_in_team: "Siz teamda emassiz",
+  captain_cannot_leave: "Sardor chiqa olmaydi — avval sardorlikni topshiring yoki teamni tarqating",
+  not_captain: "Bu amal faqat sardorga ruxsat etilgan",
+  member_not_found: "A'zo topilmadi",
+  cannot_remove_self: "O'zingizni chiqara olmaysiz",
+  lineup_size: "Asosiy tarkib soni chegaradan tashqarida",
+  lineup_duplicate: "Tarkibda takror o'yinchi bor",
+  lineup_not_member: "Tarkibda teamga a'zo bo'lmagan o'yinchi bor",
+  bot_username_missing: "Bot nomi sozlanmagan (BOT_USERNAME)",
+  too_many_requests: "Juda tez — biroz kuting",
+  // 2026-10-16 (2-bosqich)
+  in_active_season: "Team mavsumda qatnashgan — tarqatib/o'chirib bo'lmaydi",
+  bad_score: "Hisob 0–30 oralig'ida bo'lsin",
+  game_not_found: "O'yin topilmadi",
+  not_your_game: "Bu sizning o'yiningiz emas",
+  round_closed: "Tur yopilgan — natija kiritib bo'lmaydi",
+  already_confirmed: "Natija allaqachon tasdiqlangan",
+  nothing_to_confirm: "Tasdiqlanadigan natija yo'q",
+  own_submission: "O'zingiz kiritgan natijani raqib tasdiqlaydi",
+  no_season: "Faol mavsum yo'q",
+  active_exists: "Faol mavsum bor — avval uni yakunlang",
+  not_enough_teams: "Qatnasha oladigan team kamida 2 ta bo'lishi kerak",
+  bad_division_size: "Divizion hajmi 4–20 oralig'ida bo'lsin",
+  already_started: "Turlar allaqachon boshlangan",
+  not_running: "Mavsum hali boshlanmagan",
+  all_rounds_done: "Barcha turlar o'tib bo'lgan",
+  // 2026-10-16 (ligalar)
+  league_not_found: "Liga topilmadi yoki havola eskirgan",
+  league_name_taken: "Bu liga nomi band",
+  admin_not_found: "Bunday foydalanuvchi topilmadi (botga /start bosgan bo'lishi kerak)",
+  league_not_empty: "Ligada teamlar yoki mavsumlar bor — o'chirib bo'lmaydi",
+  bad_lineup_limits: "Tarkib chegaralari noto'g'ri (3–30, kamida ≤ ko'pi bilan)",
+  not_league_admin: "Bu amal faqat liga adminiga ruxsat etilgan",
+};
+function tbErr(e) { return TB_ERR[e && e.message] || ("Xato: " + (e && e.message || "")); }

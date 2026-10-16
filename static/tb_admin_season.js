@@ -3,6 +3,7 @@
 //  Admin tabining tepasida: qatnasha oladigan teamlar soni, qur'a (divizion hajmi),
 //  turlarni boshlash, turni hozir yopish, mavsumni yakunlash, o'yin natijasini qo'yish (ID bo'yicha).
 //  tb_admin.js tbAdminRender() shu blokni qo'yadi: tbAdminSeasonHtml(). Global: TB, apiFetch, escHtml, showToast, tbErr.
+//  2026-10-16: barcha amallar tanlangan liga uchun (TB.adminLeagueId).
 // =============================================================
 
 function tbAdminSeasonHtml() {
@@ -39,7 +40,7 @@ function tbAdminSeasonHtml() {
 }
 
 async function tbAdminSeasonLoad() {
-  try { TB.seasonPreview = await apiFetch("/tb/admin/season/preview"); }
+  try { TB.seasonPreview = await apiFetch(`/tb/admin/season/preview?league_id=${TB.adminLeagueId}`); }
   catch (_) { TB.seasonPreview = null; }
 }
 
@@ -57,7 +58,8 @@ async function tbAdminSeasonAct(a, btn) {
   } else {
     if (!confirm(ask)) return;
     path = `/tb/admin/season/${a}`;
-    if (a === "create") body = { division_size: +(document.getElementById("tbs-divsize")?.value || 10) };
+    body = { league_id: TB.adminLeagueId };                              // 2026-10-16: liga
+    if (a === "create") body.division_size = +(document.getElementById("tbs-divsize")?.value || 0) || null;
   }
   btn.disabled = true;
   try {

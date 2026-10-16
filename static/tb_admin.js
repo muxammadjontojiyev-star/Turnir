@@ -1,7 +1,9 @@
 // =============================================================
-//  tb_admin.js — "TEAMLAR JANGI": bosh admin tabi (2026-10-15, 1-bosqich)
+//  tb_admin.js — "TEAMLAR JANGI": admin tabi (2026-10-15, 1-bosqich; 2026-10-16 — ligalar)
 //  Teamlarni tasdiqlash / rad etish (sabab bilan, sardorga bot xabari) / o'chirish.
-//  Backend: GET /tb/admin/teams, POST /tb/admin/review, POST /tb/admin/delete (faqat bosh admin).
+//  2026-10-16: tab bosh admin va liga adminlariga ko'rinadi; yuqorida liga tanlash va liga
+//  boshqaruvi (tb_admin_league.js), so'ng mavsum (tb_admin_season.js), so'ng shu liga teamlari.
+//  Backend: GET /tb/admin/teams?league_id=, POST /tb/admin/review, POST /tb/admin/delete.
 //  tb.js dan KEYIN ulanadi. Global: TB, tbRender, tbErr, tbWho, apiFetch, escHtml, showToast.
 // =============================================================
 
@@ -10,8 +12,10 @@ const TB_ADMIN_FILTERS = [["pending", "Kutilmoqda"], ["approved", "Tasdiqlangan"
 async function tbAdminLoad() {
   tbRender(`<div class="empty-state">Yuklanmoqda…</div>`);
   try {
-    TB.adminTeams = (await apiFetch("/tb/admin/teams")).teams || [];
-    if (typeof tbAdminSeasonLoad === "function") await tbAdminSeasonLoad();   // 2026-10-16
+    await tbAdminLeaguesLoad();                                              // 2026-10-16: ligalar
+    const lid = TB.adminLeagueId;
+    TB.adminTeams = lid ? (await apiFetch(`/tb/admin/teams?league_id=${lid}`)).teams || [] : [];
+    if (lid && typeof tbAdminSeasonLoad === "function") await tbAdminSeasonLoad();
   } catch (e) {
     tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
     return;
@@ -41,8 +45,10 @@ function tbAdminRender() {
         <button class="tb-mini tb-mini--danger" data-tb-adm="delete" data-id="${t.id}">🗑 O'chirish</button>
       </div>
     </div>`).join("");
+  const leagues = tbAdminLeaguesHtml();
+  if (!TB.adminLeagueId) { tbRender(leagues); return; }
   const season = typeof tbAdminSeasonHtml === "function" ? tbAdminSeasonHtml() : "";
-  tbRender(`${season}<div class="tb-chips">${chips}</div>
+  tbRender(`${leagues}${season}<div class="tb-chips">${chips}</div>
     ${rows || `<div class="empty-state">Bu bo'limda team yo'q</div>`}`);
 }
 

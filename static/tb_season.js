@@ -20,7 +20,7 @@ function tbsSeasonLine(s) {
 }
 
 async function tbsLoadInfo() {
-  TBS.info = await apiFetch("/tb/season");
+  TBS.info = await apiFetch("/tb/season" + tbLeagueQ());
   return TBS.info;
 }
 
@@ -35,7 +35,7 @@ async function tbBattleLoad() {
     let fixtureHtml = "";
     const s = info.season;
     if (s && s.status === "running" && info.my_division && s.current_round <= s.total_rounds) {
-      const d = await apiFetch(`/tb/season/fixtures?division=${info.my_division}&round=${s.current_round}`);
+      const d = await apiFetch(`/tb/season/fixtures?division=${info.my_division}&round=${s.current_round}${tbLeagueQ("&")}`);
       const mine = (d.fixtures || []).find(f => f.home_team_id === info.my_team_id || f.away_team_id === info.my_team_id);
       fixtureHtml = mine ? `<div class="section-label">TEAMIMNING BAHSI (${s.current_round}-TUR)</div>${tbsFixtureHtml(mine, true)}`
         : `<div class="tb-note">Bu turda teamingiz dam oladi (raqib yo'q).</div>`;
@@ -100,7 +100,7 @@ function tbsFixtureHtml(f, open) {
     f.technical === "both" ? "ikkala teamning tarkibi yetmadi" : (f.technical === "home" ? f.home_team : f.away_team) + " tarkibi yetmadi"}</div>` : "";
   const games = (f.games || []).map(g => {
     const sc = g.status === "confirmed" ? `${g.score1}:${g.score2}` : g.status === "awaiting_confirmation" ? "⏳" : "–";
-    const gid = TB.me && TB.me.is_admin ? `<i class="tb-pair-id">#${g.id}</i>` : "";
+    const gid = TB.me && tbCanManageCur() ? `<i class="tb-pair-id">#${g.id}</i>` : "";
     return `<div class="tb-pair">${gid}<span>${escHtml(g.home)}</span><b>${sc}</b><span>${escHtml(g.away)}</span></div>`;
   }).join("");
   return `<details class="card tb-fx"${open ? " open" : ""}>
@@ -132,8 +132,8 @@ async function tbTableLoad() {
 async function tbsRenderTable() {
   const s = TBS.info.season, divs = TBS.info.divisions || [];
   const [t, fx] = await Promise.all([
-    apiFetch(`/tb/season/table?division=${TBS.division}`),
-    apiFetch(`/tb/season/fixtures?division=${TBS.division}&round=${TBS.round}`),
+    apiFetch(`/tb/season/table?division=${TBS.division}${tbLeagueQ("&")}`),
+    apiFetch(`/tb/season/fixtures?division=${TBS.division}&round=${TBS.round}${tbLeagueQ("&")}`),
   ]);
   const myTeam = TBS.info.my_team_id;
   // 3-bosqich: ko'tarilish (yashil) / tushish (qizil) zonalari

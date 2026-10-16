@@ -5,71 +5,54 @@
 //  Teamni sardor ochadi, a'zolarni taklif havolasi bilan yig'adi, asosiy
 //  tarkibni (TB.me.lineup_min..max) tuzadi; bosh admin tasdiqlaydi.
 //  Backend: tb_api.py. Global: APP, apiFetch, escHtml, showToast, ICON, showHubSelect.
-//  Sardor amallari — tb_team.js; admin — tb_admin.js.
+//  Sardor amallari — tb_team.js; admin — tb_admin.js, tb_admin_league.js.
+//  2026-10-16: LIGALAR — team faqat liga havolasi (?tbl_join=<kod>) orqali ochiladi;
+//  Teamlar/Jang/Jadval — o'z teamim ligasi (teami yo'q liga admini uchun — tanlangan liga).
 // =============================================================
 
 const TB = { me: null, teams: null, tab: "my", view: null, joinCode: null, invite: null,
-             createEmoji: null, lineupSel: null, adminTeams: null, adminFilter: "pending" };
+             createEmoji: null, lineupSel: null, adminTeams: null, adminFilter: "pending",
+             leagueCode: null, joinLeague: null, adminLeagueId: null };
 
-const TB_ERR = {
-  bad_name_len: "Nom 3–24 belgidan iborat bo'lsin",
-  bad_name_chars: "Nomda faqat harf, raqam, probel va - . ' bo'lishi mumkin",
-  bad_name_profanity: "Nomda nomaqbul so'z bor",
-  bad_emoji: "Belgini ro'yxatdan tanlang",
-  already_in_team: "Siz allaqachon boshqa teamdasiz",
-  already_member: "Siz allaqachon shu teamdasiz",
-  name_taken: "Bu nom band — boshqasini tanlang",
-  not_found: "Team topilmadi yoki havola eskirgan",
-  rejected: "Bu team admin tomonidan rad etilgan",
-  not_in_team: "Siz teamda emassiz",
-  captain_cannot_leave: "Sardor chiqa olmaydi — avval sardorlikni topshiring yoki teamni tarqating",
-  not_captain: "Bu amal faqat sardorga ruxsat etilgan",
-  member_not_found: "A'zo topilmadi",
-  cannot_remove_self: "O'zingizni chiqara olmaysiz",
-  lineup_size: "Asosiy tarkib soni chegaradan tashqarida",
-  lineup_duplicate: "Tarkibda takror o'yinchi bor",
-  lineup_not_member: "Tarkibda teamga a'zo bo'lmagan o'yinchi bor",
-  bot_username_missing: "Bot nomi sozlanmagan (BOT_USERNAME)",
-  too_many_requests: "Juda tez — biroz kuting",
-  // 2026-10-16 (2-bosqich)
-  in_active_season: "Team mavsumda qatnashgan — tarqatib/o'chirib bo'lmaydi",
-  bad_score: "Hisob 0–30 oralig'ida bo'lsin",
-  game_not_found: "O'yin topilmadi",
-  not_your_game: "Bu sizning o'yiningiz emas",
-  round_closed: "Tur yopilgan — natija kiritib bo'lmaydi",
-  already_confirmed: "Natija allaqachon tasdiqlangan",
-  nothing_to_confirm: "Tasdiqlanadigan natija yo'q",
-  own_submission: "O'zingiz kiritgan natijani raqib tasdiqlaydi",
-  no_season: "Faol mavsum yo'q",
-  active_exists: "Faol mavsum bor — avval uni yakunlang",
-  not_enough_teams: "Qatnasha oladigan team kamida 2 ta bo'lishi kerak",
-  bad_division_size: "Divizion hajmi 4–20 oralig'ida bo'lsin",
-  already_started: "Turlar allaqachon boshlangan",
-  not_running: "Mavsum hali boshlanmagan",
-  all_rounds_done: "Barcha turlar o'tib bo'lgan",
-};
-function tbErr(e) { return TB_ERR[e && e.message] || ("Xato: " + (e && e.message || "")); }
+// TB_ERR, tbErr — tb_i18n.js (2026-10-16: matnlar bir joyda)
 
 function tbWho(o) { return o.username ? "@" + o.username : (o.nickname || "—"); }
 
-// Taklif kodi: URL ?tb_join=<kod> yoki Telegram startapp (tb_<kod>). Bir marta o'qiladi.
+// Taklif kodi: URL ?tb_join=<kod> (team) / ?tbl_join=<kod> (liga, 2026-10-16) yoki Telegram startapp.
+// Bir marta o'qiladi. Liga kodi "L:" bilan qaytadi (team kodida ":" bo'lmaydi).
 function tbConsumeInviteParam() {
-  let code = null;
+  let code = null, league = false;
   try {
     const params = new URLSearchParams(window.location.search);
-    code = params.get("tb_join");
+    for (const key of ["tb_join", "tbl_join"]) {
+      const v = params.get(key);
+      if (v && !code) { code = v; league = key === "tbl_join"; }
+      params.delete(key);
+    }
     if (code) {
-      params.delete("tb_join");
       const q = params.toString();
       window.history.replaceState(null, "", window.location.pathname + (q ? "?" + q : "") + window.location.hash);
     }
   } catch (_) { code = null; }
-  if (!code) {
+  if (!code && !TB._startParamUsed) {
     const sp = window.Telegram?.WebApp?.initDataUnsafe?.start_param || "";
-    if (sp.startsWith("tb_") && !TB._startParamUsed) { code = sp.slice(3); TB._startParamUsed = true; }
+    if (sp.startsWith("tbl_")) { code = sp.slice(4); league = true; TB._startParamUsed = true; }
+    else if (sp.startsWith("tb_")) { code = sp.slice(3); TB._startParamUsed = true; }
   }
-  return code && /^[A-Za-z0-9_-]{4,40}$/.test(code) ? code : null;
+  if (!code || !/^[A-Za-z0-9_-]{4,40}$/.test(code)) return null;
+  return league ? "L:" + code : code;
 }
+
+// Ko'rsatiladigan liga: o'z teamim ligasi, bo'lmasa admin tanlagan liga
+function tbCurLeague() {
+  return (TB.me && TB.me.team && TB.me.team.league_id) || TB.adminLeagueId
+    || (TB.me && TB.me.managed_leagues && TB.me.managed_leagues[0] && TB.me.managed_leagues[0].id) || null;
+}
+function tbCanManageCur() {
+  const l = tbCurLeague();
+  return !!(TB.me && (TB.me.is_super || (TB.me.managed_leagues || []).some(x => x.id === l)));
+}
+function tbLeagueQ(sep) { const l = tbCurLeague(); return l ? `${sep || "?"}league_id=${l}` : ""; }
 
 function showTeamBattle(joinCode) {
   ["hub-select", "mode-select", "pt-root"].forEach(id => document.getElementById(id)?.classList.add("hidden"));
@@ -84,7 +67,9 @@ function showTeamBattle(joinCode) {
   }
   root.classList.remove("hidden");
   TB.view = null;
-  TB.joinCode = joinCode || null;
+  const isLeague = typeof joinCode === "string" && joinCode.startsWith("L:");
+  TB.joinCode = isLeague ? null : (joinCode || null);
+  if (isLeague) { TB.leagueCode = joinCode.slice(2); TB.tab = "my"; }
   void tbLoad();
 }
 
@@ -102,6 +87,14 @@ async function tbLoad() {
     return;
   }
   if (TB.joinCode) { await tbOpenJoin(TB.joinCode); return; }
+  if (TB.leagueCode && !TB.joinLeague) {
+    try { TB.joinLeague = await apiFetch(`/tb/league/by-code/${encodeURIComponent(TB.leagueCode)}`); }
+    catch (e) { TB.leagueCode = null; tbToast("❌ " + tbErr(e)); }
+    if (TB.me.team && TB.leagueCode) {                  // bir kishi — faqat bitta team
+      tbToast("Siz allaqachon teamdasiz — yangi team ochish uchun avval undan chiqing");
+      TB.leagueCode = null; TB.joinLeague = null;
+    }
+  }
   tbRenderTab();
 }
 
@@ -118,6 +111,7 @@ function tbRender(bodyHtml) {
       <div class="wc-header-title tb-title">${ICON.get("shield", 20)} <span>TEAMLAR JANGI</span></div>
     </div>
     <div class="wc-body tb-body-wrap">
+      ${tbLeagueBarHtml()}
       ${TB.view ? "" : `<div class="tb-tabs">${tabs.map(([k, l]) =>
         `<button class="tb-tab${TB.tab === k ? " active" : ""}" data-tb-tab="${k}">${escHtml(l)}</button>`).join("")}</div>`}
       <div class="tb-body">${bodyHtml}</div>
@@ -135,32 +129,7 @@ function tbRenderTab() {
   if (TB.me.team && TB.me.team.is_captain && typeof tbBindCaptain === "function") tbBindCaptain();
 }
 
-// ---------------- Teami yo'q: tushuntirish + team ochish ----------------
-function tbNoTeamHtml() {
-  const em = TB.me.emojis || [];
-  if (!TB.createEmoji) TB.createEmoji = em[0];
-  return `
-    <div class="card tb-hero">
-      <div class="tb-hero-kicker">${ICON.get("swords", 16)} TEAMLAR JANGI</div>
-      <div class="tb-hero-title">Jamoangizni yig'ing va jangga kiring</div>
-      <ul class="tb-hero-list">
-        <li>Team ochasiz yoki do'stingiz teamiga taklif havolasi orqali qo'shilasiz.</li>
-        <li>Sardor asosiy tarkibni tuzadi (${TB.me.lineup_min}–${TB.me.lineup_max} kishi).</li>
-        <li>Ikki team bahsida o'yinchilar 1v1 o'ynaydi — ko'p g'alaba olgan team yutadi.</li>
-        <li>Teamlar divizionlarda liga formatida bellashadi.</li>
-      </ul>
-    </div>
-    <div class="section-label">TEAM OCHISH</div>
-    <div class="card tb-form">
-      <input id="tb-name" class="modal-input" maxlength="${TB.me.name_max}" placeholder="Team nomi (${TB.me.name_min}–${TB.me.name_max} belgi)" autocomplete="off">
-      <div class="tb-form-label">Belgi</div>
-      <div class="tb-emoji-grid">${em.map(e =>
-        `<button class="tb-emoji${e === TB.createEmoji ? " active" : ""}" data-tb-emoji="${escHtml(e)}">${escHtml(e)}</button>`).join("")}</div>
-      <button class="btn btn--primary btn--glow" data-tb="create">⚔️ Team ochish</button>
-      <div class="tb-hint">Team admin tasdig'idan keyin turnirda qatnashadi. A'zolarni hozirdan yig'ishingiz mumkin.</div>
-    </div>
-    <div class="tb-hint tb-hint--center">Do'stingiz teamiga qo'shilish uchun undan taklif havolasini so'rang.</div>`;
-}
+// tbLeagueBarHtml, tbNoTeamHtml — tb_league_ui.js (2026-10-16)
 
 const TB_STATUS = { pending: ["⏳ Tasdiq kutilmoqda", "pending"], approved: ["✅ Tasdiqlangan", "approved"],
                     rejected: ["❌ Rad etilgan", "rejected"] };
@@ -173,6 +142,7 @@ function tbTeamHeadHtml(t) {
       <div class="tb-team-name">${escHtml(t.name)}</div>
       <span class="tb-status tb-status--${cls}">${escHtml(label)}</span>
       <div class="tb-team-meta">Sardor: <b>${escHtml(tbWho({ username: t.captain_username, nickname: t.captain_nickname }))}</b></div>
+      ${t.league_name ? `<div class="tb-team-meta">Liga: <b>${escHtml((t.league_emoji ? t.league_emoji + " " : "") + t.league_name)}</b></div>` : ""}
       <div class="tb-team-stats">
         <div><b>${t.members_count}</b><span>A'ZO</span></div>
         <div><b>${t.lineup_count ?? "—"}</b><span>ASOSIY TARKIB</span></div>
@@ -222,7 +192,7 @@ function tbMyTeamHtml(t) {
 async function tbLoadTeams() {
   tbRender(`<div class="empty-state">Yuklanmoqda…</div>`);
   try {
-    TB.teams = (await apiFetch("/tb/teams")).teams || [];
+    TB.teams = (await apiFetch("/tb/teams" + tbLeagueQ())).teams || [];
   } catch (e) {
     tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
     return;
@@ -235,7 +205,7 @@ async function tbLoadTeams() {
       <span class="tb-row-count">${t.members_count}<small>a'zo</small></span>
     </button>`).join("");
   tbRender(`<div class="section-label">TASDIQLANGAN TEAMLAR (${TB.teams.length})</div>
-    ${rows || `<div class="empty-state">Hozircha tasdiqlangan team yo'q</div>`}`);
+    ${rows || `<div class="empty-state">${tbCurLeague() ? "Hozircha tasdiqlangan team yo'q" : "Siz hali hech qaysi ligada emassiz"}</div>`}`);
 }
 
 async function tbOpenTeam(id) {
@@ -316,7 +286,8 @@ function tbHandleClick(e) {
   else if (a === "back") { TB.joinCode = null; TB.view = null; tbRenderTab(); }
   else if (a === "create") {
     const name = (document.getElementById("tb-name")?.value || "").trim();
-    void tbAction("/tb/teams", { name, emoji: TB.createEmoji }, "✅ Team ochildi! Endi a'zolarni taklif qiling", act);
+    void tbAction("/tb/teams", { name, emoji: TB.createEmoji, league_code: TB.leagueCode },
+      "✅ Team ochildi! Endi a'zolarni taklif qiling", act).then(ok => { if (ok) { TB.leagueCode = null; TB.joinLeague = null; } });
   } else if (a === "join") {
     const code = TB.joinCode;
     TB.joinCode = null;

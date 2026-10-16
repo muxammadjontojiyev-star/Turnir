@@ -7192,3 +7192,23 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .tb-zl--up { background: #22c55e; } .tb-zl--down { background: #ef4444; }
 .tb-titles { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #ffd479; margin-top: 4px; }
 .tb-title-cnt { font-style: normal; font-size: 12px; color: #ffd479; }
+
+/* ===== TEAMLAR JANGI — ligalar (2026-10-16) ===== */
+.tb-league-bar { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px;
+  color: var(--tb-accent); margin: 0 0 10px; letter-spacing: .3px; }
+.tb-league-bar b { color: #fff; font-weight: 700; }
+.tb-league-card, .tb-adm-league-head { display: flex; align-items: center; gap: 12px; }
+.tb-league-card > span, .tb-adm-league-head > span { font-size: 30px; }
+.tb-league-card div, .tb-adm-league-head div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tb-league-card b, .tb-adm-league-head b { font-size: 17px; overflow-wrap: anywhere; }
+.tb-league-card small, .tb-adm-league-head small { font-size: 12px; color: var(--text-secondary); }
+.tb-adm-league { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.tb-adm-settings { border-top: 1px solid var(--border); padding-top: 8px; }
+.tb-adm-settings summary { font-size: 13px; color: var(--text-secondary); cursor: pointer; padding: 4px 0; }
+.tb-adm-settings[open] { display: flex; flex-direction: column; gap: 8px; }
+.tb-adm-settings .modal-input { margin: 0; }
+.tb-adm-line .modal-input[type=number] { max-width: 90px; margin-left: auto; }
+.tb-emoji-grid--sm .tb-emoji { font-size: 15px; border-radius: 8px; }
+.tb-chip--add { color: var(--tb-accent); border-style: dashed; }
+.tb-chip-badge { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 2px; border-radius: 999px;
+  background: var(--tb-red); color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
