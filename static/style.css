@@ -7212,3 +7212,8 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .tb-chip--add { color: var(--tb-accent); border-style: dashed; }
 .tb-chip-badge { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 2px; border-radius: 999px;
   background: var(--tb-red); color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
+/* 2026-10-16: TB admin — ko'plab o'chirish uchun tanlash (pt-all-check / pt-bulk-bar qayta ishlatiladi) */
+.tb-adm-item { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tb-adm-item > .tb-adm-row { flex: 1; min-width: 0; margin-bottom: 0; }
+.tb-adm-item .pt-all-check { height: 34px; }
+.tb-adm-item.is-sel > .tb-adm-row { border-color: rgba(255,90,60,.55); }
