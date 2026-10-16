@@ -209,9 +209,9 @@ def tb_create_season(league_id: int, division_size: int | None = None) -> tuple[
 
 def _standings_cur(cur, season_id: int, division: int) -> list[dict]:
     cur.execute(
-        "SELECT st.team_id, t.name, t.emoji FROM tb_season_teams st JOIN tb_teams t ON t.id = st.team_id "
+        "SELECT st.team_id, t.name, t.emoji, t.logo_ver FROM tb_season_teams st JOIN tb_teams t ON t.id = st.team_id "
         "WHERE st.season_id = ? AND st.division = ?", (season_id, division))
-    rows = {r["team_id"]: {"team_id": r["team_id"], "name": r["name"], "emoji": r["emoji"],
+    rows = {r["team_id"]: {"team_id": r["team_id"], "name": r["name"], "emoji": r["emoji"], "logo_ver": r["logo_ver"],
                            "played": 0, "wins": 0, "draws": 0, "losses": 0, "points": 0,
                            "gw": 0, "gl": 0, "gf": 0, "ga": 0} for r in cur.fetchall()}
     cur.execute("SELECT home_team_id, away_team_id, home_wins, away_wins, home_goals, away_goals "

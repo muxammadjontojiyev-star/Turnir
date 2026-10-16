@@ -166,6 +166,8 @@ def _in_active_season(cur, team_id: int) -> bool:
 
 
 def _delete_team(cur, team_id: int) -> None:
+    from tb_logos import delete_logo_cur
+    delete_logo_cur(cur, "team", team_id)             # 2026-10-16: logosi ham
     cur.execute("DELETE FROM tb_members WHERE team_id = ?", (team_id,))
     cur.execute("DELETE FROM tb_teams WHERE id = ?", (team_id,))
 

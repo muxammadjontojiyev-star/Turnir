@@ -93,6 +93,8 @@ def migrate_leagues() -> None:
         create_league_table(cur)
         if "league_id" not in _cols(cur, "tb_teams"):
             cur.execute("ALTER TABLE tb_teams ADD COLUMN league_id INTEGER REFERENCES tb_leagues(id)")
+        from tb_logos import init_logo_table
+        init_logo_table(cur)                    # 2026-10-16: galereyadan logo (tb_logos, logo_ver)
         conn.commit()
         if "league_id" not in _cols(cur, "tb_seasons"):
             _rebuild_seasons(conn)

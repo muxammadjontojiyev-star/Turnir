@@ -226,6 +226,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
                 cursor.execute("UPDATE tb_teams SET captain_user_id = ? WHERE id = ?", (heir["user_id"], tr["id"]))
             else:
                 cursor.execute("DELETE FROM tb_members WHERE team_id = ?", (tr["id"],))
+                cursor.execute("DELETE FROM tb_logos WHERE kind = 'team' AND ref_id = ?", (tr["id"],))  # 2026-10-16
                 cursor.execute("DELETE FROM tb_teams WHERE id = ?", (tr["id"],))
         cursor.execute("DELETE FROM tb_members WHERE user_id = ?", (user_id,))
         cursor.execute("UPDATE tb_leagues SET admin_user_id = NULL WHERE admin_user_id = ?", (user_id,))  # 2026-10-16

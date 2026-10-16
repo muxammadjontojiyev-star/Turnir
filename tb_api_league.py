@@ -112,3 +112,47 @@ def tb_admin_league_link_regen(league_id: int = Body(..., embed=True), user: dic
     require_manage(user, league_id)
     res = _ok(tb_league_regen_code(league_id))
     return {"link": _league_link(res["invite_code"])}
+
+
+# ---------------------------------------------------------------- logolar (2026-10-16, tb_logos.py)
+
+
+
+def _logo_ok(res: tuple):
+    ok, data = res
+    if not ok:
+        _fail(data, 404 if data == "not_found" else 400)
+    return {"status": "ok", **data}
+
+
+@router.get("/tb/logo/{kind}/{ref_id}")
+def tb_logo_get(kind: str, ref_id: int):
+    """Ommaviy (jadvalda hamma ko'radi; <img> sarlavha yubora olmaydi). ?v= versiya — uzoq kesh."""
+    from fastapi.responses import Response
+    from tb_logos import tb_get_logo
+    r = tb_get_logo(kind, ref_id)
+    if not r:
+        raise HTTPException(status_code=404, detail="not_found")
+    return Response(content=r[0], media_type=r[1],
+                    headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
+@router.post("/tb/team/logo")
+def tb_team_logo_set(image_base64: str | None = Body(None, embed=True), user: dict = Depends(get_authenticated_user)):
+    """Team sardori o'z teami logosini qo'yadi / olib tashlaydi (image_base64 bo'sh)."""
+    from tb_core import tb_my_team_id, tb_team_detail
+    from tb_logos import tb_set_logo
+    team_id = tb_my_team_id(user["id"])
+    d = tb_team_detail(team_id, user["id"]) if team_id else None
+    if not d or not d["is_captain"]:
+        _fail("not_captain", 403)
+    return _logo_ok(tb_set_logo("team", team_id, image_base64))
+
+
+@router.post("/tb/admin/league/logo")
+def tb_league_logo_set(league_id: int = Body(..., embed=True), image_base64: str | None = Body(None, embed=True),
+                       user: dict = Depends(get_authenticated_user)):
+    """Liga admini / bosh admin liga logosini qo'yadi / olib tashlaydi."""
+    from tb_logos import tb_set_logo
+    require_manage(user, league_id)
+    return _logo_ok(tb_set_logo("league", league_id, image_base64))

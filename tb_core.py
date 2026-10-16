@@ -81,9 +81,9 @@ def _finish(cur, ok: bool):
 
 def _team_row(cursor, team_id: int):
     cursor.execute(
-        "SELECT t.id, t.name, t.emoji, t.status, t.reject_reason, t.captain_user_id, t.created_at, "
+        "SELECT t.id, t.name, t.emoji, t.logo_ver, t.status, t.reject_reason, t.captain_user_id, t.created_at, "
         "u.nickname AS captain_nickname, u.username AS captain_username, "
-        "t.league_id, l.name AS league_name, l.emoji AS league_emoji, "
+        "t.league_id, l.name AS league_name, l.emoji AS league_emoji, l.logo_ver AS league_logo_ver, "
         "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id) AS members_count "
         "FROM tb_teams t JOIN users u ON u.id = t.captain_user_id "
         "LEFT JOIN tb_leagues l ON l.id = t.league_id WHERE t.id = ?",
@@ -158,7 +158,7 @@ def tb_list_teams(status: str | None = STATUS_APPROVED, league_id: int | None = 
     conn = get_connection()
     try:
         cur = conn.cursor()
-        sql = ("SELECT t.id, t.name, t.emoji, t.status, t.reject_reason, t.created_at, "
+        sql = ("SELECT t.id, t.name, t.emoji, t.logo_ver, t.status, t.reject_reason, t.created_at, "
                "u.nickname AS captain_nickname, u.username AS captain_username, "
                "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id) AS members_count, "
                "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id AND m.in_lineup = 1) AS lineup_count, "

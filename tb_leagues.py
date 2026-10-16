@@ -23,7 +23,7 @@ TB_LEAGUE_PREFIX = "tbl_"           # /start parametri: tbl_<invite_code>
 TB_LINEUP_FLOOR = 3                 # liga sozlamasi: asosiy tarkib kamida shuncha bo'lishi mumkin
 TB_LINEUP_CEIL = 30                 # liga sozlamasi: asosiy tarkib ko'pi bilan
 _CODE_RE = re.compile(r"^[A-Za-z0-9_-]{4,40}$")
-_LEAGUE_COLS = ("l.id, l.name, l.emoji, l.admin_user_id, l.lineup_min, l.lineup_max, l.division_size, "
+_LEAGUE_COLS = ("l.id, l.name, l.emoji, l.logo_ver, l.admin_user_id, l.lineup_min, l.lineup_max, l.division_size, "
                 "l.created_at, u.nickname AS admin_nickname, u.username AS admin_username")
 
 
@@ -183,6 +183,8 @@ def tb_league_delete(league_id: int) -> tuple[bool, str | dict]:
         if busy:
             _finish(cur, False)
             return False, "league_not_empty"
+        from tb_logos import delete_logo_cur
+        delete_logo_cur(cur, "league", league_id)
         cur.execute("DELETE FROM tb_leagues WHERE id = ?", (league_id,))
         _finish(cur, True)
         return True, {"league_id": league_id}

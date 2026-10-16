@@ -23,8 +23,8 @@ TB_SCORE_MAX = 30
 _GAME_SQL = (
     "SELECT g.id, g.fixture_id, g.slot, g.home_user_id, g.away_user_id, g.score1, g.score2, "
     "g.submitted_by, g.status, f.round, f.division, f.status AS fixture_status, "
-    "f.home_team_id, f.away_team_id, ht.name AS home_team, ht.emoji AS home_emoji, "
-    "at.name AS away_team, at.emoji AS away_emoji, "
+    "f.home_team_id, f.away_team_id, ht.name AS home_team, ht.emoji AS home_emoji, ht.logo_ver AS home_logo_ver, "
+    "at.name AS away_team, at.emoji AS away_emoji, at.logo_ver AS away_logo_ver, "
     "hu.nickname AS home_nick, hu.username AS home_username, "
     "au.nickname AS away_nick, au.username AS away_username "
     "FROM tb_games g JOIN tb_fixtures f ON f.id = g.fixture_id "
@@ -165,8 +165,8 @@ def tb_round_fixtures(season_id: int, division: int, rnd: int) -> list[dict]:
         cur = conn.cursor()
         cur.execute(
             "SELECT f.id, f.round, f.status, f.technical, f.home_wins, f.away_wins, f.draws, "
-            "f.home_team_id, f.away_team_id, ht.name AS home_team, ht.emoji AS home_emoji, "
-            "at.name AS away_team, at.emoji AS away_emoji "
+            "f.home_team_id, f.away_team_id, ht.name AS home_team, ht.emoji AS home_emoji, ht.logo_ver AS home_logo_ver, "
+            "at.name AS away_team, at.emoji AS away_emoji, at.logo_ver AS away_logo_ver "
             "FROM tb_fixtures f JOIN tb_teams ht ON ht.id = f.home_team_id JOIN tb_teams at ON at.id = f.away_team_id "
             "WHERE f.season_id = ? AND f.division = ? AND f.round = ? ORDER BY f.id",
             (season_id, division, rnd))
