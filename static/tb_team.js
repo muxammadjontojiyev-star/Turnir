@@ -19,6 +19,7 @@ function tbCaptainBlocksHtml(t) {
     const pos = TB.lineupSel.indexOf(m.user_id);
     return `<button class="tb-lu-row${pos >= 0 ? " on" : ""}" data-tb-lu="${m.user_id}">
         <span class="tb-lu-pos">${pos >= 0 ? pos + 1 : ""}</span>
+        ${tbAvatarHtml(m, "tb-ava--sm")}
         <span class="tb-lu-name">${escHtml(tbWho(m))}${m.role === "captain" ? ` <span class="tb-badge tb-badge--cap">SARDOR</span>` : ""}</span>
       </button>`;
   }).join("");

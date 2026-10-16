@@ -7235,3 +7235,30 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .tb-logo-btn { margin: 0; text-align: center; cursor: pointer; }
 .tb-logo-btn.is-busy { opacity: .5; pointer-events: none; }
 .tb-league-bar .tb-logo, .tb-team-meta .tb-logo { margin-right: 2px; }
+/* 2026-10-16: TB — pastki tab paneli (asosiy .bottom-nav uslubida) */
+.tb-nav { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: 100%; max-width: 480px;
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex; align-items: stretch; z-index: 30;
+  background: rgba(13,13,26,.88); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-top: 1px solid rgba(255,255,255,.08); box-shadow: 0 -14px 34px -20px rgba(0,0,0,.9); }
+.tb-nav-item { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; border: none; background: none; color: var(--text-secondary); font-size: 11px; font-weight: 600;
+  letter-spacing: .2px; transition: transform .15s ease, color .15s ease; position: relative; }
+.tb-nav-item:active { transform: translateY(1px) scale(.95); }
+.tb-nav-icon { display: flex; }
+.tb-nav-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
+.tb-nav-item.active { color: var(--tb-accent); }
+.tb-nav-item.active .tb-nav-icon { filter: drop-shadow(0 0 9px rgba(255,140,60,.75)); transform: translateY(-1px); }
+.tb-nav-item.active::before { content: ""; position: absolute; top: 0; left: 28%; right: 28%; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, #b3202e, #e0782a); }
+#tb-root.tb-has-nav .tb-body-wrap { padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px); }
+/* a'zolar: Telegram rasmi + @username */
+.tb-ava { position: relative; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; overflow: hidden;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(179,32,46,.55), rgba(224,120,42,.55)); color: #fff; font-weight: 800; font-size: 15px; }
+.tb-ava i { font-style: normal; }
+.tb-ava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tb-ava--sm { width: 30px; height: 30px; font-size: 13px; }
+.tb-who { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.tb-who b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-who small { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

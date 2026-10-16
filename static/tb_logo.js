@@ -2,6 +2,7 @@
 //  tb_logo.js — "TEAMLAR JANGI": team va liga logolari (galereyadan rasm, 2026-10-16)
 //  tbLogo(kind, id, ver, emoji, cls)  — logo <img> (yo'q bo'lsa — emoji); barcha ekranlar ishlatadi
 //  tbLogoPickerHtml(kind, id, ver, emoji) — "Logoni o'zgartirish" bloki (sardor / liga admini)
+//  tbAvatarHtml(m), tbNameHtml(m) — a'zoning Telegram rasmi va @username (2026-10-16)
 //  Rasm brauzerda 256x256 kvadratga (markazdan) kesilib siqiladi -> POST:
 //    team:   /tb/team/logo          {image_base64}            (sardor)
 //    league: /tb/admin/league/logo  {league_id, image_base64} (liga admini / bosh admin)
@@ -91,3 +92,16 @@ document.addEventListener("click", async (e) => {
     b.disabled = false;
   }
 });
+
+// 2026-10-16: a'zoning Telegram rasmi (/players/{id}/photo — mavjud proksi, keshlangan); rasm
+// bo'lmasa (404) — ismning bosh harfi. Ism: @username (asosiy) + nik (kichik, farq qilsa).
+function tbAvatarHtml(m, cls) {
+  const letter = escHtml(((m.nickname || m.username || "?").trim()[0] || "?").toUpperCase());
+  return `<span class="tb-ava${cls ? " " + cls : ""}"><i>${letter}</i>${m.user_id ? `<img src="${API_BASE}/players/${+m.user_id}/photo"
+    alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ""}</span>`;
+}
+function tbNameHtml(m) {
+  const user = m.username ? "@" + m.username : "";
+  const nick = m.nickname && m.nickname !== m.username ? m.nickname : "";
+  return `<span class="tb-who"><b>${escHtml(user || nick || "—")}</b>${user && nick ? `<small>${escHtml(nick)}</small>` : ""}</span>`;
+}

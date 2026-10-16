@@ -18,6 +18,8 @@ const TB = { me: null, teams: null, tab: "my", view: null, joinCode: null, invit
 
 function tbWho(o) { return o.username ? "@" + o.username : (o.nickname || "—"); }
 
+// tbAvatarHtml, tbNameHtml — tb_logo.js (2026-10-16)
+
 // Taklif kodi: URL ?tb_join=<kod> (team) / ?tbl_join=<kod> (liga, 2026-10-16) yoki Telegram startapp.
 // Bir marta o'qiladi. Liga kodi "L:" bilan qaytadi (team kodida ":" bo'lmaydi).
 function tbConsumeInviteParam() {
@@ -103,8 +105,9 @@ function tbRender(bodyHtml) {
   if (!root) return;
   const admin = TB.me && TB.me.is_admin;
   // 2026-10-16 (2-bosqich): + "Jang" (mening 1v1 o'yinim) va "Jadval" (divizionlar, turlar)
-  const tabs = [["my", "Teamim"], ["battle", "Jang"], ["table", "Jadval"], ["teams", "Teamlar"]]
-    .concat(admin ? [["admin", "Admin"]] : []);
+  // 2026-10-16: tablar PASTKI panelda (ilovaning asosiy pastki menyusi kabi), ikonka bilan
+  const tabs = [["my", "Teamim", "user"], ["battle", "Jang", "swords"], ["table", "Jadval", "trophy"],
+                ["teams", "Teamlar", "shield"]].concat(admin ? [["admin", "Admin", "lock"]] : []);
   root.innerHTML = `
     <div class="wc-header">
       <button class="wc-back" data-tb="exit" aria-label="Ortga">←</button>
@@ -112,10 +115,12 @@ function tbRender(bodyHtml) {
     </div>
     <div class="wc-body tb-body-wrap">
       ${tbLeagueBarHtml()}
-      ${TB.view ? "" : `<div class="tb-tabs">${tabs.map(([k, l]) =>
-        `<button class="tb-tab${TB.tab === k ? " active" : ""}" data-tb-tab="${k}">${escHtml(l)}</button>`).join("")}</div>`}
       <div class="tb-body">${bodyHtml}</div>
-    </div>`;
+    </div>
+    ${TB.view ? "" : `<nav class="tb-nav">${tabs.map(([k, l, ic]) =>
+      `<button class="tb-nav-item${TB.tab === k ? " active" : ""}" data-tb-tab="${k}">
+        <span class="tb-nav-icon">${ICON.get(ic, 22)}</span><span class="tb-nav-label">${escHtml(l)}</span></button>`).join("")}</nav>`}`;
+  root.classList.toggle("tb-has-nav", !TB.view);
   tbI18nApply(root);                    // 2026-10-16 (3-bosqich): ru/en
 }
 
@@ -162,7 +167,8 @@ function tbMemberRowHtml(m, t, captainView) {
          <button class="tb-mini tb-mini--danger" data-tb-kick="${m.user_id}">Chiqarish</button>
        </div>` : "";
   return `<div class="tb-member">
-      <div class="tb-member-info"><b>${escHtml(tbWho(m))}</b>${role}${lu}
+      ${tbAvatarHtml(m)}
+      <div class="tb-member-info">${tbNameHtml(m)}${role}${lu}
         ${captainView && m.telegram_id ? `<span class="tb-member-id">ID ${escHtml(String(m.telegram_id))}</span>` : ""}</div>
       ${acts}
     </div>`;
