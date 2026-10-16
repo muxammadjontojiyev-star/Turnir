@@ -1,7 +1,7 @@
 // =============================================================
 //  tb_admin_league.js — "TEAMLAR JANGI": ligalar boshqaruvi (Admin tabi tepasi, 2026-10-16)
-//  Bosh admin: liga ochish (nom, belgi, admin @username/ID), admin tayinlash, bo'sh ligani o'chirish.
-//  Liga admini (va bosh admin): liga tanlash, sozlamalar (nom, belgi, tarkib min/max,
+//  Bosh admin: liga ochish (nom, admin @username/ID), admin tayinlash, bo'sh ligani o'chirish.
+//  Liga admini (va bosh admin): liga tanlash, sozlamalar (nom, logo — galereyadan (tb_logo.js), tarkib min/max,
 //  divizion hajmi), liga taklif havolasi (nusxalash/ulashish/yangilash).
 //  Backend: tb_api_league.py. tb_admin.js tbAdminLoad/tbAdminRender chaqiradi.
 //  Global: TB, apiFetch, escHtml, tbToast, tbConfirm, tbErr, tbWho, tbCopy, tbAdminLoad.
@@ -19,34 +19,26 @@ async function tbAdminLeaguesLoad() {
 
 function tbAdminCurLeague() { return (TB.adminLeagues || []).find(l => l.id === TB.adminLeagueId) || null; }
 
-function tbAdminEmojiGrid(attr, current) {
-  return `<div class="tb-emoji-grid tb-emoji-grid--sm">${(TB.me.emojis || []).map(e =>
-    `<button class="tb-emoji${e === current ? " active" : ""}" ${attr}="${escHtml(e)}">${escHtml(e)}</button>`).join("")}</div>`;
-}
-
 function tbAdminLeaguesHtml() {
   const list = TB.adminLeagues || [];
   const chips = list.map(l => `<button class="tb-chip${l.id === TB.adminLeagueId ? " active" : ""}" data-tbl-pick="${l.id}">
-      ${escHtml(l.emoji || "🏆")} ${escHtml(l.name)}${l.pending ? ` <b class="tb-chip-badge">${l.pending}</b>` : ""}</button>`).join("");
+      ${tbLogo("league", l.id, l.logo_ver, l.emoji, "tb-logo--xs")} ${escHtml(l.name)}${l.pending ? ` <b class="tb-chip-badge">${l.pending}</b>` : ""}</button>`).join("");
   const add = TB.me.is_super ? `<button class="tb-chip tb-chip--add" data-tbl="new">➕ Liga</button>` : "";
   let html = `<div class="section-label">LIGALAR</div><div class="tb-chips">${chips}${add}</div>`;
   if (TB.me.is_super && TB.adminLeagueForm) {
-    if (!TB.newLeagueEmoji) TB.newLeagueEmoji = (TB.me.emojis || [])[0];
     html += `<div class="card tb-form">
         <input id="tbl-new-name" class="modal-input" maxlength="${TB.me.name_max}" placeholder="Liga nomi">
-        <div class="tb-form-label">Belgi</div>${tbAdminEmojiGrid("data-tbl-newemo", TB.newLeagueEmoji)}
         <input id="tbl-new-admin" class="modal-input" placeholder="Liga admini: @username yoki Telegram ID">
         <button class="btn btn--primary" data-tbl="create">🏆 Liga ochish</button>
-        <div class="tb-hint">Admin keyin ham tayinlanishi mumkin. U botga /start bosgan bo'lishi kerak.</div>
+        <div class="tb-hint">Admin keyin ham tayinlanishi mumkin. U botga /start bosgan bo'lishi kerak. Logo — ochilgandan keyin Sozlamalarda (galereyadan).</div>
       </div>`;
   }
   if (!list.length) return html + `<div class="empty-state">Hali liga yo'q${TB.me.is_super ? " — «➕ Liga» bilan oching" : ""}</div>`;
   const l = tbAdminCurLeague();
   if (!l) return html;
-  if (!TB.leagueEditEmoji || TB._leagueEditFor !== l.id) { TB.leagueEditEmoji = l.emoji; TB._leagueEditFor = l.id; }
   const admin = l.admin_username || l.admin_nickname ? tbWho({ username: l.admin_username, nickname: l.admin_nickname }) : "— (faqat bosh admin)";
   html += `<div class="card tb-adm-league">
-      <div class="tb-adm-league-head"><span>${escHtml(l.emoji || "🏆")}</span><div><b>${escHtml(l.name)}</b>
+      <div class="tb-adm-league-head">${tbLogo("league", l.id, l.logo_ver, l.emoji, "tb-logo--lg")}<div><b>${escHtml(l.name)}</b>
         <small>Admin: ${escHtml(admin)} · ${l.teams} team${l.pending ? ` · ${l.pending} ariza` : ""}</small></div></div>
       <div class="tb-adm-acts">
         <button class="btn btn--primary" data-tbl="link">🔗 Liga havolasi</button>
@@ -54,7 +46,7 @@ function tbAdminLeaguesHtml() {
       <div id="tbl-link-box">${TB.adminLeagueLink ? tbAdminLinkHtml() : ""}</div>
       <details class="tb-adm-settings"><summary>⚙️ Sozlamalar</summary>
         <input id="tbl-name" class="modal-input" maxlength="${TB.me.name_max}" value="${escHtml(l.name)}" placeholder="Liga nomi">
-        <div class="tb-form-label">Belgi</div>${tbAdminEmojiGrid("data-tbl-emo", TB.leagueEditEmoji)}
+        <div class="tb-form-label">Liga logosi</div>${tbLogoPickerHtml("league", l.id, l.logo_ver, l.emoji)}
         <div class="tb-adm-line"><span>Asosiy tarkib: kamida</span><input id="tbl-lmin" class="modal-input" type="number" min="3" max="30" value="${l.lineup_min}"></div>
         <div class="tb-adm-line"><span>Asosiy tarkib: ko'pi bilan</span><input id="tbl-lmax" class="modal-input" type="number" min="3" max="30" value="${l.lineup_max}"></div>
         <div class="tb-adm-line"><span>Divizion hajmi</span><input id="tbl-div" class="modal-input" type="number" min="4" max="20" value="${l.division_size}"></div>
@@ -81,11 +73,6 @@ function tbAdminLinkHtml() {
     <div class="tb-hint">Havolani bosgan kishi shu ligada team ochadi; team sizning tasdig'ingizdan keyin qatnashadi.</div>`;
 }
 
-function tbAdminPickEmoji(btn, attr, key) {
-  TB[key] = btn.getAttribute(attr);
-  btn.parentElement.querySelectorAll(".tb-emoji").forEach(b => b.classList.toggle("active", b === btn));
-}
-
 async function tbAdminLeaguePost(path, body, okMsg, btn) {
   if (btn) btn.disabled = true;
   try {
@@ -105,11 +92,11 @@ async function tbAdminLeagueAct(a, btn) {
   if (a === "new") { TB.adminLeagueForm = !TB.adminLeagueForm; tbAdminRender(); return; }
   if (a === "create") {
     const r = await tbAdminLeaguePost("/tb/admin/leagues",
-      { name: val("tbl-new-name"), emoji: TB.newLeagueEmoji, admin_who: val("tbl-new-admin") || null }, "✅ Liga ochildi", btn);
+      { name: val("tbl-new-name"), admin_who: val("tbl-new-admin") || null }, "✅ Liga ochildi", btn);
     if (r) { TB.adminLeagueForm = false; TB.adminLeagueId = r.league_id; TB.adminLeagueLink = null; await tbAdminReloadAll(); }
   } else if (a === "save") {
     const r = await tbAdminLeaguePost("/tb/admin/league/settings", { league_id: lid, name: val("tbl-name"),
-      emoji: TB.leagueEditEmoji, lineup_min: +val("tbl-lmin"), lineup_max: +val("tbl-lmax"),
+      lineup_min: +val("tbl-lmin"), lineup_max: +val("tbl-lmax"),
       division_size: +val("tbl-div") }, "✅ Sozlamalar saqlandi", btn);
     if (r) await tbAdminReloadAll();
   } else if (a === "set-admin") {
@@ -159,10 +146,6 @@ document.addEventListener("click", (e) => {
     void tbAdminLoad();
     return;
   }
-  const ne = e.target.closest("#tb-root [data-tbl-newemo]");
-  if (ne) { tbAdminPickEmoji(ne, "data-tbl-newemo", "newLeagueEmoji"); return; }
-  const ee = e.target.closest("#tb-root [data-tbl-emo]");
-  if (ee) { tbAdminPickEmoji(ee, "data-tbl-emo", "leagueEditEmoji"); return; }
   const b = e.target.closest("#tb-root [data-tbl]");
   if (b) void tbAdminLeagueAct(b.dataset.tbl, b);
 });

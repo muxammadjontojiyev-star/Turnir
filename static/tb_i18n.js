@@ -81,6 +81,12 @@ const TB_I18N = {
     "Siz hali hech qaysi ligada emassiz": "Вы пока не состоите ни в одной лиге",
     "Liga topilmadi yoki havola eskirgan": "Лига не найдена или ссылка устарела",
     "Bu amal faqat liga adminiga ruxsat etilgan": "Это действие доступно только админу лиги",
+    // 2026-10-16: logolar
+    "TEAM LOGOSI": "ЛОГОТИП КОМАНДЫ", "Liga logosi": "Логотип лиги", "🖼 Galereyadan logo": "🖼 Логотип из галереи",
+    "Logoni olib tashlash": "Удалить логотип", "Kvadrat rasm yaxshi chiqadi — markazi kesib olinadi.": "Лучше квадратное фото — обрезается по центру.",
+    "✅ Logo yangilandi": "✅ Логотип обновлён", "Logo olib tashlandi": "Логотип удалён", "Logo olib tashlansinmi?": "Удалить логотип?",
+    "Team logosini ochilgandan keyin galereyadan qo'yasiz.": "Логотип команды можно поставить из галереи после создания.",
+    "Rasm juda katta": "Изображение слишком большое", "Rasm formati noto'g'ri (JPEG/PNG/WEBP)": "Неверный формат (JPEG/PNG/WEBP)", "Rasm tanlanmadi": "Изображение не выбрано",
   },
   en: {
     "Yuklanmoqda…": "Loading…", "Teamim": "My team", "Jang": "Battle", "Jadval": "Table",
@@ -151,6 +157,11 @@ const TB_I18N = {
     "Siz hali hech qaysi ligada emassiz": "You're not in any league yet",
     "Liga topilmadi yoki havola eskirgan": "League not found or link expired",
     "Bu amal faqat liga adminiga ruxsat etilgan": "Only the league admin can do this",
+    "TEAM LOGOSI": "TEAM LOGO", "Liga logosi": "League logo", "🖼 Galereyadan logo": "🖼 Logo from gallery",
+    "Logoni olib tashlash": "Remove logo", "Kvadrat rasm yaxshi chiqadi — markazi kesib olinadi.": "A square image works best — the center is cropped.",
+    "✅ Logo yangilandi": "✅ Logo updated", "Logo olib tashlandi": "Logo removed", "Logo olib tashlansinmi?": "Remove the logo?",
+    "Team logosini ochilgandan keyin galereyadan qo'yasiz.": "You can set the team logo from your gallery after creating it.",
+    "Rasm juda katta": "Image is too large", "Rasm formati noto'g'ri (JPEG/PNG/WEBP)": "Wrong image format (JPEG/PNG/WEBP)", "Rasm tanlanmadi": "No image selected",
   },
 };
 
@@ -269,5 +280,9 @@ const TB_ERR = {
   league_not_empty: "Ligada teamlar yoki mavsumlar bor — o'chirib bo'lmaydi",
   bad_lineup_limits: "Tarkib chegaralari noto'g'ri (3–30, kamida ≤ ko'pi bilan)",
   not_league_admin: "Bu amal faqat liga adminiga ruxsat etilgan",
+  // 2026-10-16: logolar
+  image_too_large: "Rasm juda katta",
+  bad_image: "Rasm formati noto'g'ri (JPEG/PNG/WEBP)",
+  empty_image: "Rasm tanlanmadi",
 };
 function tbErr(e) { return TB_ERR[e && e.message] || ("Xato: " + (e && e.message || "")); }

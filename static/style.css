@@ -7217,3 +7217,21 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .tb-adm-item > .tb-adm-row { flex: 1; min-width: 0; margin-bottom: 0; }
 .tb-adm-item .pt-all-check { height: 34px; }
 .tb-adm-item.is-sel > .tb-adm-row { border-color: rgba(255,90,60,.55); }
+/* 2026-10-16: TB logolari — galereyadan rasm (tb_logo.js); yo'q bo'lsa emoji */
+.tb-logo { display: inline-block; width: 28px; height: 28px; border-radius: 8px; object-fit: cover;
+  vertical-align: middle; flex: 0 0 auto; background: rgba(255,255,255,.04); }
+.tb-logo--emoji { background: none; font-size: 22px; line-height: 28px; text-align: center; }
+.tb-logo--xs { width: 18px; height: 18px; border-radius: 5px; }
+.tb-logo--xs.tb-logo--emoji { font-size: 14px; line-height: 18px; }
+.tb-logo--sm { width: 20px; height: 20px; border-radius: 6px; margin-right: 2px; }
+.tb-logo--sm.tb-logo--emoji { font-size: 15px; line-height: 20px; }
+.tb-logo--lg { width: 52px; height: 52px; border-radius: 14px; }
+.tb-logo--lg.tb-logo--emoji { font-size: 34px; line-height: 52px; }
+.tb-logo--xl { width: 84px; height: 84px; border-radius: 22px; box-shadow: 0 6px 22px rgba(255,120,60,.35); }
+.tb-logo--xl.tb-logo--emoji { font-size: 48px; line-height: 84px; box-shadow: none; }
+.tb-team-emoji .tb-logo--xl { margin: 0 auto; }
+.tb-logo-pick { display: flex; align-items: center; gap: 14px; }
+.tb-logo-pick-acts { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.tb-logo-btn { margin: 0; text-align: center; cursor: pointer; }
+.tb-logo-btn.is-busy { opacity: .5; pointer-events: none; }
+.tb-league-bar .tb-logo, .tb-team-meta .tb-logo { margin-right: 2px; }

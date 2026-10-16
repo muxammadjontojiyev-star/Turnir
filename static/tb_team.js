@@ -3,6 +3,7 @@
 //  1) Taklif havolasi: olish, nusxalash, Telegram'da ulashish, yangilash.
 //  2) Asosiy tarkib muharriri: a'zoni bosish — tarkibga qo'shadi/olib tashlaydi
 //     (bosilish tartibi = tarkib tartibi), TB.me.lineup_min..max oralig'ida saqlanadi.
+//  3) 2026-10-16: team logosi — galereyadan (tb_logo.js).
 //  tb.js dan KEYIN ulanadi. Global: TB, tbAction, tbErr, tbWho, apiFetch, escHtml, showToast.
 // =============================================================
 
@@ -22,6 +23,8 @@ function tbCaptainBlocksHtml(t) {
       </button>`;
   }).join("");
   return `
+    <div class="section-label">TEAM LOGOSI</div>
+    <div class="card">${tbLogoPickerHtml("team", t.id, t.logo_ver, t.emoji)}</div>
     <div class="section-label">TAKLIF HAVOLASI</div>
     <div class="card tb-invite">
       <div class="tb-hint">Havolani do'stlaringizga yuboring — bosgan kishi teamingizga qo'shiladi.</div>

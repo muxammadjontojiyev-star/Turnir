@@ -37,7 +37,7 @@ function tbAdminRender() {
     <button class="pt-all-check${sel.has(t.id) ? " is-on" : ""}" data-tb-pick="${t.id}" title="Tanlash">${sel.has(t.id) ? "✓" : ""}</button>
     <div class="card tb-adm-row">
       <div class="tb-adm-top">
-        <span class="tb-row-emoji">${escHtml(t.emoji || "⚔️")}</span>
+        <span class="tb-row-emoji">${tbLogo("team", t.id, t.logo_ver, t.emoji)}</span>
         <span class="tb-row-info"><b>${escHtml(t.name)}</b>
           <span>Sardor: ${escHtml(tbWho({ username: t.captain_username, nickname: t.captain_nickname }))} · ${t.members_count} a'zo · tarkib ${t.lineup_count}</span></span>
         <span class="tb-status tb-status--${t.status}">${t.status === "pending" ? "⏳" : t.status === "approved" ? "✅" : "❌"}</span>

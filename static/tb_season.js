@@ -9,7 +9,8 @@
 
 const TBS = { info: null, games: null, division: null, round: null };
 
-function tbsTeam(name, emoji) { return `${escHtml(emoji || "⚔️")} ${escHtml(name || "?")}`; }
+// 2026-10-16: emoji o'rniga galereyadan logo (tb_logo.js), logo yo'q bo'lsa — emoji
+function tbsTeam(name, emoji, id, ver) { return `${tbLogo("team", id, ver, emoji, "tb-logo--sm")} ${escHtml(name || "?")}`; }
 
 function tbsSeasonLine(s) {
   if (!s) return "Mavsum hali e'lon qilinmagan";
@@ -53,8 +54,8 @@ async function tbBattleLoad() {
 
 function tbsGameCardHtml(g) {
   const iAmHome = g.home_user_id === TBS.me;
-  const myTeam = iAmHome ? tbsTeam(g.home_team, g.home_emoji) : tbsTeam(g.away_team, g.away_emoji);
-  const opTeam = iAmHome ? tbsTeam(g.away_team, g.away_emoji) : tbsTeam(g.home_team, g.home_emoji);
+  const myTeam = iAmHome ? tbsTeam(g.home_team, g.home_emoji, g.home_team_id, g.home_logo_ver) : tbsTeam(g.away_team, g.away_emoji, g.away_team_id, g.away_logo_ver);
+  const opTeam = iAmHome ? tbsTeam(g.away_team, g.away_emoji, g.away_team_id, g.away_logo_ver) : tbsTeam(g.home_team, g.home_emoji, g.home_team_id, g.home_logo_ver);
   const opUser = iAmHome ? g.away_username : g.home_username;
   const opName = opUser ? "@" + opUser : (iAmHome ? g.away_nick : g.home_nick);
   const mine = iAmHome ? g.score1 : g.score2, theirs = iAmHome ? g.score2 : g.score1;
@@ -105,9 +106,9 @@ function tbsFixtureHtml(f, open) {
   }).join("");
   return `<details class="card tb-fx"${open ? " open" : ""}>
       <summary class="tb-fx-head">
-        <span class="tb-fx-team">${tbsTeam(f.home_team, f.home_emoji)}</span>
+        <span class="tb-fx-team">${tbsTeam(f.home_team, f.home_emoji, f.home_team_id, f.home_logo_ver)}</span>
         <span class="tb-fx-score${f.status === "finished" ? " done" : ""}">${score}</span>
-        <span class="tb-fx-team tb-fx-team--away">${tbsTeam(f.away_team, f.away_emoji)}</span>
+        <span class="tb-fx-team tb-fx-team--away">${tbsTeam(f.away_team, f.away_emoji, f.away_team_id, f.away_logo_ver)}</span>
       </summary>
       ${tech}${games ? `<div class="tb-pairs">${games}</div>` : (f.status === "scheduled" ? `<div class="tb-hint tb-hint--center">Juftliklar tur ochilganda tuziladi</div>` : "")}
     </details>`;
@@ -148,7 +149,7 @@ async function tbsRenderTable() {
   const rows = (t.table || []).map((r, i) => `
     <tr class="${r.team_id === myTeam ? "is-me" : ""}${zone(i)}">
       <td>${i + 1}</td>
-      <td class="tb-tt-name">${tbsTeam(r.name, r.emoji)}</td>
+      <td class="tb-tt-name">${tbsTeam(r.name, r.emoji, r.team_id, r.logo_ver)}</td>
       <td>${r.played}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td>
       <td>${r.gw - r.gl >= 0 ? "+" : ""}${r.gw - r.gl}</td>
       <td class="pts">${r.points}</td>

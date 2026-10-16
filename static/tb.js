@@ -138,11 +138,11 @@ function tbTeamHeadHtml(t) {
   const [label, cls] = TB_STATUS[t.status] || [t.status, ""];
   return `
     <div class="card tb-team-head">
-      <div class="tb-team-emoji">${escHtml(t.emoji || "⚔️")}</div>
+      <div class="tb-team-emoji">${tbLogo("team", t.id, t.logo_ver, t.emoji, "tb-logo--xl")}</div>
       <div class="tb-team-name">${escHtml(t.name)}</div>
       <span class="tb-status tb-status--${cls}">${escHtml(label)}</span>
       <div class="tb-team-meta">Sardor: <b>${escHtml(tbWho({ username: t.captain_username, nickname: t.captain_nickname }))}</b></div>
-      ${t.league_name ? `<div class="tb-team-meta">Liga: <b>${escHtml((t.league_emoji ? t.league_emoji + " " : "") + t.league_name)}</b></div>` : ""}
+      ${t.league_name ? `<div class="tb-team-meta">Liga: ${tbLogo("league", t.league_id, t.league_logo_ver, t.league_emoji, "tb-logo--xs")} <b>${escHtml(t.league_name)}</b></div>` : ""}
       <div class="tb-team-stats">
         <div><b>${t.members_count}</b><span>A'ZO</span></div>
         <div><b>${t.lineup_count ?? "—"}</b><span>ASOSIY TARKIB</span></div>
@@ -200,7 +200,7 @@ async function tbLoadTeams() {
   const rows = TB.teams.map((t, i) => `
     <button class="tb-team-row" data-tb-team="${t.id}">
       <span class="tb-row-n">${i + 1}</span>
-      <span class="tb-row-emoji">${escHtml(t.emoji || "⚔️")}</span>
+      <span class="tb-row-emoji">${tbLogo("team", t.id, t.logo_ver, t.emoji)}</span>
       <span class="tb-row-info"><b>${escHtml(t.name)}${t.titles_count ? ` <i class="tb-title-cnt">🏆${t.titles_count > 1 ? "×" + t.titles_count : ""}</i>` : ""}</b><span>Sardor: ${escHtml(tbWho({ username: t.captain_username, nickname: t.captain_nickname }))}</span></span>
       <span class="tb-row-count">${t.members_count}<small>a'zo</small></span>
     </button>`).join("");
@@ -265,12 +265,6 @@ function tbHandleClick(e) {
   if (!t.closest) return;
   const tab = t.closest("[data-tb-tab]");
   if (tab) { TB.tab = tab.dataset.tbTab; tbRenderTab(); return; }
-  const emo = t.closest("[data-tb-emoji]");
-  if (emo) {
-    TB.createEmoji = emo.dataset.tbEmoji;
-    document.querySelectorAll(".tb-emoji").forEach(b => b.classList.toggle("active", b === emo));
-    return;
-  }
   const team = t.closest("[data-tb-team]");
   if (team) { void tbOpenTeam(team.dataset.tbTeam); return; }
   const kick = t.closest("[data-tb-kick]");

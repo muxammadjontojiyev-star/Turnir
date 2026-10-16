@@ -7,7 +7,7 @@
 
 function tbLeagueBarHtml() {
   const lg = TB.me && TB.me.league;
-  return lg ? `<div class="tb-league-bar">${escHtml(lg.emoji || "🏆")} <b>${escHtml(lg.name)}</b></div>` : "";
+  return lg ? `<div class="tb-league-bar">${tbLogo("league", lg.id, lg.logo_ver, lg.emoji, "tb-logo--sm")} <b>${escHtml(lg.name)}</b></div>` : "";
 }
 
 // ---------------- Teami yo'q: tushuntirish + (liga havolasi bo'lsa) team ochish ----------------
@@ -33,16 +33,14 @@ function tbNoTeamHtml() {
   }
   return hero + `
     <div class="section-label">LIGA</div>
-    <div class="card tb-league-card"><span>${escHtml(L.emoji || "🏆")}</span><div><b>${escHtml(L.name)}</b>
+    <div class="card tb-league-card">${tbLogo("league", L.id, L.logo_ver, L.emoji, "tb-logo--lg")}<div><b>${escHtml(L.name)}</b>
       ${L.admin_username || L.admin_nickname ? `<small>Liga admini: ${escHtml(tbWho({ username: L.admin_username, nickname: L.admin_nickname }))}</small>` : ""}</div></div>
     <div class="section-label">TEAM OCHISH</div>
     <div class="card tb-form">
       <input id="tb-name" class="modal-input" maxlength="${TB.me.name_max}" placeholder="Team nomi (${TB.me.name_min}–${TB.me.name_max} belgi)" autocomplete="off">
-      <div class="tb-form-label">Belgi</div>
-      <div class="tb-emoji-grid">${em.map(e =>
-        `<button class="tb-emoji${e === TB.createEmoji ? " active" : ""}" data-tb-emoji="${escHtml(e)}">${escHtml(e)}</button>`).join("")}</div>
       <button class="btn btn--primary btn--glow" data-tb="create">⚔️ Team ochish</button>
       <div class="tb-hint">Team admin tasdig'idan keyin turnirda qatnashadi. A'zolarni hozirdan yig'ishingiz mumkin.</div>
+      <div class="tb-hint">Team logosini ochilgandan keyin galereyadan qo'yasiz.</div>
     </div>
     <div class="tb-hint tb-hint--center">Do'stingiz teamiga qo'shilish uchun undan taklif havolasini so'rang.</div>`;
 }
