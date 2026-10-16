@@ -247,3 +247,31 @@ def tb_admin_delete(team_id: int) -> tuple[bool, str | dict]:
         raise
     finally:
         conn.close()
+
+
+TB_BULK_DELETE_MAX = 200        # bir so'rovda o'chiriladigan teamlar soni chegarasi
+
+
+def tb_admin_delete_many(team_ids: list[int], league_id: int) -> tuple[bool, str | dict]:
+    """
+    2026-10-16: tanlangan teamlarni bir yo'la o'chirish (shaxsiy turnirdagi kabi).
+    Faqat shu LIGA teamlari o'chadi (boshqa liga teami — failed, qoida #34);
+    mavsumda qatnashgan team ham o'chirilmaydi (tb_admin_delete -> in_active_season).
+    Sabablar: empty, too_many. Qaytaradi: {deleted: [id], failed: [id]}.
+    """
+    from tb_core import tb_team_league_id
+    uniq = list(dict.fromkeys(int(i) for i in (team_ids or []) if int(i) > 0))
+    if not uniq:
+        return False, "empty"
+    if len(uniq) > TB_BULK_DELETE_MAX:
+        return False, "too_many"
+    deleted, failed = [], []
+    for tid in uniq:
+        try:
+            ok = tb_team_league_id(tid) == league_id and tb_admin_delete(tid)[0]
+        except Exception:
+            logger.exception("tb_admin_delete_many: team #%s o'chirilmadi", tid)
+            ok = False
+        (deleted if ok else failed).append(tid)
+    logger.info("TB bulk delete (liga %s): %d o'chirildi, %d o'chirilmadi", league_id, len(deleted), len(failed))
+    return True, {"deleted": deleted, "failed": failed}

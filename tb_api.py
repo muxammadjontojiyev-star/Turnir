@@ -207,3 +207,13 @@ def tb_admin_delete_ep(team_id: int = Body(..., embed=True),
     from tb_manage import tb_admin_delete, tb_team_league
     require_manage(admin, tb_team_league(team_id))
     return _ok(tb_admin_delete(team_id))
+
+
+@router.post("/tb/admin/delete-bulk")
+def tb_admin_delete_bulk(league_id: int = Body(..., embed=True), ids: list[int] = Body(..., embed=True),
+                         admin: dict = Depends(get_authenticated_user)):
+    """2026-10-16: liga admini / bosh admin — tanlangan teamlarni bir yo'la o'chirish."""
+    from tb_manage import tb_admin_delete_many
+    require_manage(admin, league_id)
+    r = _ok(tb_admin_delete_many(ids, league_id))
+    return {"status": "ok", "deleted": len(r["deleted"]), "failed": r["failed"]}
