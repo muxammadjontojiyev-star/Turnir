@@ -7291,3 +7291,28 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .club-priority-note.is-wait { background: rgba(255,181,71,.12); border: 1px solid rgba(255,181,71,.45); color: #ffe2b0; }
 .adm-pp-check { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--text-secondary); margin: 6px 0; line-height: 1.35; }
 .adm-pp-check input { margin-top: 2px; flex: 0 0 auto; }
+/* 2026-10-18: klubni topshirish (club_market.js) — switch, profil kartasi, bosh sahifa ro'yxati */
+.ui-switch { position: relative; flex: 0 0 auto; width: 52px; height: 30px; border-radius: 999px; border: none; padding: 0;
+  background: rgba(255,255,255,.18); transition: background .2s ease; cursor: pointer; }
+.ui-switch i { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .2s ease; }
+.ui-switch.is-on { background: #2f6bff; }
+.ui-switch.is-on i { transform: translateX(22px); }
+.ui-switch:disabled { opacity: .5; }
+.club-offer { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.club-offer.is-on { border-color: rgba(255,181,71,.45); }
+.club-offer-row { display: flex; align-items: center; gap: 12px; }
+.club-offer-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.club-offer-text b { font-size: 15px; }
+.club-offer-text span { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.club-offer-hint { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.club-offer.is-on .club-offer-hint { color: #ffe2b0; }
+.club-mkt { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.club-mkt-hint { font-size: 12.5px; color: var(--text-secondary); line-height: 1.4; }
+.club-mkt-note { font-size: 12px; color: #ffe2b0; }
+.club-mkt-item { display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); }
+.club-mkt-logo { width: 32px; height: 32px; object-fit: contain; flex: 0 0 auto; }
+.club-mkt-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.club-mkt-info b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.club-mkt-info span { font-size: 12px; color: var(--text-secondary); }
+.club-mkt-take { flex: 0 0 auto; width: auto; margin: 0; padding: 8px 16px; font-size: 13px; }

@@ -491,6 +491,7 @@ async function loadHome() {
     renderHeroCard(open || null);
     renderRules();
     if (typeof clubPriorityLoad === "function") void clubPriorityLoad();   // 2026-10-18: klub navbati
+    if (typeof clubMarketLoad === "function") void clubMarketLoad();       // 2026-10-18: klubni topshirish
   } catch (e) {
     showToast("❌ " + e.message);
   }
@@ -1076,6 +1077,7 @@ async function loadProfile() {
     const data = await apiFetch("/profile");
     APP.profileData = data;
     renderProfile(data);
+    if (typeof clubOfferBoxLoad === "function") void clubOfferBoxLoad();   // 2026-10-18: klubni topshirish
     await loadMyPrizes(data.user_id);
     await loadMyMatches();
     // 2026-09-22: admin paneli endi ALOHIDA sahifada — profil ochilganda uni
