@@ -4,6 +4,7 @@
 //  turlarni boshlash, turni hozir yopish, mavsumni yakunlash, o'yin natijasini qo'yish (ID bo'yicha).
 //  tb_admin.js tbAdminRender() shu blokni qo'yadi: tbAdminSeasonHtml(). Global: TB, apiFetch, escHtml, showToast, tbErr.
 //  2026-10-16: barcha amallar tanlangan liga uchun (TB.adminLeagueId).
+//  2026-10-18: qur'a formasi — tb_admin_draw.js (Liga / UCL, N vs N).
 // =============================================================
 
 function tbAdminSeasonHtml() {
@@ -12,15 +13,14 @@ function tbAdminSeasonHtml() {
   const s = p.active;
   let state, acts;
   if (!s) {
-    state = `Faol mavsum yo'q. Qatnasha oladi: <b>${p.eligible}</b> ta team (tasdiqlangan ${p.approved}, tarkibi ≥ ${p.lineup_min}).`;
-    acts = `<div class="tb-adm-line"><span>Divizion hajmi</span>
-        <input id="tbs-divsize" class="modal-input" type="number" min="4" max="20" value="${p.division_size}"></div>
-      <button class="btn btn--primary" data-tbsa="create">🎲 Qur'a o'tkazish (yangi mavsum)</button>`;
+    state = `Faol mavsum yo'q. Tasdiqlangan teamlar: ${p.approved}.`;
+    acts = tbAdminDrawFormHtml(p);                // 2026-10-18: Liga / UCL, N vs N (tb_admin_draw.js)
   } else if (s.status === "drawn") {
-    state = `<b>${s.number}-mavsum</b>: qur'a o'tkazilgan (${s.total_rounds} tur). Turlar hali boshlanmagan.`;
+    state = `<b>${s.number}-mavsum</b>${tbsFmtTag(s)}: qur'a o'tkazilgan (${s.total_rounds} tur). Turlar hali boshlanmagan.`;
     acts = `<button class="btn btn--primary" data-tbsa="start">▶️ Turlarni boshlash (1-tur bugun ochiladi)</button>`;
   } else {
-    state = `<b>${s.number}-mavsum</b>: ${Math.min(s.current_round, s.total_rounds)}/${s.total_rounds}-tur. Tur har kuni 23:30 da almashadi.`;
+    state = `<b>${s.number}-mavsum</b>${tbsFmtTag(s)}: ${Math.min(s.current_round, s.total_rounds)}/${s.total_rounds}-tur. Tur har kuni 23:30 da almashadi.`
+      + (s.waiting_admin ? `<div class="tb-warn">⚖️ Pley-offda teng juftlik bor — g'olibni belgilang (Jadval → Pley-off). Shundan keyin keyingi bosqich ochiladi.</div>` : "");
     acts = `<button class="btn btn--ghost" data-tbsa="advance">⏭ Joriy turni hozir yopish</button>
       <button class="btn btn--ghost tb-danger-btn" data-tbsa="finish">🏁 Mavsumni yakunlash</button>`;
   }
@@ -45,7 +45,7 @@ async function tbAdminSeasonLoad() {
 }
 
 async function tbAdminSeasonAct(a, btn) {
-  const ask = { create: "Qur'a o'tkazilsinmi? Tasdiqlangan, tarkibi to'liq teamlar divizionlarga bo'linadi.",
+  const ask = { create: "Qur'a o'tkazilsinmi? Tasdiqlangan va asosiy tarkibi yetarli teamlar qatnashadi.",
                 start: "Turlar boshlansinmi? 1-tur hozir ochiladi va o'yinchilar juftlanadi.",
                 advance: "Joriy tur hozir yopilsinmi? Kiritilmagan o'yinlar 0:0 bo'ladi, keyingi tur ochiladi.",
                 finish: "Mavsum yakunlansinmi? Ochiq o'yinlar yopiladi, har divizion g'olibi 🏆 oladi. Keyingi qur'ada har divizionning top-2 tasi ko'tariladi, oxirgi 2 tasi tushadi. Qaytarib bo'lmaydi!" }[a];
@@ -59,15 +59,17 @@ async function tbAdminSeasonAct(a, btn) {
     if (!confirm(ask)) return;
     path = `/tb/admin/season/${a}`;
     body = { league_id: TB.adminLeagueId };                              // 2026-10-16: liga
-    if (a === "create") body.division_size = +(document.getElementById("tbs-divsize")?.value || 0) || null;
+    if (a === "create") Object.assign(body, tbAdminDrawBody());      // 2026-10-18
   }
   btn.disabled = true;
   try {
     const r = await apiFetch(path, { method: "POST", body: JSON.stringify(body) });
-    const msg = a === "create" ? `✅ ${r.number}-mavsum: ${r.teams} team, ${r.divisions} divizion, ${r.total_rounds} tur`
+    const msg = a === "create" ? (r.format === "ucl" ? `✅ ${r.number}-mavsum (UCL): ${r.teams} team, ${r.total_rounds} tur`
+                                                     : `✅ ${r.number}-mavsum: ${r.teams} team, ${r.divisions} divizion, ${r.total_rounds} tur`)
       : a === "start" ? `✅ 1-tur ochildi: ${r.games} ta 1v1 o'yin`
-      : a === "advance" ? `✅ ${r.closed_round}-tur yopildi`
-      : a === "finish" ? `🏁 Mavsum yakunlandi. Chempionlar: ${(r.champions || []).map(c => c.division + "-div: " + c.name).join(", ") || "—"}`
+      : a === "advance" ? (r.waiting_admin ? `✅ ${r.closed_round}-tur yopildi. ⚖️ Pley-offda teng juftlik — g'olibni belgilang`
+                                           : `✅ ${r.closed_round}-tur yopildi`)
+      : a === "finish" ? `🏁 Mavsum yakunlandi. Chempion: ${(r.champions || []).map(c => c.name).join(", ") || "—"}`
       : "✅ Natija qo'yildi";
     showToast(msg);
     if (typeof tbAdminLoad === "function") await tbAdminLoad();

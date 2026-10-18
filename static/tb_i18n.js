@@ -87,6 +87,12 @@ const TB_I18N = {
     "✅ Logo yangilandi": "✅ Логотип обновлён", "Logo olib tashlandi": "Логотип удалён", "Logo olib tashlansinmi?": "Удалить логотип?",
     "Team logosini ochilgandan keyin galereyadan qo'yasiz.": "Логотип команды можно поставить из галереи после создания.",
     "Rasm juda katta": "Изображение слишком большое", "Rasm formati noto'g'ri (JPEG/PNG/WEBP)": "Неверный формат (JPEG/PNG/WEBP)", "Rasm tanlanmadi": "Изображение не выбрано",
+    // 2026-10-18: UCL
+    "LIGA BOSQICHI": "ОБЩИЙ ЭТАП", "PLEY-OFF": "ПЛЕЙ-ОФФ", "1/8 final": "1/8 финала", "Chorak final": "Четвертьфинал",
+    "Yarim final": "Полуфинал", "Final": "Финал", "Juftliklar oldingi bosqichdan keyin aniqlanadi": "Пары определятся после предыдущей стадии",
+    "Raqam — 1v1 g'alabalar yig'indisi. Teng bo'lsa: gol farqi → liga admini qarori.": "Число — сумма побед 1 на 1. При равенстве: разница мячей → решение админа лиги.",
+    "⚖️ Teng — liga admini qarori kutilmoqda": "⚖️ Ничья — ждём решения админа лиги",
+    "Pley-offda teng juftlik bor — avval g'olibni belgilang": "В плей-офф ничья — сначала определите победителя",
   },
   en: {
     "Yuklanmoqda…": "Loading…", "Teamim": "My team", "Jang": "Battle", "Jadval": "Table",
@@ -162,6 +168,11 @@ const TB_I18N = {
     "✅ Logo yangilandi": "✅ Logo updated", "Logo olib tashlandi": "Logo removed", "Logo olib tashlansinmi?": "Remove the logo?",
     "Team logosini ochilgandan keyin galereyadan qo'yasiz.": "You can set the team logo from your gallery after creating it.",
     "Rasm juda katta": "Image is too large", "Rasm formati noto'g'ri (JPEG/PNG/WEBP)": "Wrong image format (JPEG/PNG/WEBP)", "Rasm tanlanmadi": "No image selected",
+    "LIGA BOSQICHI": "LEAGUE PHASE", "PLEY-OFF": "PLAY-OFF", "1/8 final": "Round of 16", "Chorak final": "Quarter-final",
+    "Yarim final": "Semi-final", "Final": "Final", "Juftliklar oldingi bosqichdan keyin aniqlanadi": "Pairs are set after the previous stage",
+    "Raqam — 1v1 g'alabalar yig'indisi. Teng bo'lsa: gol farqi → liga admini qarori.": "Number = total 1v1 wins. If level: goal difference → league admin decides.",
+    "⚖️ Teng — liga admini qarori kutilmoqda": "⚖️ Level — awaiting the league admin's decision",
+    "Pley-offda teng juftlik bor — avval g'olibni belgilang": "A play-off tie is level — decide the winner first",
   },
 };
 
@@ -195,6 +206,9 @@ const TB_I18N_PATTERNS = [
   [/^Quyi divizionga tushadi \((\d+)\)$/, "Понижение в низший дивизион ($1)", "Relegated to the lower division ($1)"],
   [/^(\d+)-tur$/, "$1-й тур", "Round $1"],
   [/^Natija: Siz (\d+) : (\d+) Raqib\. Yuborilsinmi\?$/, "Результат: Вы $1 : $2 Соперник. Отправить?", "Result: You $1 : $2 Opponent. Send?"],
+  // 2026-10-18: UCL
+  [/^(\d+)-o'yin: (.*)$/, "Игра $1: $2", "Leg $1: $2"],
+  [/^Pley-offga chiqadi \((\d+)\)$/, "Выход в плей-офф ($1)", "Qualifies for play-off ($1)"],
 ];
 
 function tbLang() { return (typeof APP !== "undefined" && APP.lang) || "uz"; }
@@ -284,5 +298,17 @@ const TB_ERR = {
   image_too_large: "Rasm juda katta",
   bad_image: "Rasm formati noto'g'ri (JPEG/PNG/WEBP)",
   empty_image: "Rasm tanlanmadi",
+  // 2026-10-18: Liga / UCL formati
+  bad_format: "Format noto'g'ri",
+  bad_match_size: "Bahsdagi o'yinchilar soni 1–30 oralig'ida bo'lsin",
+  bad_qualify: "Pley-offga chiqadiganlar soni qatnashuvchi teamlardan ko'p bo'lmasin (2/4/8/16)",
+  bad_legs: "Bahs 1 yoki 2 o'yindan iborat bo'ladi",
+  bad_ucl_rounds: "Har team o'ynaydigan bahslar soni noto'g'ri (teamlar sonidan kam bo'lsin)",
+  bad_ucl_params: "UCL sozlamalari noto'g'ri",
+  waiting_admin: "Pley-offda teng juftlik bor — avval g'olibni belgilang",
+  tie_not_found: "Juftlik topilmadi",
+  bad_winner: "G'olib shu juftlikdagi team bo'lishi kerak",
+  already_decided: "Bu juftlik allaqachon hal qilingan",
+  not_tied: "Bu juftlik teng emas — g'olib avtomatik aniqlanadi",
 };
 function tbErr(e) { return TB_ERR[e && e.message] || ("Xato: " + (e && e.message || "")); }

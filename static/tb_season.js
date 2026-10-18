@@ -12,6 +12,10 @@ const TBS = { info: null, games: null, division: null, round: null };
 // 2026-10-16: emoji o'rniga galereyadan logo (tb_logo.js), logo yo'q bo'lsa — emoji
 function tbsTeam(name, emoji, id, ver) { return `${tbLogo("team", id, ver, emoji, "tb-logo--sm")} ${escHtml(name || "?")}`; }
 
+// 2026-10-18: format belgisi (UCL) va pley-off bosqichidami
+function tbsFmtTag(s) { return s && s.format === "ucl" ? ` <span class="tb-fmt-tag">UCL</span>` : ""; }
+function tbsIsKo(s, rnd) { return !!(s && s.format === "ucl" && (rnd || s.current_round) > (s.ucl_rounds || 0)); }
+
 function tbsSeasonLine(s) {
   if (!s) return "Mavsum hali e'lon qilinmagan";
   if (s.status === "drawn") return `${s.number}-mavsum · qur'a o'tkazildi, turlar tez orada boshlanadi`;
@@ -36,7 +40,8 @@ async function tbBattleLoad() {
     let fixtureHtml = "";
     const s = info.season;
     if (s && s.status === "running" && info.my_division && s.current_round <= s.total_rounds) {
-      const d = await apiFetch(`/tb/season/fixtures?division=${info.my_division}&round=${s.current_round}${tbLeagueQ("&")}`);
+      const div = tbsIsKo(s) ? 0 : info.my_division;            // 2026-10-18: pley-off bahslari — division 0
+      const d = await apiFetch(`/tb/season/fixtures?division=${div}&round=${s.current_round}${tbLeagueQ("&")}`);
       const mine = (d.fixtures || []).find(f => f.home_team_id === info.my_team_id || f.away_team_id === info.my_team_id);
       fixtureHtml = mine ? `<div class="section-label">TEAMIMNING BAHSI (${s.current_round}-TUR)</div>${tbsFixtureHtml(mine, true)}`
         : `<div class="tb-note">Bu turda teamingiz dam oladi (raqib yo'q).</div>`;
@@ -45,7 +50,7 @@ async function tbBattleLoad() {
       : `<div class="card tb-hint tb-hint--center">${s && s.status === "running"
           ? "Hozir ochiq o'yiningiz yo'q. Asosiy tarkibga kirgan o'yinchilar juftlanadi."
           : "O'yinlar mavsum boshlangach shu yerda chiqadi."}</div>`;
-    tbRender(`<div class="card tb-season-line">${ICON.get("swords", 16)} ${escHtml(tbsSeasonLine(s))}</div>
+    tbRender(`<div class="card tb-season-line">${ICON.get("swords", 16)} ${escHtml(tbsSeasonLine(s))}${tbsFmtTag(s)}</div>
       <div class="section-label">MENING O'YINIM</div>${gamesHtml}${fixtureHtml}`);
   } catch (e) {
     tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
@@ -123,7 +128,7 @@ async function tbTableLoad() {
     if (!s) { tbRender(`<div class="empty-state">Mavsum hali e'lon qilinmagan</div>`); return; }
     const divs = info.divisions || [];
     if (!TBS.division || !divs.some(d => d.division === TBS.division)) TBS.division = info.my_division || (divs[0] && divs[0].division);
-    if (!TBS.round) TBS.round = Math.max(1, Math.min(s.current_round || 1, s.total_rounds || 1));
+    if (!TBS.round) TBS.round = Math.max(1, Math.min(s.current_round || 1, tbsLastTableRound(s)));
     await tbsRenderTable();
   } catch (e) {
     tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
@@ -132,15 +137,19 @@ async function tbTableLoad() {
 
 async function tbsRenderTable() {
   const s = TBS.info.season, divs = TBS.info.divisions || [];
-  const [t, fx] = await Promise.all([
+  const ucl = s.format === "ucl";
+  TBS.round = Math.min(TBS.round, tbsLastTableRound(s));
+  const [t, fx, ko] = await Promise.all([
     apiFetch(`/tb/season/table?division=${TBS.division}${tbLeagueQ("&")}`),
     apiFetch(`/tb/season/fixtures?division=${TBS.division}&round=${TBS.round}${tbLeagueQ("&")}`),
+    ucl ? apiFetch("/tb/season/ko" + tbLeagueQ()) : Promise.resolve(null),   // 2026-10-18: pley-off
   ]);
   const myTeam = TBS.info.my_team_id;
   // 3-bosqich: ko'tarilish (yashil) / tushish (qizil) zonalari
   const promo = TBS.info.promo || 0, lastDiv = divs.length ? divs[divs.length - 1].division : 1;
   const nRows = (t.table || []).length;
   const zone = (i) => {
+    if (ucl) return i < (s.ucl_qualify || 0) ? " tb-zone-up" : "";
     if (!promo || nRows < 2 * promo) return "";
     if (TBS.division > 1 && i < promo) return " tb-zone-up";
     if (TBS.division < lastDiv && i >= nRows - promo) return " tb-zone-down";
@@ -156,8 +165,8 @@ async function tbsRenderTable() {
     </tr>`).join("");
   const chips = divs.map(d => `<button class="tb-chip${d.division === TBS.division ? " active" : ""}" data-tbs-div="${d.division}">${d.division}-divizion <b>${d.teams}</b></button>`).join("");
   tbRender(`
-    <div class="card tb-season-line">${ICON.get("swords", 16)} ${escHtml(tbsSeasonLine(s))}</div>
-    <div class="tb-chips">${chips}</div>
+    <div class="card tb-season-line">${ICON.get("swords", 16)} ${escHtml(tbsSeasonLine(s))}${tbsFmtTag(s)}</div>
+    ${ucl ? `<div class="section-label">LIGA BOSQICHI</div>` : `<div class="tb-chips">${chips}</div>`}
     <div class="card card--table tb-table-card">
       <table class="rating-table tb-table">
         <thead><tr><th>#</th><th>Team</th><th>O</th><th>G</th><th>D</th><th>M</th><th title="1v1 g'alabalar farqi">1v1</th><th>Och</th></tr></thead>
@@ -165,14 +174,21 @@ async function tbsRenderTable() {
       </table>
     </div>
     <div class="tb-hint">Ochko: g'alaba 3 · durang 1. Teng bo'lsa: 1v1 g'alabalar farqi → gol farqi.</div>
-    ${divs.length > 1 ? `<div class="tb-zone-legend">${TBS.division > 1 ? `<span><i class="tb-zl tb-zl--up"></i>Yuqori divizionga ko'tariladi (${promo})</span>` : ""}
+    ${ucl ? `<div class="tb-zone-legend"><span><i class="tb-zl tb-zl--up"></i>Pley-offga chiqadi (${s.ucl_qualify})</span></div>` : ""}
+    ${!ucl && divs.length > 1 ? `<div class="tb-zone-legend">${TBS.division > 1 ? `<span><i class="tb-zl tb-zl--up"></i>Yuqori divizionga ko'tariladi (${promo})</span>` : ""}
       ${TBS.division < lastDiv ? `<span><i class="tb-zl tb-zl--down"></i>Quyi divizionga tushadi (${promo})</span>` : ""}</div>` : ""}
     <div class="tb-round-nav">
       <button class="tb-mini" data-tbs-round="-1" ${TBS.round <= 1 ? "disabled" : ""}>◀</button>
       <b>${TBS.round}-tur</b>
-      <button class="tb-mini" data-tbs-round="1" ${TBS.round >= (s.total_rounds || 1) ? "disabled" : ""}>▶</button>
+      <button class="tb-mini" data-tbs-round="1" ${TBS.round >= tbsLastTableRound(s) ? "disabled" : ""}>▶</button>
     </div>
-    ${(fx.fixtures || []).map(f => tbsFixtureHtml(f, false)).join("") || `<div class="tb-hint tb-hint--center">Bu turda bahs yo'q</div>`}`);
+    ${(fx.fixtures || []).map(f => tbsFixtureHtml(f, false)).join("") || `<div class="tb-hint tb-hint--center">Bu turda bahs yo'q</div>`}
+    ${ko && typeof tbUclBracketHtml === "function" ? tbUclBracketHtml(ko) : ""}`);
+}
+
+// Jadval sahifasidagi tur tanlash chegarasi: UCL'da faqat liga bosqichi turlari (pley-off — alohida blokda)
+function tbsLastTableRound(s) {
+  return Math.max(1, s.format === "ucl" ? (s.ucl_rounds || 1) : (s.total_rounds || 1));
 }
 
 // ------------------------------------------------------------------ amallar
