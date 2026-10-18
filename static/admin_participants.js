@@ -74,6 +74,8 @@ function admPpRenderPanel() {
       <div class="adm-pp-act-title">👤 Yangi akkountga o'tkazish</div>
       <div class="adm-pp-hint">Klub, jadval va natijalar joyida qoladi — o'yinchi almashadi.</div>
       <input id="adm-pp-new" class="modal-input" type="text" autocomplete="off" placeholder="Yangi Telegram ID yoki @username">
+      <label class="adm-pp-check"><input type="checkbox" id="adm-pp-abandoned" checked>
+        Tashlab ketdi (kanalni tark etdi) — keyingi mavsumda klub tanlash navbatida oxirgi bo'ladi</label>
       <button class="btn" id="adm-pp-reassign">👤 O'tkazish</button>
     </div>
 
@@ -117,7 +119,8 @@ async function admPpReassign(btn) {
   btn.disabled = true;
   try {
     const r = await apiFetch("/league/participant/reassign", {
-      method: "POST", body: JSON.stringify({ old_user_id: o.user_id, new_query: q }),
+      method: "POST", body: JSON.stringify({ old_user_id: o.user_id, new_query: q,
+        abandoned: !!document.getElementById("adm-pp-abandoned")?.checked }),   // 2026-10-18: klub navbati
     });
     showToast(`✅ O'tkazildi: ${r.matches_updated || 0} o'yin yangilandi`);
     await admPpReload();

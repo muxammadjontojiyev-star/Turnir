@@ -490,6 +490,7 @@ async function loadHome() {
     renderLeagues(leagues);
     renderHeroCard(open || null);
     renderRules();
+    if (typeof clubPriorityLoad === "function") void clubPriorityLoad();   // 2026-10-18: klub navbati
   } catch (e) {
     showToast("❌ " + e.message);
   }
@@ -2698,6 +2699,7 @@ async function registerToLeague() {
       league_full:        APP.t.league_full_err    || "Liga to'liq",
       club_taken:         APP.t.club_taken          || "Bu klub allaqachon band qilingan",
       league_locked:      APP.t.league_locked_toast || "Bu liga hali yopiq. Avval oldingi liga to'lishi kerak.",
+      priority_wait:      typeof clubPriorityWaitText === "function" ? clubPriorityWaitText() : "⏳",   // 2026-10-18
     }[e.message] || e.message;
     showToast("❌ " + msg);
     btn.disabled = false;
