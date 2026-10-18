@@ -446,6 +446,7 @@ function divRenderRating() {
   return `
     ${tabs}
     ${myRankCard}
+    ${typeof divSearchBoxHtml === "function" ? divSearchBoxHtml() : ""}
     <div class="card div-rating-legend">${DT("div_legend")}</div>
     <div class="card card--table">
       <table class="rating-table">
