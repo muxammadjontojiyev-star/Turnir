@@ -1291,6 +1291,14 @@ def init_db():
     # 2026-10-15: Teamlar jangi jadvallari (tb_models.py)
     from tb_models import init_tb_tables
     init_tb_tables()
+    # 2026-10-18: klub tanlash navbati (club_priority.py)
+    from club_priority import init_club_priority_table
+    _c = get_connection()
+    try:
+        init_club_priority_table(_c.cursor())
+        _c.commit()
+    finally:
+        _c.close()
     # db_migrations.py'da, oddiy ALTER'lardan KEYIN ishlashi shart
     # (is_playoff ustuni allaqachon qo'shilgan bo'ladi).
     from db_migrations import run_migrations  # lokal import — circular oldini olish

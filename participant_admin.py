@@ -94,12 +94,13 @@ def resolve_telegram_id(query: str) -> int | None:
         conn.close()
 
 
-def league_reassign_participant(old_user_id: int, new_telegram_id: int
+def league_reassign_participant(old_user_id: int, new_telegram_id: int, abandoned: bool = False
                                 ) -> tuple[bool, str | dict]:
     """
     Liga ishtirokchisini (old_user_id) yangi akkountga bog'laydi:
     registrations.user_id, matches.player1/2_id + submitted_by,
     messages.sender_id yangilanadi. Qur'a (jadval) o'zgarmaydi.
+    2026-10-18: abandoned=True — eski o'yinchi "tashlab ketdi" (keyingi mavsumda klub navbatida oxirgi).
     """
     conn = get_connection()
     conn.isolation_level = None
@@ -133,6 +134,11 @@ def league_reassign_participant(old_user_id: int, new_telegram_id: int
             cursor.execute("ROLLBACK")
             return False, "new_already_participant"
 
+        if abandoned:
+            old = cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (old_user_id,)).fetchone()
+            if old:
+                from club_priority import mark_abandoned_cur
+                mark_abandoned_cur(cursor, old["telegram_id"])
         regs = _swap_user_columns(cursor, "registrations", ["user_id"],
                                   old_user_id, new_user_id)
         matches = _swap_user_columns(

@@ -711,11 +711,22 @@ def register(league_id: int, club_name: str | None = None, user: dict = Depends(
     # Ketma-ket ochilish — yopiq (navbati kelmagan) ligaga ro'yxat taqiqlanadi
     if _is_league_locked(league_id):
         raise HTTPException(status_code=400, detail="league_locked")
+    # 2026-10-18: klub tanlash navbati — o'tgan mavsumni oxirigacha o'ynaganlar birinchi
+    from club_priority import club_priority_for
+    if not club_priority_for(user["telegram_id"])["open"]:
+        raise HTTPException(status_code=400, detail="priority_wait")
 
     success, reason = register_user_to_league(user["id"], league_id, club_name)
     if not success:
         raise HTTPException(status_code=400, detail=reason)
     return {"status": "ok", "league_id": league_id}
+
+
+@app.get("/club-priority/me")
+def club_priority_me(user: dict = Depends(get_authenticated_user)):
+    """2026-10-18: klub tanlash navbatidagi holatim (bosh sahifa banneri uchun)."""
+    from club_priority import club_priority_for
+    return club_priority_for(user["telegram_id"])
 
 
 def _is_league_locked(league_id: int) -> bool:
@@ -1688,6 +1699,7 @@ def league_participant_reassign(
     old_user_id: int = Body(..., embed=True),
     new_telegram_id: int | None = Body(None, embed=True),
     new_query: str | None = Body(None, embed=True),
+    abandoned: bool = Body(False, embed=True),
     admin: dict = Depends(get_authenticated_super_admin),
 ):
     """
@@ -1701,7 +1713,7 @@ def league_participant_reassign(
         new_telegram_id = resolve_telegram_id(new_query)
     if not new_telegram_id:
         raise HTTPException(status_code=400, detail="new_user_not_found")
-    success, result = league_reassign_participant(old_user_id, new_telegram_id)
+    success, result = league_reassign_participant(old_user_id, new_telegram_id, abandoned)
     if not success:
         raise HTTPException(status_code=400, detail=result)
     return {"status": "ok", **result}

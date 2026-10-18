@@ -136,6 +136,12 @@ PT_CARD_HOLDER = os.getenv("PT_CARD_HOLDER", "").strip()
 # Taklif havolasi uchun (t.me/<BOT_USERNAME>?start=pt_<kod>); Railway'da allaqachon bor.
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
 
+# 2026-10-18: liga klubini tanlashda NAVBAT (club_priority.py). Yangi mavsum ochilgach:
+# oxirigacha o'ynaganlar darhol, yangilar CLUB_PRIORITY_HOURS soatdan keyin, tashlab ketganlar
+# yana CLUB_ABANDON_EXTRA_HOURS soatdan keyin klub tanlay oladi.
+CLUB_PRIORITY_HOURS = int(os.getenv("CLUB_PRIORITY_HOURS", "24") or 0)
+CLUB_ABANDON_EXTRA_HOURS = int(os.getenv("CLUB_ABANDON_EXTRA_HOURS", "24") or 0)
+
 # === Majburiy kanal a'zoligi ===
 # Foydalanuvchi botdan/WebApp'dan foydalanish uchun shu kanalga a'zo bo'lishi shart.
 # ⚠️ Bot shu kanalda ADMIN bo'lishi kerak — aks holda getChatMember ishlamaydi.

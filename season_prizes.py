@@ -297,6 +297,10 @@ def _finalize_league_locked(conn, cursor) -> dict:
     from ac_qualification import save_ac_qualifiers
     counts["ac_qualifiers"] = save_ac_qualifiers(cursor, season)
 
+    # 2026-10-18: klub tanlash navbati — mavsumni oxirigacha o'ynaganlar (reset'dan OLDIN)
+    from club_priority import record_finishers_cur
+    counts["club_finishers"] = record_finishers_cur(cursor, season)
+
     cursor.execute(
         "UPDATE season_state SET current_season = current_season + 1, "
         "last_finalized_at = datetime('now') WHERE id = 1"

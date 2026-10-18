@@ -139,6 +139,10 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
             cursor.execute("ROLLBACK")
             return False, "user_not_found"
         telegram_id = row["telegram_id"]
+        # 2026-10-18: mavsum o'rtasida (qur'adan keyin) chiqarilgan liga ishtirokchisi —
+        # keyingi mavsumda klub tanlash navbatida oxirgi (club_priority.py)
+        from club_priority import mark_if_league_player_cur
+        mark_if_league_player_cur(cursor, user_id)
 
         # user_id ustuni bo'yicha o'chiriladigan jadvallar
         by_user_id = [
