@@ -32,12 +32,26 @@ async def on_channel_member(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if not cm or not _is_required_channel(cm.chat):
         return
     old, new = cm.old_chat_member.status, cm.new_chat_member.status
+    tg_id = cm.new_chat_member.user.id
     if old in _IN_CHANNEL and new in LEFT_STATUSES:
+        # 2026-10-18: klubi bosh sahifadagi "klubini topshirayotganlar" ro'yxatiga chiqadi
         try:
-            await notify_admins_about_leaver(cm.new_chat_member.user.id)
+            from club_market import club_offer_left
+            club_offer_left([tg_id], True)
+        except Exception as exc:
+            logger.warning("Tark etgan klubni ro'yxatga qo'yib bo'lmadi (tg=%s): %s", tg_id, exc)
+        try:
+            await notify_admins_about_leaver(tg_id)
         except Exception as exc:
             logger.warning("Kanaldan chiqish xabari yuborilmadi (tg=%s): %s",
-                           cm.new_chat_member.user.id, exc)
+                           tg_id, exc)
+    elif old in LEFT_STATUSES and new in _IN_CHANNEL:
+        # 2026-10-18: kanalga qaytdi — klub ro'yxatdan olinadi (agar hali hech kim olmagan bo'lsa)
+        try:
+            from club_market import club_offer_left
+            club_offer_left([tg_id], False)
+        except Exception as exc:
+            logger.warning("Qaytgan ishtirokchi klubini ro'yxatdan olib bo'lmadi (tg=%s): %s", tg_id, exc)
 
 
 def register_channel_leave_handler(application: Application) -> None:

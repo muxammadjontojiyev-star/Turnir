@@ -156,4 +156,12 @@ async def scan_channel_leavers(league_ids: list[int] | None = None) -> dict:
 
     leavers = [dict(p, status=st) for p, st in results if st in LEFT_STATUSES]
     unknown = sum(1 for _, st in results if st is None)
+    # 2026-10-18: topilgan tark etganlar klubi bosh sahifadagi ro'yxatga; qaytganlarniki — olinadi
+    try:
+        from club_market import club_offer_left
+        club_offer_left([p["telegram_id"] for p in leavers], True)
+        back = [p["telegram_id"] for p, st in results if st and st not in LEFT_STATUSES]
+        club_offer_left(back, False)
+    except Exception as exc:
+        logger.warning("Tark etganlar klubini ro'yxatga qo'yishda xato: %s", exc)
     return {"checked": len(players), "unknown": unknown, "leavers": leavers}
