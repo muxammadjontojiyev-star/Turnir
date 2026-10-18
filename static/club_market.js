@@ -5,6 +5,7 @@
 //  2) Bosh sahifa (#club-market): topshirilayotgan klublar ro'yxati — klubsiz o'yinchi
 //     "Olish" bilan klubni (jadval va natijalari bilan) o'ziga rasmiylashtiradi.
 //     Shu mavsumda klubini topshirganlar ololmaydi.
+//  2026-10-18: kanalni tark etganlar klubi ham ro'yxatda (source='left', 🚪 belgisi).
 //  Backend: club_market.py — GET /club-offers, POST /club-offers/me, POST /club-offers/take.
 //  api.js: loadHome -> clubMarketLoad(); loadProfile -> clubOfferBoxLoad().
 //  Global: APP, apiFetch, escHtml, showToast, renderLeagueLogo, clubPriorityWaitText, loadHome, loadProfile.
@@ -14,7 +15,7 @@ const CLUB_MKT_TXT = {
   uz: {
     title: "KLUBINI TOPSHIRAYOTGANLAR",
     hint: "Klub yetmay qoldimi? Quyidagi klublardan birini o'zingizga rasmiylashtiring — jadval va natijalari bilan birga.",
-    played: "o'yin o'ynalgan", take: "Olish",
+    played: "o'yin o'ynalgan", take: "Olish", left: "🚪 Kanalni tark etgan",
     reason_registered: "Siz allaqachon ligada qatnashyapsiz.",
     reason_gave_up: "Shu mavsumda klubingizni topshirgansiz — boshqa klub ola olmaysiz.",
     take_ask: "«{club}» ({league}) klubini o'zingizga rasmiylashtirasizmi?\n\nSiz uning o'rnida jadvaldagi o'rin va natijalar bilan davom etasiz.",
@@ -32,7 +33,7 @@ const CLUB_MKT_TXT = {
   ru: {
     title: "КЛУБЫ, КОТОРЫЕ ОТДАЮТ",
     hint: "Не хватило клуба? Оформите один из этих клубов на себя — вместе с местом в таблице и результатами.",
-    played: "игр сыграно", take: "Взять",
+    played: "игр сыграно", take: "Взять", left: "🚪 Покинул канал",
     reason_registered: "Вы уже участвуете в лиге.",
     reason_gave_up: "В этом сезоне вы уже отдали свой клуб — взять другой нельзя.",
     take_ask: "Оформить клуб «{club}» ({league}) на себя?\n\nВы продолжите с его местом и результатами в таблице.",
@@ -50,7 +51,7 @@ const CLUB_MKT_TXT = {
   en: {
     title: "CLUBS BEING GIVEN UP",
     hint: "No club left for you? Take one of these clubs — together with its table position and results.",
-    played: "games played", take: "Take",
+    played: "games played", take: "Take", left: "🚪 Left the channel",
     reason_registered: "You are already in a league.",
     reason_gave_up: "You gave up your club this season — you can't take another.",
     take_ask: "Take over «{club}» ({league})?\n\nYou'll continue with its table position and results.",
@@ -106,7 +107,8 @@ function clubMarketRender() {
     me.reason === "gave_up_club" ? clubMktT("reason_gave_up") : clubMktT("reason_registered"))}</div>`;
   const rows = offers.map(o => `<div class="club-mkt-item">
         ${typeof renderLeagueLogo === "function" ? renderLeagueLogo(o.league_name, "club-mkt-logo") : ""}
-        <div class="club-mkt-info"><b>${escHtml(o.club_name || "—")}</b>
+        <div class="club-mkt-info"><b>${escHtml(o.club_name || "—")}${o.source === "left"
+          ? ` <i class="club-mkt-left">${escHtml(clubMktT("left"))}</i>` : ""}</b>
           <span>${escHtml(o.league_name)} · ${o.played} ${escHtml(clubMktT("played"))}</span></div>
         ${me.can_take ? `<button class="btn btn--primary club-mkt-take" data-club-take="${o.user_id}"
           data-club="${escHtml(o.club_name || "")}" data-league="${escHtml(o.league_name)}">${escHtml(clubMktT("take"))}</button>` : ""}
