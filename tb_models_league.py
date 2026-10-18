@@ -99,6 +99,8 @@ def migrate_leagues() -> None:
         if "league_id" not in _cols(cur, "tb_seasons"):
             _rebuild_seasons(conn)
             cur = conn.cursor()
+        from tb_ucl import init_ucl_columns
+        init_ucl_columns(cur)                   # 2026-10-18: UCL formati (qayta qurilgandan KEYIN)
         cur.execute("CREATE INDEX IF NOT EXISTS idx_tb_teams_league ON tb_teams(league_id, status)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_tb_seasons_league ON tb_seasons(league_id, status)")
         orphan_t = cur.execute("SELECT COUNT(*) FROM tb_teams WHERE league_id IS NULL").fetchone()[0]

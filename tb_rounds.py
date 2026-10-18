@@ -40,15 +40,21 @@ def _lineup(cur, team_id: int) -> list[int]:
     return [r["user_id"] for r in cur.fetchall()]
 
 
-def _season_lineup_min(cur, season_id: int) -> int:
-    cur.execute("SELECT l.lineup_min FROM tb_seasons s JOIN tb_leagues l ON l.id = s.league_id WHERE s.id = ?",
-                (season_id,))
+def _season_sizes(cur, season_id: int) -> tuple[int, int | None]:
+    """(tarkib minimumi, bahsdagi o'yinchilar soni). 2026-10-18: match_size — qur'ada (N vs N)."""
+    cur.execute("SELECT l.lineup_min, s.match_size FROM tb_seasons s JOIN tb_leagues l ON l.id = s.league_id "
+                "WHERE s.id = ?", (season_id,))
     r = cur.fetchone()
-    return r["lineup_min"] if r else TB_LINEUP_MIN
+    if not r:
+        return TB_LINEUP_MIN, None
+    return (r["match_size"] or r["lineup_min"]), r["match_size"]
 
 
-def _open_fixture(cur, f, lmin: int) -> int:
-    """Bahs uchun 1v1 juftliklar (yoki texnik natija). Qaytaradi: yaratilgan o'yinlar soni."""
+def _open_fixture(cur, f, lmin: int, match_size: int | None = None) -> int:
+    """
+    Bahs uchun 1v1 juftliklar (yoki texnik natija). Qaytaradi: yaratilgan o'yinlar soni.
+    match_size berilgan bo'lsa — aynan shuncha juftlik (har tarkibdan tasodifiy), aks holda min(A, B).
+    """
     home, away = _lineup(cur, f["home_team_id"]), _lineup(cur, f["away_team_id"])
     h_ok, a_ok = len(home) >= lmin, len(away) >= lmin
     if not (h_ok and a_ok):
@@ -58,7 +64,7 @@ def _open_fixture(cur, f, lmin: int) -> int:
         cur.execute("UPDATE tb_fixtures SET status = 'finished', technical = ?, home_wins = ?, away_wins = ?, "
                     "draws = 0, home_goals = 0, away_goals = 0 WHERE id = ?", (tech, hw, aw, f["id"]))
         return 0
-    n = min(len(home), len(away))
+    n = match_size or min(len(home), len(away))
     hs, as_ = random.sample(home, n), random.sample(away, n)
     for slot, (hu, au) in enumerate(zip(hs, as_), start=1):
         cur.execute("INSERT INTO tb_games (fixture_id, slot, home_user_id, away_user_id, status) "
@@ -71,8 +77,8 @@ def open_round(cur, season_id: int, rnd: int) -> dict:
     cur.execute("SELECT id, home_team_id, away_team_id FROM tb_fixtures "
                 "WHERE season_id = ? AND round = ? AND status = 'scheduled'", (season_id, rnd))
     fixtures = cur.fetchall()
-    lmin = _season_lineup_min(cur, season_id)
-    games = sum(_open_fixture(cur, f, lmin) for f in fixtures)
+    lmin, msize = _season_sizes(cur, season_id)
+    games = sum(_open_fixture(cur, f, lmin, msize) for f in fixtures)
     return {"fixtures": len(fixtures), "games": games}
 
 
@@ -146,14 +152,25 @@ def tb_start_rounds(league_id: int) -> tuple[bool, str | dict]:
 
 
 def _advance(cur, s: dict, today: str) -> dict:
+    """
+    Joriy turni yopadi, keyingisini ochadi. 2026-10-18 (UCL): pley-off juftliklari hal qilinadi,
+    keyingi bosqich yaratiladi; teng juftlik admin qarorini kutsa — tur ochilmaydi (waiting_admin=1).
+    """
+    from tb_ucl import FMT_UCL, prepare_round, resolve_ties
     cur_round = s["current_round"]
     closed = close_round(cur, s["id"], cur_round)
     nxt = cur_round + 1
-    opened = open_round(cur, s["id"], nxt) if nxt <= s["total_rounds"] else {"fixtures": 0, "games": 0}
-    cur.execute("UPDATE tb_seasons SET current_round = ?, last_advance_date = ? WHERE id = ?",
-                (nxt, today, s["id"]))
-    return {"season_id": s["id"], "closed_round": cur_round, "opened_round": nxt if nxt <= s["total_rounds"] else None,
-            **closed, "games_created": opened["games"]}
+    waiting = False
+    if s.get("format") == FMT_UCL:
+        resolve_ties(cur, s["id"])
+        if nxt <= s["total_rounds"]:
+            waiting = prepare_round(cur, s, nxt) == "waiting"
+    can_open = nxt <= s["total_rounds"] and not waiting
+    opened = open_round(cur, s["id"], nxt) if can_open else {"fixtures": 0, "games": 0}
+    cur.execute("UPDATE tb_seasons SET current_round = ?, last_advance_date = ?, waiting_admin = ? WHERE id = ?",
+                (nxt, today, 1 if waiting else 0, s["id"]))
+    return {"season_id": s["id"], "closed_round": cur_round, "opened_round": nxt if can_open else None,
+            "waiting_admin": waiting, **closed, "games_created": opened["games"]}
 
 
 def tb_force_advance(league_id: int) -> tuple[bool, str | dict]:
@@ -166,6 +183,8 @@ def tb_force_advance(league_id: int) -> tuple[bool, str | dict]:
             return False, "not_running"
         if s["current_round"] > s["total_rounds"]:
             return False, "all_rounds_done"
+        if s.get("waiting_admin"):
+            return False, "waiting_admin"
         return True, _advance(cur, s, _now_local().date().isoformat())
     return _tx(run)
 
@@ -182,7 +201,7 @@ def tb_tick() -> list[dict]:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT DISTINCT league_id FROM tb_seasons WHERE status = 'running' "
+        cur.execute("SELECT DISTINCT league_id FROM tb_seasons WHERE status = 'running' AND waiting_admin = 0 "
                     "AND (last_advance_date IS NULL OR last_advance_date != ?) AND current_round <= total_rounds",
                     (today,))
         leagues = [r["league_id"] for r in cur.fetchall()]
@@ -193,7 +212,7 @@ def tb_tick() -> list[dict]:
         def run(cur, lid=lid):
             s = tb_active_season(lid, cur)
             if (not s or s["status"] != "running" or s["last_advance_date"] == today
-                    or s["current_round"] > s["total_rounds"]):
+                    or s["current_round"] > s["total_rounds"] or s.get("waiting_admin")):
                 return False, None
             return True, _advance(cur, s, today)
         try:
@@ -213,12 +232,20 @@ def tb_finish_season(league_id: int) -> tuple[bool, str | dict]:
             return False, "no_season"
         closed = close_round(cur, s["id"], s["total_rounds"])
         # o'ynalmagan (scheduled) bahslar shundayligicha qoladi — jadvalga kirmaydi
-        cur.execute("UPDATE tb_seasons SET status = 'finished', finished_at = datetime('now') WHERE id = ?",
+        cur.execute("UPDATE tb_seasons SET status = 'finished', waiting_admin = 0, finished_at = datetime('now') WHERE id = ?",
                     (s["id"],))
+        champions = []
+        from tb_ucl import FMT_UCL, ucl_champion
+        if s.get("format") == FMT_UCL:            # 2026-10-18: UCL chempioni — final g'olibi
+            ch = ucl_champion(cur, s["id"])
+            if ch:
+                cur.execute("INSERT OR IGNORE INTO tb_titles (season_id, season_number, division, team_id, team_name) "
+                            "VALUES (?, ?, 1, ?, ?)", (s["id"], s["number"], ch["team_id"], ch["name"]))
+                champions.append({"division": 1, **ch})
+            return True, {"season": s["number"], "champions": champions, **closed}
         # 3-bosqich: har divizion g'olibi — tb_titles (team sahifasida 🏆)
         from tb_season import _standings_cur
         cur.execute("SELECT DISTINCT division FROM tb_season_teams WHERE season_id = ? ORDER BY division", (s["id"],))
-        champions = []
         for d in [r["division"] for r in cur.fetchall()]:
             table = _standings_cur(cur, s["id"], d)
             if table and table[0]["played"] > 0:

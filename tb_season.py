@@ -9,7 +9,7 @@ Jadval saralash: ochko -> 1v1 g'alabalar farqi -> gol farqi -> 1v1 g'alabalar.
   2026-10-16: hammasi LIGA ichida (league_id) — har ligada o'z mavsumi, raqamlash ham liga ichida.
   tb_active_season(league_id)     — ligadagi faol (tugamagan) mavsum yoki None
   tb_season_preview(league_id)    — qatnasha oladigan teamlar soni (admin uchun)
-  tb_create_season(league_id, div_size) — qur'a: divizionlar + barcha turlar jadvali
+  tb_create_season(...)           — tb_draw.py (qur'a: Liga yoki UCL formati)
   tb_standings(season_id, div)    — divizion jadvali
   tb_team_division(season_id, team_id)
 """
@@ -18,7 +18,6 @@ import logging
 import random
 
 from models import get_connection
-from schedule import _generate_round_robin_pairs
 from tb_core import STATUS_APPROVED, TB_LINEUP_MIN
 
 logger = logging.getLogger(__name__)
@@ -31,7 +30,9 @@ TB_PTS_WIN, TB_PTS_DRAW = 3, 1
 TB_PROMO = 2            # har divizion juftida ko'tariladigan/tushadigan teamlar soni (3-bosqich)
 
 _SEASON_COLS = ("id, league_id, number, status, division_size, total_rounds, current_round, "
-                "last_advance_date, created_at, started_at, finished_at")
+                "last_advance_date, created_at, started_at, finished_at, "
+                # 2026-10-18: format (league | ucl), bahsdagi o'yinchilar soni, UCL parametrlari
+                "format, match_size, ucl_rounds, ucl_qualify, ko_legs, final_legs, waiting_admin")
 
 
 def tb_active_season(league_id: int | None, cursor=None) -> dict | None:
@@ -70,9 +71,12 @@ def _league_settings(cur, league_id: int) -> dict:
     return dict(r) if r else {"lineup_min": TB_LINEUP_MIN, "division_size": TB_DIV_SIZE}
 
 
-def _eligible_teams(cur, league_id: int) -> list[int]:
-    """Ligadagi tasdiqlangan va asosiy tarkibi kamida liga lineup_min bo'lgan teamlar."""
-    lmin = _league_settings(cur, league_id)["lineup_min"]
+def _eligible_teams(cur, league_id: int, need: int | None = None) -> list[int]:
+    """
+    Ligadagi tasdiqlangan va asosiy tarkibi kamida `need` (bahsdagi o'yinchilar soni,
+    2026-10-18) — berilmasa liga lineup_min — bo'lgan teamlar.
+    """
+    lmin = need or _league_settings(cur, league_id)["lineup_min"]
     cur.execute(
         "SELECT t.id FROM tb_teams t WHERE t.league_id = ? AND t.status = ? AND "
         "(SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id AND m.in_lineup = 1) >= ?",
@@ -90,8 +94,14 @@ def tb_season_preview(league_id: int) -> dict:
                     (league_id, STATUS_APPROVED))
         approved = cur.fetchone()["c"]
         st = _league_settings(cur, league_id)
+        # 2026-10-18: har tasdiqlangan teamning asosiy tarkib soni — admin "N vs N" kiritganda
+        # nechta team qatnasha olishini brauzerda darhol hisoblaydi
+        cur.execute("SELECT (SELECT COUNT(*) FROM tb_members m WHERE m.team_id = t.id AND m.in_lineup = 1) AS n "
+                    "FROM tb_teams t WHERE t.league_id = ? AND t.status = ?", (league_id, STATUS_APPROVED))
+        lineups = [r["n"] for r in cur.fetchall()]
         return {"eligible": len(eligible), "approved": approved, "lineup_min": st["lineup_min"],
-                "division_size": st["division_size"], "active": tb_active_season(league_id, cur)}
+                "division_size": st["division_size"], "lineups": lineups,
+                "active": tb_active_season(league_id, cur)}
     finally:
         conn.close()
 
@@ -149,62 +159,7 @@ def _ordered_for_draw(cur, team_ids: list[int], league_id: int) -> list[int]:
     return known + new
 
 
-def tb_create_season(league_id: int, division_size: int | None = None) -> tuple[bool, str | dict]:
-    """
-    Ligada qur'a. division_size berilmasa — liga sozlamasi.
-    Sabablar: active_exists, bad_division_size, not_enough_teams.
-    Qaytaradi: {season_id, number, divisions, teams, fixtures, total_rounds}
-    """
-    conn = get_connection()
-    conn.isolation_level = None
-    cur = conn.cursor()
-    try:
-        size = int(division_size or _league_settings(cur, league_id)["division_size"])
-        if size < TB_DIV_SIZE_MIN or size > TB_DIV_SIZE_MAX:
-            return False, "bad_division_size"
-        cur.execute("BEGIN IMMEDIATE")
-        if tb_active_season(league_id, cur):
-            cur.execute("ROLLBACK")
-            return False, "active_exists"
-        teams = _eligible_teams(cur, league_id)
-        if len(teams) < 2:
-            cur.execute("ROLLBACK")
-            return False, "not_enough_teams"
-        divisions = split_divisions(_ordered_for_draw(cur, teams, league_id), size)
-        cur.execute("SELECT COALESCE(MAX(number), 0) + 1 AS n FROM tb_seasons WHERE league_id = ?", (league_id,))
-        number = cur.fetchone()["n"]
-        cur.execute("INSERT INTO tb_seasons (league_id, number, status, division_size) VALUES (?, ?, 'drawn', ?)",
-                    (league_id, number, size))
-        sid = cur.lastrowid
-        fixtures = 0
-        total_rounds = 0
-        for d, ids in enumerate(divisions, start=1):
-            ids = ids[:]
-            random.shuffle(ids)                      # divizion ichida juftlash tartibi tasodifiy
-            for tid in ids:
-                cur.execute("INSERT INTO tb_season_teams (season_id, team_id, division) VALUES (?, ?, ?)",
-                            (sid, tid, d))
-            rounds = _generate_round_robin_pairs(ids)
-            total_rounds = max(total_rounds, len(rounds))
-            for rnd, pairs in enumerate(rounds, start=1):
-                for home, away in pairs:
-                    cur.execute("INSERT INTO tb_fixtures (season_id, division, round, home_team_id, away_team_id) "
-                                "VALUES (?, ?, ?, ?, ?)", (sid, d, rnd, home, away))
-                    fixtures += 1
-        cur.execute("UPDATE tb_seasons SET total_rounds = ? WHERE id = ?", (total_rounds, sid))
-        cur.execute("COMMIT")
-        logger.info("TB: liga %s, %s-mavsum qur'asi — %s team, %s divizion, %s bahs, %s tur",
-                    league_id, number, len(teams), len(divisions), fixtures, total_rounds)
-        return True, {"season_id": sid, "number": number, "divisions": len(divisions),
-                      "teams": len(teams), "fixtures": fixtures, "total_rounds": total_rounds}
-    except Exception:
-        try:
-            cur.execute("ROLLBACK")
-        except Exception:
-            logger.exception("tb_create_season: ROLLBACK xatosi")
-        raise
-    finally:
-        conn.close()
+# tb_create_season — tb_draw.py ga ko'chirildi (2026-10-18: Liga / UCL formatlari)
 
 
 def _standings_cur(cur, season_id: int, division: int) -> list[dict]:

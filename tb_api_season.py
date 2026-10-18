@@ -109,9 +109,35 @@ def tb_admin_preview(league_id: int, admin: dict = Depends(get_authenticated_use
 
 @router.post("/tb/admin/season/create")
 def tb_admin_create(league_id: int = Body(..., embed=True), division_size: int | None = Body(None, embed=True),
+                    format: str | None = Body(None, embed=True), match_size: int | None = Body(None, embed=True),
+                    ucl_rounds: int | None = Body(None, embed=True), ucl_qualify: int | None = Body(None, embed=True),
+                    ko_legs: int | None = Body(None, embed=True), final_legs: int | None = Body(None, embed=True),
                     admin: dict = Depends(get_authenticated_user)):
-    from tb_season import tb_create_season
-    return _ok(tb_create_season(require_manage(admin, league_id), division_size))
+    """2026-10-18: format (league | ucl), match_size (N vs N), UCL parametrlari — tb_draw.py."""
+    from tb_draw import tb_create_season
+    return _ok(tb_create_season(require_manage(admin, league_id), division_size, format, match_size,
+                                ucl_rounds, ucl_qualify, ko_legs, final_legs))
+
+
+@router.get("/tb/season/ko")
+def tb_season_ko(league_id: int | None = None, user: dict = Depends(get_authenticated_user)):
+    """2026-10-18: UCL pley-off (bosqichlar, juftliklar, natijalar)."""
+    from tb_season import tb_last_season
+    from tb_ucl_view import tb_ko_view
+    lid = league_or_mine(user, league_id)
+    s = tb_last_season(lid) if lid else None
+    return tb_ko_view(s["id"]) if s else {"stages": []}
+
+
+@router.post("/tb/admin/ko/decide")
+async def tb_admin_ko_decide(league_id: int = Body(..., embed=True), tie_id: int = Body(..., embed=True),
+                             winner_team_id: int = Body(..., embed=True), admin: dict = Depends(get_authenticated_user)):
+    """2026-10-18: teng pley-off juftligida liga admini g'olibni belgilaydi."""
+    from tb_notify import tb_spawn_round_notify
+    from tb_ucl_view import tb_ko_decide
+    res = _ok(tb_ko_decide(require_manage(admin, league_id), tie_id, winner_team_id))
+    tb_spawn_round_notify(res["season_id"], res.get("opened_round"))
+    return res
 
 
 @router.post("/tb/admin/season/start")
