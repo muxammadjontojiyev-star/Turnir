@@ -146,7 +146,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
 
         # user_id ustuni bo'yicha o'chiriladigan jadvallar
         by_user_id = [
-            "registrations", "chat_typing", "wc_chat_typing",
+            "registrations", "club_offers", "chat_typing", "wc_chat_typing",
             "cl_qualifiers", "el_qualifiers", "cl_participants", "el_participants",
             "ac_qualifiers", "ac_participants",   # 2026-10-15
             "div_registrations",

@@ -722,6 +722,42 @@ def register(league_id: int, club_name: str | None = None, user: dict = Depends(
     return {"status": "ok", "league_id": league_id}
 
 
+# ============ KLUBNI TOPSHIRISH (2026-10-18, club_market.py) ============
+
+@app.get("/club-offers")
+def club_offers_get(user: dict = Depends(get_authenticated_user)):
+    """Topshirilayotgan liga klublari + mening holatim (bosh sahifa / profil)."""
+    from club_market import club_offers_list
+    return club_offers_list(user)
+
+
+@app.post("/club-offers/me")
+def club_offers_me(on: bool = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    """Profil: "Klubimni topshiraman" tugmachasi. Xato: not_registered."""
+    from club_market import club_offer_set
+    ok, res = club_offer_set(user["id"], on)
+    if not ok:
+        raise HTTPException(status_code=400, detail=res)
+    return {"status": "ok", **res}
+
+
+@app.post("/club-offers/take")
+async def club_offers_take(owner_user_id: int = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    """Klubsiz o'yinchi topshirilayotgan klubni o'ziga rasmiylashtiradi; eski egaga bot xabari."""
+    from club_market import club_offer_take
+    ok, res = club_offer_take(user, owner_user_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail=res)
+    try:
+        from notify import notify_user
+        who = "@" + user["username"] if user.get("username") else (user.get("nickname") or "")
+        await notify_user(res["owner_telegram_id"], "club_taken_notify", res["owner_language"],
+                          club=res["club_name"], league=res["league_name"], who=who)
+    except Exception as exc:   # klub o'tdi — xabar ketmasa ham natija saqlanadi (qoida #37)
+        logger.warning("Klub topshirish xabari yuborilmadi: %s", exc)
+    return {"status": "ok", "league_name": res["league_name"], "club_name": res["club_name"]}
+
+
 @app.get("/club-priority/me")
 def club_priority_me(user: dict = Depends(get_authenticated_user)):
     """2026-10-18: klub tanlash navbatidagi holatim (bosh sahifa banneri uchun)."""

@@ -240,6 +240,12 @@ TEXTS = {
         LANGUAGE_EN: "🏆 View tournament",
     },
     # 2026-10-15: TEAMLAR JANGI (tb_*) — taklif va admin qarori
+    # 2026-10-18: klubni topshirish (club_market.py)
+    "club_taken_notify": {
+        LANGUAGE_UZ: "🔁 «{club}» klubingiz ({league}) yangi egaga o'tdi: {who}. Siz ligadan chiqdingiz.\nEslatma: keyingi mavsumda klub tanlash navbatida oxirgi bo'lasiz.",
+        LANGUAGE_RU: "🔁 Ваш клуб «{club}» ({league}) перешёл новому владельцу: {who}. Вы выбыли из лиги.\nНапоминание: в следующем сезоне вы выбираете клуб последним.",
+        LANGUAGE_EN: "🔁 Your club «{club}» ({league}) has passed to a new owner: {who}. You have left the league.\nNote: next season you will pick a club last.",
+    },
     # 2026-10-16: Teamlar jangi — ligalar
     "tb_league_invite_message": {
         LANGUAGE_UZ: "⚔️ {emoji} «{name}» ligasi (Teamlar jangi)\nTeam ochib, shu ligada bellashing. Team liga admini tasdig'idan keyin qatnashadi.",

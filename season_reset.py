@@ -35,7 +35,8 @@ def _reset_connection():
 
 
 # Liga kontenti (users TEGILMAYDI). Tartib muhim emas (FK OFF).
-_LEAGUE_TABLES = ["messages", "chat_notify", "chat_typing", "matches", "registrations", "prizes"]
+_LEAGUE_TABLES = ["messages", "chat_notify", "chat_typing", "matches", "registrations", "prizes",
+                  "club_offers"]   # 2026-10-18: klubni topshirish takliflari (club_market.py)
 
 # WC kontenti (users TEGILMAYDI).
 _WC_TABLES = [
