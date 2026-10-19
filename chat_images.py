@@ -48,6 +48,7 @@ _MODE_SCOPES = {
     "ac": SCOPE_AC, "ac_po": SCOPE_AC,   # 2026-10-15
     "pt": None,
     "tb": None,    # 2026-10-16: Teamlar jangi — ishtirokchilar + bosh admin
+    "qm": None,    # 2026-10-19: tezkor o'yin
 }
 
 

@@ -3010,6 +3010,7 @@ CHAT_REPORT_SCOPES = {
     "el": SCOPE_EL, "el_po": SCOPE_EL,
     "ac": "ac", "ac_po": "ac",   # 2026-10-15: admin_roles.SCOPE_AC
     "tb": "tb",                  # 2026-10-16: Teamlar jangi — scope admini yo'q, faqat bosh admin o'tadi
+    "qm": "qm",                  # 2026-10-19: tezkor o'yin — faqat bosh admin
 }
 
 
@@ -3631,3 +3632,5 @@ app.include_router(tb_router)
 app.include_router(tb_season_router)
 from tb_api_league import router as tb_league_router  # noqa: E402  (2026-10-16, ligalar)
 app.include_router(tb_league_router)
+from qm_api import router as qm_router  # noqa: E402  (2026-10-19, tezkor o'yin)
+app.include_router(qm_router)

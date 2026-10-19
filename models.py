@@ -1298,6 +1298,8 @@ def init_db():
         init_club_priority_table(_c.cursor())
         from club_market import init_club_market_table      # 2026-10-18: klubni topshirish
         init_club_market_table(_c.cursor())
+        from qm_core import init_qm_tables                  # 2026-10-19: tezkor o'yin
+        init_qm_tables(_c.cursor())
         _c.commit()
     finally:
         _c.close()

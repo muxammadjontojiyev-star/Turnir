@@ -476,6 +476,26 @@ TEXTS = {
         LANGUAGE_RU: "Азиатская лига чемпионов",
         LANGUAGE_EN: "Asian Champions League",
     },
+    "mode_name_qm": {        # 2026-10-19: tezkor o'yin
+        LANGUAGE_UZ: "Tezkor o'yin",
+        LANGUAGE_RU: "Быстрая игра",
+        LANGUAGE_EN: "Quick match",
+    },
+    "qm_notify_found": {
+        LANGUAGE_UZ: "⚡ Tezkor o'yin: raqib topildi — {opp}!\n{minutes} daqiqa ichida eFootball'da xona ochib, xona ID ni ilovada yuboring, aks holda o'yin bekor bo'ladi.",
+        LANGUAGE_RU: "⚡ Быстрая игра: соперник найден — {opp}!\nВ течение {minutes} мин создайте комнату в eFootball и отправьте ID комнаты в приложении, иначе игра отменится.",
+        LANGUAGE_EN: "⚡ Quick match: opponent found — {opp}!\nWithin {minutes} min create a room in eFootball and send the room ID in the app, or the match is cancelled.",
+    },
+    "qm_notify_result": {
+        LANGUAGE_UZ: "⚡ Tezkor o'yin: {opp} natija kiritdi — {score} (sizning hisobingiz birinchi). Ilovada tasdiqlang yoki rad eting. {minutes} daqiqada javob bermasangiz, natija avtomatik tasdiqlanadi.",
+        LANGUAGE_RU: "⚡ Быстрая игра: {opp} ввёл результат — {score} (ваш счёт первым). Подтвердите или отклоните в приложении. Без ответа {minutes} мин результат подтвердится автоматически.",
+        LANGUAGE_EN: "⚡ Quick match: {opp} submitted {score} (your score first). Confirm or reject in the app. With no reply in {minutes} min it is confirmed automatically.",
+    },
+    "qm_notify_rejected": {
+        LANGUAGE_UZ: "⚠️ Tezkor o'yin: raqibingiz kiritgan natijangizni rad etdi. Chatda kelishib, qayta kiriting.",
+        LANGUAGE_RU: "⚠️ Быстрая игра: соперник отклонил ваш результат. Договоритесь в чате и введите заново.",
+        LANGUAGE_EN: "⚠️ Quick match: your opponent rejected your result. Agree in the chat and submit again.",
+    },
     "mode_name_tb": {        # 2026-10-16
         LANGUAGE_UZ: "Teamlar jangi",
         LANGUAGE_RU: "Битва команд",

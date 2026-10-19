@@ -60,6 +60,7 @@ MODE_NAME_KEYS = {
     "ac_po": "mode_name_ac",
     "pt": "mode_name_pt",
     "tb": "mode_name_tb",    # 2026-10-16
+    "qm": "mode_name_qm",    # 2026-10-19: tezkor o'yin
 }
 
 

@@ -173,6 +173,15 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: OChL tur siljitishda xato: %s", exc)
 
+    # === TEZKOR O'YIN (2026-10-19): xona ID / natija / tasdiq muddatlari ===
+    try:
+        from qm_core import qm_tick
+        n = qm_tick()
+        if n:
+            logger.info("Scheduler: tezkor o'yin — %d ta natija avtomatik tasdiqlandi", n)
+    except Exception as exc:
+        logger.warning("Scheduler: tezkor o'yin muddatlarida xato: %s", exc)
+
     # === TEAMLAR JANGI (2026-10-16): 23:30 da joriy tur yopiladi, keyingisi ochiladi ===
     try:
         from tb_rounds import tb_tick

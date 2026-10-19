@@ -211,6 +211,12 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
                 f"DELETE FROM {t} WHERE player1_id = ? OR player2_id = ?",
                 (user_id, user_id),
             )
+        # 2026-10-19: tezkor o'yin (navbat, reyting, o'yinlar va ularning chati)
+        cursor.execute("DELETE FROM qm_messages WHERE sender_id = ? OR match_id IN "
+                       "(SELECT id FROM qm_matches WHERE player1_id = ? OR player2_id = ?)", (user_id, user_id, user_id))
+        cursor.execute("DELETE FROM qm_matches WHERE player1_id = ? OR player2_id = ?", (user_id, user_id))
+        cursor.execute("DELETE FROM qm_queue WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM qm_ratings WHERE user_id = ?", (user_id,))
 
         # Chat xabarlari (sender_id)
         for t in ["messages", "cl_messages", "div_messages", "wc_messages",

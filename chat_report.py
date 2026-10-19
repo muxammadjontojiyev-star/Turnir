@@ -78,6 +78,10 @@ MODES = {
     "tb":     {"msg_table": "tb_messages",     "match_table": "tb_games_v",
                "round_col": "round",    "round_label": "tur",
                "playoff": None, "has_club": False, "title": "Teamlar jangi"},
+    # 2026-10-19: tezkor o'yin (qm_core.py; hisobot faqat bosh admin)
+    "qm":     {"msg_table": "qm_messages",     "match_table": "qm_matches",
+               "round_col": "round",    "round_label": "o'yin",
+               "playoff": None, "has_club": False, "title": "Tezkor o'yin"},
     # 2026-10-02: shaxsiy turnir (xona ID uchun; hisobot faqat bosh admin — scope yo'q)
     "pt":     {"msg_table": "pt_messages",     "match_table": "pt_matches",
                "round_col": "round",    "round_label": "tur",
