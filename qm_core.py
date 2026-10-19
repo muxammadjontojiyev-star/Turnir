@@ -12,8 +12,9 @@ Oqim:
   3) Xona ID yuborilgach ('playing'): QM_PLAY_MINUTES ichida natija kiritilishi kerak, aks holda bekor.
   4) Natija kiritilgach ('awaiting'): raqib tasdiqlaydi/rad etadi; QM_CONFIRM_MINUTES ichida javob
      bermasa — natija AVTOMATIK tasdiqlanadi (cho'zishning foydasi yo'q).
-  5) Tasdiqlangach ('confirmed'): reyting: g'alaba +QM_PTS_WIN, durang +QM_PTS_DRAW, mag'lubiyat
-     QM_PTS_LOSS. Bir raqib bilan kuniga QM_SAME_OPP_DAILY tadan ortiq o'yin reytingga ta'sir
+  5) Tasdiqlangach ('confirmed'): reyting — natija + gol farqi (2026-10-19, egasi tanlovi):
+     g'alaba QM_WIN_BASE + QM_GD_STEP×farq, mag'lubiyat −(QM_LOSS_BASE + QM_GD_STEP×farq),
+     durang +QM_PTS_DRAW; farq QM_GD_CAP gacha hisoblanadi (kuchli o'yinchi yangini "yeb" ketmasin). Bir raqib bilan kuniga QM_SAME_OPP_DAILY tadan ortiq o'yin reytingga ta'sir
      qilmaydi (ball "yig'ib olish"ning oldini olish).
 Muddatlar: qm_tick() (scheduler, daqiqada) va har /qm/state so'rovida (lazy) tekshiriladi.
 Har o'zgartirish BEGIN IMMEDIATE ichida (qoida #38).
@@ -31,7 +32,11 @@ QM_CONFIRM_MINUTES = 10        # raqib tasdiqlamasa — avtomatik tasdiq
 QM_QUEUE_STALE_S = 25          # navbatda ping kelmasa — tushib qoladi
 QM_ONLINE_S = 120              # "onlayn" deb hisoblanadigan oxirgi faollik
 QM_BASE_RATING = 1000
-QM_PTS_WIN, QM_PTS_DRAW, QM_PTS_LOSS = 15, 5, -10
+QM_WIN_BASE = 10              # g'alaba: asosiy ball
+QM_LOSS_BASE = 5              # mag'lubiyat: asosiy ayirma
+QM_GD_STEP = 2                # har gol farqi uchun
+QM_GD_CAP = 5                 # gol farqi ko'pi bilan shuncha hisoblanadi (g'alaba max +20, mag'lubiyat max −15)
+QM_PTS_DRAW = 3
 QM_SAME_OPP_DAILY = 3
 QM_SCORE_MAX = 30
 ST_ROOM, ST_PLAYING, ST_AWAITING, ST_CONFIRMED, ST_CANCELLED = (
@@ -164,6 +169,12 @@ def _apply(cur, user_id: int, delta: int, res: str) -> None:
                 "updated_at = datetime('now') WHERE user_id = ?", (delta, user_id))
 
 
+def qm_points(a: int, b: int) -> tuple[int, int]:
+    """(g'olib balli, mag'lub balli) gol farqi bo'yicha. Durangda ishlatilmaydi."""
+    gd = min(abs(a - b), QM_GD_CAP)
+    return QM_WIN_BASE + QM_GD_STEP * gd, -(QM_LOSS_BASE + QM_GD_STEP * gd)
+
+
 def _confirm_cur(cur, match_id: int) -> None:
     m = cur.execute("SELECT * FROM qm_matches WHERE id = ?", (match_id,)).fetchone()
     if not m or m["status"] == ST_CONFIRMED:
@@ -175,10 +186,11 @@ def _confirm_cur(cur, match_id: int) -> None:
         (ST_CONFIRMED, p1, p2, p2, p1)).fetchone()["c"]
     rated = n_today < QM_SAME_OPP_DAILY
     s1, s2 = m["score1"], m["score2"]
+    win, loss = qm_points(s1, s2)
     if s1 > s2:
-        d1, d2, r1, r2 = QM_PTS_WIN, QM_PTS_LOSS, "w", "l"
+        d1, d2, r1, r2 = win, loss, "w", "l"
     elif s1 < s2:
-        d1, d2, r1, r2 = QM_PTS_LOSS, QM_PTS_WIN, "l", "w"
+        d1, d2, r1, r2 = loss, win, "l", "w"
     else:
         d1 = d2 = QM_PTS_DRAW
         r1 = r2 = "d"
