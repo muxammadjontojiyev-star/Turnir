@@ -18,6 +18,7 @@ const CHAT_IMG_MODES = {
   "/el/matches": "el", "/el/playoff/matches": "el_po", "/div/matches": "div",
   "/ac/matches": "ac", "/ac/playoff/matches": "ac_po",   // 2026-10-15
   "/tb/matches": "tb",                                   // 2026-10-16: Teamlar jangi
+  "/qm/matches": "qm",                                   // 2026-10-19: tezkor o'yin
   "/pt/matches": "pt",
 };
 
