@@ -336,7 +336,7 @@ function qmRatingHtml() {
         <span class="qm-rname">${escHtml(qmWho(p))}<small>${p.wins}–${p.draws}–${p.losses} · ${p.played} ${escHtml(qmT("played"))}</small></span>
         <b class="qm-rpts">${p.rating}</b>
       </div>`).join("");
-  const recent = (r.recent || []).map(qmLastHtml).join("");
+  const recent = qmRecentStripHtml(r.recent);
   return `<div class="card qm-me">
       ${qmAvatar(QM.st && QM.st.me.user_id, QM.st ? qmWho(QM.st.me) : "", "qm-ava--lg")}
       <div><small>${escHtml(qmT("pos"))}: ${me.position || "—"}</small><b>${me.rating ?? "—"}</b>

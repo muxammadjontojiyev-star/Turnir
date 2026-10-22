@@ -7437,3 +7437,13 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .qm-rname { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 14px; overflow: hidden; }
 .qm-rname small { font-size: 11.5px; color: var(--text-secondary); }
 .qm-rpts { font-family: var(--font-display); font-size: 17px; color: #d8ccff; }
+
+/* TEZKOR O'YIN — so'nggi o'yinlar: eFootball uslubidagi bitta qator (2026-10-22) */
+.qm-rc-strip { display: flex; gap: 6px; padding: 12px 8px; }
+.qm-rc { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.qm-ava--md { width: 44px; height: 44px; font-size: 17px; }
+.qm-rc-score { width: 100%; text-align: center; padding: 4px 0; border-radius: 4px; font-family: var(--font-display);
+  font-size: 16px; font-weight: 800; color: #0d1a10; background: #66c566; }
+.qm-rc.is-draw .qm-rc-score { background: #b4b4b4; color: #1a1a1a; }
+.qm-rc.is-loss .qm-rc-score { background: #e84c3d; color: #fff; }
+.qm-rc-pts { font-size: 11px; color: var(--text-secondary); }
