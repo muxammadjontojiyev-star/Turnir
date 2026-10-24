@@ -7358,7 +7358,7 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
 .qm-root { position: fixed; inset: 0; z-index: 90; overflow-y: auto; padding: 0 16px 32px;
   background: radial-gradient(120% 60% at 50% 0%, rgba(143,107,255,.22), transparent 60%), #0b0b18; color: #fff; }
 .qm-head { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
-  padding: 12px 0; background: linear-gradient(#0b0b18 70%, transparent); }
+  padding: calc(12px + max(var(--safe-top), env(safe-area-inset-top, 0px))) 0 12px; background: linear-gradient(#0b0b18 70%, transparent); }
 .qm-x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-card); color: #fff;
   display: flex; align-items: center; justify-content: center; }
 .qm-title { text-align: center; font-family: var(--font-display); font-weight: 800; letter-spacing: 1.5px; color: #d8ccff;
