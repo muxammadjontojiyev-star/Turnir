@@ -29,7 +29,8 @@ TB_EFB_ID_MAX = 24
 TB_EFB_NAME_MIN = 2
 TB_EFB_NAME_MAX = 24
 
-_ID_RE = re.compile(r"^[A-Z0-9-]+$")
+_ID_RE = re.compile(r"^[A-Z0-9]+$")                  # tire va probellarsiz shakl
+_STD_ID_RE = re.compile(r"^([A-Z]{4})(\d{3})(\d{3})(\d{3})$")   # eFootball formati: ASGJ-819-293-194
 _CTRL_RE = re.compile(r"[\x00-\x1f\x7f<>]")
 
 
@@ -59,11 +60,19 @@ def init_tb_efb_tables(cursor) -> None:
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_efb_hist_user ON tb_efb_history(user_id)")
 
 
+def tb_efb_raw(efb_id) -> str:
+    """Solishtirish uchun shakl: probel va tirelarsiz, katta harf ('asgj 819-293194' -> 'ASGJ819293194')."""
+    return re.sub(r"[\s-]+", "", str(efb_id or "")).upper()
+
+
 def tb_efb_clean(efb_id, efb_name) -> tuple[tuple[str, str] | None, str]:
-    """ID: probel/tire atrofi tozalanadi, katta harf; nik: ortiqcha probellar, boshqaruv belgilarisiz."""
-    i = re.sub(r"\s+", "", str(efb_id or "")).upper()
-    if not (TB_EFB_ID_MIN <= len(i) <= TB_EFB_ID_MAX) or not _ID_RE.match(i):
+    """ID: tire/probelsiz tekshiriladi, eFootball formatida bo'lsa 'ASGJ-819-293-194' ko'rinishida saqlanadi
+    (2026-10-25: tireli va tiresiz yozuv bitta ID hisoblanadi). Nik: ortiqcha probellar, boshqaruv belgilarisiz."""
+    raw = tb_efb_raw(efb_id)
+    if not (TB_EFB_ID_MIN <= len(raw) <= TB_EFB_ID_MAX) or not _ID_RE.match(raw):
         return None, "efb_bad_id"
+    m = _STD_ID_RE.match(raw)
+    i = "-".join(m.groups()) if m else raw
     n = " ".join(str(efb_name or "").split())
     if not (TB_EFB_NAME_MIN <= len(n) <= TB_EFB_NAME_MAX) or _CTRL_RE.search(n):
         return None, "efb_bad_name"
@@ -102,8 +111,8 @@ def _write(user_id: int, efb_id, efb_name, by_user_id: int, allow_replace: bool)
         if old and not allow_replace:
             cur.execute("ROLLBACK")
             return False, "efb_locked"
-        owner = cur.execute("SELECT user_id FROM tb_efb_accounts WHERE efb_id = ? COLLATE NOCASE",
-                            (new_id,)).fetchone()
+        owner = cur.execute("SELECT user_id FROM tb_efb_accounts WHERE UPPER(REPLACE(REPLACE(efb_id, '-', ''), ' ', '')) = ?",
+                            (tb_efb_raw(new_id),)).fetchone()       # eski tireli/tiresiz yozuvlar ham
         if owner and owner["user_id"] != user_id:
             cur.execute("ROLLBACK")
             return False, "efb_id_taken"
