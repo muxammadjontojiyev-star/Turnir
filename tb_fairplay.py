@@ -12,7 +12,7 @@ tb_fairplay.py — "TEAMLAR JANGI": halol o'yin dalillari (2026-10-25).
 
 4-bosqich — «Boshqa odam o'ynadi» shikoyati (tb_reports):
   O'yin ishtirokchisi raqibi ustidan shikoyat qiladi (bir o'yinga bir marta — UNIQUE, qoida #38),
-  liga adminiga bot xabari boradi. Admin skrinshot, eFootball niklari va chatni ko'rib qaror qiladi:
+  liga adminiga bot xabari boradi. Admin skrinshot va chatni ko'rib qaror qiladi:
     dismiss  — asossiz (natija o'zgarmaydi);
     replay   — natija tozalanadi, qayta o'ynash (faqat tur ochiq bo'lsa; tb_games.tb_admin_reset);
     tech     — raqibga texnik mag'lubiyat TB_TECH_SCORE (tb_games.tb_admin_set, bahs qayta hisoblanadi).
@@ -128,14 +128,12 @@ _REPORT_SQL = (
     "SELECT r.id, r.game_id, r.note, r.status, r.decision, r.created_at, r.resolved_at, "
     "r.reporter_id, r.accused_id, g.score1, g.score2, g.status AS game_status, g.proof_token, g.slot, "
     "g.home_user_id, f.round, f.status AS fixture_status, s.league_id, ht.name AS home_team, at.name AS away_team, "
-    "ru.username AS reporter_username, ru.nickname AS reporter_nick, re.efb_name AS reporter_efb, re.efb_id AS reporter_efb_id, "
-    "au.username AS accused_username, au.nickname AS accused_nick, ae.efb_name AS accused_efb, ae.efb_id AS accused_efb_id "
+    "ru.username AS reporter_username, ru.nickname AS reporter_nick, "
+    "au.username AS accused_username, au.nickname AS accused_nick "
     "FROM tb_reports r JOIN tb_games g ON g.id = r.game_id JOIN tb_fixtures f ON f.id = g.fixture_id "
     "JOIN tb_seasons s ON s.id = f.season_id "
     "JOIN tb_teams ht ON ht.id = f.home_team_id JOIN tb_teams at ON at.id = f.away_team_id "
     "JOIN users ru ON ru.id = r.reporter_id JOIN users au ON au.id = r.accused_id "
-    "LEFT JOIN tb_efb_accounts re ON re.user_id = r.reporter_id "
-    "LEFT JOIN tb_efb_accounts ae ON ae.user_id = r.accused_id "
 )
 
 

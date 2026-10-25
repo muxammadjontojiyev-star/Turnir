@@ -27,13 +27,10 @@ _GAME_SQL = (
     "f.home_team_id, f.away_team_id, ht.name AS home_team, ht.emoji AS home_emoji, ht.logo_ver AS home_logo_ver, "
     "at.name AS away_team, at.emoji AS away_emoji, at.logo_ver AS away_logo_ver, "
     "hu.nickname AS home_nick, hu.username AS home_username, "
-    "au.nickname AS away_nick, au.username AS away_username, "
-    "he.efb_name AS home_efb, he.efb_id AS home_efb_id, ae.efb_name AS away_efb, ae.efb_id AS away_efb_id "
+    "au.nickname AS away_nick, au.username AS away_username "
     "FROM tb_games g JOIN tb_fixtures f ON f.id = g.fixture_id "
     "JOIN tb_teams ht ON ht.id = f.home_team_id JOIN tb_teams at ON at.id = f.away_team_id "
     "JOIN users hu ON hu.id = g.home_user_id JOIN users au ON au.id = g.away_user_id "
-    "LEFT JOIN tb_efb_accounts he ON he.user_id = g.home_user_id "      # 2026-10-25: eFootball niki (VS)
-    "LEFT JOIN tb_efb_accounts ae ON ae.user_id = g.away_user_id "
 )
 
 

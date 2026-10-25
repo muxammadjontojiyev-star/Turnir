@@ -16,9 +16,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _who(username: str | None, nick: str | None, efb: str | None) -> str:
-    base = "@" + username if username else (nick or "—")
-    return f"{base} / eFootball: {efb}" if efb else base
+def _who(username: str | None, nick: str | None) -> str:
+    return "@" + username if username else (nick or "—")
 
 
 async def _send(telegram_id: int, language: str | None, key: str, **fmt) -> None:
@@ -41,8 +40,8 @@ async def tb_report(game_id: int = Body(..., embed=True), note: str | None = Bod
         lg = tb_league(rep["league_id"]) or {}
         await _send(adm["telegram_id"], adm["language"], "tb_notify_report",
                     league=lg.get("name", ""), round=rep["round"], game=rep["game_id"],
-                    reporter=_who(rep["reporter_username"], rep["reporter_nick"], rep["reporter_efb"]),
-                    accused=_who(rep["accused_username"], rep["accused_nick"], rep["accused_efb"]))
+                    reporter=_who(rep["reporter_username"], rep["reporter_nick"]),
+                    accused=_who(rep["accused_username"], rep["accused_nick"]))
     return res
 
 
