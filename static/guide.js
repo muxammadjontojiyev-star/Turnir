@@ -1,7 +1,7 @@
 // =============================================================
 //  guide.js — butun bot bo'yicha QO'LLANMA (2026-10-25)
 //  Yangi foydalanuvchilar uchun: bo'limlar ro'yxati -> bo'lim sahifasi (qadamlar, maslahatlar,
-//  belgilangan eFootball skrinshotlari). Matnlar: guide_uz.js / guide_ru.js / guide_en.js
+//  ixtiyoriy rasmlar static/images/guide/). Matnlar: guide_uz.js / guide_ru.js / guide_en.js
 //  (GUIDE_I18N[lang] = { ui, sections }). Til — APP.lang, topilmasa o'zbekcha.
 //  Kirish nuqtalari:
 //    - bo'lim tanlash ekranidagi «📖 Qo'llanma» tugmasi (app.js showHubSelect -> guideHubButtonHtml);

@@ -51,24 +51,6 @@ GUIDE_I18N.en = {
       ],
     },
     {
-      id: "efb", icon: "🆔", title: "eFootball ID and nickname", sub: "Where to find them and how to add them",
-      intro: "In Team Battle your eFootball account is linked to your Telegram account. Your opponent sees your nickname before the match — if someone else joins the room, it's obvious straight away.",
-      steps: [
-        { t: "In eFootball open the **«Extras»** tab (1) and tap **«User Information»** (2). Your nickname is on the card on the left (**N**) — enter exactly this nickname in the bot.",
-          img: "efb-step1-extras.jpg", cap: "1 — Extras, 2 — User Information, N — your nickname" },
-        { t: "Open **«User Personal Information»** (3).", img: "efb-step2-user-info.jpg", cap: "3 — User Personal Information" },
-        { t: "The **«User ID»** row shows your ID (4), e.g. ABCD-123-456-789. **«Copy User ID»** (5) copies it.",
-          img: "efb-step3-user-id.jpg", cap: "4 — User ID, 5 — Copy User ID" },
-        "In the bot: **Team Battle → My team** — paste the ID, type your nickname and tap **«Save»**. The same form appears when you join or create a team.",
-      ],
-      tips: [
-        "You enter the ID yourself **once**. After that only the league admin can change it.",
-        "One eFootball ID can be linked to only **one** Telegram account.",
-        "With or without dashes is fine — the bot formats it for you.",
-        "Your nickname is visible to everyone in the team list; the ID only to the captain and admins.",
-      ],
-    },
-    {
       id: "leagues", icon: "🏆", title: "Leagues", sub: "Picking a club, rounds, points",
       intro: "Leagues are the main mode: everyone plays with one club, all in one table, and everyone plays everyone home and away.",
       steps: [
@@ -164,10 +146,8 @@ GUIDE_I18N.en = {
       intro: "Team Battle is playing as a team: in a match between two teams the players play 1v1, and the team with more wins takes it.",
       steps: [
         "To create a team, get a **league link** from the league admin. To join a friend's team, ask the captain for the **invite link**.",
-        "Add your **eFootball User ID and nickname** (see «eFootball ID and nickname»).",
         "The captain sets the **starting lineup**; the league sets the lineup size.",
         "When a round opens (**1** round a day, deadline **23:30**), lineup players are paired 1v1 with the opposing team — your opponent is on the **«Battle»** tab.",
-        "The VS card shows your opponent's **eFootball nickname**. Only that nickname should join the room.",
         "Enter the result with a **screenshot of the final screen** — results without a screenshot are not accepted.",
       ],
       tips: [
@@ -184,7 +164,7 @@ GUIDE_I18N.en = {
         "Take a **screenshot of the final screen** after every match.",
         "If your opponent enters a wrong result, tap **«Reject»** and sort it out in chat.",
         "If you can't agree, contact an **admin** with a screenshot or video. The responsible admins are listed on the Profile page of each mode.",
-        "In Team Battle, if someone else joins instead of your opponent, don't play and tap **«🚩 Someone else played»**. The admin checks the screenshot and nicknames and decides: no grounds, replay or technical defeat.",
+        "In Team Battle, if someone else joins instead of your opponent, don't play and tap **«🚩 Someone else played»**. The admin checks the screenshot and chat and decides: no grounds, replay or technical defeat.",
       ],
       tips: [
         "Only an admin can change a confirmed result.",

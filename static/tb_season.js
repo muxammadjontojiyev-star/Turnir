@@ -98,7 +98,6 @@ function tbsGameCardHtml(g) {
         <div class="tb-g-x">VS</div>
         <div class="tb-g-side"><b>${escHtml(opName || "—")}</b><span>${opTeam}</span></div>
       </div>
-      ${typeof tbEfbVsHtml === "function" ? tbEfbVsHtml(g, iAmHome) : ""}
       ${body}
       ${typeof tbReportBtnHtml === "function" ? tbReportBtnHtml(g) : ""}
     </div>`;

@@ -51,9 +51,8 @@ async function tbReportsLoad(leagueId) {
   catch (_) { TB.adminReports = []; }                       // ro'yxat yuklanmasa — Admin tabi baribir ochiladi
 }
 
-function tbReportSideHtml(label, username, nick, efb, efbId) {
-  return `<div class="tb-rep-side"><small>${label}</small><b>${escHtml(tbWho({ username, nickname: nick }))}</b>
-      <span>🎮 ${efb ? `${escHtml(efb)} <i>${escHtml(efbId || "")}</i>` : "kiritilmagan"}</span></div>`;
+function tbReportSideHtml(label, username, nick) {
+  return `<div class="tb-rep-side"><small>${label}</small><b>${escHtml(tbWho({ username, nickname: nick }))}</b></div>`;
 }
 
 function tbReportCardHtml(r) {
@@ -66,8 +65,8 @@ function tbReportCardHtml(r) {
       <div class="tb-rep-head"><b>O'yin #${r.game_id}</b><span>${r.round}-tur · ${r.slot}-juftlik · ${escHtml(r.created_at || "")}</span></div>
       <div class="tb-hint">${escHtml(r.home_team)} — ${escHtml(r.away_team)} · ${escHtml(res)}</div>
       <div class="tb-rep-sides">
-        ${tbReportSideHtml("Shikoyatchi", r.reporter_username, r.reporter_nick, r.reporter_efb, r.reporter_efb_id)}
-        ${tbReportSideHtml("Gumon qilingan", r.accused_username, r.accused_nick, r.accused_efb, r.accused_efb_id)}
+        ${tbReportSideHtml("Shikoyatchi", r.reporter_username, r.reporter_nick)}
+        ${tbReportSideHtml("Gumon qilingan", r.accused_username, r.accused_nick)}
       </div>
       ${r.note ? `<div class="tb-note">${escHtml(r.note)}</div>` : ""}
       ${proof}

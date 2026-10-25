@@ -53,24 +53,6 @@ GUIDE_I18N.uz = {
       ],
     },
     {
-      id: "efb", icon: "🆔", title: "eFootball ID va nik", sub: "Qayerdan olinadi va qanday kiritiladi",
-      intro: "Teamlar jangida eFootball akkauntingiz Telegram akkauntingizga bog'lanadi. Raqib o'yin oldidan nikingizni ko'radi — xonaga boshqa odam kirsa, darhol bilinadi.",
-      steps: [
-        { t: "eFootball'da yuqoridagi **«Extras»** bo'limini oching (1) va **«User Information»**ni bosing (2). Nikingiz chap kartada turadi (**N**) — botga aynan shu nikni yozing.",
-          img: "efb-step1-extras.jpg", cap: "1 — Extras, 2 — User Information, N — nikingiz" },
-        { t: "**«User Personal Information»**ni oching (3).", img: "efb-step2-user-info.jpg", cap: "3 — User Personal Information" },
-        { t: "**«User ID»** qatorida ID'ingiz turadi (4), masalan ABCD-123-456-789. **«Copy User ID»** (5) uni nusxalaydi.",
-          img: "efb-step3-user-id.jpg", cap: "4 — User ID, 5 — Copy User ID" },
-        "Botda **Teamlar jangi → Teamim**: ID'ni joylang, nikni yozing va **«Saqlash»**ni bosing. Teamga qo'shilishda yoki team ochishda ham shu forma chiqadi.",
-      ],
-      tips: [
-        "ID'ni **bir marta** o'zingiz kiritasiz. Keyin uni faqat liga admini o'zgartira oladi.",
-        "Bitta eFootball ID faqat **bitta** Telegram akkauntga bog'lanadi.",
-        "Tire bilan yoki tiresiz yozsangiz ham bo'ladi — bot o'zi to'g'rilaydi.",
-        "Nik team ro'yxatida hammaga ko'rinadi, ID esa faqat sardor va adminga.",
-      ],
-    },
-    {
       id: "leagues", icon: "🏆", title: "Ligalar", sub: "Klub tanlash, turlar, ochko",
       intro: "Ligalar — asosiy rejim: har kim bitta klub bilan o'ynaydi, hamma bitta jadvalda, har kim har kim bilan uy va mehmonda uchrashadi.",
       steps: [
@@ -166,10 +148,8 @@ GUIDE_I18N.uz = {
       intro: "Teamlar jangi — jamoa bo'lib o'ynash: ikki team bahsida o'yinchilar 1v1 o'ynaydi, ko'p g'alaba olgan team yutadi.",
       steps: [
         "Team ochish uchun liga adminidan **liga havolasini** oling. Do'stingiz teamiga qo'shilish uchun sardordan **taklif havolasini** so'rang.",
-        "**eFootball User ID va nikingizni** kiriting (qarang: «eFootball ID va nik»).",
         "Sardor **asosiy tarkibni** tuzadi; tarkib hajmini liga belgilaydi.",
         "Tur ochilganda (kuniga **1** tur, deadline **23:30**) tarkib o'yinchilari raqib teamdan 1v1 juftlanadi — raqibingiz **«Jang»** tabida.",
-        "VS-kartada raqibingizning **eFootball niki** chiqadi. Xonaga faqat shu nik kirishi kerak.",
         "Natijani **yakun ekrani skrinshoti** bilan kiriting — skrinshotsiz natija qabul qilinmaydi.",
       ],
       tips: [
@@ -186,7 +166,7 @@ GUIDE_I18N.uz = {
         "Har o'yindan keyin **yakun ekranini skrinshot** qiling.",
         "Raqib noto'g'ri natija kiritsa — **«Rad etish»**ni bosing va chatda kelishing.",
         "Kelishilmasa — skrinshot yoki video bilan **adminga** murojaat qiling. Mas'ul adminlar har rejimning Profil sahifasida.",
-        "Teamlar jangida raqib o'rniga boshqa odam kirsa — o'ynamang va **«🚩 Boshqa odam o'ynadi»**ni bosing. Admin skrinshot va niklarni ko'rib qaror qiladi: asossiz, qayta o'ynash yoki texnik mag'lubiyat.",
+        "Teamlar jangida raqib o'rniga boshqa odam kirsa — o'ynamang va **«🚩 Boshqa odam o'ynadi»**ni bosing. Admin skrinshot va chatni ko'rib qaror qiladi: asossiz, qayta o'ynash yoki texnik mag'lubiyat.",
       ],
       tips: [
         "Tasdiqlangan natijani faqat admin o'zgartira oladi.",
