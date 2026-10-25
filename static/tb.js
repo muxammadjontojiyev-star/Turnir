@@ -169,7 +169,8 @@ function tbMemberRowHtml(m, t, captainView) {
   return `<div class="tb-member">
       ${tbAvatarHtml(m)}
       <div class="tb-member-info">${tbNameHtml(m)}${role}${lu}
-        ${captainView && m.telegram_id ? `<span class="tb-member-id">ID ${escHtml(String(m.telegram_id))}</span>` : ""}</div>
+        ${captainView && m.telegram_id ? `<span class="tb-member-id">ID ${escHtml(String(m.telegram_id))}</span>` : ""}
+        ${typeof tbEfbMemberHtml === "function" ? tbEfbMemberHtml(m, t) : ""}</div>
       ${acts}
     </div>`;
 }
@@ -181,7 +182,7 @@ function tbMyTeamHtml(t) {
   const short = lineup.length < lmin
     ? `<div class="tb-warn">Asosiy tarkib to'liq emas: ${lineup.length}/${lmin}. ${cap ? "Tarkibni tuzing." : "Sardor tarkibni tuzishi kerak."}</div>` : "";
   return `
-    ${tbTeamHeadHtml(t)}
+    ${tbTeamHeadHtml(t)}${typeof tbEfbMineHtml === "function" ? tbEfbMineHtml() : ""}
     ${t.status === "pending" ? `<div class="tb-note">Team admin tasdig'ini kutmoqda. Shu vaqtda a'zolarni yig'ib, tarkibni tuzib qo'ying.</div>` : ""}
     ${cap && typeof tbCaptainBlocksHtml === "function" ? tbCaptainBlocksHtml(t) : `
       <div class="section-label">ASOSIY TARKIB (${lineup.length})</div>
@@ -215,7 +216,7 @@ async function tbLoadTeams() {
 }
 
 async function tbOpenTeam(id) {
-  TB.view = "team";
+  TB.view = "team"; TB._openTeamId = id;
   tbRender(`<div class="empty-state">Yuklanmoqda…</div>`);
   try {
     const t = await apiFetch(`/tb/teams/${id}`);
@@ -244,7 +245,7 @@ async function tbOpenJoin(code) {
   if (p.my_team_id === p.id) action = `<div class="tb-note">Siz shu teamning a'zosisiz.</div>`;
   else if (p.my_team_id) action = `<div class="tb-warn">Siz boshqa teamdasiz. Qo'shilish uchun avval undan chiqing.</div>`;
   else if (p.status === "rejected") action = `<div class="tb-warn">Bu team admin tomonidan rad etilgan.</div>`;
-  else action = `<button class="btn btn--primary btn--glow" data-tb="join">⚔️ Teamga qo'shilish</button>`;
+  else action = `${typeof tbEfbJoinFormHtml === "function" ? tbEfbJoinFormHtml() : ""}<button class="btn btn--primary btn--glow" data-tb="join">⚔️ Teamga qo'shilish</button>`;
   tbRender(`<div class="section-label">TEAMGA TAKLIF</div>${tbTeamHeadHtml(p)}${action}
     <button class="btn btn--ghost" data-tb="back">Bo'limga o'tish</button>`);
 }
@@ -286,14 +287,14 @@ function tbHandleClick(e) {
   else if (a === "back") { TB.joinCode = null; TB.view = null; tbRenderTab(); }
   else if (a === "create") {
     const name = (document.getElementById("tb-name")?.value || "").trim();
-    void tbAction("/tb/teams", { name, emoji: TB.createEmoji, league_code: TB.leagueCode },
-      "✅ Team ochildi! Endi a'zolarni taklif qiling", act).then(ok => { if (ok) { TB.leagueCode = null; TB.joinLeague = null; } });
+    void tbEfbEnsure(act).then(okE => okE && tbAction("/tb/teams", { name, emoji: TB.createEmoji, league_code: TB.leagueCode },
+      "✅ Team ochildi! Endi a'zolarni taklif qiling", act).then(ok => { if (ok) { TB.leagueCode = null; TB.joinLeague = null; } }));
   } else if (a === "join") {
     const code = TB.joinCode;
-    TB.joinCode = null;
-    void tbAction("/tb/join", { code }, "✅ Teamga qo'shildingiz", act);
+    void tbEfbEnsure(act).then(okE => { if (okE) { TB.joinCode = null; void tbAction("/tb/join", { code }, "✅ Teamga qo'shildingiz", act); } });
   } else if (a === "leave" && tbConfirm("Teamdan chiqasizmi?")) void tbAction("/tb/leave", {}, "Teamdan chiqdingiz", act);
   else if (a === "dissolve" && tbConfirm("Team butunlay tarqatilsinmi? Barcha a'zolar chiqariladi. Qaytarib bo'lmaydi!")) {
     void tbAction("/tb/dissolve", {}, "Team tarqatildi", act);
-  } else if (typeof tbCaptainClick === "function") tbCaptainClick(a, act);
+  } else if (a === "efb-save") void tbEfbEnsure(act).then(ok => { if (ok) { tbToast("✅ eFootball akkaunti saqlandi"); tbRenderTab(); } });
+  else if (typeof tbCaptainClick === "function") tbCaptainClick(a, act);
 }

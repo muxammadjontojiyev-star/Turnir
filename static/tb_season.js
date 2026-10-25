@@ -52,6 +52,7 @@ async function tbBattleLoad() {
           : "O'yinlar mavsum boshlangach shu yerda chiqadi."}</div>`;
     tbRender(`<div class="card tb-season-line">${ICON.get("swords", 16)} ${escHtml(tbsSeasonLine(s))}${tbsFmtTag(s)}</div>
       <div class="section-label">MENING O'YINIM</div>${gamesHtml}${fixtureHtml}`);
+    if (typeof chatLoadImages === "function") chatLoadImages(document.querySelector("#tb-root .tb-body"));   // skrinshotlar
   } catch (e) {
     tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
   }
@@ -68,9 +69,9 @@ function tbsGameCardHtml(g) {
   if (g.status === "confirmed") {
     body = `<div class="tb-g-final">${mine} : ${theirs}</div><div class="tb-hint tb-hint--center">✅ Tasdiqlangan</div>`;
   } else if (g.status === "awaiting_confirmation" && g.submitted_by === TBS.me) {
-    body = `<div class="tb-g-final">${mine} : ${theirs}</div><div class="tb-hint tb-hint--center">⏳ Raqib tasdig'i kutilmoqda</div>`;
+    body = `<div class="tb-g-final">${mine} : ${theirs}</div><div class="tb-hint tb-hint--center">⏳ Raqib tasdig'i kutilmoqda</div>${tbsProofView(g)}`;
   } else if (g.status === "awaiting_confirmation") {
-    body = `<div class="tb-note">Raqib natija kiritdi: <b>${mine} : ${theirs}</b> (sizning hisobingiz birinchi)</div>
+    body = `<div class="tb-note">Raqib natija kiritdi: <b>${mine} : ${theirs}</b> (sizning hisobingiz birinchi)</div>${tbsProofView(g)}
       <div class="tb-g-acts">
         <button class="btn btn--primary" data-tbs-confirm="${g.id}" data-accept="1">✅ Tasdiqlash</button>
         <button class="btn btn--ghost" data-tbs-confirm="${g.id}" data-accept="0">❌ Rad etish</button>
@@ -81,6 +82,7 @@ function tbsGameCardHtml(g) {
         <b>:</b>
         <div><span>Raqib</span><input class="score-input" type="number" inputmode="numeric" min="0" max="30" value="0" id="tbs-o-${g.id}"></div>
       </div>
+      ${typeof tbProofPickHtml === "function" ? tbProofPickHtml(g.id) : ""}
       <button class="btn btn--primary" data-tbs-submit="${g.id}">Natijani yuborish</button>`;
   }
   // 3-bosqich: ilova ichidagi chat (rasm yuborish bilan) + Telegram'da yozish
@@ -96,9 +98,13 @@ function tbsGameCardHtml(g) {
         <div class="tb-g-x">VS</div>
         <div class="tb-g-side"><b>${escHtml(opName || "—")}</b><span>${opTeam}</span></div>
       </div>
+      ${typeof tbEfbVsHtml === "function" ? tbEfbVsHtml(g, iAmHome) : ""}
       ${body}
+      ${typeof tbReportBtnHtml === "function" ? tbReportBtnHtml(g) : ""}
     </div>`;
 }
+
+function tbsProofView(g) { return typeof tbProofViewHtml === "function" ? tbProofViewHtml(g) : ""; }
 
 function tbsFixtureHtml(f, open) {
   const score = f.status === "scheduled" ? "—" : `${f.home_wins} : ${f.away_wins}`;
@@ -213,8 +219,9 @@ document.addEventListener("click", (e) => {
     const id = +sub.dataset.tbsSubmit;
     const m = document.getElementById(`tbs-m-${id}`)?.value, o = document.getElementById(`tbs-o-${id}`)?.value;
     if (m === "" || o === "") { tbToast("Hisobni kiriting"); return; }
+    if (!tbProofHas(id)) { tbToast("Avval yakun ekrani skrinshotini tanlang"); return; }   // 2026-10-25 (tb_proof.js)
     if (!tbConfirm(`Natija: Siz ${m} : ${o} Raqib. Yuborilsinmi?`)) return;
-    void tbsPost("/tb/game/submit", { game_id: id, my_score: +m, opp_score: +o }, "✅ Yuborildi — raqib tasdiqlaydi", sub);
+    void tbProofSubmit(id, +m, +o, sub);
     return;
   }
   const cf = e.target.closest("[data-tbs-confirm]");

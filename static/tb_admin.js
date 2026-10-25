@@ -18,6 +18,7 @@ async function tbAdminLoad() {
     const lid = TB.adminLeagueId;
     TB.adminTeams = lid ? (await apiFetch(`/tb/admin/teams?league_id=${lid}`)).teams || [] : [];
     if (lid && typeof tbAdminSeasonLoad === "function") await tbAdminSeasonLoad();
+    if (lid && typeof tbReportsLoad === "function") await tbReportsLoad(lid);     // 2026-10-25: shikoyatlar
   } catch (e) {
     tbRender(`<div class="empty-state">${escHtml(tbErr(e))}</div>`);
     return;
@@ -53,9 +54,11 @@ function tbAdminRender() {
   const leagues = tbAdminLeaguesHtml();
   if (!TB.adminLeagueId) { tbRender(leagues); return; }
   const season = typeof tbAdminSeasonHtml === "function" ? tbAdminSeasonHtml() : "";
-  tbRender(`${leagues}${season}<div class="tb-chips">${chips}</div>
+  const reports = typeof tbReportsAdminHtml === "function" ? tbReportsAdminHtml() : "";
+  tbRender(`${leagues}${season}${reports}<div class="tb-chips">${chips}</div>
     ${tbAdminBulkBarHtml(list)}
     ${rows || `<div class="empty-state">Bu bo'limda team yo'q</div>`}`);
+  if (typeof chatLoadImages === "function") chatLoadImages(document.querySelector("#tb-root .tb-body"));
 }
 
 // 2026-10-16: ko'plab o'chirish (shaxsiy turnirdagi kabi) — faqat ko'rinib turgan ro'yxatdan

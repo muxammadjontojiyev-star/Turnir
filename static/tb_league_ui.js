@@ -35,6 +35,7 @@ function tbNoTeamHtml() {
     <div class="section-label">LIGA</div>
     <div class="card tb-league-card">${tbLogo("league", L.id, L.logo_ver, L.emoji, "tb-logo--lg")}<div><b>${escHtml(L.name)}</b>
       ${L.admin_username || L.admin_nickname ? `<small>Liga admini: ${escHtml(tbWho({ username: L.admin_username, nickname: L.admin_nickname }))}</small>` : ""}</div></div>
+    ${typeof tbEfbJoinFormHtml === "function" ? tbEfbJoinFormHtml() : ""}
     <div class="section-label">TEAM OCHISH</div>
     <div class="card tb-form">
       <input id="tb-name" class="modal-input" maxlength="${TB.me.name_max}" placeholder="Team nomi (${TB.me.name_min}–${TB.me.name_max} belgi)" autocomplete="off">
