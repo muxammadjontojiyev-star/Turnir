@@ -50,6 +50,35 @@ TEXTS = {
         LANGUAGE_RU: "Язык успешно изменён ✅",
         LANGUAGE_EN: "Language changed successfully ✅",
     },
+    # 2026-10-25: qo'llanma (guide.js) — /help va «Kirish» xabaridagi tugma
+    "guide_button": {
+        LANGUAGE_UZ: "📖 Qo'llanma",
+        LANGUAGE_RU: "📖 Руководство",
+        LANGUAGE_EN: "📖 Guide",
+    },
+    "guide_message": {
+        LANGUAGE_UZ: "📖 Bot qanday ishlaydi — qisqacha:\n\n"
+                     "1. Kanalga a'zo bo'ling va «Kirish» orqali ilovani oching.\n"
+                     "2. Bo'limni tanlang: Rasmiy turnirlar, Shaxsiy turnirlar yoki Teamlar jangi.\n"
+                     "3. Ro'yxatdan o'ting — raqibingiz chiqqach bot xabar beradi.\n"
+                     "4. Chatda kelishing, eFootball'da xona oching va xona ID'sini yuboring.\n"
+                     "5. O'ynang, natijani kiriting — raqib tasdiqlaydi.\n\n"
+                     "Batafsil va rasmlar bilan — «Qo'llanma» tugmasida.",
+        LANGUAGE_RU: "📖 Как работает бот — коротко:\n\n"
+                     "1. Подпишитесь на канал и откройте приложение кнопкой «Войти».\n"
+                     "2. Выберите раздел: Официальные турниры, Частные турниры или Битва команд.\n"
+                     "3. Зарегистрируйтесь — когда появится соперник, бот сообщит.\n"
+                     "4. Договоритесь в чате, создайте комнату в eFootball и отправьте её ID.\n"
+                     "5. Сыграйте и внесите результат — соперник подтвердит.\n\n"
+                     "Подробно и с картинками — по кнопке «Руководство».",
+        LANGUAGE_EN: "📖 How the bot works — in short:\n\n"
+                     "1. Join the channel and open the app with «Enter».\n"
+                     "2. Pick a section: Official tournaments, Private tournaments or Team Battle.\n"
+                     "3. Sign up — the bot tells you when your opponent is ready.\n"
+                     "4. Agree in chat, create a room in eFootball and send its ID.\n"
+                     "5. Play and enter the result — your opponent confirms it.\n\n"
+                     "Full details with pictures — tap «Guide».",
+    },
     "enter_webapp": {
         LANGUAGE_UZ: "🚀 Kirish",
         LANGUAGE_RU: "🚀 Войти",

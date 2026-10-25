@@ -4,6 +4,7 @@ handlers/main_menu.py — Botning yagona kirish nuqtasi.
 Oqim: /start -> til tanlash (inline) -> "Kirish" tugmasi -> WebApp ochiladi.
 Botda boshqa hech qanday funksional handler yo'q — qolgan hammasi WebApp ichida.
 2026-10-08: /stats — faqat bosh admin uchun bot statistikasi (stats.py).
+2026-10-25: /help, /qollanma — qo'llanma (WebApp ?guide=list); «Kirish» xabarida ham «📖 Qo'llanma» tugmasi.
 """
 
 from telegram import (
@@ -45,16 +46,27 @@ def _build_language_keyboard() -> InlineKeyboardMarkup:
 
 
 def _build_enter_webapp_keyboard(language: str) -> InlineKeyboardMarkup:
-    """Til tanlangandan keyin chiqadigan "Kirish" WebApp tugmasi."""
+    """Til tanlangandan keyin chiqadigan "Kirish" WebApp tugmasi (+ 2026-10-25: qo'llanma)."""
     buttons = [
         [
             InlineKeyboardButton(
                 t("enter_webapp", language),
                 web_app=WebAppInfo(url=WEBAPP_URL),
             )
-        ]
+        ],
+        [_guide_button(language)],
     ]
     return InlineKeyboardMarkup(buttons)
+
+
+# 2026-10-25: qo'llanma — WebApp ?guide=list (bo'limlar ro'yxati), static/guide.js
+GUIDE_URL_PARAM = "guide"
+GUIDE_URL_LIST = "list"
+
+
+def _guide_button(language: str) -> InlineKeyboardButton:
+    return InlineKeyboardButton(t("guide_button", language),
+                                web_app=WebAppInfo(url=_webapp_url_with(GUIDE_URL_PARAM, GUIDE_URL_LIST)))
 
 
 def _build_subscribe_keyboard(language: str) -> InlineKeyboardMarkup:
@@ -212,9 +224,21 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await update.effective_message.reply_text(format_stats_text(get_bot_stats(), user.get("language")))
 
 
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """2026-10-25: /help va /qollanma — qisqa tushuntirish + qo'llanmani ochuvchi tugma."""
+    tg_user = update.effective_user
+    if not tg_user or not update.effective_message:
+        return
+    user = get_or_create_user(tg_user.id, tg_user.full_name)
+    lang = user.get("language") or LANGUAGE_UZ
+    await update.effective_message.reply_text(t("guide_message", lang),
+                                              reply_markup=InlineKeyboardMarkup([[_guide_button(lang)]]))
+
+
 def register_main_menu_handlers(application: Application) -> None:
     """Barcha main_menu handlerlarini botga ro'yxatdan o'tkazadi."""
     application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(CommandHandler(["help", "qollanma"], help_command))
     application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(
         CallbackQueryHandler(language_chosen, pattern=f"^{LANGUAGE_CALLBACK_PREFIX}")
