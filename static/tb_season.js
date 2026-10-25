@@ -154,6 +154,10 @@ async function tbsRenderTable() {
   const promo = TBS.info.promo || 0, lastDiv = divs.length ? divs[divs.length - 1].division : 1;
   const nRows = (t.table || []).length;
   const zone = (i) => {
+    if (ucl && s.ucl_playin) {                                   // 2026-10-26: rasmiy ChL kabi
+      const d = (s.ucl_qualify || 0) / 2;
+      return i < d ? " tb-zone-up" : (i < d + (s.ucl_qualify || 0) ? " tb-zone-po" : "");
+    }
     if (ucl) return i < (s.ucl_qualify || 0) ? " tb-zone-up" : "";
     if (!promo || nRows < 2 * promo) return "";
     if (TBS.division > 1 && i < promo) return " tb-zone-up";
@@ -179,7 +183,9 @@ async function tbsRenderTable() {
       </table>
     </div>
     <div class="tb-hint">Ochko: g'alaba 3 · durang 1. Teng bo'lsa: 1v1 g'alabalar farqi → gol farqi.</div>
-    ${ucl ? `<div class="tb-zone-legend"><span><i class="tb-zl tb-zl--up"></i>Pley-offga chiqadi (${s.ucl_qualify})</span></div>` : ""}
+    ${ucl && s.ucl_playin ? `<div class="tb-zone-legend"><span><i class="tb-zl tb-zl--up"></i>To'g'ridan setkaga (1–${s.ucl_qualify / 2})</span>
+      <span><i class="tb-zl tb-zl--po"></i>Pley-off raundi (${s.ucl_qualify / 2 + 1}–${s.ucl_qualify * 1.5})</span></div>`
+      : ucl ? `<div class="tb-zone-legend"><span><i class="tb-zl tb-zl--up"></i>Pley-offga chiqadi (${s.ucl_qualify})</span></div>` : ""}
     ${!ucl && divs.length > 1 ? `<div class="tb-zone-legend">${TBS.division > 1 ? `<span><i class="tb-zl tb-zl--up"></i>Yuqori divizionga ko'tariladi (${promo})</span>` : ""}
       ${TBS.division < lastDiv ? `<span><i class="tb-zl tb-zl--down"></i>Quyi divizionga tushadi (${promo})</span>` : ""}</div>` : ""}
     <div class="tb-round-nav">

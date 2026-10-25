@@ -6,7 +6,8 @@
 //  Global: TB, TBS, apiFetch, escHtml, tbLogo, tbToast, tbConfirm, tbErr, tbCanManageCur, tbCurLeague, tbsRenderTable.
 // =============================================================
 
-const TB_UCL_STAGE = { 16: "1/8 final", 8: "Chorak final", 4: "Yarim final", 2: "Final" };
+// 2026-10-26: 1 — pley-off raundi (tb_ucl.TB_PLAYIN_STAGE), rasmiy ChL kabi
+const TB_UCL_STAGE = { 1: "Pley-off raundi", 16: "1/8 final", 8: "Chorak final", 4: "Yarim final", 2: "Final" };
 
 function tbUclTeam(t, win) {
   if (!t) return `<span class="tb-ko-team">?</span>`;
@@ -62,3 +63,14 @@ document.addEventListener("click", async (e) => {
     b.disabled = false;
   }
 });
+
+// ---- 2026-10-26: pley-off raundi — xato matni va tarjimalar ----
+Object.assign(TB_ERR, {
+  bad_playin: "Pley-off raundi uchun teamlar yetmaydi: 1–8 / 9–24 uchun 24 ta, 1–4 / 5–12 uchun 12 ta, 1–2 / 3–6 uchun 6 ta team kerak",
+});
+Object.assign(TB_I18N.ru, { "Pley-off raundi": "Стыковой раунд" });
+Object.assign(TB_I18N.en, { "Pley-off raundi": "Knockout play-off" });
+TB_I18N_PATTERNS.push(
+  [/^To'g'ridan setkaga \((\d+)–(\d+)\)$/, "Сразу в сетку ($1–$2)", "Straight to the bracket ($1–$2)"],
+  [/^Pley-off raundi \((\d+)–(\d+)\)$/, "Стыковой раунд ($1–$2)", "Knockout play-off ($1–$2)"],
+);
