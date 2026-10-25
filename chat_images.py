@@ -47,7 +47,7 @@ _MODE_SCOPES = {
     "el": SCOPE_EL, "el_po": SCOPE_EL,
     "ac": SCOPE_AC, "ac_po": SCOPE_AC,   # 2026-10-15
     "pt": None,
-    "tb": None,    # 2026-10-16: Teamlar jangi — ishtirokchilar + bosh admin
+    "tb": None,    # 2026-10-16: Teamlar jangi — ishtirokchilar + bosh admin (+ liga admini, get_chat_image)
     "qm": None,    # 2026-10-19: tezkor o'yin
 }
 
@@ -158,6 +158,11 @@ def get_chat_image(token: str, user_id: int, telegram_id: int):
         if not allowed:
             scope = _MODE_SCOPES.get(row["mode"])
             allowed = is_scope_admin(telegram_id, scope) if scope else is_super_admin(telegram_id)
+        if not allowed and row["mode"] == "tb":
+            # 2026-10-25: Teamlar jangi — shu o'yin ligasining admini ham (skrinshot / shikoyat)
+            from tb_games import tb_game_league
+            from tb_leagues import tb_can_manage
+            allowed = tb_can_manage({"id": user_id, "telegram_id": telegram_id}, tb_game_league(row["match_id"]))
         if not allowed:
             return None
         return bytes(row["data"]), row["mime"]

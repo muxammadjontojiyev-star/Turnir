@@ -2,7 +2,7 @@
 tb_games.py — "TEAMLAR JANGI": 1v1 o'yin natijalari va bahslar ko'rinishi (2026-10-16, 2-bosqich).
 
   tb_my_games(user_id)                — mening joriy (ochiq) o'yinim(lar) + bahs ma'lumoti
-  tb_submit(user_id, game_id, mine, opp) — natija kiritish (o'z nuqtai nazaridan) -> awaiting
+  tb_submit(user_id, game_id, mine, opp, proof_token) — natija + skrinshot (o'z nuqtai nazaridan) -> awaiting
   tb_confirm(user_id, game_id, accept)   — raqib tasdiqlaydi (confirmed) yoki rad etadi (pending)
   tb_admin_set(game_id, s1, s2)          — liga admini / bosh admin natijani qo'yadi (confirmed)
   tb_game_league(game_id)                — o'yin ligasi (ruxsat tekshiruvi)
@@ -14,6 +14,7 @@ tasdiqlansa — bahs darhol yakunlanadi (tb_rounds.aggregate_fixture).
 import logging
 
 from models import get_connection
+from tb_fairplay import tb_proof_valid
 from tb_rounds import G_AWAITING, G_CONFIRMED, G_PENDING, aggregate_fixture
 
 logger = logging.getLogger(__name__)
@@ -22,14 +23,17 @@ TB_SCORE_MAX = 30
 
 _GAME_SQL = (
     "SELECT g.id, g.fixture_id, g.slot, g.home_user_id, g.away_user_id, g.score1, g.score2, "
-    "g.submitted_by, g.status, f.round, f.division, f.status AS fixture_status, "
+    "g.submitted_by, g.status, g.proof_token, f.round, f.division, f.status AS fixture_status, "
     "f.home_team_id, f.away_team_id, ht.name AS home_team, ht.emoji AS home_emoji, ht.logo_ver AS home_logo_ver, "
     "at.name AS away_team, at.emoji AS away_emoji, at.logo_ver AS away_logo_ver, "
     "hu.nickname AS home_nick, hu.username AS home_username, "
-    "au.nickname AS away_nick, au.username AS away_username "
+    "au.nickname AS away_nick, au.username AS away_username, "
+    "he.efb_name AS home_efb, he.efb_id AS home_efb_id, ae.efb_name AS away_efb, ae.efb_id AS away_efb_id "
     "FROM tb_games g JOIN tb_fixtures f ON f.id = g.fixture_id "
     "JOIN tb_teams ht ON ht.id = f.home_team_id JOIN tb_teams at ON at.id = f.away_team_id "
     "JOIN users hu ON hu.id = g.home_user_id JOIN users au ON au.id = g.away_user_id "
+    "LEFT JOIN tb_efb_accounts he ON he.user_id = g.home_user_id "      # 2026-10-25: eFootball niki (VS)
+    "LEFT JOIN tb_efb_accounts ae ON ae.user_id = g.away_user_id "
 )
 
 
@@ -80,8 +84,10 @@ def tb_my_games(user_id: int) -> list[dict]:
         conn.close()
 
 
-def tb_submit(user_id: int, game_id: int, my_score, opp_score) -> tuple[bool, str | dict]:
-    """Sabablar: bad_score, game_not_found, not_your_game, round_closed, already_confirmed."""
+def tb_submit(user_id: int, game_id: int, my_score, opp_score, proof_token: str | None = None
+              ) -> tuple[bool, str | dict]:
+    """Sabablar: bad_score, game_not_found, not_your_game, round_closed, already_confirmed, proof_required.
+    2026-10-25: proof_token — shu o'yin chatiga o'zi yuborgan skrinshot (tb_fairplay.tb_proof_valid)."""
     mine, opp = _valid_score(my_score), _valid_score(opp_score)
     if mine is None or opp is None:
         return False, "bad_score"
@@ -98,9 +104,11 @@ def tb_submit(user_id: int, game_id: int, my_score, opp_score) -> tuple[bool, st
             return False, "round_closed"
         if g["status"] == G_CONFIRMED:
             return False, "already_confirmed"
+        if not tb_proof_valid(cur, proof_token, game_id, user_id):
+            return False, "proof_required"
         s1, s2 = (mine, opp) if user_id == g["home_user_id"] else (opp, mine)
-        cur.execute("UPDATE tb_games SET score1 = ?, score2 = ?, submitted_by = ?, status = ?, "
-                    "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (s1, s2, user_id, G_AWAITING, game_id))
+        cur.execute("UPDATE tb_games SET score1 = ?, score2 = ?, submitted_by = ?, status = ?, proof_token = ?, "
+                    "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (s1, s2, user_id, G_AWAITING, proof_token, game_id))
         opp_id = g["away_user_id"] if user_id == g["home_user_id"] else g["home_user_id"]
         return True, {"game_id": game_id, "opponent_user_id": opp_id}
     return _tx(run)
@@ -129,7 +137,7 @@ def tb_confirm(user_id: int, game_id: int, accept: bool) -> tuple[bool, str | di
             finished = _maybe_finish_fixture(cur, g["fixture_id"])
         else:
             cur.execute("UPDATE tb_games SET status = ?, score1 = NULL, score2 = NULL, submitted_by = NULL, "
-                        "updated_at = CURRENT_TIMESTAMP WHERE id = ?", (G_PENDING, game_id))
+                        "proof_token = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (G_PENDING, game_id))
             finished = False
         return True, {"game_id": game_id, "accepted": bool(accept), "fixture_finished": finished,
                       "submitter_user_id": g["submitted_by"]}
@@ -200,3 +208,21 @@ def tb_game_league(game_id: int) -> int | None:
         return r["league_id"] if r else None
     finally:
         conn.close()
+
+
+def tb_admin_reset(game_id: int) -> tuple[bool, str | dict]:
+    """2026-10-25 (shikoyat -> qayta o'ynash): natija tozalanadi, o'yin yana 'pending'.
+    Faqat tur ochiq bo'lsa (yopilgan turda qayta o'ynab bo'lmaydi). Sabablar: game_not_found, round_closed."""
+    def run(cur):
+        cur.execute("SELECT g.fixture_id, f.status AS fst FROM tb_games g JOIN tb_fixtures f ON f.id = g.fixture_id "
+                    "WHERE g.id = ?", (game_id,))
+        g = cur.fetchone()
+        if not g:
+            return False, "game_not_found"
+        if g["fst"] != "open":
+            return False, "round_closed"
+        cur.execute("UPDATE tb_games SET status = ?, score1 = NULL, score2 = NULL, submitted_by = NULL, "
+                    "proof_token = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (G_PENDING, game_id))
+        _maybe_finish_fixture(cur, g["fixture_id"])          # bahs hisobi qayta (tasdiqlangan bo'lgan bo'lsa)
+        return True, {"game_id": game_id}
+    return _tx(run)

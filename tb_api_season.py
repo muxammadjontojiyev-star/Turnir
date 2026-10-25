@@ -60,8 +60,13 @@ def tb_season_fixtures(division: int, round: int, league_id: int | None = None,
 
 @router.get("/tb/my-games")
 def tb_my_games_ep(user: dict = Depends(get_authenticated_user)):
+    from tb_fairplay import tb_my_reports
     from tb_games import tb_my_games
-    return {"user_id": user["id"], "games": tb_my_games(user["id"])}
+    games = tb_my_games(user["id"])
+    reports = tb_my_reports(user["id"], [g["id"] for g in games])     # 2026-10-25: shikoyat holati
+    for g in games:
+        g["my_report"] = reports.get(g["id"])
+    return {"user_id": user["id"], "games": games}
 
 
 async def _notify(user_id: int, key: str, **fmt) -> None:
@@ -82,9 +87,10 @@ async def _notify(user_id: int, key: str, **fmt) -> None:
 
 @router.post("/tb/game/submit")
 async def tb_game_submit(game_id: int = Body(..., embed=True), my_score: int = Body(..., embed=True),
-                         opp_score: int = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+                         opp_score: int = Body(..., embed=True), proof_token: str | None = Body(None, embed=True),
+                         user: dict = Depends(get_authenticated_user)):
     from tb_games import tb_submit
-    res = _ok(tb_submit(user["id"], game_id, my_score, opp_score))
+    res = _ok(tb_submit(user["id"], game_id, my_score, opp_score, proof_token))   # 2026-10-25: skrinshot majburiy
     await _notify(res["opponent_user_id"], "tb_notify_result", score=f"{opp_score}:{my_score}")
     return res
 

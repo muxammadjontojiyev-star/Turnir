@@ -262,6 +262,32 @@ TEXTS = {
         LANGUAGE_RU: "⚔️ Создать команду",
         LANGUAGE_EN: "⚔️ Create a team",
     },
+    # 2026-10-25: Teamlar jangi — «boshqa odam o'ynadi» shikoyati (tb_api_fairplay.py)
+    "tb_notify_report": {
+        LANGUAGE_UZ: "🚩 Shikoyat: «{league}» ligasi, {round}-tur, o'yin #{game}. {reporter} raqibi ({accused}) o'rniga boshqa odam o'ynaganini aytmoqda. Teamlar jangi → Admin → Shikoyatlar.",
+        LANGUAGE_RU: "🚩 Жалоба: лига «{league}», тур {round}, игра #{game}. {reporter} сообщает, что вместо соперника ({accused}) играл другой человек. Битва команд → Админ → Жалобы.",
+        LANGUAGE_EN: "🚩 Report: league «{league}», round {round}, game #{game}. {reporter} says someone else played instead of their opponent ({accused}). Team Battle → Admin → Reports.",
+    },
+    "tb_notify_report_done": {
+        LANGUAGE_UZ: "🚩 O'yin #{game} bo'yicha shikoyatingiz ko'rib chiqildi: {decision}",
+        LANGUAGE_RU: "🚩 Ваша жалоба по игре #{game} рассмотрена: {decision}",
+        LANGUAGE_EN: "🚩 Your report on game #{game} was reviewed: {decision}",
+    },
+    "tb_report_dec_dismiss": {
+        LANGUAGE_UZ: "asos topilmadi, natija o'zgarmadi.",
+        LANGUAGE_RU: "оснований не найдено, результат не изменён.",
+        LANGUAGE_EN: "no grounds found, the result stands.",
+    },
+    "tb_report_dec_replay": {
+        LANGUAGE_UZ: "natija bekor qilindi — o'yinni qayta o'ynang.",
+        LANGUAGE_RU: "результат отменён — сыграйте игру заново.",
+        LANGUAGE_EN: "the result was cancelled — replay the match.",
+    },
+    "tb_report_dec_tech": {
+        LANGUAGE_UZ: "raqibingizga texnik mag'lubiyat berildi.",
+        LANGUAGE_RU: "сопернику засчитано техническое поражение.",
+        LANGUAGE_EN: "your opponent was given a technical defeat.",
+    },
     "tb_notify_league_new_team": {
         LANGUAGE_UZ: "🆕 «{league}» ligasida yangi team: «{name}». Tasdiqlash uchun Teamlar jangi → Admin bo'limiga kiring.",
         LANGUAGE_RU: "🆕 Новая команда в лиге «{league}»: «{name}». Одобрите её в Битва команд → Админ.",

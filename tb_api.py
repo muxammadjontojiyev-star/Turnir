@@ -49,6 +49,7 @@ def tb_me(user: dict = Depends(get_authenticated_user)):
     from tb_core import (TB_EMOJIS, TB_LINEUP_MAX, TB_LINEUP_MIN, TB_NAME_MAX, TB_NAME_MIN,
                          tb_my_team_id, tb_team_detail)
     from tb_leagues import tb_can_manage, tb_league, tb_managed_leagues
+    from tb_efb import TB_EFB_ID_MAX, TB_EFB_ID_MIN, TB_EFB_NAME_MAX, TB_EFB_NAME_MIN, tb_efb_get
     is_super = is_super_admin(user["telegram_id"])
     managed = [{"id": x["id"], "name": x["name"], "emoji": x["emoji"], "pending": x["pending"]}
                for x in tb_managed_leagues(user)]
@@ -68,6 +69,9 @@ def tb_me(user: dict = Depends(get_authenticated_user)):
         "lineup_min": league["lineup_min"] if league else TB_LINEUP_MIN,
         "lineup_max": league["lineup_max"] if league else TB_LINEUP_MAX,
         "name_min": TB_NAME_MIN, "name_max": TB_NAME_MAX,
+        "efb": tb_efb_get(user["id"]),                   # 2026-10-25: eFootball akkaunti (yo'q — None)
+        "efb_limits": {"id_min": TB_EFB_ID_MIN, "id_max": TB_EFB_ID_MAX,
+                       "name_min": TB_EFB_NAME_MIN, "name_max": TB_EFB_NAME_MAX},
     }
 
 

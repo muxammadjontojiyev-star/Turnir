@@ -16,6 +16,7 @@ import re
 import secrets
 
 from models import get_connection
+from tb_efb import tb_efb_has
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +97,9 @@ def _team_row(cursor, team_id: int):
 def _members(cursor, team_id: int) -> list[dict]:
     cursor.execute(
         "SELECT m.user_id, m.role, m.in_lineup, m.lineup_pos, m.joined_at, "
-        "u.telegram_id, u.nickname, u.username "
-        "FROM tb_members m JOIN users u ON u.id = m.user_id WHERE m.team_id = ? "
+        "u.telegram_id, u.nickname, u.username, e.efb_id, e.efb_name "
+        "FROM tb_members m JOIN users u ON u.id = m.user_id "
+        "LEFT JOIN tb_efb_accounts e ON e.user_id = m.user_id WHERE m.team_id = ? "
         "ORDER BY m.role = 'captain' DESC, m.in_lineup DESC, m.lineup_pos, u.nickname",
         (team_id,),
     )
@@ -117,6 +119,7 @@ def tb_team_detail(team_id: int, viewer_id: int, viewer_is_admin: bool = False) 
         if not (is_captain or viewer_is_admin):
             for m in members:
                 m.pop("telegram_id", None)
+                m.pop("efb_id", None)           # 2026-10-25: nik hammaga, ID — sardor/adminga
         team["members"] = members
         team["is_captain"] = is_captain
         team["is_member"] = any(m["user_id"] == viewer_id for m in members)
@@ -199,7 +202,7 @@ def tb_create_team(user_id: int, name: str, emoji: str | None, league_code: str 
                    ) -> tuple[bool, str | dict]:
     """
     Team faqat liga taklif havolasi orqali ochiladi (2026-10-16): league_code -> liga.
-    Sabablar: league_not_found, bad_name_*, bad_emoji, already_in_team, name_taken.
+    Sabablar: league_not_found, bad_name_*, bad_emoji, already_in_team, efb_required, name_taken.
     """
     from tb_leagues import tb_league_by_code
     league = tb_league_by_code(league_code) if league_code else None
@@ -216,6 +219,9 @@ def tb_create_team(user_id: int, name: str, emoji: str | None, league_code: str 
         if _my_membership(cur, user_id):
             _finish(cur, False)
             return False, "already_in_team"
+        if not tb_efb_has(cur, user_id):                # 2026-10-25: eFootball akkaunti majburiy
+            _finish(cur, False)
+            return False, "efb_required"
         cur.execute("SELECT 1 FROM tb_teams WHERE name = ? COLLATE NOCASE", (clean,))
         if cur.fetchone():
             _finish(cur, False)
@@ -240,7 +246,7 @@ def tb_create_team(user_id: int, name: str, emoji: str | None, league_code: str 
 
 
 def tb_join(user_id: int, code: str) -> tuple[bool, str | dict]:
-    """Taklif kodi bilan qo'shilish. Sabablar: not_found, rejected, already_in_team."""
+    """Taklif kodi bilan qo'shilish. Sabablar: not_found, rejected, already_in_team, efb_required."""
     if not code or not _CODE_RE.match(code):
         return False, "not_found"
     conn = get_connection()
@@ -258,6 +264,9 @@ def tb_join(user_id: int, code: str) -> tuple[bool, str | dict]:
         if m:
             _finish(cur, False)
             return False, "already_member" if m["team_id"] == t["id"] else "already_in_team"
+        if not tb_efb_has(cur, user_id):                # 2026-10-25: eFootball akkaunti majburiy
+            _finish(cur, False)
+            return False, "efb_required"
         cur.execute("INSERT INTO tb_members (team_id, user_id, role) VALUES (?, ?, ?)",
                     (t["id"], user_id, ROLE_MEMBER))
         _finish(cur, True)

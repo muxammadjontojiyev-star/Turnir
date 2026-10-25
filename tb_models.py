@@ -158,6 +158,11 @@ def init_tb_tables() -> None:
             )
         """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_tb_titles_team ON tb_titles(team_id)")
+        # 2026-10-25: eFootball akkaunti bog'lash (tb_efb.py) — o'rniga boshqa odam o'ynashiga qarshi
+        from tb_efb import init_tb_efb_tables
+        init_tb_efb_tables(cursor)
+        from tb_fairplay import init_tb_fairplay_tables   # 2026-10-25: natija skrinshoti (tb_games.proof_token)
+        init_tb_fairplay_tables(cursor)
         conn.commit()
     finally:
         conn.close()
