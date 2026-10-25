@@ -12,6 +12,13 @@ Egasi qarorlari:
     belgilaydi (needs_admin). Qaror kutilayotganda keyingi bosqich ochilmaydi (tb_seasons.waiting_admin).
 Pley-off bahslari tb_fixtures'da division=0 va tie_id bilan (jadval hisobiga kirmaydi);
 juftliklar — tb_ko_ties. Har oyoq (leg) — bitta tur (kun). Ko'rinish/qaror — tb_ucl_view.py.
+
+2026-10-26 — PLEY-OFF RAUNDI (egasi: "rasmiy ChL kabi", ucl_playin=1). ucl_qualify = setka hajmi B
+(16 / 8 / 4): jadvalning 1..B/2-o'rinlari to'g'ridan setkaga, B/2+1..B/2+B-o'rinlari pley-off raundida
+(B/2+1 — oxirgisi bilan: 9–24, 10–23 … 16–17). Raund g'oliblari setkada: 1-o'rin — 16–17 juftligi
+g'olibi bilan, 2 — 15–18 bilan … 8 — 9–24 bilan. Kerakli teamlar: 1.5×B (24 / 12 / 6).
+Pley-off raundi tb_ko_ties.stage_size = TB_PLAYIN_STAGE (1) bilan saqlanadi (setka bosqichlari >= 2),
+bahsi ko_legs o'yindan. ucl_playin=0 — eski qoida (top-N to'g'ridan setkaga).
 """
 
 import logging
@@ -22,7 +29,9 @@ from schedule import _generate_round_robin_pairs
 logger = logging.getLogger(__name__)
 
 FMT_LEAGUE, FMT_UCL = "league", "ucl"
-TB_UCL_QUALIFY = (2, 4, 8, 16)          # pley-offga chiqadiganlar
+TB_UCL_QUALIFY = (2, 4, 8, 16)          # pley-offga chiqadiganlar (eski qoida) / setka hajmi
+TB_UCL_PLAYIN_BRACKETS = (4, 8, 16)     # 2026-10-26: pley-off raundi bilan setka hajmlari
+TB_PLAYIN_STAGE = 1                     # tb_ko_ties.stage_size — pley-off raundi (setka bosqichlari >= 2)
 TB_UCL_LEGS = (1, 2)
 TB_UCL_ROUNDS_DEFAULT = 6               # liga bosqichida har team nechta bahs o'ynaydi
 TB_MATCH_SIZE_MIN, TB_MATCH_SIZE_MAX = 1, 30
@@ -35,7 +44,8 @@ def init_ucl_columns(cur) -> None:
         return {r[1] for r in cur.execute(f"PRAGMA table_info({t})").fetchall()}
     season_cols = {"format": "TEXT NOT NULL DEFAULT 'league'", "match_size": "INTEGER",
                    "ucl_rounds": "INTEGER", "ucl_qualify": "INTEGER", "ko_legs": "INTEGER",
-                   "final_legs": "INTEGER", "waiting_admin": "INTEGER NOT NULL DEFAULT 0"}
+                   "final_legs": "INTEGER", "waiting_admin": "INTEGER NOT NULL DEFAULT 0",
+                   "ucl_playin": "INTEGER NOT NULL DEFAULT 0"}             # 2026-10-26
     have = cols("tb_seasons")
     for name, ddl in season_cols.items():
         if name not in have:
@@ -63,9 +73,16 @@ def init_ucl_columns(cur) -> None:
     cur.execute("CREATE INDEX IF NOT EXISTS idx_tb_fx_tie ON tb_fixtures(tie_id)")
 
 
-def ko_schedule(qualify: int, ko_legs: int, final_legs: int) -> list[tuple[int, int]]:
-    """Pley-off turlari ketma-ketligi: [(bosqich hajmi, oyoq), ...]. Masalan 8,2,1 -> 8/1 8/2 4/1 4/2 2/1."""
-    out, size = [], qualify
+def playin_need(bracket: int) -> int:
+    """Pley-off raundi bilan kerakli teamlar: B/2 to'g'ridan + B raundda (16 -> 24)."""
+    return bracket // 2 + bracket
+
+
+def ko_schedule(qualify: int, ko_legs: int, final_legs: int, playin: bool = False) -> list[tuple[int, int]]:
+    """Pley-off turlari ketma-ketligi: [(bosqich hajmi, oyoq), ...]. Masalan 8,2,1 -> 8/1 8/2 4/1 4/2 2/1.
+    playin=True — boshida pley-off raundi: (TB_PLAYIN_STAGE, 1), (TB_PLAYIN_STAGE, 2) ..."""
+    out = [(TB_PLAYIN_STAGE, leg) for leg in range(1, ko_legs + 1)] if playin else []
+    size = qualify
     while size >= 2:
         legs = final_legs if size == 2 else ko_legs
         out.extend((size, leg) for leg in range(1, legs + 1))
@@ -73,13 +90,16 @@ def ko_schedule(qualify: int, ko_legs: int, final_legs: int) -> list[tuple[int, 
     return out
 
 
-def validate_ucl(n_teams: int, rounds, qualify, ko_legs, final_legs) -> tuple[str | None, dict]:
-    """Qur'a parametrlari. Qaytaradi: (sabab | None, tozalangan qiymatlar)."""
+def validate_ucl(n_teams: int, rounds, qualify, ko_legs, final_legs, playin=False) -> tuple[str | None, dict]:
+    """Qur'a parametrlari. Qaytaradi: (sabab | None, tozalangan qiymatlar). Sabab: bad_playin (2026-10-26)."""
     try:
         q, kl, fl = int(qualify), int(ko_legs or 1), int(final_legs or 1)
         r = int(rounds or min(TB_UCL_ROUNDS_DEFAULT, max(1, n_teams - 1)))
     except (TypeError, ValueError):
         return "bad_ucl_params", {}
+    playin = bool(playin)
+    if playin and (q not in TB_UCL_PLAYIN_BRACKETS or playin_need(q) > n_teams):
+        return "bad_playin", {}
     if q not in TB_UCL_QUALIFY or q > n_teams:
         return "bad_qualify", {}
     if kl not in TB_UCL_LEGS or fl not in TB_UCL_LEGS:
@@ -87,7 +107,7 @@ def validate_ucl(n_teams: int, rounds, qualify, ko_legs, final_legs) -> tuple[st
     max_r = n_teams - 1 if n_teams % 2 == 0 else n_teams      # toq sonda bitta "dam olish" turi bor
     if r < 1 or r > max_r:
         return "bad_ucl_rounds", {}
-    return None, {"ucl_rounds": r, "ucl_qualify": q, "ko_legs": kl, "final_legs": fl}
+    return None, {"ucl_rounds": r, "ucl_qualify": q, "ko_legs": kl, "final_legs": fl, "ucl_playin": int(playin)}
 
 
 def create_ucl_fixtures(cur, season_id: int, team_ids: list[int], rounds: int) -> int:
@@ -147,7 +167,7 @@ def _stage_at(s: dict, rnd: int) -> tuple[int, int] | None:
     """Tur raqami -> (bosqich hajmi, oyoq) yoki None (liga bosqichi)."""
     if rnd <= (s["ucl_rounds"] or 0):
         return None
-    sched = ko_schedule(s["ucl_qualify"], s["ko_legs"], s["final_legs"])
+    sched = ko_schedule(s["ucl_qualify"], s["ko_legs"], s["final_legs"], bool(s.get("ucl_playin")))
     i = rnd - s["ucl_rounds"] - 1
     return sched[i] if 0 <= i < len(sched) else None
 
@@ -166,7 +186,12 @@ def prepare_round(cur, s: dict, rnd: int) -> str:
     sid = s["id"]
     if cur.execute("SELECT 1 FROM tb_ko_ties WHERE season_id = ? AND stage_size = ?", (sid, size)).fetchone():
         return "ok"                                         # allaqachon yaratilgan (idempotent)
-    if size == s["ucl_qualify"]:
+    playin = bool(s.get("ucl_playin"))
+    if size == TB_PLAYIN_STAGE or (size == s["ucl_qualify"] and playin):
+        pairs = _playin_pairs(cur, s, size)
+        if pairs is None:
+            return "waiting"
+    elif size == s["ucl_qualify"]:
         from tb_season import _standings_cur
         seeds = [r["team_id"] for r in _standings_cur(cur, sid, 1)][:size]
         pairs = [(seeds[i], seeds[size - 1 - i]) for i in range(size // 2)]
@@ -178,7 +203,7 @@ def prepare_round(cur, s: dict, rnd: int) -> str:
         if not winners or any(w is None for w in winners):
             return "waiting"
         pairs = [(winners[i], winners[i + 1]) for i in range(0, len(winners), 2)]
-    legs = s["final_legs"] if size == 2 else s["ko_legs"]
+    legs = s["final_legs"] if size == 2 else s["ko_legs"]               # pley-off raundi ham ko_legs
     for no, (ta, tb) in enumerate(pairs, start=1):
         cur.execute("INSERT INTO tb_ko_ties (season_id, stage_size, tie_no, team_a, team_b, legs) "
                     "VALUES (?, ?, ?, ?, ?, ?)", (sid, size, no, ta, tb, legs))
@@ -187,8 +212,32 @@ def prepare_round(cur, s: dict, rnd: int) -> str:
             home, away = (ta, tb) if leg == 0 else (tb, ta)
             cur.execute("INSERT INTO tb_fixtures (season_id, division, round, home_team_id, away_team_id, tie_id) "
                         "VALUES (?, ?, ?, ?, ?, ?)", (sid, KO_DIVISION, rnd + leg, home, away, tie_id))
-    logger.info("TB UCL: mavsum %s — 1/%s bosqich (%s juftlik) yaratildi", sid, size // 2, len(pairs))
+    logger.info("TB UCL: mavsum %s — %s bosqich (%s juftlik) yaratildi", sid,
+                "pley-off raundi" if size == TB_PLAYIN_STAGE else f"1/{size // 2}", len(pairs))
     return "ok"
+
+
+def _playin_pairs(cur, s: dict, size: int) -> list[tuple[int, int]] | None:
+    """
+    2026-10-26 (ucl_playin): pley-off raundi yoki undan keyingi birinchi setka bosqichi juftliklari.
+      raund: o'rinlar D+1..D+B (D = B/2): (D+1, D+B), (D+2, D+B-1) ... — tie_no 1..D
+      setka: i-o'rin (1..D) — (D+1-i)-juftlik g'olibi bilan (1 — 16–17 g'olibi, 8 — 9–24 g'olibi)
+    None — raund g'oliblari hali aniq emas (admin qarori kutilmoqda).
+    """
+    from tb_season import _standings_cur
+    sid, b = s["id"], s["ucl_qualify"]
+    d = b // 2
+    seeds = [r["team_id"] for r in _standings_cur(cur, sid, 1)]
+    if size == TB_PLAYIN_STAGE:
+        pool = seeds[d:d + b]
+        return [(pool[k], pool[b - 1 - k]) for k in range(d)]
+    resolve_ties(cur, sid)
+    cur.execute("SELECT winner_team_id FROM tb_ko_ties WHERE season_id = ? AND stage_size = ? ORDER BY tie_no",
+                (sid, TB_PLAYIN_STAGE))
+    winners = [r["winner_team_id"] for r in cur.fetchall()]
+    if len(winners) != d or any(w is None for w in winners):
+        return None
+    return [(seeds[i], winners[d - 1 - i]) for i in range(d)]
 
 
 def ucl_champion(cur, season_id: int) -> dict | None:

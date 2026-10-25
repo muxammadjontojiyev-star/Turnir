@@ -28,7 +28,7 @@ def tb_ko_view(season_id: int) -> dict:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        s = cur.execute("SELECT format, ucl_rounds, ucl_qualify, ko_legs, final_legs, waiting_admin "
+        s = cur.execute("SELECT format, ucl_rounds, ucl_qualify, ko_legs, final_legs, waiting_admin, ucl_playin "
                         "FROM tb_seasons WHERE id = ?", (season_id,)).fetchone()
         if not s or s["format"] != "ucl":
             return {"stages": []}
@@ -52,12 +52,13 @@ def tb_ko_view(season_id: int) -> dict:
                 "goals_a": sc["a"]["goals"], "goals_b": sc["b"]["goals"],
                 "winner_team_id": t["winner_team_id"], "needs_admin": bool(t["needs_admin"])})
         sizes = []
-        for size, _leg in ko_schedule(s["ucl_qualify"], s["ko_legs"], s["final_legs"]):
+        playin = bool(s["ucl_playin"])
+        for size, _leg in ko_schedule(s["ucl_qualify"], s["ko_legs"], s["final_legs"], playin):
             if size not in sizes:
                 sizes.append(size)
         stages = [{"size": z, "ties": by_stage.get(z, [])} for z in sizes]
         return {"stages": stages, "qualify": s["ucl_qualify"], "league_rounds": s["ucl_rounds"],
-                "waiting_admin": bool(s["waiting_admin"])}
+                "waiting_admin": bool(s["waiting_admin"]), "playin": playin}
     finally:
         conn.close()
 

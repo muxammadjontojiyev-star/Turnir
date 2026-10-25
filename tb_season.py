@@ -32,7 +32,7 @@ TB_PROMO = 2            # har divizion juftida ko'tariladigan/tushadigan teamlar
 _SEASON_COLS = ("id, league_id, number, status, division_size, total_rounds, current_round, "
                 "last_advance_date, created_at, started_at, finished_at, "
                 # 2026-10-18: format (league | ucl), bahsdagi o'yinchilar soni, UCL parametrlari
-                "format, match_size, ucl_rounds, ucl_qualify, ko_legs, final_legs, waiting_admin")
+                "format, match_size, ucl_rounds, ucl_qualify, ko_legs, final_legs, waiting_admin, ucl_playin")
 
 
 def tb_active_season(league_id: int | None, cursor=None) -> dict | None:

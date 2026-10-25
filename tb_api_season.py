@@ -118,11 +118,13 @@ def tb_admin_create(league_id: int = Body(..., embed=True), division_size: int |
                     format: str | None = Body(None, embed=True), match_size: int | None = Body(None, embed=True),
                     ucl_rounds: int | None = Body(None, embed=True), ucl_qualify: int | None = Body(None, embed=True),
                     ko_legs: int | None = Body(None, embed=True), final_legs: int | None = Body(None, embed=True),
+                    ucl_playin: bool = Body(False, embed=True),
                     admin: dict = Depends(get_authenticated_user)):
-    """2026-10-18: format (league | ucl), match_size (N vs N), UCL parametrlari — tb_draw.py."""
+    """2026-10-18: format (league | ucl), match_size (N vs N), UCL parametrlari — tb_draw.py.
+    2026-10-26: ucl_playin — pley-off raundi (rasmiy ChL kabi)."""
     from tb_draw import tb_create_season
     return _ok(tb_create_season(require_manage(admin, league_id), division_size, format, match_size,
-                                ucl_rounds, ucl_qualify, ko_legs, final_legs))
+                                ucl_rounds, ucl_qualify, ko_legs, final_legs, ucl_playin))
 
 
 @router.get("/tb/season/ko")

@@ -43,10 +43,11 @@ def _league_fixtures(cur, sid: int, divisions: list[list[int]]) -> tuple[int, in
 def tb_create_season(league_id: int, division_size: int | None = None, fmt: str | None = None,
                      match_size: int | None = None, ucl_rounds: int | None = None,
                      ucl_qualify: int | None = None, ko_legs: int | None = None,
-                     final_legs: int | None = None) -> tuple[bool, str | dict]:
+                     final_legs: int | None = None, ucl_playin: bool = False) -> tuple[bool, str | dict]:
     """
     Ligada qur'a. Sabablar: bad_format, bad_match_size, bad_division_size, active_exists,
-    not_enough_teams, bad_qualify, bad_legs, bad_ucl_rounds, bad_ucl_params.
+    not_enough_teams, bad_qualify, bad_playin, bad_legs, bad_ucl_rounds, bad_ucl_params.
+    2026-10-26: ucl_playin — rasmiy ChL kabi pley-off raundi (tb_ucl.py).
     Qaytaradi: {season_id, number, format, divisions, teams, fixtures, total_rounds}
     """
     fmt = fmt or FMT_LEAGUE
@@ -78,20 +79,22 @@ def tb_create_season(league_id: int, division_size: int | None = None, fmt: str 
             return False, "not_enough_teams"
         ucl = {}
         if fmt == FMT_UCL:
-            why, ucl = validate_ucl(len(teams), ucl_rounds, ucl_qualify, ko_legs, final_legs)
+            why, ucl = validate_ucl(len(teams), ucl_rounds, ucl_qualify, ko_legs, final_legs, ucl_playin)
             if why:
                 cur.execute("ROLLBACK")
                 return False, why
         cur.execute("SELECT COALESCE(MAX(number), 0) + 1 AS n FROM tb_seasons WHERE league_id = ?", (league_id,))
         number = cur.fetchone()["n"]
         cur.execute("INSERT INTO tb_seasons (league_id, number, status, division_size, format, match_size, "
-                    "ucl_rounds, ucl_qualify, ko_legs, final_legs) VALUES (?, ?, 'drawn', ?, ?, ?, ?, ?, ?, ?)",
+                    "ucl_rounds, ucl_qualify, ko_legs, final_legs, ucl_playin) "
+                    "VALUES (?, ?, 'drawn', ?, ?, ?, ?, ?, ?, ?, ?)",
                     (league_id, number, size, fmt, match_size, ucl.get("ucl_rounds"), ucl.get("ucl_qualify"),
-                     ucl.get("ko_legs"), ucl.get("final_legs")))
+                     ucl.get("ko_legs"), ucl.get("final_legs"), ucl.get("ucl_playin", 0)))
         sid = cur.lastrowid
         if fmt == FMT_UCL:
             fixtures = create_ucl_fixtures(cur, sid, teams, ucl["ucl_rounds"])
-            total_rounds = ucl["ucl_rounds"] + len(ko_schedule(ucl["ucl_qualify"], ucl["ko_legs"], ucl["final_legs"]))
+            total_rounds = ucl["ucl_rounds"] + len(ko_schedule(ucl["ucl_qualify"], ucl["ko_legs"], ucl["final_legs"],
+                                                               bool(ucl["ucl_playin"])))
             n_div = 1
         else:
             divisions = split_divisions(_ordered_for_draw(cur, teams, league_id), size)
