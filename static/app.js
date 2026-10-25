@@ -1494,7 +1494,10 @@ function showEntryScreen() {
     showTeamBattle(tbCode);
     return;
   }
+  // 2026-10-25: bot /help va «Kirish» xabaridagi «Qo'llanma» tugmasi (?guide=<bo'lim>)
+  const guideSec = typeof guideConsumeParam === "function" ? guideConsumeParam() : null;
   showHubSelect();
+  if (guideSec && typeof openGuide === "function") openGuide(guideSec);
 }
 
 function showHubSelect() {
@@ -1532,7 +1535,8 @@ function showHubSelect() {
         <span class="hub-card-name">${escHtml(t.hub_teams || "Teamlar jangi")}</span>
         <span class="hub-card-sub">${escHtml(t.hub_teams_sub || "Team tuzing va boshqa teamlar bilan 1v1 bellashing")}</span>
       </button>
-    </div>`;
+    </div>
+    ${typeof guideHubButtonHtml === "function" ? guideHubButtonHtml() : ""}`;
   document.getElementById("hub-card-official").addEventListener("click", showModeSelect);
   document.getElementById("hub-card-private").addEventListener("click", () => {
     if (typeof showPrivateTournaments === "function") showPrivateTournaments();
@@ -1543,6 +1547,7 @@ function showHubSelect() {
     if (typeof showTeamBattle === "function") showTeamBattle();
     else showToast("Tez orada!");
   });
+  if (typeof guideMaybeAutoOpen === "function") guideMaybeAutoOpen();   // 2026-10-25: yangilar uchun qo'llanma
 }
 
 // Rejim ekranini yashiradi (tanlangach asosiy interfeysga o'tish uchun)

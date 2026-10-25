@@ -111,7 +111,7 @@ function tbRender(bodyHtml) {
   root.innerHTML = `
     <div class="wc-header">
       <button class="wc-back" data-tb="exit" aria-label="Ortga">←</button>
-      <div class="wc-header-title tb-title">${ICON.get("shield", 20)} <span>TEAMLAR JANGI</span></div>
+      <div class="wc-header-title tb-title">${ICON.get("shield", 20)} <span>TEAMLAR JANGI</span></div><button class="wc-back tb-help" data-guide-open="tb" aria-label="?">?</button>
     </div>
     <div class="wc-body tb-body-wrap">
       ${tbLeagueBarHtml()}
