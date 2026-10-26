@@ -83,6 +83,16 @@ def tb_admin_league_delete(league_id: int = Body(..., embed=True),
     return _ok(tb_league_delete(league_id))
 
 
+@router.post("/tb/admin/leagues/bulk-settings")
+def tb_admin_leagues_bulk(lineup_min: int | None = Body(None, embed=True), lineup_max: int | None = Body(None, embed=True),
+                          division_size: int | None = Body(None, embed=True),
+                          admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-10-26: faqat bosh admin — sozlamalarni barcha ligalarga birdan (tb_leagues_bulk_update)."""
+    from tb_leagues_bulk import tb_leagues_bulk_update
+    return _ok(tb_leagues_bulk_update({"lineup_min": lineup_min, "lineup_max": lineup_max,
+                                       "division_size": division_size}))
+
+
 @router.post("/tb/admin/league/settings")
 def tb_admin_league_settings(league_id: int = Body(..., embed=True), name: str | None = Body(None, embed=True),
                              emoji: str | None = Body(None, embed=True),
