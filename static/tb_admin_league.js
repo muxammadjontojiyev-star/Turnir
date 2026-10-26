@@ -3,6 +3,8 @@
 //  Bosh admin: liga ochish (nom, admin @username/ID), admin tayinlash, bo'sh ligani o'chirish.
 //  Liga admini (va bosh admin): liga tanlash, sozlamalar (nom, logo — galereyadan (tb_logo.js), tarkib min/max,
 //  divizion hajmi), liga taklif havolasi (nusxalash/ulashish/yangilash).
+//  2026-10-26: bosh admin — «🌐 Barcha ligalarga qo'llash» (tarkib min/max, divizion hajmi bir bosishda,
+//  POST /tb/admin/leagues/bulk-settings; bo'sh maydon — o'zgarmaydi).
 //  Backend: tb_api_league.py. tb_admin.js tbAdminLoad/tbAdminRender chaqiradi.
 //  Global: TB, apiFetch, escHtml, tbToast, tbConfirm, tbErr, tbWho, tbCopy, tbAdminLoad.
 // =============================================================
@@ -34,6 +36,7 @@ function tbAdminLeaguesHtml() {
       </div>`;
   }
   if (!list.length) return html + `<div class="empty-state">Hali liga yo'q${TB.me.is_super ? " — «➕ Liga» bilan oching" : ""}</div>`;
+  if (TB.me.is_super) html += tbAdminBulkHtml(list.length);
   const l = tbAdminCurLeague();
   if (!l) return html;
   const admin = l.admin_username || l.admin_nickname ? tbWho({ username: l.admin_username, nickname: l.admin_nickname }) : "— (faqat bosh admin)";
@@ -63,6 +66,30 @@ function tbAdminLeaguesHtml() {
   return html;
 }
 
+// 2026-10-26: bosh admin — sozlamalarni barcha ligalarga birdan qo'llash
+function tbAdminBulkHtml(n) {
+  return `<details class="card tb-adm-settings tb-adm-bulk"><summary>🌐 Barcha ligalarga qo'llash (${n} ta liga)</summary>
+      <div class="tb-adm-line"><span>Asosiy tarkib: kamida</span><input id="tbl-b-lmin" class="modal-input" type="number" min="3" max="30" placeholder="—"></div>
+      <div class="tb-adm-line"><span>Asosiy tarkib: ko'pi bilan</span><input id="tbl-b-lmax" class="modal-input" type="number" min="3" max="30" placeholder="—"></div>
+      <div class="tb-adm-line"><span>Divizion hajmi</span><input id="tbl-b-div" class="modal-input" type="number" min="4" max="20" placeholder="—"></div>
+      <button class="btn btn--primary" data-tbl="bulk">🌐 Hammasiga qo'llash</button>
+      <div class="tb-hint">Bo'sh qoldirilgan maydon hech bir ligada o'zgarmaydi. Divizion hajmi keyingi qur'adan ta'sir qiladi. Tarkib minimumi «N vs N»siz ochilgan joriy mavsumda keyingi turlardan qo'llanadi — tarkibi yetmagan team texnik mag'lubiyat oladi.</div>
+    </details>`;
+}
+
+async function tbAdminBulkApply(btn) {
+  const num = (id) => { const v = (document.getElementById(id)?.value || "").trim(); return v === "" ? null : +v; };
+  const body = { lineup_min: num("tbl-b-lmin"), lineup_max: num("tbl-b-lmax"), division_size: num("tbl-b-div") };
+  if (Object.values(body).every(v => v === null)) { tbToast("Kamida bitta qiymat kiriting"); return; }
+  const n = (TB.adminLeagues || []).length;
+  if (!tbConfirm(`Sozlamalar ${n} ta liganing hammasiga qo'llansinmi?`)) return;
+  const r = await tbAdminLeaguePost("/tb/admin/leagues/bulk-settings", body, null, btn);
+  if (!r) return;
+  const bad = (r.failed || []).map(f => `${f.name}: ${tbErr({ message: f.reason })}`);
+  tbToast(`✅ ${r.updated} ta ligaga qo'llandi` + (bad.length ? ` · ${bad.length} tasida xato — ${bad.join("; ")}` : ""));
+  await tbAdminReloadAll();
+}
+
 function tbAdminLinkHtml() {
   return `<div class="tb-invite-link">${escHtml(TB.adminLeagueLink)}</div>
     <div class="tb-invite-acts">
@@ -90,6 +117,7 @@ async function tbAdminLeagueAct(a, btn) {
   const lid = TB.adminLeagueId;
   const val = (id) => (document.getElementById(id)?.value || "").trim();
   if (a === "new") { TB.adminLeagueForm = !TB.adminLeagueForm; tbAdminRender(); return; }
+  if (a === "bulk") { await tbAdminBulkApply(btn); return; }
   if (a === "create") {
     const r = await tbAdminLeaguePost("/tb/admin/leagues",
       { name: val("tbl-new-name"), admin_who: val("tbl-new-admin") || null }, "✅ Liga ochildi", btn);
@@ -149,3 +177,5 @@ document.addEventListener("click", (e) => {
   const b = e.target.closest("#tb-root [data-tbl]");
   if (b) void tbAdminLeagueAct(b.dataset.tbl, b);
 });
+
+Object.assign(TB_ERR, { nothing_to_update: "Kamida bitta qiymat kiriting" });   // 2026-10-26
