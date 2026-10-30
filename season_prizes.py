@@ -321,6 +321,13 @@ def _finalize_league_locked(conn, cursor) -> dict:
     except Exception:
         # Reset xatosi sovrin saqlanishini bekor qilmasin (sovrin allaqachon commit bo'ldi).
         logger.exception("Liga reset xatosi (sovrinlar saqlangan)")
+    if reset_info is not None:
+        # 2026-10-30: auksion g'oliblari yangi mavsumda klubiga avtomatik yoziladi (reset'dan KEYIN)
+        try:
+            from auction_admin import auction_apply_reservations
+            reset_info["auction"] = auction_apply_reservations()
+        except Exception:
+            logger.exception("Auksion: g'oliblarni klubga yozishda xato (scheduler qayta urinmaydi — admin tekshirsin)")
 
     return {"season": season, "already": False, "counts": counts,
             "prizes": prizes, "reset": reset_info}

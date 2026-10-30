@@ -145,6 +145,11 @@ SHOP_COINS_MAX = 1_000_000            # bitta paketdagi eF Token chegarasi (admi
 SHOP_PRICE_MAX_UZS = 100_000_000      # bitta paket narxi chegarasi (so'm)
 SHOP_PACKAGES_MAX = 12                # faol + nofaol paketlar soni
 SHOP_ORDERS_HISTORY = 10              # "Buyurtmalarim" ro'yxatida oxirgi N ta
+# --- Auksion (2026-10-30): klub uchun muddatli kim oshdi savdosi (eF Token) ---
+AUCTION_SNIPE_MINUTES = 5             # oxirgi N daqiqada taklif tushsa — savdo N daqiqaga uzayadi
+AUCTION_MIN_HOURS, AUCTION_MAX_HOURS = 1, 24 * 14   # lot muddati chegarasi (soat)
+AUCTION_PRICE_MAX = 10_000_000        # boshlang'ich narx / qadam / taklif chegarasi (eF Token)
+AUCTION_ENDED_SHOWN = 10              # "Yakunlangan savdolar" ro'yxatida oxirgi N ta
 # Taklif havolasi uchun (t.me/<BOT_USERNAME>?start=pt_<kod>); Railway'da allaqachon bor.
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
 

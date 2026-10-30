@@ -1302,6 +1302,8 @@ def init_db():
         init_qm_tables(_c.cursor())
         from shop_models import init_shop_tables            # 2026-10-30: do'kon / eF Token
         init_shop_tables(_c.cursor())
+        from auction_core import init_auction_tables        # 2026-10-30: auksion (klub uchun kim oshdi)
+        init_auction_tables(_c.cursor())
         _c.commit()
     finally:
         _c.close()

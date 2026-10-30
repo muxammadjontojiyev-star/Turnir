@@ -182,6 +182,15 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: tezkor o'yin muddatlarida xato: %s", exc)
 
+    # === AUKSION (2026-10-30): muddati o'tgan savdolar yopiladi, g'olib/admin/yangi mavsum xabarlari ===
+    try:
+        from auction_notify import auction_send_notices
+        n = await auction_send_notices()
+        if n:
+            logger.info("Scheduler: auksion — %d ta xabar yuborildi", n)
+    except Exception as exc:
+        logger.warning("Scheduler: auksion xabarlarida xato: %s", exc)
+
     # === TEAMLAR JANGI (2026-10-16): 23:30 da joriy tur yopiladi, keyingisi ochiladi ===
     try:
         from tb_rounds import tb_tick

@@ -243,6 +243,37 @@ TEXTS = {
         LANGUAGE_RU: "❌ Оплата за {coins} eF Token отклонена.\nПричина: {reason}\nЕсли есть вопросы — напишите админу.",
         LANGUAGE_EN: "❌ Payment for {coins} eF Token was rejected.\nReason: {reason}\nIf you have questions, message the admin.",
     },
+    # 2026-10-30: Auksion (auction_api.py, scheduler)
+    "auction_notify_outbid": {
+        LANGUAGE_UZ: "🔨 {club} ({league}) auksionida taklifingiz oshirildi: yangi taklif {amount} eF Token.\nSizning {refund} eF Token balansingizga qaytdi.",
+        LANGUAGE_RU: "🔨 Вашу ставку на {club} ({league}) перебили: новая ставка {amount} eF Token.\nВаши {refund} eF Token вернулись на баланс.",
+        LANGUAGE_EN: "🔨 You were outbid for {club} ({league}): the new bid is {amount} eF Token.\nYour {refund} eF Token are back on your balance.",
+    },
+    "auction_notify_won": {
+        LANGUAGE_UZ: "🏆 Tabriklaymiz! {club} ({league}) auksionida g'olib bo'ldingiz: {amount} eF Token.\nYangi liga mavsumi ochilganda shu klubga avtomatik yozilasiz.",
+        LANGUAGE_RU: "🏆 Поздравляем! Вы выиграли аукцион {club} ({league}): {amount} eF Token.\nПри открытии нового сезона вы будете автоматически записаны в этот клуб.",
+        LANGUAGE_EN: "🏆 Congratulations! You won the auction for {club} ({league}): {amount} eF Token.\nWhen the new league season opens, you'll be registered to this club automatically.",
+    },
+    "auction_notify_admin_end": {
+        LANGUAGE_UZ: "🔨 Auksion yakunlandi: {club} ({league}) — {result}",
+        LANGUAGE_RU: "🔨 Аукцион завершён: {club} ({league}) — {result}",
+        LANGUAGE_EN: "🔨 Auction ended: {club} ({league}) — {result}",
+    },
+    "auction_notify_applied": {
+        LANGUAGE_UZ: "✅ Yangi mavsum: siz auksionda yutgan {club} ({league}) klubiga yozildingiz.",
+        LANGUAGE_RU: "✅ Новый сезон: вы записаны в клуб {club} ({league}), выигранный на аукционе.",
+        LANGUAGE_EN: "✅ New season: you've been registered to {club} ({league}), which you won at auction.",
+    },
+    "auction_notify_failed": {
+        LANGUAGE_UZ: "⚠️ Yangi mavsumda {club} ({league}) klubiga avtomatik yozib bo'lmadi. {amount} eF Token balansingizga qaytarildi. Savol bo'lsa, adminga yozing.",
+        LANGUAGE_RU: "⚠️ Не удалось автоматически записать вас в клуб {club} ({league}). {amount} eF Token возвращены на баланс. Если есть вопросы — напишите админу.",
+        LANGUAGE_EN: "⚠️ We couldn't register you to {club} ({league}) automatically. {amount} eF Token were returned to your balance. If you have questions, message the admin.",
+    },
+    "auction_notify_cancelled": {
+        LANGUAGE_UZ: "🔨 {club} auksioni admin tomonidan bekor qilindi. {amount} eF Token balansingizga qaytdi.",
+        LANGUAGE_RU: "🔨 Аукцион {club} отменён админом. {amount} eF Token вернулись на баланс.",
+        LANGUAGE_EN: "🔨 The auction for {club} was cancelled by the admin. {amount} eF Token are back on your balance.",
+    },
     # 2026-10-02: shaxsiy turnirga qo'shilish (3-bosqich)
     "pt_notify_join_request": {
         LANGUAGE_UZ: "🙋 {who} «{name}» turniringizga qo'shilmoqchi. Tasdiqlash uchun ilovani oching.",
