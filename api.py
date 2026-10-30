@@ -3641,3 +3641,5 @@ from tb_api_fairplay import router as tb_fairplay_router  # noqa: E402  (2026-10
 app.include_router(tb_fairplay_router)
 from qm_api import router as qm_router  # noqa: E402  (2026-10-19, tezkor o'yin)
 app.include_router(qm_router)
+from shop_api import router as shop_router  # noqa: E402  (2026-10-30, do'kon / eF Token)
+app.include_router(shop_router)

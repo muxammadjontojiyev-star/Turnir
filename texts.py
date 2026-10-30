@@ -227,6 +227,22 @@ TEXTS = {
         LANGUAGE_RU: "❌ Оплата турнира «{name}» отклонена.\nПричина: {reason}\nВы можете отправить чек повторно.",
         LANGUAGE_EN: "❌ Payment for «{name}» was rejected.\nReason: {reason}\nYou can send the receipt again.",
     },
+    # 2026-10-30: Do'kon — eF Token sotib olish (shop_api.py)
+    "shop_notify_order_admin": {
+        LANGUAGE_UZ: "🛒 eF Token buyurtmasi #{id}\nXaridor: {buyer}\nPaket: {coins} eF Token\nSumma: {price} so'm\nTekshirish: ilova → Admin → Do'kon.",
+        LANGUAGE_RU: "🛒 Заказ eF Token #{id}\nПокупатель: {buyer}\nПакет: {coins} eF Token\nСумма: {price} сум\nПроверка: приложение → Admin → Магазин.",
+        LANGUAGE_EN: "🛒 eF Token order #{id}\nBuyer: {buyer}\nPackage: {coins} eF Token\nAmount: {price} UZS\nReview: app → Admin → Shop.",
+    },
+    "shop_notify_approved": {
+        LANGUAGE_UZ: "✅ To'lovingiz tasdiqlandi: +{coins} eF Token.\nBalans: {balance} eF Token.",
+        LANGUAGE_RU: "✅ Оплата подтверждена: +{coins} eF Token.\nБаланс: {balance} eF Token.",
+        LANGUAGE_EN: "✅ Payment approved: +{coins} eF Token.\nBalance: {balance} eF Token.",
+    },
+    "shop_notify_rejected": {
+        LANGUAGE_UZ: "❌ {coins} eF Token uchun to'lov rad etildi.\nSabab: {reason}\nSavol bo'lsa, adminga yozing.",
+        LANGUAGE_RU: "❌ Оплата за {coins} eF Token отклонена.\nПричина: {reason}\nЕсли есть вопросы — напишите админу.",
+        LANGUAGE_EN: "❌ Payment for {coins} eF Token was rejected.\nReason: {reason}\nIf you have questions, message the admin.",
+    },
     # 2026-10-02: shaxsiy turnirga qo'shilish (3-bosqich)
     "pt_notify_join_request": {
         LANGUAGE_UZ: "🙋 {who} «{name}» turniringizga qo'shilmoqchi. Tasdiqlash uchun ilovani oching.",

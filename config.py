@@ -136,6 +136,15 @@ PT_PRICE_MONTH_UZS = int(os.getenv("PT_PRICE_MONTH_UZS", "0") or 0)  # obuna: 30
 PT_PRICE_YEAR_UZS = int(os.getenv("PT_PRICE_YEAR_UZS", "0") or 0)    # obuna: 365 kun
 PT_CARD_NUMBER = os.getenv("PT_CARD_NUMBER", "").strip()
 PT_CARD_HOLDER = os.getenv("PT_CARD_HOLDER", "").strip()
+# --- Do'kon / ilova valyutasi eF Token (2026-10-30) — karta FAQAT .env'da (qoida #33/#46) ---
+# SHOP_CARD_NUMBER / SHOP_CARD_HOLDER bo'sh bo'lsa — shaxsiy turnir kartasi (PT_CARD_*) ishlatiladi.
+SHOP_CARD_NUMBER = os.getenv("SHOP_CARD_NUMBER", "").strip() or PT_CARD_NUMBER
+SHOP_CARD_HOLDER = os.getenv("SHOP_CARD_HOLDER", "").strip() or PT_CARD_HOLDER
+SHOP_PENDING_MAX = int(os.getenv("SHOP_PENDING_MAX", "3") or 3)   # bir kishining tekshiruvdagi buyurtmalari
+SHOP_COINS_MAX = 1_000_000            # bitta paketdagi eF Token chegarasi (admin xatosidan himoya)
+SHOP_PRICE_MAX_UZS = 100_000_000      # bitta paket narxi chegarasi (so'm)
+SHOP_PACKAGES_MAX = 12                # faol + nofaol paketlar soni
+SHOP_ORDERS_HISTORY = 10              # "Buyurtmalarim" ro'yxatida oxirgi N ta
 # Taklif havolasi uchun (t.me/<BOT_USERNAME>?start=pt_<kod>); Railway'da allaqachon bor.
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
 

@@ -1300,6 +1300,8 @@ def init_db():
         init_club_market_table(_c.cursor())
         from qm_core import init_qm_tables                  # 2026-10-19: tezkor o'yin
         init_qm_tables(_c.cursor())
+        from shop_models import init_shop_tables            # 2026-10-30: do'kon / eF Token
+        init_shop_tables(_c.cursor())
         _c.commit()
     finally:
         _c.close()
