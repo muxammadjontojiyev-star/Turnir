@@ -13,6 +13,7 @@ const PT_RULES_PREVIEW = 4;          // yig'iq holatda ko'rinadigan qoidalar son
 function ptDefaultRules(t) {
   const f = (t && t.format) || "classic";
   const key = f === "league" ? "pt_rules_default_league" : (f === "cl" || f === "el") ? "pt_rules_default_cl"
+    : f === "wc" ? "pt_rules_default_wc"                 // 2026-10-30: 3-o'rinlar bilan (texts_pt_wc.js)
     : f === "classic" && t.legs === 2 ? "pt_rules_default_classic2" : "pt_rules_default";
   return PTT(key) || PTT("pt_rules_default");
 }

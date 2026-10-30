@@ -43,7 +43,7 @@ function ptKnockoutAdminHtml(p) {
         <div class="pt-hint">${escHtml(ptKoReadyHint(p))}</div>
         <button class="btn btn--primary btn--glow" id="pt-semis-btn">${escHtml(PTT("pt_semis_btn"))}</button></div>`;
   }
-  return `<div class="card pt-pay">
+  return `${ptKoRebuildHtml(p)}<div class="card pt-pay">
       <div class="section-label pt-label">${escHtml(PTT("pt_ko_title"))}</div>
       <div class="pt-card-row"><span>${escHtml(PTT("pt_deadline"))}</span>
         <b>${escHtml(p.deadline_local || PTT("pt_no_deadline"))}</b></div>
@@ -52,10 +52,41 @@ function ptKnockoutAdminHtml(p) {
 
 // Pley-off boshlanishidan oldingi izoh: ChL/YeL — top-Q va pley-off raundi; guruhli — g'oliblar
 function ptKoReadyHint(p) {
+  if (p.format === "wc") return ptWcHint(p.bracket_size, Object.keys(p.standings || {}).length);
   if (!p.single_table) return PTT("pt_semis_hint", { size: p.bracket_size });
   const q = p.direct_count || p.bracket_size / 2;
   return PTT("pt_po_hint", { q, from: q + 1, to: 3 * q, size: p.bracket_size });
 }
+
+// 2026-10-30: JCh — g'oliblar + 2-o'rinlar + eng yaxshi 3-o'rinlar (setka < 2·G bo'lsa — klassik izoh)
+function ptWcHint(size, g) {
+  if (size < 2 * g) return PTT("pt_semis_hint", { size });
+  return size > 2 * g ? PTT("pt_wc_hint", { size, thirds: size - 2 * g }) : PTT("pt_wc_hint2", { size });
+}
+
+// 2026-10-30: eski qoida bilan tuzilgan JCh setkasi (natijasiz) — qayta tuzish (server: ko_rebuildable)
+function ptKoRebuildHtml(p) {
+  if (!p.ko_rebuildable) return "";
+  return `<div class="card pt-pay pt-ko-rebuild" style="margin-bottom:12px">
+      <div class="pt-hint">⚠️ ${escHtml(PTT("pt_ko_rebuild_note", { size: p.bracket_size }))}</div>
+      <div class="pt-hint">${escHtml(ptWcHint(p.bracket_size, Object.keys(p.standings || {}).length))}</div>
+      <button class="btn btn--primary" data-pt-ko-rebuild="1">${escHtml(PTT("pt_ko_rebuild_btn"))}</button></div>`;
+}
+
+function ptKoRebuild(tid) {
+  if (!window.confirm(PTT("pt_ko_rebuild_ask"))) return;
+  return ptPlayAction(tid, `/pt/${encodeURIComponent(tid)}/playoff/rebuild`, null, "pt_ko_rebuilt");
+}
+
+if (typeof PT_PLAY_ERR !== "undefined") Object.assign(PT_PLAY_ERR, {
+  ko_has_results: "pt_err_ko_results", nothing_to_change: "pt_err_ko_same",
+  bad_format: "pt_err_ko_rebuild", not_started: "pt_err_ko_rebuild", not_running: "pt_err_ko_rebuild",
+});
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest ? e.target.closest("[data-pt-ko-rebuild]") : null;
+  if (b && PT.detailId != null) void ptKoRebuild(PT.detailId);
+});
 
 function ptStartSemis(tid) {
   if (!window.confirm(PTT("pt_semis_ask"))) return;

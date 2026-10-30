@@ -43,6 +43,11 @@ function ptDirectCount(n) { for (const q of [8, 4, 2]) if (3 * q <= n) return q;
 
 function ptStageOfSize(size) { return { 64: "r64", 32: "r32", 16: "r16", 8: "qf", 4: "semi" }[size] || "semi"; }
 
+// Setka hajmi: klassik — 2·G dan oshmaydigan 2 ning darajasi; JCh (2026-10-30, server pt_ko_wc.wc_bracket_size
+// bilan bir xil) — 2·G dan kichik bo'lmagan eng kichik daraja, 3-o'rinlar yetsa (P <= 3·G, P <= 64)
+function ptClassicBracket(g) { let p = 4; while (p * 2 <= Math.min(2 * g, 64)) p *= 2; return p; }
+function ptWcBracket(g) { let p = 4; while (p < 2 * g) p *= 2; return p <= 3 * g && p <= 64 ? p : ptClassicBracket(g); }
+
 // Yaratish formasi xulosasi: format bo'yicha tur soni va pley-off tuzilishi
 function ptFormatSummary(fmt, n, legs) {
   const stage = s => PTT(`pt_stage_${s}`).toLowerCase();
@@ -57,8 +62,9 @@ function ptFormatSummary(fmt, n, legs) {
     return PTT("pt_sum_cl", { rounds: Math.min(8, n - 1), q, from: q + 1, to: 3 * q, stage: stage(ptStageOfSize(2 * q)) });
   }
   const g = Math.floor(n / 4);
-  let size = 4;
-  while (size * 2 <= Math.min(2 * g, 64)) size *= 2;
+  const size = fmt === "wc" ? ptWcBracket(g) : ptClassicBracket(g);
+  const thirds = fmt === "wc" ? Math.max(0, size - 2 * g) : 0;        // 2026-10-30: JCh — eng yaxshi 3-o'rinlar
+  if (thirds) return PTT("pt_sum_wc", { g, stage: stage(ptStageOfSize(size)), thirds });
   return PTT("pt_size_summary", { g, stage: stage(ptStageOfSize(size)) })
     + (fmt === "classic" && legs === 2 ? " · " + PTT("pt_sum_classic2") : "");
 }
