@@ -158,6 +158,21 @@ async def pt_playoff_start(tournament_id: int, user: dict = Depends(get_authenti
     return {"status": "ok", "stage": r["stage"], "pairs": len(r["pairs"])}
 
 
+@router.post("/pt/{tournament_id}/playoff/rebuild")
+async def pt_playoff_rebuild(tournament_id: int, user: dict = Depends(get_authenticated_user)):
+    """
+    2026-10-30: JCh setkasini rasmiy qoida bilan qayta tuzish (pley-offda natija yo'q bo'lsa).
+    Xato: not_owner, not_running, bad_format, not_started, ko_has_results, nothing_to_change -> 400.
+    """
+    from pt_ko_wc import pt_wc_rebuild_knockout
+    ok, r = pt_wc_rebuild_knockout(tournament_id, user["id"])
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    name, members = tournament_members(tournament_id)
+    spawn(notify_members_stage(members, "pt_notify_ko_start", r["stage"], name=name))
+    return {"status": "ok", "stage": r["stage"], "pairs": len(r["pairs"])}
+
+
 @router.get("/pt/{tournament_id}/player/{user_id}")
 def pt_player(tournament_id: int, user_id: int, user: dict = Depends(get_authenticated_user)):
     """Ishtirokchi profili (Reytingdan). Faqat a'zo/tashkilotchi/admin. Xato: not_found, player_not_found -> 404"""

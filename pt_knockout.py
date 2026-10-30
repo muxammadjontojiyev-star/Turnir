@@ -48,10 +48,13 @@ def _fmt(cursor, tid: int) -> str:
 
 
 def pt_bracket_size(fmt: str, standings: dict[str, list[dict]]) -> int:
-    """Setka hajmi: ChL/YeL — 2Q (pt_formats.cl_direct_count); guruhli formatlar — bracket_size."""
-    from pt_formats import FMT_CL, FMT_EL, cl_direct_count
+    """Setka hajmi: ChL/YeL — 2Q (pt_formats.cl_direct_count); JCh — pt_ko_wc; qolgan guruhli — bracket_size."""
+    from pt_formats import FMT_CL, FMT_EL, FMT_WC, cl_direct_count
     if fmt in (FMT_CL, FMT_EL):
         return 2 * cl_direct_count(sum(len(r) for r in standings.values()))
+    if fmt == FMT_WC:                                    # 2026-10-30: rasmiy JCh (3-o'rinlar bilan)
+        from pt_ko_wc import wc_bracket_size
+        return wc_bracket_size(len(standings))
     return bracket_size(len(standings))
 
 
@@ -93,8 +96,11 @@ def seed_order(size: int) -> list[int]:
     return order
 
 
-def pt_playoff_seeds(standings: dict[str, list[dict]]) -> list[tuple[int, str]]:
-    """[(user_id, guruh), ...] urug' tartibida: g'oliblar, keyin eng yaxshi 2-o'rinlar."""
+def pt_playoff_seeds(standings: dict[str, list[dict]], fmt: str | None = None) -> list[tuple[int, str]]:
+    """[(user_id, guruh), ...] urug' tartibida: g'oliblar, keyin eng yaxshi 2-o'rinlar (JCh — pt_ko_wc)."""
+    if fmt == "wc":                                      # 2026-10-30: + eng yaxshi 3-o'rinlar
+        from pt_ko_wc import wc_playoff_seeds
+        return wc_playoff_seeds(standings)
     size = bracket_size(len(standings))
     winners = sorted(((g, rows[0]) for g, rows in standings.items() if rows),
                      key=lambda x: _cross_key(x[1]), reverse=True)
@@ -104,9 +110,10 @@ def pt_playoff_seeds(standings: dict[str, list[dict]]) -> list[tuple[int, str]]:
     return seeds[:size]
 
 
-def pt_first_round_pairs(standings: dict[str, list[dict]]) -> tuple[str, list[tuple[int, int]]]:
+def pt_first_round_pairs(standings: dict[str, list[dict]],
+                         fmt: str | None = None) -> tuple[str, list[tuple[int, int]]]:
     """(bosqich, [(yuqori_urug', quyi_urug'), ...]) — bir guruhdan ikki kishi 1-turda uchrashmaydi."""
-    seeds = pt_playoff_seeds(standings)
+    seeds = pt_playoff_seeds(standings, fmt)
     size = len(seeds)
     order = seed_order(size)
     pairs = [[seeds[order[i] - 1], seeds[order[i + 1] - 1]] for i in range(0, size, 2)]
@@ -138,10 +145,11 @@ def _winner(m) -> int | None:
 def pt_start_knockout(cursor, tid: int) -> tuple[str, list[tuple[int, int]]]:
     """1-bosqich o'yinlarini yaratadi (ochiq tranzaksiya ichida). ChL/YeL — pley-off raundi."""
     standings = pt_group_standings(cursor, tid)
-    if _fmt(cursor, tid) in ("cl", "el"):
+    fmt = _fmt(cursor, tid)
+    if fmt in ("cl", "el"):
         stage, pairs = STAGE_PO, cl_po_pairs(_ranking(standings))
     else:
-        stage, pairs = pt_first_round_pairs(standings)
+        stage, pairs = pt_first_round_pairs(standings, fmt)       # 2026-10-30: JCh — 3-o'rinlar bilan
     insert_ties(cursor, tid, stage, pairs, ko_legs(cursor, tid))    # erkin 2 doira — javob o'yini bilan
     cursor.execute("UPDATE pt_tournaments SET round_deadline = NULL, updated_at = CURRENT_TIMESTAMP "
                    "WHERE id = ?", (tid,))

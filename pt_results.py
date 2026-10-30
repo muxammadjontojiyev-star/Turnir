@@ -104,6 +104,8 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         standings = pt_group_standings(cursor, tid)
         from pt_knockout import pt_knockout_phase
         phase = pt_knockout_phase(cursor, tid)
+        from pt_ko_wc import wc_rebuild_block                # 2026-10-30: JCh setkasini qayta tuzish
+        ko_rebuildable = bool(manager and t["format"] == "wc" and wc_rebuild_block(cursor, tid) is None)
         cursor.execute("SELECT u.id, u.nickname, u.username, pm.team_name FROM pt_tournaments t JOIN users u "
                        "ON u.id = t.champion_user_id LEFT JOIN pt_members pm ON pm.tournament_id = t.id "
                        "AND pm.user_id = u.id WHERE t.id = ?", (tid,))
@@ -137,6 +139,7 @@ def pt_get_play(tid: int, user_id: int, is_super: bool = False) -> dict | None:
         # 5-bosqich: pley-off
         "phase": phase,                     # None | ko_ready | r64..final (joriy bosqich) | finished
         "bracket_size": pt_bracket_size(fmt, standings),
+        "ko_rebuildable": ko_rebuildable,
         # 2026-10-07: format (yagona jadval — liga/ChL/YeL), ChL/YeL zonalari: top-Q setka, Q+1..3Q pley-off raundi
         "max_normal_score": MAX_NORMAL_SCORE,
         "big_pending": [x for x in matches if x["status"] == "admin_pending" and x.get("can_decide")],
