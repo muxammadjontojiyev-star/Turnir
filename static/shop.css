@@ -19,10 +19,10 @@
 .shop-hero-val { font-family: var(--font-display); font-weight: 700; font-size: 34px; color: var(--text-heading); line-height: 1.1; }
 .shop-hero-val small { font-size: 14px; color: var(--cyan); margin-left: 6px; letter-spacing: 1px; }
 
-.shop-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 14px;
+.shop-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; margin-bottom: 14px;
   border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--border); }
-.shop-seg-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 6px; border-radius: 10px;
-  font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .5px; color: var(--text-secondary); }
+.shop-seg-btn { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 10px 4px; border-radius: 10px; white-space: nowrap;
+  font-family: var(--font-display); font-weight: 700; font-size: 14px; letter-spacing: .5px; color: var(--text-secondary); }
 .shop-seg-btn.active { background: linear-gradient(135deg, var(--violet), #2f6bff); color: #fff; box-shadow: 0 6px 18px -8px var(--violet-glow); }
 
 .shop-pkgs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }

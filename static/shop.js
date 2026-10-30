@@ -1,7 +1,7 @@
 // =============================================================
 //  shop.js — DO'KON sahifasi (#section-shop, pastki menyuning 5-tugmasi) va eF Token (2026-10-30)
 //  Tablar: «eF Token» — balans, paketlar, sotib olish (karta + chek), buyurtmalarim;
-//          «Auksion» — klub uchun kim oshdi savdosi (shop_auction.js).
+//          «Bezaklar» — ramka va profil orqa foni (cosmetics.js); «Auksion» — klub uchun kim oshdi savdosi (shop_auction.js).
 //  API: GET /shop, POST /shop/order {package_id, image_base64}. Matnlar — texts_shop.js.
 //  Global: APP, apiFetch, escHtml, showToast, SECTION_LOADERS (app.js), receiptPrepare (receipt_image.js).
 // =============================================================
@@ -28,6 +28,7 @@ async function loadShop() {
   }
   shopRender();
   if (SHOP.tab === "auction" && typeof aucLoad === "function") await aucLoad();
+  if (SHOP.tab === "cos" && typeof cosLoad === "function") await cosLoad();
 }
 
 function shopRender() {
@@ -44,9 +45,10 @@ function shopRender() {
     </div>
     <div class="shop-seg">
       <button class="shop-seg-btn ${SHOP.tab === "coins" ? "active" : ""}" data-shop-tab="coins">${shopToken("shop-tk shop-tk--xs")} ${escHtml(shopT("shop_tab_coins"))}</button>
+      <button class="shop-seg-btn ${SHOP.tab === "cos" ? "active" : ""}" data-shop-tab="cos">🎨 ${escHtml(shopT("shop_tab_cos"))}</button>
       <button class="shop-seg-btn ${SHOP.tab === "auction" ? "active" : ""}" data-shop-tab="auction">🔨 ${escHtml(shopT("shop_tab_auction"))}</button>
     </div>
-    ${SHOP.tab === "auction" ? shopAuctionHtml() : shopCoinsHtml(d)}`;
+    ${SHOP.tab === "auction" ? shopAuctionHtml() : SHOP.tab === "cos" && typeof cosTabHtml === "function" ? cosTabHtml() : shopCoinsHtml(d)}`;
 }
 
 function shopCoinsHtml(d) {
@@ -208,6 +210,7 @@ document.addEventListener("click", (e) => {
     SHOP.tab = tab.dataset.shopTab;
     shopRender();
     if (SHOP.tab === "auction" && typeof aucLoad === "function") void aucLoad();
+    if (SHOP.tab === "cos" && typeof cosLoad === "function") void cosLoad();      // 2026-10-30: bezaklar
     return;
   }
   const pkg = e.target.closest("[data-shop-pkg]");
