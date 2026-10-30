@@ -1,13 +1,11 @@
 // =============================================================
 //  pt_payment.js — SHAXSIY turnir to'lovi (2026-10-02, 2-bosqich)
-//  1) Tashkilotchi: chek rasmini yuklash (telefonda 1600px JPEG ga siqiladi).
+//  1) Tashkilotchi: chek rasmini yuklash (receipt_image.js — JPEG ga siqiladi).
 //  2) Bosh admin: tekshiruvdagi to'lovlar, chek rasmi, tasdiqlash/rad etish.
 //  pt.js dan KEYIN ulanadi. Global: PT, PTT, apiFetch, API_BASE, escHtml,
 //  showToast, ptRender, ptOpenDetail, ptFormatPrice, ptLoadList.
 // =============================================================
 
-const PT_RECEIPT_MAX_SIDE = 1600;    // px — chek o'qilishi uchun yetarli, hajmi kichik
-const PT_RECEIPT_QUALITY = 0.82;
 
 // Tashkilotchi to'lov blokining pastki qismi (pt.js ptRenderDetail chaqiradi)
 function ptPaymentActionsHtml(t) {
@@ -33,23 +31,10 @@ function ptBindPaymentActions(t) {
   });
 }
 
-// Rasmni canvas orqali kichraytirib JPEG base64 ga aylantiradi
+// Chek rasmini base64 ga tayyorlaydi. 2026-10-30: receipt_image.js (receiptPrepare) — HEIC/bo'sh canvas/uzun
+// skrinshot muammolari hal qilingan; ochib bo'lmasa asl JPEG/PNG/WEBP yuboriladi.
 function ptCompressImage(file) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, PT_RECEIPT_MAX_SIDE / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", PT_RECEIPT_QUALITY));
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad_image")); };
-    img.src = url;
-  });
+  return receiptPrepare(file);
 }
 
 async function ptUploadReceipt(tournamentId, file, btn) {
@@ -66,7 +51,7 @@ async function ptUploadReceipt(tournamentId, file, btn) {
     PT.busy = false;
     await ptOpenDetail(tournamentId);
   } catch (e) {
-    const map = { bad_image: "pt_err_image", empty_image: "pt_err_image",
+    const map = { bad_image: "pt_err_image", empty_image: "pt_err_image", unsupported_format: "pt_err_image",
                   image_too_large: "pt_err_image_large", wrong_status: "pt_err_wrong_status" };
     showToast(PTT(map[e && e.message] || "pt_err_generic"));
     btn.disabled = false;

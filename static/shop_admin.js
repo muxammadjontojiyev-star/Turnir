@@ -35,7 +35,8 @@ function shopAdmOrdersHtml(orders) {
           <span>· ${shopNum(o.price_uzs)} so'm · #${Number(o.id)}</span></div>
         <div class="shop-adm-order-who">${escHtml(who)} · ID ${escHtml(o.telegram_id)} · ${escHtml(o.created_local || "")}</div>
         <div class="shop-adm-actions">
-          <button class="btn btn--ghost" data-shop-adm="receipt" data-id="${Number(o.id)}">🧾 Chek</button>
+          ${o.has_receipt ? `<button class="btn btn--ghost" data-shop-adm="receipt" data-id="${Number(o.id)}">🧾 Chek</button>`
+            : `<button class="btn btn--ghost" disabled title="Xaridor chekni Telegram'da yuboradi">📩 Telegramda</button>`}
           <button class="btn btn--primary" data-shop-adm="approve" data-id="${Number(o.id)}">✅ Tasdiqlash</button>
           <button class="btn btn--ghost" data-shop-adm="reject" data-id="${Number(o.id)}">❌ Rad etish</button>
         </div>

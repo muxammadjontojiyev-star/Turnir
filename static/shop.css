@@ -110,3 +110,10 @@
 .auc-adm-form { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
 .auc-adm-form .modal-input { padding: 9px 10px; font-size: 14px; min-width: 0; }
 .auc-adm-form .btn { padding: 9px 6px; font-size: 13px; letter-spacing: 0; white-space: nowrap; }
+
+/* 2026-10-30: chek yuborish xatosi oynada qoladi + "chekni yubora olmayapman" yo'li */
+.shop-err { font-size: 13px; line-height: 1.45; color: #ffd1d8; background: rgba(255,69,96,.12); border: 1px solid rgba(255,69,96,.35);
+  border-radius: 10px; padding: 10px 12px; }
+.shop-noreceipt { font-size: 13px; color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; padding: 4px; align-self: center; }
+.shop-noreceipt--hl { color: var(--cyan); font-weight: 600; }
+.shop-order-tg { color: var(--cyan); }
