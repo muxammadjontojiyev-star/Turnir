@@ -495,6 +495,7 @@ def get_profile(user: dict = Depends(get_authenticated_user)):
         "league_id": registration["league_id"] if registration else None,
         "club_name": registration["club_name"] if registration else None,
         "rating": position_info,
+        "cosmetics": _cosmetics_of(user["id"]),          # 2026-10-30: ramka va orqa fon (cosmetics.py)
     }
 
 
@@ -526,7 +527,18 @@ def get_player_profile(user_id: int, viewer: dict = Depends(get_authenticated_us
         "club_name": registration["club_name"] if registration else None,
         "rating": position_info,
         "matches": _annotate_matches_locked(get_user_matches(user_id)),
+        "cosmetics": _cosmetics_of(target["id"]),        # 2026-10-30: ramka va orqa fon (cosmetics.py)
     }
+
+
+def _cosmetics_of(user_id: int) -> dict:
+    """Bezaklar profil javobini buzmasin (xato bo'lsa — bezaksiz)."""
+    try:
+        from cosmetics import get_equipped
+        return get_equipped(user_id)
+    except Exception:
+        logger.exception("Bezaklarni o'qishda xato (user %s)", user_id)
+        return {"frame": None, "bg": None}
 
 
 # ============ GET /players/{user_id}/photo ============
@@ -3645,3 +3657,5 @@ from shop_api import router as shop_router  # noqa: E402  (2026-10-30, do'kon / 
 app.include_router(shop_router)
 from auction_api import router as auction_router  # noqa: E402  (2026-10-30, auksion)
 app.include_router(auction_router)
+from cosmetics_api import router as cosmetics_router  # noqa: E402  (2026-10-30, bezaklar)
+app.include_router(cosmetics_router)
