@@ -18,7 +18,16 @@
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 .profile-avatar[class*="cos-frame-"]::after { content: ""; position: absolute; pointer-events: none; }
-.profile-avatar[class*="cos-frame-"] img { position: relative; z-index: 1; }
+/* 2026-10-30 FIX: Telegram rasmi (inline 56px) avatar qutisidan (52px) katta edi va halqaning bir qismini
+   yopib qo'yardi — rasm qutiga sig'diriladi, halqa esa rasm USTIDA (mask tufayli faqat hoshiya chiziladi). */
+.profile-avatar[class*="cos-frame-"] > div {
+  width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; position: relative; z-index: 1;
+}
+.profile-avatar[class*="cos-frame-"] img {
+  width: 100% !important; height: 100% !important; object-fit: cover; border-radius: 50%; display: block;
+}
+.profile-avatar[class*="cos-frame-"]::before { z-index: 2; }
 
 @keyframes cos-spin { to { transform: rotate(360deg); } }
 @keyframes cos-flicker { 0%, 100% { filter: brightness(1) saturate(1.1); } 50% { filter: brightness(1.35) saturate(1.4); } }
