@@ -1304,6 +1304,10 @@ def init_db():
         init_shop_tables(_c.cursor())
         from auction_core import init_auction_tables        # 2026-10-30: auksion (klub uchun kim oshdi)
         init_auction_tables(_c.cursor())
+        # 2026-10-30: bir martalik sovg'a — o'sha paytdagi barcha foydalanuvchilarga 100 eF Token (wallet_grants.py)
+        from wallet_grants import LAUNCH_GIFT_AMOUNT, LAUNCH_GIFT_KEY, grant_once, init_grants_table
+        init_grants_table(_c.cursor())
+        grant_once(_c.cursor(), LAUNCH_GIFT_KEY, LAUNCH_GIFT_AMOUNT)
         _c.commit()
     finally:
         _c.close()
