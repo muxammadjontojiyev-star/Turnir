@@ -67,9 +67,13 @@ function cosItemHtml(item, d) {
       ? `<button class="btn btn--primary cos-btn" data-cos="on" data-id="${escHtml(item.id)}" data-kind="${item.kind}">${escHtml(shopT("cos_apply"))}</button>`
       : `<button class="btn btn--primary cos-btn" data-cos="buy" data-id="${escHtml(item.id)}">${shopToken("shop-tk shop-tk--xs")} ${shopNum(item.price)}</button>`;
   return `<div class="cos-item ${on ? "cos-item--on" : ""}">
-      ${cosPreview(item, APP.profileData || { nickname: document.getElementById("header-nickname")?.textContent || "" })}
+      <div class="cos-prev-wrap" data-cos-try="${escHtml(item.id)}" role="button">
+        ${cosPreview(item, APP.profileData || { nickname: document.getElementById("header-nickname")?.textContent || "" })}
+        <span class="cos-eye">👁</span>
+      </div>
       <div class="cos-name">${escHtml(shopT("cos_" + item.id))}${on ? ` <span class="cos-on">✓</span>` : ""}</div>
       ${btn}
+      <button class="cos-look" data-cos-try="${escHtml(item.id)}">${escHtml(shopT("cos_try_btn"))}</button>
     </div>`;
 }
 
