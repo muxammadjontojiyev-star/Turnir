@@ -1,7 +1,7 @@
 // =============================================================
 //  shop.js — DO'KON sahifasi (#section-shop, pastki menyuning 5-tugmasi) va eF Token (2026-10-30)
 //  Tablar: «eF Token» — balans, paketlar, sotib olish (karta + chek), buyurtmalarim;
-//          «Auksion» — keyingi bosqich (klub logolari), hozircha "Tez orada".
+//          «Auksion» — klub uchun kim oshdi savdosi (shop_auction.js).
 //  API: GET /shop, POST /shop/order {package_id, image_base64}. Matnlar — texts_shop.js.
 //  Global: APP, apiFetch, escHtml, showToast, SECTION_LOADERS (app.js), ptCompressImage (pt_payment.js).
 // =============================================================
@@ -27,6 +27,7 @@ async function loadShop() {
     if (!SHOP.data) { root.innerHTML = `<div class="card shop-empty">${escHtml(shopT("shop_err_generic"))}</div>`; return; }
   }
   shopRender();
+  if (SHOP.tab === "auction" && typeof aucLoad === "function") await aucLoad();
 }
 
 function shopRender() {
@@ -69,13 +70,7 @@ function shopCoinsHtml(d) {
     ${orders ? `<div class="card shop-orders">${orders}</div>` : `<div class="card shop-empty">${escHtml(shopT("shop_no_orders"))}</div>`}`;
 }
 
-function shopAuctionHtml() {
-  return `<div class="card shop-soon">
-      <div class="shop-soon-ico">🔨</div>
-      <div class="shop-soon-title">${escHtml(shopT("shop_auction_soon"))}</div>
-      <div class="shop-soon-txt">${escHtml(shopT("shop_auction_text"))}</div>
-    </div>`;
-}
+// Auksion tabi — shop_auction.js (shopAuctionHtml, aucLoad)
 
 // ---------------- Sotib olish oynasi ----------------
 
@@ -162,7 +157,12 @@ document.addEventListener("click", (e) => {
   const root = document.getElementById("shop-root");
   if (!root || !e.target.closest || !root.contains(e.target)) return;
   const tab = e.target.closest("[data-shop-tab]");
-  if (tab) { SHOP.tab = tab.dataset.shopTab; shopRender(); return; }
+  if (tab) {
+    SHOP.tab = tab.dataset.shopTab;
+    shopRender();
+    if (SHOP.tab === "auction" && typeof aucLoad === "function") void aucLoad();
+    return;
+  }
   const pkg = e.target.closest("[data-shop-pkg]");
   if (pkg) shopOpenBuy(pkg.dataset.shopPkg);
 });
