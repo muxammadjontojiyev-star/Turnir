@@ -258,6 +258,7 @@ const TEXTS = {
     golden_ball_desc:   "Turnir g'olibi",
     league_trophy:      "Liga Kubogi",
     league_trophy_desc: "Liga chempioni",
+    golden_second_tier: "Oltin To'p va Oltin Butsa faqat 1-ligalar orasida aniqlanadi — 2-ligalarda Liga kubogi o'ynaladi.",
     by_league:          "LIGA BO'YICHA",
     goals:              "gol",
     // Admin panel
@@ -590,6 +591,7 @@ const TEXTS = {
     golden_ball_desc:   "Победитель турнира",
     league_trophy:      "Кубок Лиги",
     league_trophy_desc: "Чемпион лиги",
+    golden_second_tier: "Золотой Мяч и Золотая Бутса разыгрываются только среди высших лиг — во вторых лигах разыгрывается Кубок лиги.",
     by_league:          "ПО ЛИГЕ",
     goals:              "голов",
     // Admin panel
@@ -922,6 +924,7 @@ const TEXTS = {
     golden_ball_desc:   "Tournament winner",
     league_trophy:      "League Trophy",
     league_trophy_desc: "League champion",
+    golden_second_tier: "The Golden Ball and Golden Boot are decided among top-tier leagues only — second-tier leagues play for the League Trophy.",
     by_league:          "BY LEAGUE",
     goals:              "goals",
     // Admin panel

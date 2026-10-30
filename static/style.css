@@ -7533,3 +7533,6 @@ body.guide-lock { overflow: hidden; }
 /* 2026-10-26: Teamlar jangi UCL — pley-off raundi zonasi (jadval) */
 .tb-table tr.tb-zone-po td:first-child { box-shadow: inset 3px 0 0 #f5b342; }
 .tb-zl--po { background: #f5b342; }
+
+/* 2026-10-30: Sovrinlar — 2-liga tanlanganda oltin sovrinlar o'rniga izoh */
+.prize-golden-note { font-size: 13px; line-height: 1.45; color: var(--text-secondary); padding: 14px 16px; }

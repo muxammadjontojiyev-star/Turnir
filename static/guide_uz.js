@@ -65,7 +65,7 @@ GUIDE_I18N.uz = {
         "G'alaba — **3** ochko, durang — **1**, mag'lubiyat — **0**. Teng bo'lsa: gol farqi, so'ng urilgan gollar.",
         "Liga odatda **20** kishilik (LaLiga 2 — 22).",
         "Ligadagi o'rningiz Chempionlar ligasi, Yevropa ligasi va Osiyo Chempionlar ligasiga yo'llanmani belgilaydi.",
-        "Sovrinlar: liga kubogi, **Oltin to'p** (g'olib) va **Oltin butsa** (eng ko'p gol urgan).",
+        "Sovrinlar: liga kubogi, **Oltin to'p** (g'olib) va **Oltin butsa** (eng ko'p gol urgan). Oltin to'p va butsa faqat **1-ligalar** orasida aniqlanadi — 2-ligalarda (LaLiga 2, Championship, 2. Bundesliga, Serie B, Ligue 2, Liga Portugal 2) faqat liga kubogi.",
       ],
     },
     {

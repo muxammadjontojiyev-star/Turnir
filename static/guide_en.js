@@ -63,7 +63,7 @@ GUIDE_I18N.en = {
         "Win — **3** points, draw — **1**, loss — **0**. If level: goal difference, then goals scored.",
         "A league usually has **20** players (LaLiga 2 — 22).",
         "Your league position decides qualification for the Champions League, Europa League and Asian Champions League.",
-        "Prizes: the league trophy, the **Golden Ball** (winner) and the **Golden Boot** (top scorer).",
+        "Prizes: the league trophy, the **Golden Ball** (winner) and the **Golden Boot** (top scorer). The Golden Ball and Boot are decided among **top-tier leagues** only — second-tier leagues (LaLiga 2, Championship, 2. Bundesliga, Serie B, Ligue 2, Liga Portugal 2) play for the league trophy only.",
       ],
     },
     {

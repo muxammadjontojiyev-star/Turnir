@@ -408,6 +408,11 @@ const LEAGUE_TROPHIES = {
   "J1 Liga":        "images/japan-trophy.png",
   "LaLiga 2":       "images/laliga2-trophy.png",       // 2026-10-11
   "Championship":   "images/championship-trophy.png",  // 2026-10-11
+  // 2026-10-30: 2-ligalar kuboklari (fon shaffof PNG, egasi yuborgan rasmlardan)
+  "2. Bundesliga":   "images/bundesliga2-trophy.png",
+  "Serie B":         "images/serieb-trophy.png",
+  "Ligue 2":         "images/ligue2-trophy.png",
+  "Liga Portugal 2": "images/portugal2-trophy.png",
 };
 
 // Liga emblemasi (logo) — liga nomi yonida ko'rsatiladi (hero karta + tanlash ro'yxati)
@@ -2629,6 +2634,12 @@ async function fetchAndRenderPrizes(leagueId) {
     document.getElementById("prize-winner-club")
   );
 
+  // 2026-10-30: Oltin to'p / butsa faqat 1-ligalar orasida — 2-liga tanlansa kartalar o'rniga izoh
+  const golden = data.golden_eligible !== false;
+  ["prize-boot-card", "prize-ball-card"].forEach(id => document.getElementById(id)?.classList.toggle("hidden", !golden));
+  const gNote = document.getElementById("prize-golden-note");
+  if (gNote) { gNote.textContent = t.golden_second_tier || ""; gNote.classList.toggle("hidden", golden); }
+
   // Liga kubogi: tanlangan liga nomiga qarab rasmni ko'rsatamiz.
   // Champion = SHU liganing reyting 1-o'rni (league_champion).
   const league = (APP.leagues || []).find(l => l.id === leagueId);
@@ -2636,7 +2647,7 @@ async function fetchAndRenderPrizes(leagueId) {
   const img = document.getElementById("league-trophy-img");
   const trophyFile = league ? LEAGUE_TROPHIES[league.name] : null;
   if (card && img && trophyFile) {
-    img.src = trophyFile + "?v=20260625c";
+    img.src = trophyFile + "?v=20261030a";
     img.onerror = function () { card.style.display = "none"; };
     card.style.display = "";
     renderPrizeClub(
