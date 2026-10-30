@@ -3,7 +3,7 @@ shop_api.py — DO'KON endpointlari (2026-10-30, APIRouter). Mantiq — shop_cor
 
 Ishtirokchi:
   GET  /shop                       — balans, faol paketlar, karta, buyurtmalarim
-  POST /shop/order                 — {package_id, image_base64} chek bilan buyurtma
+  POST /shop/order                 — {package_id, image_base64} chek bilan yoki {package_id, no_receipt: true}
 Bosh admin:
   GET  /shop/admin/orders          — tekshiruvdagi buyurtmalar
   GET  /shop/admin/order/{id}/receipt — chek rasmi (no-store)
@@ -36,27 +36,38 @@ def shop_get(user: dict = Depends(get_authenticated_user)):
 
 
 @router.post("/shop/order")
-async def shop_order(package_id: int = Body(...), image_base64: str = Body(...),
+async def shop_order(package_id: int = Body(...), image_base64: str | None = Body(None), no_receipt: bool = Body(False),
                      user: dict = Depends(get_authenticated_user)):
-    """Xato (400): empty_image, bad_image, image_too_large, package_not_found, too_many_pending, no_card."""
+    """
+    Xato (400): empty_image, bad_image, image_too_large, package_not_found, too_many_pending, no_card.
+    2026-10-30: no_receipt=true — chekni ilovada yubora olmadi: buyurtma chek rasmisiz ochiladi, xaridor chekni
+    adminga Telegram'da yuboradi; adminga matnli xabar (shop_notify_order_admin_nochek).
+    """
     if not SHOP_CARD_NUMBER:
         raise HTTPException(status_code=400, detail="no_card")
     from pt_payment import decode_receipt
-    from shop_core import shop_create_order
-    data, mime = decode_receipt(image_base64)
-    if data is None:
-        raise HTTPException(status_code=400, detail=mime)
+    from shop_core import NO_RECEIPT, shop_create_order
+    if no_receipt:
+        data, mime = NO_RECEIPT
+    else:
+        data, mime = decode_receipt(image_base64 or "")
+        if data is None:
+            logger.info("SHOP: chek rad etildi (user %s): %s, %s belgi", user["id"], mime, len(image_base64 or ""))
+            raise HTTPException(status_code=400, detail=mime)
     ok, r = shop_create_order(user["id"], package_id, data, mime)
     if not ok:
         raise HTTPException(status_code=400, detail=r)
-    from notify import notify_user_photo
+    from notify import notify_user, notify_user_photo
     buyer = "@" + r["username"] if r.get("username") else (r.get("nickname") or "")
+    fmt = {"id": r["id"], "buyer": buyer, "coins": _money(r["coins"]), "price": _money(r["price_uzs"])}
     for admin_tg in ADMIN_TELEGRAM_IDS:
         try:
             admin = get_user_by_telegram_id(admin_tg)
-            await notify_user_photo(admin_tg, data, mime, "shop_notify_order_admin",
-                                    admin.get("language") if admin else None, open_button_key="btn_open_app",
-                                    id=r["id"], buyer=buyer, coins=_money(r["coins"]), price=_money(r["price_uzs"]))
+            lang = admin.get("language") if admin else None
+            if no_receipt:
+                await notify_user(admin_tg, "shop_notify_order_admin_nochek", lang, open_button_key="btn_open_app", **fmt)
+            else:
+                await notify_user_photo(admin_tg, data, mime, "shop_notify_order_admin", lang, open_button_key="btn_open_app", **fmt)
         except Exception as exc:
             logger.warning("SHOP #%s: admin xabari xatosi (%s): %s", r["id"], admin_tg, exc)
     return {"status": "ok", "id": r["id"]}

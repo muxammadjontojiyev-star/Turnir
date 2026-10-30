@@ -24,7 +24,11 @@ logger = logging.getLogger(__name__)
 
 ST_REVIEW, ST_APPROVED, ST_REJECTED = "review", "approved", "rejected"
 _PKG_COLS = "id, coins, price_uzs, active"
-_ORDER_COLS = "o.id, o.user_id, o.package_id, o.coins, o.price_uzs, o.status, o.reject_reason, o.created_at, o.reviewed_at"
+_ORDER_COLS = ("o.id, o.user_id, o.package_id, o.coins, o.price_uzs, o.status, o.reject_reason, o.created_at, o.reviewed_at, "
+               "length(o.receipt) > 0 AS has_receipt")
+# 2026-10-30: chekni ilovada yubora olmagan xaridor — buyurtma chek RASMISIZ ochiladi (receipt = b"", mime = ""),
+# chekni bosh adminga Telegram'da yuboradi; admin to'lovni tekshirib tasdiqlaydi (tushunmovchilik bo'lmasin).
+NO_RECEIPT = (b"", "")
 
 
 def _tx(fn):
@@ -122,7 +126,7 @@ def shop_get_receipt(order_id) -> tuple[bytes, str] | None:
     conn = get_connection()
     try:
         r = conn.execute("SELECT receipt, receipt_mime FROM shop_orders WHERE id = ?", (_int(order_id),)).fetchone()
-        return (bytes(r["receipt"]), r["receipt_mime"]) if r else None
+        return (bytes(r["receipt"]), r["receipt_mime"]) if r and r["receipt"] else None
     finally:
         conn.close()
 

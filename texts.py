@@ -233,6 +233,11 @@ TEXTS = {
         LANGUAGE_RU: "🛒 Заказ eF Token #{id}\nПокупатель: {buyer}\nПакет: {coins} eF Token\nСумма: {price} сум\nПроверка: приложение → Admin → Магазин.",
         LANGUAGE_EN: "🛒 eF Token order #{id}\nBuyer: {buyer}\nPackage: {coins} eF Token\nAmount: {price} UZS\nReview: app → Admin → Shop.",
     },
+    "shop_notify_order_admin_nochek": {
+        LANGUAGE_UZ: "🛒 eF Token buyurtmasi #{id} — CHEK RASMISIZ\nXaridor: {buyer}\nPaket: {coins} eF Token\nSumma: {price} so'm\nXaridor chekni ilovada yubora olmadi — u chekni sizga Telegram'da yuboradi. To'lovni tekshirib, ilova → Admin → Do'kon'da tasdiqlang.",
+        LANGUAGE_RU: "🛒 Заказ eF Token #{id} — БЕЗ ЧЕКА\nПокупатель: {buyer}\nПакет: {coins} eF Token\nСумма: {price} сум\nПокупатель не смог отправить чек в приложении — он пришлёт его вам в Telegram. Проверьте оплату и подтвердите: приложение → Admin → Магазин.",
+        LANGUAGE_EN: "🛒 eF Token order #{id} — NO RECEIPT\nBuyer: {buyer}\nPackage: {coins} eF Token\nAmount: {price} UZS\nThe buyer couldn't send the receipt in the app — they'll send it to you on Telegram. Check the payment and approve: app → Admin → Shop.",
+    },
     "shop_notify_approved": {
         LANGUAGE_UZ: "✅ To'lovingiz tasdiqlandi: +{coins} eF Token.\nBalans: {balance} eF Token.",
         LANGUAGE_RU: "✅ Оплата подтверждена: +{coins} eF Token.\nБаланс: {balance} eF Token.",
