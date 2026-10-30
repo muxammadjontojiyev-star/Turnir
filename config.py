@@ -104,6 +104,9 @@ WEBAPP_URL = os.getenv("WEBAPP_URL", "https://example.com/webapp")
 # === Sovrinlar ===
 PRIZE_TOP_SCORER = "golden_boot"   # Eng ko'p gol urgan — Oltin Butsa
 PRIZE_WINNER = "golden_ball"       # Turnir g'olibi — Oltin To'p znachogi
+# 2026-10-30: 2-ligalar (DB liga nomlari) — Oltin to'p va Oltin butsa hisobiga KIRMAYDI,
+# ular faqat 1-ligalar orasida aniqlanadi. Liga kubogi 2-ligalarda ham beriladi. Yangi 2-liga — shu yerga.
+SECOND_TIER_LEAGUES = ("LaLiga 2", "Championship", "2. Bundesliga", "Serie B", "Ligue 2", "Liga Portugal 2")
 
 # === Adminlar ===
 # Shu Telegram ID'lar WebApp'da admin paneliga kira oladi (bosh admin).

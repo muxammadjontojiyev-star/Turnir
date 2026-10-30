@@ -644,11 +644,15 @@ def get_prizes(league_id: int):
     if league is None:
         raise HTTPException(status_code=404, detail="Liga topilmadi")
 
-    # Oltin butsa va Oltin to'p — IKKALASI HAM barcha ligalar bo'yicha umumiy hisoblanadi
+    # Oltin butsa va Oltin to'p — IKKALASI HAM barcha 1-ligalar bo'yicha umumiy hisoblanadi
     # (liga tanlansa o'zgarmaydi). Bir ishtirokchining (user_id) barcha ligalardagi
     # natijalari yig'iladi.
+    # 2026-10-30: faqat 1-ligalar orasida (config.SECOND_TIER_LEAGUES hisobga olinmaydi)
+    from config import SECOND_TIER_LEAGUES
     overall = {}
     for lg in get_all_leagues():
+        if lg["name"] in SECOND_TIER_LEAGUES:
+            continue
         for p in calculate_league_rating(lg["id"]):
             agg = overall.get(p["user_id"])
             if agg is None:
@@ -691,6 +695,7 @@ def get_prizes(league_id: int):
         "top_scorer": top_scorer,
         "current_leader": leader,
         "league_champion": league_champion,
+        "golden_eligible": league["name"] not in SECOND_TIER_LEAGUES,   # 2-ligada oltin sovrinlar yo'q
     }
 
 

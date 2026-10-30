@@ -2,8 +2,8 @@
 Mavsum sovrinlari — hisoblash va tarixga saqlash.
 
 Sovrin turlari:
-- golden_ball: 5 liga bo'ylab eng ko'p OCHKO yig'gan (umumiy 1 kishi)   [LIGA]
-- golden_boot: 5 liga bo'ylab eng ko'p GOL urgan (umumiy 1 kishi)      [LIGA]
+- golden_ball: 1-ligalar bo'ylab eng ko'p OCHKO yig'gan (umumiy 1 kishi)   [LIGA]
+- golden_boot: 1-ligalar bo'ylab eng ko'p GOL urgan (umumiy 1 kishi)      [LIGA]
 - league_cup:  har liga 1-o'rni — o'sha liga kubogi (league_id bilan)  [LIGA]
 - wc_cup:      play-off chempioni                                       [WC]
 
@@ -17,7 +17,7 @@ Har biri o'z cooldowni + idempotentligi bilan (audit A3 naqshi).
 
 import logging
 
-from config import SEASON_FINALIZE_COOLDOWN_SECONDS
+from config import SEASON_FINALIZE_COOLDOWN_SECONDS, SECOND_TIER_LEAGUES
 from models import get_connection
 
 logger = logging.getLogger(__name__)
@@ -103,7 +103,10 @@ def calculate_league_prizes() -> dict:
             "nickname": champ.get("nickname"),
             "username": champ.get("username"),
         })
-        # Umumiy ochko/gol yig'indisi (barcha liga bo'ylab)
+        # Umumiy ochko/gol yig'indisi (barcha 1-liga bo'ylab). 2026-10-30: 2-ligalar
+        # (config.SECOND_TIER_LEAGUES) Oltin to'p / Oltin butsa hisobiga kirmaydi, kubogi — beriladi.
+        if lg["name"] in SECOND_TIER_LEAGUES:
+            continue
         for p in rating:
             uid = p["user_id"]
             if uid not in all_players:
