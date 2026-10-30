@@ -1,0 +1,76 @@
+/* shop.css — DO'KON sahifasi va eF Token (2026-10-30). Tokenlar — style.css :root (--cyan, --violet, ...). */
+
+.nav-token { width: 24px; height: 24px; display: block; filter: saturate(.55) brightness(.85); transition: filter .2s; }
+.nav-item.active .nav-token { filter: none; }
+
+.shop-tk { width: 18px; height: 18px; flex: none; display: inline-block; vertical-align: -3px; }
+.shop-tk--xs { width: 16px; height: 16px; }
+.shop-tk--pkg { width: 44px; height: 44px; filter: drop-shadow(0 6px 12px rgba(0,0,0,.5)); }
+.shop-tk--hero { width: 64px; height: 64px; filter: drop-shadow(0 0 14px var(--cyan-glow)); }
+
+.shop-loading { text-align: center; color: var(--text-secondary); padding: 30px 0; }
+.shop-empty { color: var(--text-secondary); font-size: 13px; text-align: center; padding: 18px 14px; }
+
+.shop-hero { display: flex; align-items: center; gap: 16px; padding: 18px; margin-bottom: 14px;
+  background: radial-gradient(120% 140% at 0% 0%, rgba(0,240,255,.14), transparent 55%),
+              radial-gradient(120% 140% at 100% 100%, rgba(123,47,255,.18), transparent 55%), var(--bg-card);
+  border: 1px solid var(--border-accent); }
+.shop-hero-lbl { font-size: 12px; color: var(--text-secondary); letter-spacing: .5px; }
+.shop-hero-val { font-family: var(--font-display); font-weight: 700; font-size: 34px; color: var(--text-heading); line-height: 1.1; }
+.shop-hero-val small { font-size: 14px; color: var(--cyan); margin-left: 6px; letter-spacing: 1px; }
+
+.shop-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 14px;
+  border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--border); }
+.shop-seg-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 6px; border-radius: 10px;
+  font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .5px; color: var(--text-secondary); }
+.shop-seg-btn.active { background: linear-gradient(135deg, var(--violet), #2f6bff); color: #fff; box-shadow: 0 6px 18px -8px var(--violet-glow); }
+
+.shop-pkgs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.shop-pkg { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 10px 12px; border-radius: var(--radius-card);
+  background: linear-gradient(160deg, var(--bg-card), var(--bg-card-alt)); border: 1px solid var(--border); color: var(--text-primary);
+  transition: transform .15s, border-color .2s; }
+.shop-pkg:active { transform: scale(.97); }
+.shop-pkg:hover { border-color: var(--border-accent); }
+.shop-pkg b { font-family: var(--font-display); font-size: 24px; color: var(--text-heading); margin-top: 6px; line-height: 1; }
+.shop-pkg-cur { font-size: 11px; color: var(--text-secondary); letter-spacing: .5px; }
+.shop-pkg-price { margin-top: 10px; width: 100%; padding: 8px 6px; border-radius: 10px; font-weight: 600; font-size: 13px;
+  color: #04121a; background: linear-gradient(135deg, var(--cyan), #49a8ff); }
+
+.shop-orders { padding: 6px 14px; margin-bottom: 16px; }
+.shop-order { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.shop-order:last-child { border-bottom: none; }
+.shop-order-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.shop-order-main b { font-family: var(--font-display); font-size: 17px; color: var(--text-heading); }
+.shop-order-sub { font-size: 12px; color: var(--text-secondary); }
+.shop-order-reason { width: 100%; font-size: 12px; color: var(--red-neon); }
+.shop-st { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 20px; white-space: nowrap; }
+.shop-st--review { color: #ffc94d; background: rgba(255,201,77,.12); }
+.shop-st--approved { color: #2fd39a; background: rgba(47,211,154,.12); }
+.shop-st--rejected { color: var(--red-neon); background: rgba(255,69,96,.12); }
+
+.shop-soon { text-align: center; padding: 28px 18px; }
+.shop-soon-ico { font-size: 40px; }
+.shop-soon-title { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--text-heading); margin: 6px 0; letter-spacing: 1px; }
+.shop-soon-txt { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+.shop-buy-box { gap: 12px; max-height: 88vh; overflow-y: auto; }
+.shop-buy-head { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.shop-step { font-size: 14px; font-weight: 600; color: var(--text-heading); }
+.shop-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 12px;
+  background: var(--bg-base); border: 1px solid var(--border-accent); }
+.shop-card-num { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: 1px; color: var(--text-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.shop-copy { padding: 6px 12px; flex: none; }
+.shop-card-holder { font-size: 12px; color: var(--text-secondary); margin-top: -4px; }
+.shop-hint { font-size: 12px; color: var(--text-secondary); text-align: center; line-height: 1.45; }
+
+/* Admin: DO'KON bo'limi */
+.shop-adm-order { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.shop-adm-order-top { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.shop-adm-order-top b { font-family: var(--font-display); font-size: 17px; color: var(--text-heading); }
+.shop-adm-order-who { font-size: 12px; color: var(--text-secondary); margin: 3px 0 8px; word-break: break-all; }
+.shop-adm-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.shop-adm-actions .btn { padding: 9px 2px; font-size: 12px; letter-spacing: 0; white-space: nowrap; }
+.shop-adm-pkg { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 6px; align-items: center; margin: 6px 0; }
+.shop-adm-pkg .modal-input { padding: 9px 10px; font-size: 14px; min-width: 0; }
+.shop-adm-pkg .btn { padding: 9px 12px; }
+.shop-adm-act { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; white-space: nowrap; }

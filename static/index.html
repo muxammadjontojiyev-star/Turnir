@@ -14,6 +14,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <link rel="stylesheet" href="style.css?v=20261030a" />
+  <link rel="stylesheet" href="shop.css?v=20261030a" />
 </head>
 <body>
 
@@ -265,6 +266,12 @@
       <!-- ===== ADMIN (2026-09-22: alohida sahifa — ChL/Divizion naqshi) =====
            Ilgari Profil bo'limining ichida edi; adminlar hisob tuzatish uchun
            profil sahifasini aylanib o'tishga majbur bo'lardi. -->
+      <!-- ===== DO'KON (2026-10-30, shop.js) ===== -->
+      <section id="section-shop" class="section">
+        <div class="section-label" data-i18n="shop_title">DO'KON</div>
+        <div id="shop-root"></div>
+      </section>
+
       <section id="section-admin" class="section">
         <!-- Admin panel (faqat adminga ko'rinadi, JS orqali boshqariladi) -->
         <div id="admin-panel" class="admin-panel hidden">
@@ -291,6 +298,11 @@
 
           <!-- Faqat bosh adminga -->
           <div id="admin-super-only" class="hidden">
+            <!-- 2026-10-30: Do'kon — eF Token buyurtmalari va paketlar (shop_admin.js) -->
+            <details class="adm-group" id="shop-adm-group">
+              <summary><span class="adm-group-ic">🛒</span><span>DO'KON (eF Token)</span><span class="adm-group-sub" id="shop-adm-count"></span></summary>
+              <div id="shop-adm" class="adm-pp"></div>
+            </details>
             <details class="adm-group" open>
               <summary><span class="adm-group-ic">👥</span><span>ISHTIROKCHILAR</span><span class="adm-group-sub" id="adm-pp-count"></span></summary>
               <!-- admin_participants.js: klub / @username / ID bo'yicha qidiruv + amallar -->
@@ -635,6 +647,12 @@
         <span class="nav-label" data-i18n="nav_prizes">Sovrinlar</span>
         <span class="nav-glow"></span>
       </button>
+      <!-- 2026-10-30: Do'kon (eF Token + auksion) — shop.js -->
+      <button class="nav-item" data-section="shop">
+        <span class="nav-icon"><img src="images/ef-token.svg?v=20261030a" alt="" class="nav-token"></span>
+        <span class="nav-label" data-i18n="nav_shop">Do'kon</span>
+        <span class="nav-glow"></span>
+      </button>
       <!-- 2026-09-22: Admin tugmasi — FAQAT adminlarga (api.js loadAdminPanel
            ko'rsatadi/yashiradi). ChL/Divizion naqshi. -->
       <button class="nav-item hidden" id="nav-admin" data-section="admin">
@@ -729,6 +747,10 @@
   <script src="pt_profile_prizes.js?v=20261014a"></script>
   <script src="pt_create.js?v=20261007j"></script>
   <script src="pt_payment.js?v=20261003f"></script>
+  <!-- 2026-10-30: Do'kon / eF Token (pt_payment.js dan KEYIN — ptCompressImage) -->
+  <script src="texts_shop.js?v=20261030a"></script>
+  <script src="shop.js?v=20261030a"></script>
+  <script src="shop_admin.js?v=20261030a"></script>
   <script src="pt_sub.js?v=20261003f"></script>
   <script src="pt_size.js?v=20261007r"></script>
   <script src="pt_members.js?v=20261013f"></script>
