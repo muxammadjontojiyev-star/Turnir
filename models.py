@@ -1310,6 +1310,9 @@ def init_db():
         from wallet_grants import LAUNCH_GIFT_AMOUNT, LAUNCH_GIFT_KEY, grant_once, init_grants_table
         init_grants_table(_c.cursor())
         grant_once(_c.cursor(), LAUNCH_GIFT_KEY, LAUNCH_GIFT_AMOUNT)
+        from wallet_grants import init_welcome_table, welcome_catch_up   # 2026-10-31: xush kelibsiz sovg'asi
+        init_welcome_table(_c.cursor())
+        welcome_catch_up(_c.cursor())
         _c.commit()
     finally:
         _c.close()

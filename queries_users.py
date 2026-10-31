@@ -39,6 +39,13 @@ def get_or_create_user(telegram_id: int, nickname: str, username: str | None = N
         conn.commit()
         cursor.execute("SELECT * FROM users WHERE telegram_id = ?", (telegram_id,))
         row = cursor.fetchone()
+        # 2026-10-31: xush kelibsiz sovg'asi — 100 eF Token, bir marta (wallet_grants.give_welcome).
+        # Xato bo'lsa ham foydalanuvchi yaratilishi to'xtamaydi.
+        try:
+            from wallet_grants import give_welcome
+            give_welcome(row["id"], telegram_id)
+        except Exception:
+            logger.exception("Xush kelibsiz sovg'asi berilmadi (tg %s)", telegram_id)
     elif username is not None and row["username"] != username:
         # Mavjud user — username o'zgargan bo'lsa yangilaymiz
         cursor.execute(
@@ -246,6 +253,17 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         cursor.execute("DELETE FROM tb_games WHERE home_user_id = ? OR away_user_id = ?", (user_id, user_id))
         # 2026-10-11: chat rasmlari (sender_id FK users) — userdan OLDIN
         cursor.execute("DELETE FROM chat_images WHERE sender_id = ?", (user_id,))
+
+        # 2026-10-31: Do'kon / eF Token / auksion / bezaklar (FK users) — userdan OLDIN.
+        # Yetakchi bo'lgan faol savdo bekor qilinadi, yutgan (hali qo'llanmagan) savdo — 'failed'
+        # (muzlatilgan summa egasi o'chgani uchun qaytarilmaydi). welcome_given (telegram_id) SAQLANADI —
+        # qayta ochilgan akkaunt xush kelibsiz sovg'asini ikkinchi marta olmaydi.
+        cursor.execute("UPDATE auction_lots SET status = 'cancelled', ended_at = CURRENT_TIMESTAMP, end_notified = 1 "
+                       "WHERE status = 'active' AND leader_user_id = ?", (user_id,))
+        cursor.execute("UPDATE auction_lots SET status = 'failed', applied_at = CURRENT_TIMESTAMP "
+                       "WHERE status = 'ended' AND winner_user_id = ?", (user_id,))
+        for t in ("auction_bids", "shop_orders", "user_cosmetics", "user_cosmetic_equip", "wallet_tx", "wallets"):
+            cursor.execute(f"DELETE FROM {t} WHERE user_id = ?", (user_id,))
 
         # prizes (eski jadval): top_scorer_user_id / winner_user_id
         cursor.execute(
