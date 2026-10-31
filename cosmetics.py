@@ -30,12 +30,27 @@ COSMETICS: dict[str, dict] = {
     "fire":     {"kind": KIND_FRAME, "price": 400},
     "champion": {"kind": KIND_FRAME, "price": 600},
     # profil kartasi orqa fonlari
-    "stadium":  {"kind": KIND_BG, "price": 200},
-    "sunset":   {"kind": KIND_BG, "price": 200},
-    "pitch":    {"kind": KIND_BG, "price": 250},
-    "cyber":    {"kind": KIND_BG, "price": 250},
-    "galaxy":   {"kind": KIND_BG, "price": 300},
-    "luxury":   {"kind": KIND_BG, "price": 500},
+    # 2026-10-31: egasi qarori — stadium/sunset/pitch/cyber SOTUVDAN olindi ("sale": False): sotib olganlarda
+    # qoladi (ko'rinadi, qo'llash/yechish mumkin), yangi xarid yo'q. galaxy/luxury — 200 eF.
+    "stadium":  {"kind": KIND_BG, "price": 200, "sale": False},
+    "sunset":   {"kind": KIND_BG, "price": 200, "sale": False},
+    "pitch":    {"kind": KIND_BG, "price": 250, "sale": False},
+    "cyber":    {"kind": KIND_BG, "price": 250, "sale": False},
+    "galaxy":   {"kind": KIND_BG, "price": 200},
+    "luxury":   {"kind": KIND_BG, "price": 200},
+    # 2026-10-31: futbolchilar rasmli fonlar (static/images/bg/pl-<nom>.jpg, egasi yuborgan rasmlardan):
+    # Ronaldo va Messi — qimmatroq, Real Madrid jamoaviy — o'rtacha, qolganlari — oddiy narx
+    "pl_ronaldo_pt":  {"kind": KIND_BG, "price": 700},
+    "pl_ronaldo_cr7": {"kind": KIND_BG, "price": 700},
+    "pl_messi_10":    {"kind": KIND_BG, "price": 700},
+    "pl_messi_barca": {"kind": KIND_BG, "price": 700},
+    "pl_real_zidane": {"kind": KIND_BG, "price": 500},
+    "pl_real_stars":  {"kind": KIND_BG, "price": 500},
+    "pl_neymar":      {"kind": KIND_BG, "price": 350},
+    "pl_kaka":        {"kind": KIND_BG, "price": 350},
+    "pl_bale":        {"kind": KIND_BG, "price": 350},
+    "pl_pedri":       {"kind": KIND_BG, "price": 350},
+    "pl_bellingham":  {"kind": KIND_BG, "price": 350},
 }
 _EQUIP_COL = {KIND_FRAME: "frame", KIND_BG: "bg"}
 
@@ -84,8 +99,11 @@ def cos_state(user_id: int) -> dict:
         cur = conn.cursor()
         cur.execute("SELECT item_id FROM user_cosmetics WHERE user_id = ?", (user_id,))
         owned = [r["item_id"] for r in cur.fetchall() if r["item_id"] in COSMETICS]
+        # sotuvdan olinganlar — faqat egasiga (o'zinikini qo'llash/yechish uchun) ko'rinadi
+        catalog = [{"id": k, **v, "sale": v.get("sale", True)} for k, v in COSMETICS.items()
+                   if v.get("sale", True) or k in owned]
         return {"balance": get_balance(cur, user_id), "owned": owned, "equipped": _equipped(cur, user_id),
-                "catalog": [{"id": k, **v} for k, v in COSMETICS.items()]}
+                "catalog": catalog}
     finally:
         conn.close()
 
@@ -101,7 +119,7 @@ def cos_buy(user_id: int, item_id: str) -> tuple[bool, str | dict]:
     item = COSMETICS.get(item_id or "")
 
     def run(cur):
-        if not item:
+        if not item or not item.get("sale", True):          # sotuvdan olingan — yangi xarid yo'q
             return False, "not_found"
         cur.execute("SELECT 1 FROM user_cosmetics WHERE user_id = ? AND item_id = ?", (user_id, item_id))
         if cur.fetchone():
