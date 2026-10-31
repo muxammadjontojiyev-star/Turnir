@@ -39,10 +39,31 @@ function cosApplyPage(section, bg) {
   if (bg && bg.startsWith("pl_")) section.classList.add("cos-page", `cos-page-${bg}`);
 }
 
+// 2026-10-31: o'z futbolchi foni — ilovaning asosiy sahifalarida ham (egasi so'rovi). Do'kon va Admin — fonsiz
+// (bezak namunalari va boshqaruv aniq ko'rinsin); o'yinchi sahifasida — O'SHA o'yinchining foni (renderPlayerModal).
+const COS_THEME_SECTIONS = ["section-home", "section-rating", "section-prizes", "section-profile"];
+
+function cosApplyTheme(bg) {
+  COS_THEME_SECTIONS.forEach(id => cosApplyPage(document.getElementById(id), bg));
+}
+
+async function cosThemeInit() {
+  try {
+    const d = await apiFetch("/shop/cosmetics");
+    cosApplyTheme(d && d.equipped && d.equipped.bg);
+  } catch (_) { /* fonsiz qoladi */ }
+}
+
 if (typeof renderProfile === "function") {
   const _cosPrevRenderProfile = renderProfile;
-  renderProfile = function (data) { _cosPrevRenderProfile(data); cosApplyById("profile-avatar-letter", data && data.cosmetics); };   // eslint-disable-line no-global-assign
+  renderProfile = function (data) {                                                  // eslint-disable-line no-global-assign
+    _cosPrevRenderProfile(data);
+    cosApplyById("profile-avatar-letter", data && data.cosmetics);
+    cosApplyTheme(data && data.cosmetics && data.cosmetics.bg);
+  };
 }
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(cosThemeInit, 0));
+else setTimeout(cosThemeInit, 0);
 if (typeof renderPlayerModal === "function") {
   const _cosPrevRenderPlayer = renderPlayerModal;
   renderPlayerModal = function (data) { _cosPrevRenderPlayer(data); cosApplyById("player-avatar-letter", data && data.cosmetics); };   // eslint-disable-line no-global-assign
@@ -125,6 +146,7 @@ async function cosAction(btn) {
       APP.profileData.cosmetics = r.equipped;            // Profil sahifasi qayta yuklanmasa ham yangilansin
       cosApplyById("profile-avatar-letter", r.equipped);
     }
+    cosApplyTheme(r.equipped && r.equipped.bg);          // 2026-10-31: boshqa sahifalar foni ham
     showToast(shopT(a === "buy" ? "cos_bought" : a === "on" ? "cos_applied" : "cos_removed"));
   } catch (e) {
     showToast(cosErr(e));
