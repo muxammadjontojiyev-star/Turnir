@@ -117,12 +117,18 @@ function cosItemHtml(item, d) {
     </div>`;
 }
 
+// 2026-10-31: fonlar — qimmatlari yuqorida (narx kamayish tartibida, teng narxda katalog tartibi); ramkalar — o'zgarmaydi
+function cosOrdered(items) {
+  return items.map((x, i) => ({ x, i }))
+    .sort((a, b) => (a.x.kind === "bg" ? b.x.price - a.x.price : 0) || a.i - b.i).map(o => o.x);
+}
+
 function cosTabHtml() {
   const d = COS.data;
   if (!d) return `<div class="shop-loading">…</div>`;
   if (d.error) return `<div class="card shop-empty">${escHtml(shopT("shop_err_generic"))}</div>`;
   // 2026-10-31: futbolchilar rasmli fonlar (pl_*) — alohida bo'lim; sotuvdan olinganlar faqat egasiga keladi (server)
-  const group = (kind, pl) => d.catalog.filter(x => x.kind === kind && (pl === undefined || x.id.startsWith("pl_") === pl))
+  const group = (kind, pl) => cosOrdered(d.catalog.filter(x => x.kind === kind && (pl === undefined || x.id.startsWith("pl_") === pl)))
     .map(x => cosItemHtml(x, d)).join("");
   return `<div class="auc-rules">${escHtml(shopT("cos_rules"))}</div>
     <div class="section-label">${escHtml(shopT("cos_frames"))}</div><div class="cos-grid">${group("frame")}</div>

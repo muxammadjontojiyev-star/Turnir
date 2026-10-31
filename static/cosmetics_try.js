@@ -79,7 +79,9 @@ function cosTryClose() { document.getElementById("cos-try")?.classList.add("hidd
 
 function cosTryStep(dir) {
   const item = COS.data.catalog.find(x => x.id === COS_TRY.id);
-  const same = COS.data.catalog.filter(x => x.kind === item.kind);
+  const same = typeof cosOrdered === "function"                 // ‹ › — tabdagi tartib bilan bir xil
+    ? cosOrdered(COS.data.catalog.filter(x => x.kind === item.kind && x.id.startsWith("pl_") === item.id.startsWith("pl_")))
+    : COS.data.catalog.filter(x => x.kind === item.kind);
   const i = same.findIndex(x => x.id === item.id);
   COS_TRY.id = same[(i + dir + same.length) % same.length].id;
   cosTryRender();
