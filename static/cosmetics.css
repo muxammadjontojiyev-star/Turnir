@@ -203,6 +203,15 @@
 .cos-page-pl_pedri { --pl-full: url("images/bgfull-pedri.jpg?v=20261031c"); }
 .cos-page-pl_bellingham { --pl-full: url("images/bgfull-bellingham.jpg?v=20261031c"); }
 
+/* Yuqori panel (eFOOTBALL, til) — fon bor sahifada shaffof: poster ekranning tepasigacha ko'rinadi */
+body.cos-theme-on .header {
+  background: linear-gradient(180deg, rgba(4,4,12,.55) 0%, rgba(4,4,12,.25) 70%, rgba(4,4,12,0) 100%) !important;
+  border-bottom: none !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+body.cos-theme-on .header::before, body.cos-theme-on .header::after { display: none !important; }
+body.cos-theme-on .header-title, body.cos-theme-on .header-nickname { text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+
 /* Sinab ko'rish oynasida — telefon ekranidek baland namuna (cosmetics_try.js) */
 .cos-try-page { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 9 / 13; width: min(100%, calc(46vh * 9 / 13));
   margin: 0 auto; padding: 12px; display: flex; flex-direction: column; justify-content: flex-start;

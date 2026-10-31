@@ -37,6 +37,16 @@ function cosApplyPage(section, bg) {
   if (!section) return;
   [...section.classList].filter(x => x.startsWith("cos-page")).forEach(x => section.classList.remove(x));
   if (bg && bg.startsWith("pl_")) section.classList.add("cos-page", `cos-page-${bg}`);
+  cosSyncHeader();
+}
+
+// 2026-10-31: faol sahifada futbolchi foni bo'lsa — yuqori panel (header) shaffof, poster ekranni to'liq egallaydi
+function cosSyncHeader() {
+  document.body.classList.toggle("cos-theme-on", !!document.querySelector(".section.active.cos-page"));
+}
+if (typeof navigateTo === "function") {
+  const _cosPrevNavigate = navigateTo;
+  navigateTo = function (...args) { const r = _cosPrevNavigate(...args); cosSyncHeader(); return r; };   // eslint-disable-line no-global-assign
 }
 
 // 2026-10-31: o'z futbolchi foni — ilovaning asosiy sahifalarida ham (egasi so'rovi). Do'kon va Admin — fonsiz
