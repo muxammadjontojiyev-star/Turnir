@@ -250,9 +250,9 @@ TEXTS = {
     },
     # 2026-10-30: Auksion (auction_api.py, scheduler)
     "auction_notify_outbid": {
-        LANGUAGE_UZ: "🔨 {club} ({league}) auksionida taklifingiz oshirildi: yangi taklif {amount} eF Token.\nSizning {refund} eF Token balansingizga qaytdi.",
-        LANGUAGE_RU: "🔨 Вашу ставку на {club} ({league}) перебили: новая ставка {amount} eF Token.\nВаши {refund} eF Token вернулись на баланс.",
-        LANGUAGE_EN: "🔨 You were outbid for {club} ({league}): the new bid is {amount} eF Token.\nYour {refund} eF Token are back on your balance.",
+        LANGUAGE_UZ: "🔔 Taklifingizdan oshirishdi!\n🔨 {club} ({league}): yangi taklif {amount} eF Token.\n💰 Sizning {refund} eF Token balansingizga qaytdi.\n⬆️ Qayta taklif — kamida {next_min} eF Token.\n⏳ Savdo tugashiga: {left}.\nIlova → Do'kon → Auksion.",
+        LANGUAGE_RU: "🔔 Вашу ставку перебили!\n🔨 {club} ({league}): новая ставка {amount} eF Token.\n💰 Ваши {refund} eF Token вернулись на баланс.\n⬆️ Повторная ставка — от {next_min} eF Token.\n⏳ До конца торгов: {left}.\nПриложение → Магазин → Аукцион.",
+        LANGUAGE_EN: "🔔 You've been outbid!\n🔨 {club} ({league}): the new bid is {amount} eF Token.\n💰 Your {refund} eF Token are back on your balance.\n⬆️ Bid again — at least {next_min} eF Token.\n⏳ Time left: {left}.\nApp → Shop → Auction.",
     },
     "auction_notify_won": {
         LANGUAGE_UZ: "🏆 Tabriklaymiz! {club} ({league}) auksionida g'olib bo'ldingiz: {amount} eF Token.\nYangi liga mavsumi ochilganda shu klubga avtomatik yozilasiz.",

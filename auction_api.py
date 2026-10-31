@@ -36,8 +36,10 @@ async def auction_bid_post(lot_id: int, amount: int = Body(..., embed=True), use
     prev = r.pop("prev", None)
     if prev and prev.get("telegram_id"):
         from auction_notify import _safe, money
+        from auction_notify import left_text
         await _safe(prev["telegram_id"], "auction_notify_outbid", prev.get("language"), club=r["club_name"],
-                    league=r["league_name"], amount=money(r["amount"]), refund=money(prev["amount"]))
+                    league=r["league_name"], amount=money(r["amount"]), refund=money(prev["amount"]),
+                    next_min=money(r["next_min"]), left=left_text(r["left_s"], prev.get("language")))
     return {"status": "ok", **r}
 
 

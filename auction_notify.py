@@ -15,6 +15,23 @@ def money(n) -> str:
     return f"{int(n or 0):,}".replace(",", " ")
 
 
+LEFT_UNITS = {"uz": ("kun", "soat", "daqiqa"), "ru": ("д", "ч", "мин"), "en": ("d", "h", "min")}
+
+
+def left_text(sec: int, lang: str | None) -> str:
+    """Qolgan vaqt: '1 kun 3 soat' / '2 soat 15 daqiqa' / '4 daqiqa' (xabar tilida)."""
+    d_u, h_u, m_u = LEFT_UNITS.get(lang or "uz", LEFT_UNITS["uz"])
+    sec = max(0, int(sec or 0))
+    d, h, m = sec // 86400, sec % 86400 // 3600, sec % 3600 // 60
+    if not d and not h:
+        m = max(1, m)                                     # 40 soniya ham '1 daqiqa'
+    if d:
+        return f"{d} {d_u} {h} {h_u}"
+    if h:
+        return f"{h} {h_u} {m} {m_u}"
+    return f"{m} {m_u}"
+
+
 async def _safe(tg, key, lang, **fmt) -> None:
     from notify import notify_user
     try:

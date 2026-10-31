@@ -161,7 +161,10 @@ def auction_bid(user_id: int, lot_id, amount) -> tuple[bool, str | dict]:
                     (amt, user_id, bid_id, f"+{AUCTION_SNIPE_MINUTES} minutes", lid) if extended
                     else (amt, user_id, bid_id, lid))
         return True, {"lot_id": lid, "amount": amt, "balance": balance, "extended": extended,
-                      "club_name": lot["club_name"], "league_name": lot["league_name"], "prev": prev}
+                      "club_name": lot["club_name"], "league_name": lot["league_name"], "prev": prev,
+                      # 2026-10-31: oshirilgan ishtirokchi xabari uchun — keyingi eng kam taklif va qolgan vaqt
+                      "next_min": amt + lot["min_step"],
+                      "left_s": AUCTION_SNIPE_MINUTES * 60 if extended else max(0, lot["left_s"] or 0)}
 
     ok, r = _tx(run)
     if ok:
