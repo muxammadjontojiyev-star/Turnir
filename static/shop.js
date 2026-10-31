@@ -54,7 +54,7 @@ function shopRender() {
 function shopCoinsHtml(d) {
   const pk = (d.packages || []).map(p => `
     <button class="shop-pkg" data-shop-pkg="${Number(p.id)}">
-      ${shopToken("shop-tk shop-tk--pkg")}
+      ${typeof shopStackSvg === "function" ? shopStackSvg(p.coins) : shopToken("shop-tk shop-tk--pkg")}
       <b>${shopNum(p.coins)}</b><span class="shop-pkg-cur">${escHtml(shopT("shop_currency"))}</span>
       <span class="shop-pkg-price">${escHtml(shopT("shop_price", { price: shopNum(p.price_uzs) }))}</span>
     </button>`).join("");

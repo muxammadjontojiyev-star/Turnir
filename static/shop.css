@@ -117,3 +117,6 @@
 .shop-noreceipt { font-size: 13px; color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; padding: 4px; align-self: center; }
 .shop-noreceipt--hl { color: var(--cyan); font-weight: 600; }
 .shop-order-tg { color: var(--cyan); }
+
+/* 2026-10-31: paket rasmi — miqdorga qarab token uyumi (shop_stack.js) */
+.shop-stack { width: 100%; max-width: 180px; height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(0,0,0,.45)); }
