@@ -174,6 +174,10 @@
 .cos-bg-pl_bale { --pl-img: url("images/bg-bale.jpg?v=20261031c"); --pl-pos: 60% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
 .cos-bg-pl_pedri { --pl-img: url("images/bg-pedri.jpg?v=20261031c"); --pl-pos: 60% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
 .cos-bg-pl_bellingham { --pl-img: url("images/bg-bellingham.jpg?v=20261031c"); --pl-pos: 50% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
+.cos-bg-pl_modric { --pl-img: url("images/bg-modric.jpg?v=20261031c"); --pl-pos: 50% center; --pl-border: linear-gradient(130deg, #ffffff, #9aa7c7, #7b2fff); }
+.cos-bg-pl_ramos { --pl-img: url("images/bg-ramos.jpg?v=20261031c"); --pl-pos: 50% center; --pl-border: linear-gradient(130deg, #ffffff, #9aa7c7, #7b2fff); }
+.cos-bg-pl_shevchenko { --pl-img: url("images/bg-shevchenko.jpg?v=20261031c"); --pl-pos: 50% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
+.cos-bg-pl_gullit { --pl-img: url("images/bg-gullit.jpg?v=20261031c"); --pl-pos: 50% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
 
 /* ---------------- FUTBOLCHI FONI — BUTUN SAHIFA (2026-10-31, egasi tanlovi) ----------------
    Poster (images/bgfull-<nom>.jpg, to'liq) Profil / o'yinchi sahifasining orqa foni bo'ladi; ustidagi
@@ -202,6 +206,10 @@
 .cos-page-pl_bale { --pl-full: url("images/bgfull-bale.jpg?v=20261031c"); }
 .cos-page-pl_pedri { --pl-full: url("images/bgfull-pedri.jpg?v=20261031c"); }
 .cos-page-pl_bellingham { --pl-full: url("images/bgfull-bellingham.jpg?v=20261031c"); }
+.cos-page-pl_modric { --pl-full: url("images/bgfull-modric.jpg?v=20261031c"); }
+.cos-page-pl_ramos { --pl-full: url("images/bgfull-ramos.jpg?v=20261031c"); }
+.cos-page-pl_shevchenko { --pl-full: url("images/bgfull-shevchenko.jpg?v=20261031c"); }
+.cos-page-pl_gullit { --pl-full: url("images/bgfull-gullit.jpg?v=20261031c"); }
 
 /* Yuqori panel (eFOOTBALL, til) — fon bor sahifada shaffof: poster ekranning tepasigacha ko'rinadi */
 body.cos-theme-on .header {
