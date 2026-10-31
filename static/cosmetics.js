@@ -112,6 +112,7 @@ function cosItemHtml(item, d) {
         <span class="cos-eye">👁</span>
       </div>
       <div class="cos-name">${escHtml(shopT("cos_" + item.id))}${on ? ` <span class="cos-on">✓</span>` : ""}</div>
+      <div class="cos-buyers">${escHtml(shopT("cos_buyers", { n: shopNum(item.buyers || 0) }))}</div>
       ${btn}
       <button class="cos-look" data-cos-try="${escHtml(item.id)}">${escHtml(shopT("cos_try_btn"))}</button>
     </div>`;

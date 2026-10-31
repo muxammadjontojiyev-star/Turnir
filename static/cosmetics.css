@@ -242,6 +242,7 @@ body.cos-theme-on .header-title, body.cos-theme-on .header-nickname { text-shado
 .cos-prev .profile-info b { font-family: var(--font-display); font-size: 15px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 .cos-name { font-size: 13px; font-weight: 600; color: var(--text-heading); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cos-on { color: #2fd39a; }
+.cos-buyers { font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: -6px; }
 .cos-btn { padding: 8px 4px; font-size: 12px; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
 
 /* ---------------- Sinab ko'rish (cosmetics_try.js) ---------------- */

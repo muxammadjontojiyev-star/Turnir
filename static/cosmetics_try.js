@@ -47,7 +47,7 @@ function cosTryHtml() {
       <div class="cos-try-nav">
         <button class="cos-try-arrow" data-cos-try-step="-1" aria-label="‹">‹</button>
         <div class="cos-try-name"><b>${escHtml(shopT("cos_" + item.id))}</b>
-          <small>${escHtml(shopT(item.kind === "frame" ? "cos_frames" : "cos_bgs"))}${owned ? " · " + escHtml(shopT("cos_try_owned")) : ""}</small></div>
+          <small>${escHtml(shopT(item.kind === "frame" ? "cos_frames" : "cos_bgs"))} · ${escHtml(shopT("cos_buyers", { n: shopNum(item.buyers || 0) }))}${owned ? " · " + escHtml(shopT("cos_try_owned")) : ""}</small></div>
         <button class="cos-try-arrow" data-cos-try-step="1" aria-label="›">›</button>
       </div>
       <div class="cos-try-hint">${escHtml(shopT("cos_try_hint"))}</div>
