@@ -152,6 +152,29 @@
               linear-gradient(105deg, transparent 40%, rgba(255,243,176,.10) 50%, transparent 60%);
 }
 
+/* ---------------- FUTBOLCHILAR RASMLI FONLAR (2026-10-31) ----------------
+   Rasm — static/images/bg/pl-<nom>.jpg (900×252, egasi yuborgan posterlardan kesilgan). Chap tomon qorayadi —
+   avatar va nik o'qiladi; hoshiya: Ronaldo/Messi — oltin, Real Madrid jamoaviy — kumush, qolganlari — neon. */
+.card--profile[class*="cos-bg-pl_"] {
+  background:
+    linear-gradient(90deg, rgba(8,8,20,.95) 0%, rgba(8,8,20,.78) 30%, rgba(8,8,20,.25) 62%, rgba(8,8,20,0) 85%) padding-box,
+    var(--pl-img) var(--pl-pos, center) / cover no-repeat padding-box,
+    var(--pl-border) border-box;
+  box-shadow: 0 14px 34px -16px rgba(0,0,0,.8);
+}
+.card--profile[class*="cos-bg-pl_"]::before { background: linear-gradient(180deg, rgba(0,0,0,.15), transparent 40%, rgba(0,0,0,.35)); }
+.cos-bg-pl_ronaldo_pt { --pl-img: url("images/bg/pl-ronaldo_pt.jpg?v=20261031a"); --pl-pos: 62% center; --pl-border: linear-gradient(130deg, #fff3b0, #e0a020, #ffd54a); }
+.cos-bg-pl_ronaldo_cr7 { --pl-img: url("images/bg/pl-ronaldo_cr7.jpg?v=20261031a"); --pl-pos: 45% center; --pl-border: linear-gradient(130deg, #fff3b0, #e0a020, #ffd54a); }
+.cos-bg-pl_messi_10 { --pl-img: url("images/bg/pl-messi_10.jpg?v=20261031a"); --pl-pos: 55% center; --pl-border: linear-gradient(130deg, #fff3b0, #e0a020, #ffd54a); }
+.cos-bg-pl_messi_barca { --pl-img: url("images/bg/pl-messi_barca.jpg?v=20261031a"); --pl-pos: 60% center; --pl-border: linear-gradient(130deg, #fff3b0, #e0a020, #ffd54a); }
+.cos-bg-pl_real_zidane { --pl-img: url("images/bg/pl-real_zidane.jpg?v=20261031a"); --pl-pos: 55% center; --pl-border: linear-gradient(130deg, #ffffff, #9aa7c7, #7b2fff); }
+.cos-bg-pl_real_stars { --pl-img: url("images/bg/pl-real_stars.jpg?v=20261031a"); --pl-pos: 70% center; --pl-border: linear-gradient(130deg, #ffffff, #9aa7c7, #7b2fff); }
+.cos-bg-pl_neymar { --pl-img: url("images/bg/pl-neymar.jpg?v=20261031a"); --pl-pos: 45% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
+.cos-bg-pl_kaka { --pl-img: url("images/bg/pl-kaka.jpg?v=20261031a"); --pl-pos: 55% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
+.cos-bg-pl_bale { --pl-img: url("images/bg/pl-bale.jpg?v=20261031a"); --pl-pos: 60% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
+.cos-bg-pl_pedri { --pl-img: url("images/bg/pl-pedri.jpg?v=20261031a"); --pl-pos: 60% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
+.cos-bg-pl_bellingham { --pl-img: url("images/bg/pl-bellingham.jpg?v=20261031a"); --pl-pos: 50% center; --pl-border: linear-gradient(130deg, #00f0ff, #7b2fff); }
+
 /* ---------------- Do'kon: «Bezaklar» tabi ---------------- */
 .cos-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
 .cos-grid--bg { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -81,10 +81,13 @@ function cosTabHtml() {
   const d = COS.data;
   if (!d) return `<div class="shop-loading">…</div>`;
   if (d.error) return `<div class="card shop-empty">${escHtml(shopT("shop_err_generic"))}</div>`;
-  const group = kind => d.catalog.filter(x => x.kind === kind).map(x => cosItemHtml(x, d)).join("");
+  // 2026-10-31: futbolchilar rasmli fonlar (pl_*) — alohida bo'lim; sotuvdan olinganlar faqat egasiga keladi (server)
+  const group = (kind, pl) => d.catalog.filter(x => x.kind === kind && (pl === undefined || x.id.startsWith("pl_") === pl))
+    .map(x => cosItemHtml(x, d)).join("");
   return `<div class="auc-rules">${escHtml(shopT("cos_rules"))}</div>
     <div class="section-label">${escHtml(shopT("cos_frames"))}</div><div class="cos-grid">${group("frame")}</div>
-    <div class="section-label">${escHtml(shopT("cos_bgs"))}</div><div class="cos-grid cos-grid--bg">${group("bg")}</div>`;
+    <div class="section-label">${escHtml(shopT("cos_players"))}</div><div class="cos-grid cos-grid--bg">${group("bg", true)}</div>
+    <div class="section-label">${escHtml(shopT("cos_bgs"))}</div><div class="cos-grid cos-grid--bg">${group("bg", false)}</div>`;
 }
 
 function cosErr(e) {
