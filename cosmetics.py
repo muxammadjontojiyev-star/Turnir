@@ -105,7 +105,10 @@ def cos_state(user_id: int) -> dict:
         cur.execute("SELECT item_id FROM user_cosmetics WHERE user_id = ?", (user_id,))
         owned = [r["item_id"] for r in cur.fetchall() if r["item_id"] in COSMETICS]
         # sotuvdan olinganlar — faqat egasiga (o'zinikini qo'llash/yechish uchun) ko'rinadi
-        catalog = [{"id": k, **v, "sale": v.get("sale", True)} for k, v in COSMETICS.items()
+        # 2026-10-31: har bezakni nechta kishi sotib olgan (egasi so'rovi — do'konda raqam bilan)
+        cur.execute("SELECT item_id, COUNT(*) AS n FROM user_cosmetics GROUP BY item_id")
+        buyers = {r["item_id"]: r["n"] for r in cur.fetchall()}
+        catalog = [{"id": k, **v, "sale": v.get("sale", True), "buyers": buyers.get(k, 0)} for k, v in COSMETICS.items()
                    if v.get("sale", True) or k in owned]
         return {"balance": get_balance(cur, user_id), "owned": owned, "equipped": _equipped(cur, user_id),
                 "catalog": catalog}
