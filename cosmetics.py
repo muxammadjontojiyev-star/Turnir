@@ -38,7 +38,7 @@ COSMETICS: dict[str, dict] = {
     "cyber":    {"kind": KIND_BG, "price": 250, "sale": False},
     "galaxy":   {"kind": KIND_BG, "price": 200},
     "luxury":   {"kind": KIND_BG, "price": 200},
-    # 2026-10-31: futbolchilar rasmli fonlar (static/images/bg/pl-<nom>.jpg, egasi yuborgan rasmlardan):
+    # 2026-10-31: futbolchilar rasmli fonlar (static/images/bg-<nom>.jpg, egasi yuborgan rasmlardan):
     # Ronaldo va Messi — qimmatroq, Real Madrid jamoaviy — o'rtacha, qolganlari — oddiy narx
     "pl_ronaldo_pt":  {"kind": KIND_BG, "price": 700},
     "pl_ronaldo_cr7": {"kind": KIND_BG, "price": 700},
