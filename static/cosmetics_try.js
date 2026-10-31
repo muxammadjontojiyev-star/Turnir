@@ -33,13 +33,17 @@ function cosTryHtml() {
       : `<button class="btn btn--primary cos-try-buy" data-cos="buy" data-id="${escHtml(item.id)}">${escHtml(shopT("cos_try_buy"))} · ${shopToken("shop-tk shop-tk--xs")} ${shopNum(item.price)}</button>`;
   return `<div class="modal-box cos-try-box">
       <div class="modal-title">${escHtml(shopT("cos_try_title"))}</div>
-      <div class="card card--profile ${cosClassFor("bg", look.bg)}">
-        <div class="profile-avatar ${cosClassFor("frame", look.frame)}">${cosTryAvatarHtml()}</div>
-        <div class="profile-info">
-          <h2 class="profile-nickname">${escHtml(nick)}</h2>
-          ${line ? `<span class="profile-league">${escHtml(line)}</span>` : ""}
-        </div>
-      </div>
+      ${(() => {
+        const card = `<div class="card card--profile ${cosClassFor("bg", look.bg)}">
+          <div class="profile-avatar ${cosClassFor("frame", look.frame)}">${cosTryAvatarHtml()}</div>
+          <div class="profile-info">
+            <h2 class="profile-nickname">${escHtml(nick)}</h2>
+            ${line ? `<span class="profile-league">${escHtml(line)}</span>` : ""}
+          </div>
+        </div>`;
+        // 2026-10-31: futbolchi foni — butun sahifa foni bo'lgani uchun baland namuna (poster to'liq)
+        return look.bg && look.bg.startsWith("pl_") ? `<div class="cos-try-page cos-page-${escHtml(look.bg)} cos-bg-${escHtml(look.bg)}">${card}</div>` : card;
+      })()}
       <div class="cos-try-nav">
         <button class="cos-try-arrow" data-cos-try-step="-1" aria-label="‹">‹</button>
         <div class="cos-try-name"><b>${escHtml(shopT("cos_" + item.id))}</b>

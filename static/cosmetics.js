@@ -27,7 +27,16 @@ function cosApply(card, avatar, cos) {
 
 function cosApplyById(letterId, cos) {
   const av = document.getElementById(letterId)?.closest(".profile-avatar");
-  cosApply(av?.closest(".card--profile"), av, cos);
+  const card = av?.closest(".card--profile");
+  cosApply(card, av, cos);
+  cosApplyPage(card?.closest(".section"), cos && cos.bg);
+}
+
+// 2026-10-31: futbolchi rasmli fon (pl_*) — butun sahifa foni (poster to'liq ko'rinadi), cosmetics.css .cos-page
+function cosApplyPage(section, bg) {
+  if (!section) return;
+  [...section.classList].filter(x => x.startsWith("cos-page")).forEach(x => section.classList.remove(x));
+  if (bg && bg.startsWith("pl_")) section.classList.add("cos-page", `cos-page-${bg}`);
 }
 
 if (typeof renderProfile === "function") {
