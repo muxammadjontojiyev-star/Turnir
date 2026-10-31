@@ -51,6 +51,11 @@ COSMETICS: dict[str, dict] = {
     "pl_bale":        {"kind": KIND_BG, "price": 350},
     "pl_pedri":       {"kind": KIND_BG, "price": 350},
     "pl_bellingham":  {"kind": KIND_BG, "price": 350},
+    # 2026-10-31 (2-to'plam): narx — mashhurlik bo'yicha: Modrić, Ramos — 500; Shevchenko, Gullit — 350
+    "pl_modric":      {"kind": KIND_BG, "price": 500},
+    "pl_ramos":       {"kind": KIND_BG, "price": 500},
+    "pl_shevchenko":  {"kind": KIND_BG, "price": 350},
+    "pl_gullit":      {"kind": KIND_BG, "price": 350},
 }
 _EQUIP_COL = {KIND_FRAME: "frame", KIND_BG: "bg"}
 
