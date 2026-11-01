@@ -1416,5 +1416,8 @@ def seed_leagues():
         "INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, ?)",
         ("Liga Portugal 2", 18, "open"),
     )
+    # 2026-11-01: mintaqa / faollik / tartib + 6 yangi Yevropa ligasi; bo'sh 2-ligalar nofaol (leagues_region.py)
+    from leagues_region import migrate_leagues_region
+    migrate_leagues_region(cursor)
     conn.commit()
     conn.close()

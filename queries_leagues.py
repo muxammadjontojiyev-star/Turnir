@@ -15,10 +15,10 @@ from config import (
 # ============ LEAGUES ============
 
 def get_all_leagues() -> list[dict]:
-    """Barcha ligalarni qaytaradi."""
+    """Barcha FAOL ligalarni qaytaradi (2026-11-01: nofaol 2-ligalar yashirin; tartib — sort_order, leagues_region.py)."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM leagues")
+    cursor.execute("SELECT * FROM leagues WHERE COALESCE(is_active, 1) = 1 ORDER BY sort_order, id")
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]

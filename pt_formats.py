@@ -162,6 +162,10 @@ LEAGUE_CLUBS: dict[str, tuple[str, ...]] = {
 }
 
 WC_TEAMS: tuple[str, ...] = tuple(team for teams in WC_GROUPS.values() for team in teams)
+# 2026-11-01: 6 ta yangi Yevropa ligasi (league_clubs_eu2.py — static/league_clubs_eu2.js bilan bir xil)
+from league_clubs_eu2 import NEW_EU_CLUBS  # noqa: E402
+LEAGUE_CLUBS.update(NEW_EU_CLUBS)
+
 ALL_CLUBS: tuple[str, ...] = tuple(c for cl in LEAGUE_CLUBS.values() for c in cl)
 
 

@@ -432,13 +432,14 @@ def list_leagues():
     leagues = get_all_leagues()  # id (seed) tartibida
     reserved = _promotion_reserved()   # 2026-11-01: ko'tarilganlarga band joylar — to'lganlikka qo'shiladi
     result = []
-    prev_all_full = True  # undan oldingi barcha ligalar to'lganmi
+    prev_all_full = {}  # 2026-11-01: mintaqa -> undan oldingi barcha ligalar to'lganmi (har mintaqa alohida zanjir)
     for league in leagues:
+        region = league.get("region") or "eu"
         current_count = count_league_players(league["id"])
         is_full = current_count + reserved.get(league["id"], 0) >= league["max_players"]
         has_draw = ("draw_date" in league.keys()) and (league["draw_date"] is not None)
-        # Liga yopiq, agar undan oldingilardan biri to'lmagan bo'lsa
-        is_locked = not prev_all_full
+        # Liga yopiq, agar shu mintaqada undan oldingilardan biri to'lmagan bo'lsa
+        is_locked = not prev_all_full.get(region, True)
         result.append({
             "id": league["id"],
             "name": league["name"],
@@ -449,9 +450,10 @@ def list_leagues():
             "has_draw_date": has_draw,
             "is_locked": is_locked,
             "reserved": reserved.get(league["id"], 0),
+            "region": region,
         })
         # Keyingi liga uchun: shu liga ham to'lган bo'lsagina ochiq bo'ladi
-        prev_all_full = prev_all_full and is_full
+        prev_all_full[region] = prev_all_full.get(region, True) and is_full
     return result
 
 
@@ -808,9 +810,15 @@ def _is_league_locked(league_id: int) -> bool:
     to'lmagan bo'lsa True. list_leagues bilan bir xil mantiq (backend himoyasi).
     """
     reserved = _promotion_reserved()   # 2026-11-01: band joylar to'lganlikka qo'shiladi (list_leagues bilan bir xil)
-    for league in get_all_leagues():  # id (seed) tartibida
+    leagues = get_all_leagues()        # tartib bo'yicha
+    target = next((lg for lg in leagues if lg["id"] == league_id), None)
+    if target is None:
+        return False                   # nofaol / yo'q liga — register_user_to_league o'zi rad etadi
+    for league in leagues:
         if league["id"] == league_id:
             return False  # bu liga — birinchi to'lmagan yoki to'lgan, ochiq
+        if (league.get("region") or "eu") != (target.get("region") or "eu"):
+            continue      # 2026-11-01: navbat har mintaqada alohida
         # undan oldingi liga to'lmagan bo'lsa, bu liga yopiq
         if count_league_players(league["id"]) + reserved.get(league["id"], 0) < league["max_players"]:
             return True

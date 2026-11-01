@@ -69,6 +69,8 @@ def start_new_season() -> tuple[bool, str | dict]:
                     "WHERE id = 1 AND league_break = 1")
         if not cur.rowcount:                 # parallel bosish — boshqasi allaqachon ochdi
             return False, "not_in_break"
+        from leagues_region import deactivate_empty_second_tiers   # 2026-11-01: bo'shagan 2-ligalar nofaol
+        deactivate_empty_second_tiers(cur)
         return True, {"auction": auction, "promotions": start_promotion_hold(cur)}
 
     ok, res = _tx(open_season)

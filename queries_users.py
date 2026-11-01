@@ -345,7 +345,8 @@ def register_user_to_league(user_id: int, league_id: int, club_name: str | None 
             cursor.execute("ROLLBACK")
             return False, "already_registered"
 
-        cursor.execute("SELECT max_players FROM leagues WHERE id = ?", (league_id,))
+        # 2026-11-01: nofaol (yashirin) liga — yo'q deb hisoblanadi (leagues_region.py)
+        cursor.execute("SELECT max_players FROM leagues WHERE id = ? AND COALESCE(is_active, 1) = 1", (league_id,))
         league_row = cursor.fetchone()
         if league_row is None:
             cursor.execute("ROLLBACK")

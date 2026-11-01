@@ -1,15 +1,10 @@
 """
 Yevropa ligasi (YeL) kvalifikatsiyasi.
 
-Qoida (loyiha egasi, 2026-10-14): liga mavsumi yakunlanganda ChL bilan BIR XIL
-7 ta Yevropa 1-ligasi reytingidan (cl_qualification.CL_LEAGUES):
-  - har ligadan 6..10-o'rinlar, qualified_via='top10'
-    (ChL'ga ketgan ENG YAXSHI 6-o'rin bundan CHIQARILADI — u ChL'da)
-  - 11-o'rin egalaridan ENG YAXSHI 2 tasi (achko > gol farqi > urilgan gol),
-    qualified_via='best11'
-Jami: 6 (qolgan 6-o'rinlar) + 28 (7..10) + 2 = 36 ishtirokchi (ChL bilan teng —
-Swiss formatida juft son, hech kim o'yinsiz qolmaydi).
-(Avval: 5 liga, 8..14 + eng yaxshi 2 ta 15-o'rin — 'top14'/'best15'.)
+Qoida (loyiha egasi, 2026-11-01): ChL bilan BIR XIL 13 ta Yevropa ligasi, LIGA KUCHIGA qarab
+(cl_qualification.EURO_QUOTAS — ChL kvotasidan keyingi o'rinlar): katta 5 liga — 5–8-o'rin,
+Portugaliya va Niderlandiya — 4–6, Belgiya, Turkiya, Chexiya, Rossiya — 3–4, Norvegiya va Gretsiya —
+2-o'rin; qualified_via='top10'. Jami 36. (2026-10-14 — 2026-11-01: 6–10-o'rin + eng yaxshi 2 ta 11-o'rin.)
 
 Kirish huquqi ODAMGA (telegram_id) tegishli: keyingi mavsumda boshqa klub
 tanlasa ham YeL'da qatnashadi (el_core.el_sync_participants).
@@ -25,19 +20,15 @@ dan KEYIN chaqiriladi (season_prizes._finalize_league_locked).
 
 import logging
 
-from cl_qualification import CL_TOP_N, compute_cl_qualifiers, euro_leagues
+from cl_qualification import EURO_QUOTAS, compute_cl_qualifiers, euro_leagues
 from models import get_connection
 from rating import calculate_league_rating
 
 logger = logging.getLogger(__name__)
 
-EL_FIRST_POS = CL_TOP_N + 1   # 6 — ChL'ning to'g'ridan-to'g'ri chegarasidan keyin
-EL_LAST_POS = 10              # har ligadan oxirgi to'g'ridan-to'g'ri o'rin (2026-10-14: 14 -> 10)
-EL_BEST_POS = EL_LAST_POS + 1 # 11 — eng yaxshilari saralanadigan o'rin
-EL_BEST_COUNT = 2             # eng yaxshi 11-o'rinlar soni
 EL_VIA_TOP = "top10"
-EL_VIA_BEST = "best11"
-EL_TOTAL = 36
+EL_VIA_BEST = "best11"      # endi ishlatilmaydi (eski yozuvlar uchun)
+EL_TOTAL = sum(el for _, el in EURO_QUOTAS.values())   # 36
 
 
 def compute_el_qualifiers(exclude_telegram_ids: set[int] | None = None) -> list[dict]:
@@ -63,14 +54,14 @@ def compute_el_qualifiers(exclude_telegram_ids: set[int] | None = None) -> list[
     conn.close()
 
     qualifiers: list[dict] = []
-    best_pool: list[dict] = []
 
     for lg in leagues:
+        cl_n, el_n = EURO_QUOTAS.get(lg["name"], (0, 0))
         table = calculate_league_rating(lg["id"])
         for pos, p in enumerate(table, start=1):
-            if pos < EL_FIRST_POS:
+            if pos <= cl_n:
                 continue
-            if pos > EL_BEST_POS:
+            if pos > cl_n + el_n:
                 break
             entry = {
                 "telegram_id": tg_map.get(p["user_id"]),
@@ -82,25 +73,14 @@ def compute_el_qualifiers(exclude_telegram_ids: set[int] | None = None) -> list[
                 "points": p["points"],
                 "goal_difference": p["goal_difference"],
                 "goals_for": p["goals_for"],
+                "qualified_via": EL_VIA_TOP,
             }
             if entry["telegram_id"] is None:
                 logger.warning("YeL: user_id=%s uchun telegram_id topilmadi, tashlab ketildi", p["user_id"])
                 continue
             if entry["telegram_id"] in exclude_telegram_ids:
-                continue  # ChL'ga o'tgan (eng yaxshi 6-o'rin)
-            if pos <= EL_LAST_POS:
-                entry["qualified_via"] = EL_VIA_TOP
-                qualifiers.append(entry)
-            else:  # pos == EL_BEST_POS (11-o'rin)
-                entry["qualified_via"] = EL_VIA_BEST
-                best_pool.append(entry)
-
-    # Eng yaxshi 11-o'rinlar: achko > gol farqi > urilgan gol
-    best_pool.sort(
-        key=lambda e: (e["points"], e["goal_difference"], e["goals_for"]),
-        reverse=True,
-    )
-    qualifiers.extend(best_pool[:EL_BEST_COUNT])
+                continue  # ChL'ga o'tgan (nazariy: bitta odam 2 ligada)
+            qualifiers.append(entry)
 
     # telegram_id bo'yicha dedupe (nazariy: bitta odam 2 ligada) — birinchisi qoladi
     seen: set[int] = set()

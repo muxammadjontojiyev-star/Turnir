@@ -1,12 +1,11 @@
 """
 Chempionlar ligasi (ChL) kvalifikatsiyasi.
 
-Qoida (loyiha egasi, 2026-10-14): liga mavsumi yakunlanganda YEVROPA mintaqasining
-7 ta 1-ligasi reytingidan (CL_LEAGUES — Osiyo ligalari va 2-ligalar KIRMAYDI):
-  - har ligadan TOP-5 (7 × 5 = 35 ta), qualified_via='top5'
-  - 6-o'rin egalaridan ENG YAXSHI 1 tasi (achko > gol farqi > urilgan gol),
-    qualified_via='best6'
-Jami 36 ishtirokchi. (Avval: 5 liga × TOP-7 + eng yaxshi 8-o'rin — 'top7'/'best8';
+Qoida (loyiha egasi, 2026-11-01): liga mavsumi yakunlanganda 13 ta YEVROPA ligasi reytingidan
+LIGA KUCHIGA qarab (EURO_QUOTAS): katta 5 liga — 1–4-o'rin, Portugaliya va Niderlandiya — 1–3,
+Belgiya, Turkiya, Chexiya, Rossiya — 1–2, Norvegiya va Gretsiya — 1-o'rin; qualified_via='top5'.
+(2026-10-14 — 2026-11-01: 7 liga × top-5 + eng yaxshi 6-o'rin.) Osiyo ligalari va 2-ligalar KIRMAYDI.
+Jami 36 ishtirokchi. (Undan avval: 5 liga × TOP-7 + eng yaxshi 8-o'rin — 'top7'/'best8';
 eski mavsum yozuvlarida shu kodlar qoladi.) Ular telegram_id orqali eslab qolinadi — keyingi mavsumda
 boshqa klub tanlasalar ham ChL'da qatnashish huquqi SHU odamda qoladi.
 
@@ -22,22 +21,27 @@ from rating import calculate_league_rating
 
 logger = logging.getLogger(__name__)
 
-CL_TOP_N = 5          # har ligadan to'g'ridan-to'g'ri o'tadiganlar (2026-10-14: 7 -> 5)
-CL_BEST_EIGHTH = 1    # eng yaxshi (CL_TOP_N+1)-o'rinlar soni — hozir eng yaxshi 6-o'rin
-CL_TOTAL = 36
-# 2026-10-14: ChL/YeL faqat Yevropa mintaqasining 1-ligalaridan (DB liga nomlari).
-# Osiyo ligalari (Superliga, Saudi, UAE, J1) va 2-ligalar (LaLiga 2, Championship,
-# 2. Bundesliga, Serie B, Ligue 2, Liga Portugal 2) kirmaydi. Yangi Yevropa 1-ligasi qo'shilsa — shu yerga.
-CL_LEAGUES = ("LaLiga", "Premier Liga", "Bundesliga", "Serie A", "Ligue 1",
-              "Liga Portugal", "Süper Lig")
-CL_VIA_TOP = "top5"
-CL_VIA_BEST = "best6"
+# 2026-11-01: egasi qarori — 13 ta Yevropa ligasi, yo'llanmalar LIGA KUCHIGA qarab (UEFA reytingiga o'xshash).
+# liga -> (ChL o'rinlari: 1..cl, YeL o'rinlari: cl+1..cl+el). Jami ChL 36, YeL 36. Yangi liga — shu yerga.
+EURO_QUOTAS: dict[str, tuple[int, int]] = {
+    "LaLiga": (4, 4), "Premier Liga": (4, 4), "Bundesliga": (4, 4), "Serie A": (4, 4), "Ligue 1": (4, 4),
+    "Liga Portugal": (3, 3), "Eredivisie": (3, 3),
+    "Jupiler Pro League": (2, 2), "Süper Lig": (2, 2), "Chance Liga": (2, 2), "RPL": (2, 2),
+    "Eliteserien": (1, 1), "Greek Super League": (1, 1),
+}
+CL_TOTAL = sum(cl for cl, _ in EURO_QUOTAS.values())       # 36
+# Osiyo ligalari va 2-ligalar kirmaydi. (Avval: 7 liga × top-5 + eng yaxshi 6-o'rin — 'top5'/'best6';
+# eski mavsum yozuvlarida shu kodlar qoladi.)
+CL_LEAGUES = tuple(EURO_QUOTAS)
+CL_VIA_TOP = "top5"            # kod o'zgarmadi (frontend/tarix bilan moslik) — ma'nosi: liga kvotasi ichida
+CL_VIA_BEST = "best6"          # endi ishlatilmaydi (eski yozuvlar uchun)
 
 
 def euro_leagues(cursor) -> list[dict]:
     """Kvalifikatsiya beradigan ligalar (CL_LEAGUES), id tartibida. YeL ham shundan oladi."""
     q = ",".join("?" * len(CL_LEAGUES))
-    cursor.execute(f"SELECT id, name FROM leagues WHERE name IN ({q}) ORDER BY id", CL_LEAGUES)
+    cursor.execute(f"SELECT id, name FROM leagues WHERE name IN ({q}) AND COALESCE(is_active, 1) = 1 "
+                   "ORDER BY sort_order, id", CL_LEAGUES)
     return [dict(r) for r in cursor.fetchall()]
 
 
@@ -60,12 +64,12 @@ def compute_cl_qualifiers() -> list[dict]:
     conn.close()
 
     qualifiers: list[dict] = []
-    eighths: list[dict] = []
 
     for lg in leagues:
+        quota = EURO_QUOTAS.get(lg["name"], (0, 0))[0]
         table = calculate_league_rating(lg["id"])
         for pos, p in enumerate(table, start=1):
-            if pos > CL_TOP_N + 1:
+            if pos > quota:
                 break
             entry = {
                 "telegram_id": tg_map.get(p["user_id"]),
@@ -77,23 +81,12 @@ def compute_cl_qualifiers() -> list[dict]:
                 "points": p["points"],
                 "goal_difference": p["goal_difference"],
                 "goals_for": p["goals_for"],
+                "qualified_via": CL_VIA_TOP,
             }
             if entry["telegram_id"] is None:
                 logger.warning("ChL: user_id=%s uchun telegram_id topilmadi, tashlab ketildi", p["user_id"])
                 continue
-            if pos <= CL_TOP_N:
-                entry["qualified_via"] = CL_VIA_TOP
-                qualifiers.append(entry)
-            else:  # pos == CL_TOP_N + 1 (6-o'rin)
-                entry["qualified_via"] = CL_VIA_BEST
-                eighths.append(entry)
-
-    # Eng yaxshi 6-o'rin(lar): achko > gol farqi > urilgan gol
-    eighths.sort(
-        key=lambda e: (e["points"], e["goal_difference"], e["goals_for"]),
-        reverse=True,
-    )
-    qualifiers.extend(eighths[:CL_BEST_EIGHTH])
+            qualifiers.append(entry)
 
     # telegram_id bo'yicha dedupe (nazariy: bitta odam 2 ligada) — birinchisi qoladi
     seen: set[int] = set()
