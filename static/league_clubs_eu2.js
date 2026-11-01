@@ -6,7 +6,7 @@
 //  Logolar — RASMIY klub logolari, FotMob CDN (team ID — FotMob liga jadvallaridan, 2026/27), liga logolari ham
 //  FotMob (Liga Portugal, Süper Lig va boshqalar bilan bir xil manba). (2026-11-01 birinchi versiyada —
 //  vaqtinchalik qisqartmali qalqonlar edi.)
-//  api.js dagi LEAGUE_CLUBS / LEAGUE_LOGOS ga qo'shiladi — index.html da api.js dan KEYIN ulanadi.
+//  api.js dagi LEAGUE_CLUBS / LEAGUE_LOGOS / LEAGUE_TROPHIES ga qo'shiladi — index.html da api.js dan KEYIN ulanadi.
 // =============================================================
 
 (function () {
@@ -30,6 +30,13 @@
   Object.entries(CLUBS).forEach(([league, list]) => {
     LEAGUE_CLUBS[league] = list.map(([name, id]) => ({ name, logo: `${TEAM_LOGO}${id}.png` }));
   });
+  // 2026-11-01: liga kuboklari (egasi yuborgan rasmlar, shaffof fonli PNG — static/images/)
+  const TROPHIES = {
+    "RPL": "images/rpl-trophy.png", "Eredivisie": "images/eredivisie-trophy.png",
+    "Jupiler Pro League": "images/jupiler-trophy.png", "Chance Liga": "images/chance-trophy.png",
+    "Eliteserien": "images/eliteserien-trophy.png", "Greek Super League": "images/greek-trophy.png",
+  };
+  if (typeof LEAGUE_TROPHIES !== "undefined") Object.assign(LEAGUE_TROPHIES, TROPHIES);
   if (typeof LEAGUE_LOGOS !== "undefined") {
     Object.entries(LOGOS).forEach(([league, id]) => { LEAGUE_LOGOS[league] = `${LEAGUE_LOGO}${id}.png`; });
   }
