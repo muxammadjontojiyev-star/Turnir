@@ -71,8 +71,8 @@ GUIDE_I18N.en = {
       intro: "When the league season ends, the best players qualify for the cups. Qualification belongs to the person — you keep your place even if you change club next season.",
       steps_title: "WHO PLAYS",
       steps: [
-        "**Champions League** — places 1–5 from each of the 7 European leagues plus the best 6th place: **36** players.",
-        "**Europa League** — places 6–10 from those leagues (except the 6th place that went to the UCL) plus the 2 best 11th places: **36** players.",
+        "**Champions League** — from 13 European leagues by league strength: LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1 — places 1–4; Liga Portugal, Eredivisie — 1–3; Jupiler Pro League, Süper Lig, Chance Liga, RPL — 1–2; Eliteserien, Greek Super League — 1st: **36** players.",
+        "**Europa League** — the next places after the UCL quota: top-5 leagues — 5–8; Portugal, Netherlands — 4–6; Belgium, Turkey, Czechia, Russia — 3–4; Norway, Greece — 2nd: **36** players.",
         "**Asian Champions League** — places 1–8 from the Superliga, Saudi Pro League, UAE Pro League and J1 League: **32** players.",
       ],
       tips_title: "FORMAT",

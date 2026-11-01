@@ -89,8 +89,8 @@ function elRenderRules() {
   ].map(x => `<li>${x}</li>`).join("");
 
   const general = [
-    // 2026-10-14: ChL bilan bir xil 7 ta Yevropa 1-ligasi (el_qualification)
-    `${key("7 ta Yevropa ligasi")}da ${key("6–10-o'rin")} egallaganlar (ChL'ga o'tgan eng yaxshi 6-o'rindan tashqari) va eng yaxshi ${key("ikkita 11-o'rin")} — jami ${key(EL_TOTAL + " ta")} ishtirokchi qatnashadi. 2-ligalar va Osiyo ligalari kirmaydi.`,
+    // 2026-11-01: ChL bilan bir xil 13 ta Yevropa ligasi, ChL kvotasidan keyingi o'rinlar (el_qualification)
+    `${key("13 ta Yevropa ligasi")}da ChL o'rinlaridan keyingilar: katta 5 liga — ${key("5–8-o'rin")}, Portugaliya, Niderlandiya — ${key("4–6")}, Belgiya, Turkiya, Chexiya, Rossiya — ${key("3–4")}, Norvegiya, Gretsiya — ${key("2-o'rin")} — jami ${key(EL_TOTAL + " ta")} ishtirokchi qatnashadi. Osiyo ligalari kirmaydi.`,
     `Qatnashish huquqi ${key("Telegram akkauntingizga")} beriladi — yangi mavsumda boshqa klub tanlasangiz ham saqlanadi.`,
     `Guruhlar ${key("yo'q")}: barcha ishtirokchi yagona liga bosqichida.`,
     `Har ishtirokchi ${key(EL_ROUNDS + " ta turli raqib")} bilan ${key("1 martadan")} (mehmon o'yinisiz) o'ynaydi.`,

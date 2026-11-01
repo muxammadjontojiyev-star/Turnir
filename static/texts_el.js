@@ -57,7 +57,7 @@ const EL_TEXTS = {
     el_you_in:            "Siz ishtirokchisiz",
     el_you_out:           "Siz ishtirokchi emassiz",
     el_group_empty:       "Bu guruhda ishtirokchi yo'q.",
-    el_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 7 ta Yevropa ligasi bo'yicha 6–10-o'rin egalari (ChL'ga o'tgan eng yaxshi 6-o'rindan tashqari) va eng yaxshi ikkita 11-o'rin qo'shiladi.",
+    el_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 13 ta Yevropa ligasidan ChL o'rinlaridan keyingilari qo'shiladi: katta 5 liga — 5–8-o'rin, Portugaliya va Niderlandiya — 4–6, Belgiya, Turkiya, Chexiya va Rossiya — 3–4, Norvegiya va Gretsiya — 2-o'rin.",
     el_six_matches:       "6 o'yin",
     el_auto_confirm:      "avtomatik tasdiqlanadi",
 
@@ -168,7 +168,7 @@ const EL_TEXTS = {
     el_you_in:            "Вы участвуете",
     el_you_out:           "Вы не участвуете",
     el_group_empty:       "В этой группе нет участников.",
-    el_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся участники с 6–10 мест 7 европейских лиг (кроме лучшего 6-го места, ушедшего в ЛЧ) и два лучших 11-х места.",
+    el_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся следующие места после квоты ЛЧ в 13 европейских лигах: топ-5 лиг — 5–8, Португалия и Нидерланды — 4–6, Бельгия, Турция, Чехия и Россия — 3–4, Норвегия и Греция — 2-е место.",
     el_six_matches:       "6 матчей",
     el_auto_confirm:      "подтверждается автоматически",
 
@@ -276,7 +276,7 @@ const EL_TEXTS = {
     el_you_in:            "You are playing",
     el_you_out:           "You are not playing",
     el_group_empty:       "No players in this group.",
-    el_qual_pending:      "Qualification is not decided yet. After the league season ends, players finishing 6th–10th in the 7 European leagues (except the best 6th place, who goes to the CL) and the two best 11th places will be added.",
+    el_qual_pending:      "Qualification is not decided yet. After the league season ends, the places right after the UCL quota in 13 European leagues are added: top-5 leagues — 5th–8th, Portugal and Netherlands — 4th–6th, Belgium, Turkey, Czechia and Russia — 3rd–4th, Norway and Greece — 2nd.",
     el_six_matches:       "6 matches",
     el_auto_confirm:      "confirmed automatically",
 

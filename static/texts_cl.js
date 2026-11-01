@@ -57,7 +57,7 @@ const CL_TEXTS = {
     cl_you_in:            "Siz ishtirokchisiz",
     cl_you_out:           "Siz ishtirokchi emassiz",
     cl_group_empty:       "Bu guruhda ishtirokchi yo'q.",
-    cl_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 7 ta Yevropa ligasi (LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1, Liga Portugal, Süper Lig) bo'yicha top-5 va eng yaxshi bitta 6-o'rin qo'shiladi.",
+    cl_qual_pending:      "Kvalifikatsiya hali aniqlanmagan. Liga mavsumi yakunlangach, 13 ta Yevropa ligasidan liga kuchiga qarab qo'shiladi: katta 5 liga — 1–4-o'rin, Liga Portugal va Eredivisie — 1–3, Jupiler Pro League, Süper Lig, Chance Liga va RPL — 1–2, Eliteserien va Greek Super League — 1-o'rin.",
     cl_six_matches:       "6 o'yin",
     cl_auto_confirm:      "avtomatik tasdiqlanadi",
 
@@ -168,7 +168,7 @@ const CL_TEXTS = {
     cl_you_in:            "Вы участвуете",
     cl_you_out:           "Вы не участвуете",
     cl_group_empty:       "В этой группе нет участников.",
-    cl_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся топ-5 из 7 европейских лиг (LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1, Liga Portugal, Süper Lig) и одно лучшее 6-е место.",
+    cl_qual_pending:      "Квалификация ещё не определена. После завершения сезона лиги добавятся участники 13 европейских лиг по силе лиги: топ-5 лиг — 1–4 места, Liga Portugal и Eredivisie — 1–3, Jupiler Pro League, Süper Lig, Chance Liga и RPL — 1–2, Eliteserien и Greek Super League — 1-е место.",
     cl_six_matches:       "6 матчей",
     cl_auto_confirm:      "подтверждается автоматически",
 
@@ -276,7 +276,7 @@ const CL_TEXTS = {
     cl_you_in:            "You are playing",
     cl_you_out:           "You are not playing",
     cl_group_empty:       "No players in this group.",
-    cl_qual_pending:      "Qualification is not decided yet. After the league season ends, the top 5 from the 7 European leagues (LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1, Liga Portugal, Süper Lig) plus the single best 6th place will be added.",
+    cl_qual_pending:      "Qualification is not decided yet. After the league season ends, players from 13 European leagues are added by league strength: top-5 leagues — places 1–4, Liga Portugal and Eredivisie — 1–3, Jupiler Pro League, Süper Lig, Chance Liga and RPL — 1–2, Eliteserien and Greek Super League — 1st.",
     cl_six_matches:       "6 matches",
     cl_auto_confirm:      "confirmed automatically",
 

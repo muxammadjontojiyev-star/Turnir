@@ -73,8 +73,8 @@ GUIDE_I18N.uz = {
       intro: "Liga mavsumi yakunida eng yaxshilar kuboklarga yo'llanma oladi. Yo'llanma odamga beriladi — keyingi mavsumda klub almashsangiz ham kubokda qolasiz.",
       steps_title: "KIM QATNASHADI",
       steps: [
-        "**Chempionlar ligasi** — 7 ta Yevropa ligasining har biridan 1–5-o'rinlar va eng yaxshi 6-o'rin: jami **36** kishi.",
-        "**Yevropa ligasi** — o'sha ligalardan 6–10-o'rinlar (ChL'ga o'tgan 6-o'rindan tashqari) va eng yaxshi 2 ta 11-o'rin: jami **36** kishi.",
+        "**Chempionlar ligasi** — 13 ta Yevropa ligasidan, liga kuchiga qarab: LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1 — 1–4-o'rin; Liga Portugal, Eredivisie — 1–3; Jupiler Pro League, Süper Lig, Chance Liga, RPL — 1–2; Eliteserien, Greek Super League — 1-o'rin: jami **36** kishi.",
+        "**Yevropa ligasi** — o'sha ligalardan ChL o'rinlaridan keyingilari: katta 5 liga — 5–8-o'rin; Portugaliya, Niderlandiya — 4–6; Belgiya, Turkiya, Chexiya, Rossiya — 3–4; Norvegiya, Gretsiya — 2-o'rin: jami **36** kishi.",
         "**Osiyo Chempionlar ligasi** — Superliga, Saudi Pro Liga, UAE Pro Liga va J1 Liga'ning 1–8-o'rinlari: jami **32** kishi.",
       ],
       tips_title: "FORMAT",
