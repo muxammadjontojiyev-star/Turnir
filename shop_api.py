@@ -112,6 +112,13 @@ async def shop_admin_review(order_id: int, approve: bool = Body(...), reason: st
     return {"status": "ok"}
 
 
+@router.get("/shop/admin/wallets/top")
+def shop_admin_wallets_top(admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-01: eng ko'p eF Tokeni bor 10 ishtirokchi + jami muomala (faqat bosh admin)."""
+    from wallet import wallet_top
+    return wallet_top()
+
+
 @router.get("/shop/admin/packages")
 def shop_admin_packages(admin: dict = Depends(get_authenticated_super_admin)):
     from shop_core import shop_list_packages
