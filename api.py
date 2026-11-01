@@ -737,6 +737,10 @@ def register(league_id: int, club_name: str | None = None, user: dict = Depends(
     Xato holatlari: already_registered, league_full, league_not_found, club_taken,
                     league_locked → 400
     """
+    # 2026-11-01: mavsumlar orasidagi tanaffus — admin yangi mavsumni boshlamaguncha ro'yxat yopiq
+    from season_break import is_break
+    if is_break():
+        raise HTTPException(status_code=400, detail="season_break")
     # 2026-11-01: 2-ligadan ko'tarilgan — o'z 1-ligasiga navbat va ketma-ket ochilishni kutmaydi (promotion.py)
     from promotion import promotion_for
     promo = promotion_for(user["telegram_id"])
@@ -1424,8 +1428,10 @@ def season_current():
     `season` — orqaga moslik uchun liga mavsumi (eski frontend uni o'qiydi).
     """
     from season_prizes import get_league_season, get_wc_season
+    from season_break import is_break
     league = get_league_season()
-    return {"season": league, "league_season": league, "wc_season": get_wc_season()}
+    return {"season": league, "league_season": league, "wc_season": get_wc_season(),
+            "league_break": is_break()}   # 2026-11-01: mavsumlar orasidagi tanaffus (season_break.py)
 
 
 @app.get("/season/prizes/preview")
@@ -1452,6 +1458,21 @@ def season_finalize(admin: dict = Depends(get_authenticated_super_admin)):
         # AUDIT A3: tugma takror bosildi — dublikat yozilmadi, mavsum oshmadi
         raise HTTPException(status_code=400, detail="already_finalized")
     return {"status": "ok", "season": result["season"], "counts": result["counts"]}
+
+
+@app.post("/season/start")
+def season_start(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-11-01: tanaffusdan keyin YANGI LIGA MAVSUMINI ochadi (season_break.py): auksion g'oliblari
+    klubiga yoziladi, ro'yxatdan o'tish ochiladi. Xato (400): not_in_break, auction_active (+ lots).
+    """
+    from season_break import start_new_season
+    ok, r = start_new_season()
+    if not ok:
+        if isinstance(r, dict):
+            raise HTTPException(status_code=400, detail=f"{r['code']}:{r['lots']}")
+        raise HTTPException(status_code=400, detail=r)
+    return {"status": "ok", **r}
 
 
 @app.post("/season/wc/finalize")

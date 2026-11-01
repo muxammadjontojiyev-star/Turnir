@@ -316,6 +316,9 @@ def _finalize_league_locked(conn, cursor) -> dict:
         "UPDATE season_state SET current_season = current_season + 1, "
         "last_finalized_at = datetime('now') WHERE id = 1"
     )
+    # 2026-11-01: yangi mavsum darhol ochilmaydi — tanaffus (auksion), admin «Yangi mavsumni boshlash»ni bosadi
+    from season_break import set_break_cur
+    set_break_cur(cursor)
     cursor.execute("COMMIT")
     conn.close()
 
@@ -329,13 +332,7 @@ def _finalize_league_locked(conn, cursor) -> dict:
     except Exception:
         # Reset xatosi sovrin saqlanishini bekor qilmasin (sovrin allaqachon commit bo'ldi).
         logger.exception("Liga reset xatosi (sovrinlar saqlangan)")
-    if reset_info is not None:
-        # 2026-10-30: auksion g'oliblari yangi mavsumda klubiga avtomatik yoziladi (reset'dan KEYIN)
-        try:
-            from auction_admin import auction_apply_reservations
-            reset_info["auction"] = auction_apply_reservations()
-        except Exception:
-            logger.exception("Auksion: g'oliblarni klubga yozishda xato (scheduler qayta urinmaydi — admin tekshirsin)")
+    # 2026-11-01: auksion g'oliblari endi «Yangi mavsumni boshlash»da klubiga yoziladi (season_break.start_new_season)
 
     return {"season": season, "already": False, "counts": counts,
             "prizes": prizes, "reset": reset_info}

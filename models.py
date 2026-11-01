@@ -1306,6 +1306,8 @@ def init_db():
         init_auction_tables(_c.cursor())
         from cosmetics import init_cosmetics_tables         # 2026-10-30: bezaklar (ramka, orqa fon)
         init_cosmetics_tables(_c.cursor())
+        from season_break import migrate_season_break       # 2026-11-01: mavsumlar orasidagi tanaffus (ustun)
+        migrate_season_break(_c.cursor())
         from promotion import init_promotion_table          # 2026-11-01: 2-ligadan ko'tarilish — band joy
         init_promotion_table(_c.cursor())
         from season_rewards import init_rewards_table       # 2026-11-01: mavsum mukofoti (eF Token)

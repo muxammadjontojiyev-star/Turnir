@@ -13,6 +13,9 @@ Qoida:
   * u ro'yxatdan o'tishi bilan (istalgan ligaga) yoki muddat tugashi bilan band hisoblanmaydi —
     holat saqlanmaydi, har so'rovda hisoblanadi (qo'shimcha UPDATE va yugurish xatosi yo'q).
 Odam telegram_id bo'yicha eslanadi (akkount qayta yaratilsa ham band joy saqlanadi).
+2026-11-01 (tanaffus, season_break.py): finalize'da muddat PENDING_EXPIRES (band, lekin soat hali yurmaydi);
+«Yangi mavsumni boshlash» bosilganda start_promotion_hold() muddatni HOZIR + PROMOTION_HOLD_HOURS qiladi va
+shundan keyin bot xabari ketadi.
 """
 
 import logging
@@ -21,6 +24,7 @@ from config import PROMOTION_HOLD_HOURS, PROMOTION_TOP_N, SECOND_TIER_PARENTS
 from models import get_connection
 
 logger = logging.getLogger(__name__)
+PENDING_EXPIRES = "9999-12-31 00:00:00"     # tanaffusda: band, muddat yangi mavsum ochilganda boshlanadi
 
 # faol band: muddati o'tmagan va egasi hali hech qaysi ligada ro'yxatda emas
 _ACTIVE = ("p.expires_at > CURRENT_TIMESTAMP AND NOT EXISTS (SELECT 1 FROM registrations r "
@@ -60,12 +64,19 @@ def save_promotions(cur, season: int) -> int:
             if not row:
                 continue
             cur.execute("INSERT OR IGNORE INTO league_promotions (season_number, telegram_id, from_league, "
-                        "to_league_id, position, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', ?))",
-                        (season, row["telegram_id"], lower, ids[upper], pos, f"+{PROMOTION_HOLD_HOURS} hours"))
+                        "to_league_id, position, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (season, row["telegram_id"], lower, ids[upper], pos, PENDING_EXPIRES))
             saved += cur.rowcount
     if saved:
         logger.info("KO'TARILISH: %s-mavsum — %s ishtirokchiga 1-ligada joy band qilindi", season, saved)
     return saved
+
+
+def start_promotion_hold(cur) -> int:
+    """Yangi mavsum ochildi (season_break.start_new_season): band muddati shu paytdan boshlanadi."""
+    cur.execute("UPDATE league_promotions SET expires_at = datetime('now', ?) WHERE expires_at = ?",
+                (f"+{PROMOTION_HOLD_HOURS} hours", PENDING_EXPIRES))
+    return cur.rowcount
 
 
 def reserved_counts(cur) -> dict[int, int]:
@@ -91,8 +102,10 @@ def promotion_for(telegram_id: int) -> dict | None:
                          (telegram_id,)).fetchone()
         if not r:
             return None
+        pending = str(r["expires_at"]) == PENDING_EXPIRES
         return {"league_id": r["to_league_id"], "league_name": r["name"], "from_league": r["from_league"],
-                "position": r["position"], "expires_at": str(r["expires_at"]).replace(" ", "T") + "Z"}
+                "position": r["position"], "pending": pending, "hold_hours": PROMOTION_HOLD_HOURS,
+                "expires_at": None if pending else str(r["expires_at"]).replace(" ", "T") + "Z"}
     finally:
         conn.close()
 
@@ -105,7 +118,8 @@ async def promotion_send_notices() -> int:
             "SELECT p.id, p.telegram_id, p.from_league, p.position, lg.name AS league, "
             "(SELECT language FROM users WHERE telegram_id = p.telegram_id ORDER BY id DESC LIMIT 1) AS lang "
             "FROM league_promotions p JOIN leagues lg ON lg.id = p.to_league_id "
-            "WHERE p.notified = 0 AND p.expires_at > CURRENT_TIMESTAMP").fetchall()]
+            "WHERE p.notified = 0 AND p.expires_at > CURRENT_TIMESTAMP AND p.expires_at != ?",
+            (PENDING_EXPIRES,)).fetchall()]
         if rows:
             conn.execute(f"UPDATE league_promotions SET notified = 1 WHERE id IN ({','.join('?' * len(rows))})",
                          [r["id"] for r in rows])
