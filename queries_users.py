@@ -355,7 +355,12 @@ def register_user_to_league(user_id: int, league_id: int, club_name: str | None 
             "SELECT COUNT(*) AS cnt FROM registrations WHERE league_id = ?",
             (league_id,),
         )
-        if cursor.fetchone()["cnt"] >= league_row["max_players"]:
+        cnt = cursor.fetchone()["cnt"]
+        # 2026-11-01: 2-ligadan ko'tarilganlarga band joylar (o'zining band joyi hisoblanmaydi) — promotion.py
+        from promotion import reserved_for_others
+        tg_row = cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (user_id,)).fetchone()
+        reserved = reserved_for_others(cursor, league_id, tg_row["telegram_id"] if tg_row else None)
+        if cnt + reserved >= league_row["max_players"]:
             cursor.execute("ROLLBACK")
             return False, "league_full"
 

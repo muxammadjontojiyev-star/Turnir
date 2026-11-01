@@ -300,6 +300,10 @@ def _finalize_league_locked(conn, cursor) -> dict:
     from ac_qualification import save_ac_qualifiers
     counts["ac_qualifiers"] = save_ac_qualifiers(cursor, season)
 
+    # 2026-11-01: 2-liga top-3 — 1-ligada joy band (reset'dan OLDIN, shu tranzaksiyada; promotion.py)
+    from promotion import save_promotions
+    counts["promotions"] = save_promotions(cursor, season)
+
     # 2026-10-18: klub tanlash navbati — mavsumni oxirigacha o'ynaganlar (reset'dan OLDIN)
     from club_priority import record_finishers_cur
     counts["club_finishers"] = record_finishers_cur(cursor, season)

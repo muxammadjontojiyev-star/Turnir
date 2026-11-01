@@ -191,6 +191,15 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: auksion xabarlarida xato: %s", exc)
 
+    # === KO'TARILISH (2026-11-01): 2-ligadan ko'tarilganlarga "joyingiz band" xabari (promotion.py) ===
+    try:
+        from promotion import promotion_send_notices
+        n = await promotion_send_notices()
+        if n:
+            logger.info("Scheduler: ko'tarilish — %d ta xabar yuborildi", n)
+    except Exception as exc:
+        logger.warning("Scheduler: ko'tarilish xabarlarida xato: %s", exc)
+
     # === TEAMLAR JANGI (2026-10-16): 23:30 da joriy tur yopiladi, keyingisi ochiladi ===
     try:
         from tb_rounds import tb_tick

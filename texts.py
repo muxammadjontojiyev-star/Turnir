@@ -249,6 +249,12 @@ TEXTS = {
         LANGUAGE_EN: "❌ Payment for {coins} eF Token was rejected.\nReason: {reason}\nIf you have questions, message the admin.",
     },
     # 2026-10-30: Auksion (auction_api.py, scheduler)
+    # 2026-11-01: 2-ligadan ko'tarilish — 1-ligada joy band (promotion.py)
+    "promotion_notify": {
+        LANGUAGE_UZ: "🎉 Tabriklaymiz! Siz {from_league}da {pos}-o'rinni egallab, {league}ga ko'tarildingiz!\n🔒 {league}da sizga joy band qilindi — {hours} soat ichida klub tanlab ro'yxatdan o'ting.\nMuddat o'tsa, joy boshqalarga ochiladi.\nIlova → Asosiy → {league}.",
+        LANGUAGE_RU: "🎉 Поздравляем! Вы заняли {pos}-е место в {from_league} и поднялись в {league}!\n🔒 В {league} за вами забронировано место — выберите клуб и зарегистрируйтесь в течение {hours} ч.\nПосле срока место откроется для других.\nПриложение → Главная → {league}.",
+        LANGUAGE_EN: "🎉 Congratulations! You finished {pos} in {from_league} and are promoted to {league}!\n🔒 A place in {league} is reserved for you — pick a club and register within {hours} hours.\nAfter that the place opens to others.\nApp → Home → {league}.",
+    },
     "auction_notify_outbid": {
         LANGUAGE_UZ: "🔔 Taklifingizdan oshirishdi!\n🔨 {club} ({league}): yangi taklif {amount} eF Token.\n💰 Sizning {refund} eF Token balansingizga qaytdi.\n⬆️ Qayta taklif — kamida {next_min} eF Token.\n⏳ Savdo tugashiga: {left}.\nIlova → Do'kon → Auksion.",
         LANGUAGE_RU: "🔔 Вашу ставку перебили!\n🔨 {club} ({league}): новая ставка {amount} eF Token.\n💰 Ваши {refund} eF Token вернулись на баланс.\n⬆️ Повторная ставка — от {next_min} eF Token.\n⏳ До конца торгов: {left}.\nПриложение → Магазин → Аукцион.",

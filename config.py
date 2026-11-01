@@ -107,6 +107,12 @@ PRIZE_WINNER = "golden_ball"       # Turnir g'olibi — Oltin To'p znachogi
 # 2026-10-30: 2-ligalar (DB liga nomlari) — Oltin to'p va Oltin butsa hisobiga KIRMAYDI,
 # ular faqat 1-ligalar orasida aniqlanadi. Liga kubogi 2-ligalarda ham beriladi. Yangi 2-liga — shu yerga.
 SECOND_TIER_LEAGUES = ("LaLiga 2", "Championship", "2. Bundesliga", "Serie B", "Ligue 2", "Liga Portugal 2")
+# 2026-11-01: KO'TARILISH — mavsum yakunida 2-liganing top-N'i o'z 1-ligasida joy BAND qiladi (promotion.py).
+# 2-liga -> 1-liga (static/league_tiers.js LEAGUE_SECOND_TIERS bilan bir xil). Band muddati — yangi mavsum ochilgandan.
+SECOND_TIER_PARENTS = {"LaLiga 2": "LaLiga", "Championship": "Premier Liga", "2. Bundesliga": "Bundesliga",
+                       "Serie B": "Serie A", "Ligue 2": "Ligue 1", "Liga Portugal 2": "Liga Portugal"}
+PROMOTION_TOP_N = 3
+PROMOTION_HOLD_HOURS = int(os.getenv("PROMOTION_HOLD_HOURS", "48") or 48)
 
 # === Adminlar ===
 # Shu Telegram ID'lar WebApp'da admin paneliga kira oladi (bosh admin).

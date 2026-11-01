@@ -430,11 +430,12 @@ def list_leagues():
     to'lganlar) ro'yxatga ochiq; keyingilari to'lmaguncha yopiq qoladi.
     """
     leagues = get_all_leagues()  # id (seed) tartibida
+    reserved = _promotion_reserved()   # 2026-11-01: ko'tarilganlarga band joylar — to'lganlikka qo'shiladi
     result = []
     prev_all_full = True  # undan oldingi barcha ligalar to'lganmi
     for league in leagues:
         current_count = count_league_players(league["id"])
-        is_full = current_count >= league["max_players"]
+        is_full = current_count + reserved.get(league["id"], 0) >= league["max_players"]
         has_draw = ("draw_date" in league.keys()) and (league["draw_date"] is not None)
         # Liga yopiq, agar undan oldingilardan biri to'lmagan bo'lsa
         is_locked = not prev_all_full
@@ -447,6 +448,7 @@ def list_leagues():
             "is_full": is_full,
             "has_draw_date": has_draw,
             "is_locked": is_locked,
+            "reserved": reserved.get(league["id"], 0),
         })
         # Keyingi liga uchun: shu liga ham to'lган bo'lsagina ochiq bo'ladi
         prev_all_full = prev_all_full and is_full
@@ -496,7 +498,17 @@ def get_profile(user: dict = Depends(get_authenticated_user)):
         "club_name": registration["club_name"] if registration else None,
         "rating": position_info,
         "cosmetics": _cosmetics_of(user["id"]),          # 2026-10-30: ramka va orqa fon (cosmetics.py)
+        "promotion": _promotion_of(user["telegram_id"]),  # 2026-11-01: 1-ligada band joyim (promotion.py)
     }
+
+
+def _promotion_of(telegram_id: int) -> dict | None:
+    try:
+        from promotion import promotion_for
+        return promotion_for(telegram_id)
+    except Exception as exc:          # profil ko'tarilish xatosi tufayli yiqilmasin
+        logger.warning("Ko'tarilish holati o'qilmadi: %s", exc)
+        return None
 
 
 # ============ GET /players/{user_id}/profile ============
@@ -725,12 +737,16 @@ def register(league_id: int, club_name: str | None = None, user: dict = Depends(
     Xato holatlari: already_registered, league_full, league_not_found, club_taken,
                     league_locked → 400
     """
+    # 2026-11-01: 2-ligadan ko'tarilgan — o'z 1-ligasiga navbat va ketma-ket ochilishni kutmaydi (promotion.py)
+    from promotion import promotion_for
+    promo = promotion_for(user["telegram_id"])
+    promoted_here = bool(promo and promo["league_id"] == league_id)
     # Ketma-ket ochilish — yopiq (navbati kelmagan) ligaga ro'yxat taqiqlanadi
-    if _is_league_locked(league_id):
+    if not promoted_here and _is_league_locked(league_id):
         raise HTTPException(status_code=400, detail="league_locked")
     # 2026-10-18: klub tanlash navbati — o'tgan mavsumni oxirigacha o'ynaganlar birinchi
     from club_priority import club_priority_for
-    if not club_priority_for(user["telegram_id"])["open"]:
+    if not promoted_here and not club_priority_for(user["telegram_id"])["open"]:
         raise HTTPException(status_code=400, detail="priority_wait")
 
     success, reason = register_user_to_league(user["id"], league_id, club_name)
@@ -787,13 +803,25 @@ def _is_league_locked(league_id: int) -> bool:
     Liga "navbatda yopiq"mi: undan OLDINGI (kichikroq id) ligalardan biri hali
     to'lmagan bo'lsa True. list_leagues bilan bir xil mantiq (backend himoyasi).
     """
+    reserved = _promotion_reserved()   # 2026-11-01: band joylar to'lganlikka qo'shiladi (list_leagues bilan bir xil)
     for league in get_all_leagues():  # id (seed) tartibida
         if league["id"] == league_id:
             return False  # bu liga — birinchi to'lmagan yoki to'lgan, ochiq
         # undan oldingi liga to'lmagan bo'lsa, bu liga yopiq
-        if count_league_players(league["id"]) < league["max_players"]:
+        if count_league_players(league["id"]) + reserved.get(league["id"], 0) < league["max_players"]:
             return True
     return False
+
+
+def _promotion_reserved() -> dict:
+    """2026-11-01: {liga id: 2-ligadan ko'tarilganlarga band joylar soni} (promotion.py)."""
+    from models import get_connection as _conn
+    from promotion import reserved_counts
+    conn = _conn()
+    try:
+        return reserved_counts(conn.cursor())
+    finally:
+        conn.close()
 
 
 # ============ WORLD CUP (Jahon Chempionati) — liga'dan alohida ============
