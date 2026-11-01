@@ -472,6 +472,7 @@ async function loadSeasons() {
     const d = await apiFetch("/season/current");
     APP.seasons.league = d.league_season ?? d.season ?? 1;
     APP.seasons.wc = d.wc_season ?? 1;
+    APP.seasonBreak = !!d.league_break;   // 2026-11-01: mavsumlar orasidagi tanaffus (season_break.js)
   } catch (_) { /* xato — default 1 qoladi */ }
 }
 
@@ -2713,6 +2714,7 @@ async function registerToLeague() {
       club_taken:         APP.t.club_taken          || "Bu klub allaqachon band qilingan",
       league_locked:      APP.t.league_locked_toast || "Bu liga hali yopiq. Avval oldingi liga to'lishi kerak.",
       priority_wait:      typeof clubPriorityWaitText === "function" ? clubPriorityWaitText() : "⏳",   // 2026-10-18
+      season_break:       typeof seasonBreakText === "function" ? seasonBreakText() : "⏸",               // 2026-11-01
     }[e.message] || e.message;
     showToast("❌ " + msg);
     btn.disabled = false;
