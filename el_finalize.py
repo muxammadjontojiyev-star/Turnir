@@ -77,6 +77,9 @@ def finalize_el_season() -> dict:
             (champ["user_id"], _telegram_id_for(cursor, champ["user_id"]),
              EL_PRIZE_CUP, season, EL_SEASON_KIND),
         )
+        # 2026-11-01: mavsum mukofoti — bosqich bo'yicha eF Token (season_rewards.py, reset'dan OLDIN)
+        from season_rewards import grant_cup_rewards
+        rewards = grant_cup_rewards(cursor, "el", season, champ["user_id"])
         cursor.execute(
             "UPDATE season_state SET el_season = el_season + 1, "
             "el_last_finalized_at = datetime('now') WHERE id = 1"
@@ -101,7 +104,7 @@ def finalize_el_season() -> dict:
         reset_info = reset_el_data()
     except Exception:
         logger.exception("YeL reset xatosi (kubok saqlangan)")
-    return {"season": season, "already": False, "counts": {EL_PRIZE_CUP: 1},
+    return {"season": season, "already": False, "counts": {EL_PRIZE_CUP: 1, "rewards": rewards},
             "prizes": prizes, "reset": reset_info}
 
 

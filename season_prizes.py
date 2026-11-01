@@ -304,6 +304,10 @@ def _finalize_league_locked(conn, cursor) -> dict:
     from promotion import save_promotions
     counts["promotions"] = save_promotions(cursor, season)
 
+    # 2026-11-01: mavsum mukofoti — o'rin + Oltin to'p/butsa uchun eF Token (season_rewards.py; xato yakunlashni to'xtatmaydi)
+    from season_rewards import grant_league_rewards
+    counts["rewards"] = grant_league_rewards(cursor, season, prizes)
+
     # 2026-10-18: klub tanlash navbati — mavsumni oxirigacha o'ynaganlar (reset'dan OLDIN)
     from club_priority import record_finishers_cur
     counts["club_finishers"] = record_finishers_cur(cursor, season)
@@ -401,6 +405,10 @@ def _finalize_wc_locked(conn, cursor) -> dict:
             (_uid, _telegram_id_for(cursor, _uid), season),
         )
         counts["wc_golden_boot"] = 1
+
+    # 2026-11-01: mavsum mukofoti — bosqich + JCh Oltin butsasi uchun eF Token (season_rewards.py)
+    from season_rewards import grant_wc_rewards
+    counts["rewards"] = grant_wc_rewards(cursor, season, prizes)
 
     cursor.execute(
         "UPDATE season_state SET wc_season = wc_season + 1, "
@@ -572,6 +580,9 @@ def _finalize_cl_locked(conn, cursor) -> dict:
         (_uid, _telegram_id_for(cursor, _uid), season),
     )
     counts = {"cl_cup": 1}
+    # 2026-11-01: mavsum mukofoti — bosqich bo'yicha eF Token (season_rewards.py, reset'dan OLDIN)
+    from season_rewards import grant_cup_rewards
+    counts["rewards"] = grant_cup_rewards(cursor, "cl", season, _uid)
 
     # ChL mavsumi oshadi + cooldown belgilanadi
     cursor.execute(

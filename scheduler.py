@@ -191,6 +191,15 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: auksion xabarlarida xato: %s", exc)
 
+    # === MAVSUM MUKOFOTI (2026-11-01): eF Token berilganlarga tarkibi bilan xabar (season_rewards_notify.py) ===
+    try:
+        from season_rewards_notify import reward_send_notices
+        n = await reward_send_notices()
+        if n:
+            logger.info("Scheduler: mavsum mukofoti — %d ta xabar yuborildi", n)
+    except Exception as exc:
+        logger.warning("Scheduler: mavsum mukofoti xabarlarida xato: %s", exc)
+
     # === KO'TARILISH (2026-11-01): 2-ligadan ko'tarilganlarga "joyingiz band" xabari (promotion.py) ===
     try:
         from promotion import promotion_send_notices

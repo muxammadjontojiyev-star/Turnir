@@ -249,6 +249,12 @@ TEXTS = {
         LANGUAGE_EN: "❌ Payment for {coins} eF Token was rejected.\nReason: {reason}\nIf you have questions, message the admin.",
     },
     # 2026-10-30: Auksion (auction_api.py, scheduler)
+    # 2026-11-01: mavsum mukofoti — eF Token (season_rewards_notify.py; {lines} — qismlar ro'yxati)
+    "reward_notify": {
+        LANGUAGE_UZ: "🎁 Mavsum mukofoti — {title} ({season}-mavsum)\n{lines}\n💰 Jami: +{total} eF Token balansingizga qo'shildi!\nIlova → Do'kon.",
+        LANGUAGE_RU: "🎁 Награда за сезон — {title} (сезон {season})\n{lines}\n💰 Итого: +{total} eF Token зачислено на баланс!\nПриложение → Магазин.",
+        LANGUAGE_EN: "🎁 Season reward — {title} (season {season})\n{lines}\n💰 Total: +{total} eF Token added to your balance!\nApp → Shop.",
+    },
     # 2026-11-01: 2-ligadan ko'tarilish — 1-ligada joy band (promotion.py)
     "promotion_notify": {
         LANGUAGE_UZ: "🎉 Tabriklaymiz! Siz {from_league}da {pos}-o'rinni egallab, {league}ga ko'tarildingiz!\n🔒 {league}da sizga joy band qilindi — {hours} soat ichida klub tanlab ro'yxatdan o'ting.\nMuddat o'tsa, joy boshqalarga ochiladi.\nIlova → Asosiy → {league}.",
