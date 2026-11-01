@@ -19,7 +19,7 @@ Yozuvlar (club_reliability, telegram_id bo'yicha — akkount o'chsa ham saqlanad
 import logging
 from datetime import datetime, timedelta, timezone
 
-from config import CLUB_ABANDON_EXTRA_HOURS, CLUB_PRIORITY_HOURS
+from config import CLUB_ABANDON_EXTRA_HOURS, CLUB_PRIORITY_ENABLED, CLUB_PRIORITY_HOURS
 from models import get_connection
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ def club_priority_for(telegram_id: int, now: datetime | None = None) -> dict:
                         (prev,)).fetchone()["c"] if prev >= 1 else 0
         base = {"active": False, "tier": None, "open": True, "opens_at": None, "prev_season": prev,
                 "finished_count": n}
-        if not t0 or not n:
+        if not CLUB_PRIORITY_ENABLED or not t0 or not n:   # 2026-11-01: navbat o'chirilgan bo'lsa — hamma darhol
             return base
         r = cur.execute("SELECT status FROM club_reliability WHERE telegram_id = ? AND season_number = ?",
                         (telegram_id, prev)).fetchone()

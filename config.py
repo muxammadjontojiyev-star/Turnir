@@ -165,6 +165,8 @@ BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
 # yana CLUB_ABANDON_EXTRA_HOURS soatdan keyin klub tanlay oladi.
 CLUB_PRIORITY_HOURS = int(os.getenv("CLUB_PRIORITY_HOURS", "24") or 0)
 CLUB_ABANDON_EXTRA_HOURS = int(os.getenv("CLUB_ABANDON_EXTRA_HOURS", "24") or 0)
+# 2026-11-01: egasi qarori — navbat vaqtincha O'CHIRILGAN (hamma darhol tanlaydi). Qayta yoqish: .env da CLUB_PRIORITY_ENABLED=1
+CLUB_PRIORITY_ENABLED = os.getenv("CLUB_PRIORITY_ENABLED", "0").strip() == "1"
 
 # === Majburiy kanal a'zoligi ===
 # Foydalanuvchi botdan/WebApp'dan foydalanish uchun shu kanalga a'zo bo'lishi shart.
