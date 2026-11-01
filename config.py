@@ -156,6 +156,7 @@ AUCTION_SNIPE_MINUTES = 5             # oxirgi N daqiqada taklif tushsa — savd
 AUCTION_MIN_HOURS, AUCTION_MAX_HOURS = 1, 24 * 14   # lot muddati chegarasi (soat)
 AUCTION_PRICE_MAX = 10_000_000        # boshlang'ich narx / qadam / taklif chegarasi (eF Token)
 AUCTION_ENDED_SHOWN = 10              # "Yakunlangan savdolar" ro'yxatida oxirgi N ta
+AUCTION_SET_END_MIN_AHEAD = 1         # 2026-11-01: «hammasini bir vaqtda tugatish» — kamida N daqiqa keyin
 # Taklif havolasi uchun (t.me/<BOT_USERNAME>?start=pt_<kod>); Railway'da allaqachon bor.
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
 

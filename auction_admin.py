@@ -4,6 +4,7 @@ auction_admin.py — AUKSION: bosh admin amallari, yakun xabarlari va yangi mavs
   - auction_create      — lot: liga + klub (pt_formats.LEAGUE_CLUBS dagi nom), boshlang'ich narx, qadam, muddat (soat).
                           Bir klub bir vaqtda faqat bitta faol / qo'llanmagan lotda (club_on_auction).
   - auction_cancel      — faqat faol lot; yetakchiga muzlatilgan summa qaytadi.
+  - auction_set_end_all — 2026-11-01: BARCHA faol lotlarning tugash vaqtini bitta vaqtga keltiradi (Toshkent vaqti).
   - auction_admin_list  — faol va oxirgi lotlar (admin paneli).
   - auction_take_end_notices / auction_take_apply_notices — scheduler: yuborilmagan xabarlar (bir martalik belgilanadi).
   - auction_apply_reservations — liga mavsumi yangilangach (season_prizes, reset'dan KEYIN): g'oliblar
@@ -13,7 +14,7 @@ auction_admin.py — AUKSION: bosh admin amallari, yakun xabarlari va yangi mavs
 
 import logging
 
-from config import AUCTION_ENDED_SHOWN, AUCTION_MAX_HOURS, AUCTION_MIN_HOURS, AUCTION_PRICE_MAX
+from config import AUCTION_ENDED_SHOWN, AUCTION_MAX_HOURS, AUCTION_MIN_HOURS, AUCTION_PRICE_MAX, AUCTION_SET_END_MIN_AHEAD
 from auction_core import (ST_ACTIVE, ST_APPLIED, ST_CANCELLED, ST_ENDED, ST_FAILED, TX_REFUND,
                           _LOT_COLS, _LOT_FROM, auction_close_due)
 from models import get_connection
@@ -53,6 +54,38 @@ def auction_create(admin_tg: int, league_id, club_name: str, start_price, min_st
     ok, r = _tx(run)
     if ok:
         logger.info("AUKSION #%s: %s (%s) sotuvga qo'yildi, %s eF dan, %s soat", r["id"], club, r["league_name"], price, hrs)
+    return ok, r
+
+
+def auction_set_end_all(ends_local: str) -> tuple[bool, str | dict]:
+    """
+    Egasi so'rovi (2026-11-01): yangi mavsum boshlanishidan oldin hamma lot bir vaqtda tugasin.
+    ends_local — 'YYYY-MM-DDTHH:MM' (Toshkent). Kamida AUCTION_SET_END_MIN_AHEAD daqiqa keyin,
+    ko'pi bilan AUCTION_MAX_HOURS ichida. Sabablar: bad_time, time_past, time_too_far, no_active.
+    Takliflar va pullar tegilmaydi; anti-snayper (oxirgi daqiqalardagi taklif uzaytiradi) amal qilaveradi.
+    """
+    from datetime import datetime, timedelta, timezone
+    from pt_rounds import _LOCAL_TZ, _UTC_FMT
+    try:
+        local = datetime.strptime((ends_local or "").strip()[:16], "%Y-%m-%dT%H:%M").replace(tzinfo=_LOCAL_TZ)
+    except ValueError:
+        return False, "bad_time"
+    end_utc = local.astimezone(timezone.utc)
+    now = datetime.now(timezone.utc)
+    if end_utc < now + timedelta(minutes=AUCTION_SET_END_MIN_AHEAD):
+        return False, "time_past"
+    if end_utc > now + timedelta(hours=AUCTION_MAX_HOURS):
+        return False, "time_too_far"
+    end_str = end_utc.strftime(_UTC_FMT)
+
+    def run(cur):
+        auction_close_due(cur)
+        cur.execute("UPDATE auction_lots SET ends_at = ? WHERE status = ?", (end_str, ST_ACTIVE))
+        return (True, {"lots": cur.rowcount, "ends_at": end_str}) if cur.rowcount else (False, "no_active")
+
+    ok, r = _tx(run)
+    if ok:
+        logger.info("AUKSION: %s ta faol lot tugash vaqti %s (UTC) ga keltirildi", r["lots"], end_str)
     return ok, r
 
 

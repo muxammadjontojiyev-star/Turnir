@@ -8,6 +8,7 @@ Bosh admin:
   GET  /shop/admin/auction        — faol va oxirgi lotlar
   POST /shop/admin/auction        — {league_id, club_name, start_price, min_step, hours}
   POST /shop/admin/auction/{id}/cancel — yetakchiga pul qaytadi + xabar
+  POST /shop/admin/auction/end-all — {ends_local: 'YYYY-MM-DDTHH:MM' Toshkent} — barcha faol lotlar shu vaqtda tugaydi
 """
 
 import logging
@@ -57,6 +58,16 @@ def auction_admin_create(league_id: int = Body(...), club_name: str = Body(...),
     """Xato (400): league_not_found, bad_club, bad_price, bad_step, bad_hours, club_on_auction."""
     from auction_admin import auction_create
     ok, r = auction_create(admin["telegram_id"], league_id, club_name, start_price, min_step, hours)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    return {"status": "ok", **r}
+
+
+@router.post("/shop/admin/auction/end-all")
+def auction_admin_end_all(ends_local: str = Body(..., embed=True), admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-01. Xato (400): bad_time, time_past, time_too_far, no_active."""
+    from auction_admin import auction_set_end_all
+    ok, r = auction_set_end_all(ends_local)
     if not ok:
         raise HTTPException(status_code=400, detail=r)
     return {"status": "ok", **r}
