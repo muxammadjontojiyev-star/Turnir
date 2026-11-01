@@ -303,7 +303,8 @@ def wc_eligible_revoke_unregistered() -> int:
 # Sabab: JCh yakunlanganda (reset_wc_data) wc_eligible tozalanmasdi — o'tgan JCh uchun berilgan
 # yo'llanmalar keyingi JCh'ga ham amal qilardi. Endi reset tozalaydi; bu funksiya esa ALLAQACHON
 # shunday qolgan bazani bir marta tuzatadi (main.py startida, idempotent): ro'yxat oxirgi JCh
-# yakunlanishidan OLDIN yaratilgan bo'lsa — eskirgan, o'chiriladi. Ro'yxatdan o'tganlarga tegilmaydi.
+# yakunlanishidan OLDIN yaratilgan bo'lsa — eskirgan, o'chiriladi va shu yo'llanmalar bilan yozilganlar ham
+# chiqariladi (egasi qarori: 10-sanada hammaga bir xil ochiladi).
 
 def clear_stale_wc_eligible() -> int:
     conn = get_connection()
@@ -312,9 +313,23 @@ def clear_stale_wc_eligible() -> int:
         if not r or not r["f"]:
             return 0
         cur = conn.execute("DELETE FROM wc_eligible WHERE julianday(created_at) < julianday(?)", (r["f"],))
+        stale = cur.rowcount
         conn.commit()
-        if cur.rowcount:
-            logger.info("JCh: %s ta eskirgan yo'llanma o'chirildi (JCh %s da yakunlangan)", cur.rowcount, r["f"])
-        return cur.rowcount
     finally:
         conn.close()
+    if stale:
+        logger.info("JCh: %s ta eskirgan yo'llanma o'chirildi (JCh %s da yakunlangan)", stale, r["f"])
+        # Egasi qarori: eskirgan yo'llanma bilan yozilganlar ham chiqariladi — 10-sanada (Divizion yakuni)
+        # hammaga bir xil ochiladi. Faqat shu bir martalik holatda (eskirgan yo'llanma topilganda) —
+        # keyingi startlarda qonuniy ro'yxatdan o'tganlarga tegilmaydi. reset_wc_data: ro'yxat, guruhlar,
+        # o'yinlar, chat (sovrinlar va mavsum raqami tegilmaydi).
+        conn = get_connection()
+        try:
+            n = conn.execute("SELECT COUNT(*) AS n FROM wc_registrations").fetchone()["n"]
+        finally:
+            conn.close()
+        if n:
+            from season_reset import reset_wc_data
+            reset_wc_data()
+            logger.info("JCh: eskirgan yo'llanma bilan yozilgan %s ishtirokchi chiqarildi (ro'yxat tozalandi)", n)
+    return stale
