@@ -797,6 +797,25 @@ async def club_offers_take(owner_user_id: int = Body(..., embed=True), user: dic
     return {"status": "ok", "league_name": res["league_name"], "club_name": res["club_name"]}
 
 
+@app.get("/admin/club-priority")
+def club_priority_switch_get(admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-01: klub tanlash navbati yoqilganmi (bosh admin paneli kaliti)."""
+    from club_priority import priority_enabled
+    from models import get_connection as _conn
+    conn = _conn()
+    try:
+        return {"on": priority_enabled(conn.cursor())}
+    finally:
+        conn.close()
+
+
+@app.post("/admin/club-priority")
+def club_priority_switch_set(on: bool = Body(..., embed=True), admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-01: navbatni yoqish / o'chirish (o'chiq — hamma darhol klub tanlaydi)."""
+    from club_priority import set_priority_enabled
+    return {"status": "ok", "on": set_priority_enabled(on)}
+
+
 @app.get("/club-priority/me")
 def club_priority_me(user: dict = Depends(get_authenticated_user)):
     """2026-10-18: klub tanlash navbatidagi holatim (bosh sahifa banneri uchun)."""

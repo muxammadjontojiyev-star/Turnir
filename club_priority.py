@@ -42,6 +42,34 @@ def init_club_priority_table(cursor) -> None:
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_club_rel_season ON club_reliability(season_number)")
 
 
+def migrate_priority_switch(cur) -> None:
+    """2026-11-01: navbatni bosh admin yoqib/o'chiradi — season_state.club_priority_on (NULL — config qiymati)."""
+    cols = {r["name"] for r in cur.execute("PRAGMA table_info(season_state)")}
+    if "club_priority_on" not in cols:
+        cur.execute("ALTER TABLE season_state ADD COLUMN club_priority_on INTEGER")
+
+
+def priority_enabled(cur) -> bool:
+    """Admin paneldagi kalit (bazada); hali bosilmagan bo'lsa — config.CLUB_PRIORITY_ENABLED."""
+    try:
+        r = cur.execute("SELECT club_priority_on FROM season_state WHERE id = 1").fetchone()
+    except Exception:          # migratsiya hali o'tmagan (eski baza)
+        return CLUB_PRIORITY_ENABLED
+    return CLUB_PRIORITY_ENABLED if not r or r["club_priority_on"] is None else bool(r["club_priority_on"])
+
+
+def set_priority_enabled(on: bool) -> bool:
+    """Bosh admin kaliti. Qaytaradi: yangi holat."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE season_state SET club_priority_on = ? WHERE id = 1", (1 if on else 0,))
+        conn.commit()
+    finally:
+        conn.close()
+    logger.info("Klub navbati: bosh admin %s", "YOQDI" if on else "O'CHIRDI")
+    return bool(on)
+
+
 def _current_season(cur) -> int:
     r = cur.execute("SELECT current_season FROM season_state WHERE id = 1").fetchone()
     return r["current_season"] if r else 1
@@ -98,7 +126,7 @@ def club_priority_for(telegram_id: int, now: datetime | None = None) -> dict:
                         (prev,)).fetchone()["c"] if prev >= 1 else 0
         base = {"active": False, "tier": None, "open": True, "opens_at": None, "prev_season": prev,
                 "finished_count": n}
-        if not CLUB_PRIORITY_ENABLED or not t0 or not n:   # 2026-11-01: navbat o'chirilgan bo'lsa — hamma darhol
+        if not priority_enabled(cur) or not t0 or not n:   # 2026-11-01: navbat o'chirilgan bo'lsa — hamma darhol
             return base
         r = cur.execute("SELECT status FROM club_reliability WHERE telegram_id = ? AND season_number = ?",
                         (telegram_id, prev)).fetchone()
