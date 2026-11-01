@@ -1483,6 +1483,24 @@ def season_start(admin: dict = Depends(get_authenticated_super_admin)):
     return {"status": "ok", **r}
 
 
+@app.post("/admin/promotions/register-all")
+async def promotions_register_all(admin: dict = Depends(get_authenticated_super_admin)):
+    """
+    2026-11-01: hali ro'yxatdan o'tmagan barcha ko'tarilganlarni o'z 1-ligasiga bo'sh klub (tasodifiy) bilan
+    yozadi (promotion_admin.py) va har biriga bot xabari. Natija: added / skipped (sabab bilan).
+    """
+    from promotion_admin import promotion_register_all
+    res = promotion_register_all()
+    for a in res["added"]:
+        try:
+            await notify_user(a["telegram_id"], "promotion_added_notify", a["language"],
+                              open_button_key="btn_open_app", league=a["league"], club=a["club"])
+        except Exception as exc:   # yozildi — xabar ketmasa ham natija saqlanadi (qoida #37)
+            logger.warning("Ko'tarilgan qo'shildi, xabar ketmadi (%s): %s", a["telegram_id"], exc)
+    return {"status": "ok", "added": [{"league": a["league"], "club": a["club"]} for a in res["added"]],
+            "skipped": [{"league": s["league"], "reason": s["reason"]} for s in res["skipped"]]}
+
+
 @app.post("/season/wc/finalize")
 def season_wc_finalize(admin: dict = Depends(get_authenticated_super_admin)):
     """

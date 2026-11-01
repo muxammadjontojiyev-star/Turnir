@@ -261,6 +261,12 @@ TEXTS = {
         LANGUAGE_RU: "🎉 Поздравляем! Вы заняли {pos}-е место в {from_league} и поднялись в {league}!\n🔒 В {league} за вами забронировано место — выберите клуб и зарегистрируйтесь в течение {hours} ч.\nПосле срока место откроется для других.\nПриложение → Главная → {league}.",
         LANGUAGE_EN: "🎉 Congratulations! You finished {pos} in {from_league} and are promoted to {league}!\n🔒 A place in {league} is reserved for you — pick a club and register within {hours} hours.\nAfter that the place opens to others.\nApp → Home → {league}.",
     },
+    # 2026-11-01: admin ko'tarilganni ligaga o'zi qo'shdi (promotion_admin.py)
+    "promotion_added_notify": {
+        LANGUAGE_UZ: "✅ Siz {league}ga qo'shildingiz! Klubingiz: {club}.\nYangi mavsumda omad! Ilova → Profil.",
+        LANGUAGE_RU: "✅ Вы добавлены в {league}! Ваш клуб: {club}.\nУдачи в новом сезоне! Приложение → Профиль.",
+        LANGUAGE_EN: "✅ You've been added to {league}! Your club: {club}.\nGood luck this season! App → Profile.",
+    },
     "auction_notify_outbid": {
         LANGUAGE_UZ: "🔔 Taklifingizdan oshirishdi!\n🔨 {club} ({league}): yangi taklif {amount} eF Token.\n💰 Sizning {refund} eF Token balansingizga qaytdi.\n⬆️ Qayta taklif — kamida {next_min} eF Token.\n⏳ Savdo tugashiga: {left}.\nIlova → Do'kon → Auksion.",
         LANGUAGE_RU: "🔔 Вашу ставку перебили!\n🔨 {club} ({league}): новая ставка {amount} eF Token.\n💰 Ваши {refund} eF Token вернулись на баланс.\n⬆️ Повторная ставка — от {next_min} eF Token.\n⏳ До конца торгов: {left}.\nПриложение → Магазин → Аукцион.",
