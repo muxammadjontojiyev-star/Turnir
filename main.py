@@ -37,6 +37,9 @@ def main() -> None:
 
     init_db()
     seed_leagues()
+    # 2026-11-01: joriy liga o'yin raqamlari 4 xonadan oshgan bo'lsa — bir martalik qayta raqamlash (match_ids.py)
+    from match_ids import renumber_league_matches
+    renumber_league_matches()
     logger.info("Ma'lumotlar bazasi va ligalar tayyor.")
 
     # Play-off ta'mirlash: ilgari confirmed bo'lib, g'olibi o'tmay qolgan

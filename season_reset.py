@@ -88,6 +88,8 @@ def reset_league_data() -> dict:
             "last_notified_matchday = 0, last_deadline_notice_date = NULL"
         )
         counts["leagues_reset"] = cursor.rowcount
+        from match_ids import restart_ids          # 2026-11-01: keyingi mavsum o'yinlari #1 dan
+        restart_ids(cursor, ["matches"])
         cursor.execute("COMMIT")
     except Exception:
         try:
@@ -121,6 +123,8 @@ def reset_wc_data() -> dict:
         # Play-off holatini boshlang'ich (boshlanmagan) holatga qaytaramiz
         cursor.execute("UPDATE wc_playoff_state SET started = 0, start_date = NULL WHERE id = 1")
         counts["wc_playoff_state_reset"] = cursor.rowcount
+        from match_ids import restart_ids          # 2026-11-01: keyingi JCh o'yinlari #1 dan
+        restart_ids(cursor, ["wc_matches", "wc_playoff_matches"])
         cursor.execute("COMMIT")
     except Exception:
         try:
@@ -175,6 +179,8 @@ def reset_cl_data() -> dict:
         counts["cl_state"] = cursor.rowcount
         cursor.execute("DELETE FROM cl_playoff_state")
         counts["cl_playoff_state"] = cursor.rowcount
+        from match_ids import restart_ids          # 2026-11-01: keyingi ChL o'yinlari #1 dan
+        restart_ids(cursor, ["cl_matches", "cl_playoff_matches"])
         cursor.execute("COMMIT")
     except Exception:
         try:
@@ -203,6 +209,8 @@ def reset_el_data() -> dict:
         for tbl in _EL_TABLES + ["el_state", "el_playoff_state"]:
             cursor.execute(f"DELETE FROM {tbl}")   # nomlar KODDAN (qoida #29)
             counts[tbl] = cursor.rowcount
+        from match_ids import restart_ids          # 2026-11-01: keyingi mavsum o'yinlari #1 dan
+        restart_ids(cursor, ["el_matches", "el_playoff_matches"])
         cursor.execute("COMMIT")
     except Exception:
         try:
@@ -231,6 +239,8 @@ def reset_ac_data() -> dict:
         for tbl in _AC_TABLES + ["ac_state", "ac_playoff_state"]:
             cursor.execute(f"DELETE FROM {tbl}")   # nomlar KODDAN (qoida #29)
             counts[tbl] = cursor.rowcount
+        from match_ids import restart_ids          # 2026-11-01: keyingi mavsum o'yinlari #1 dan
+        restart_ids(cursor, ["ac_matches", "ac_playoff_matches"])
         cursor.execute("COMMIT")
     except Exception:
         try:
