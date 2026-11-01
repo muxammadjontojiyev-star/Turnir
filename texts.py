@@ -601,6 +601,11 @@ TEXTS = {
         LANGUAGE_RU: "Азиатская лига чемпионов",
         LANGUAGE_EN: "Asian Champions League",
     },
+    "mode_name_co": {        # 2026-11-01: Konferensiya ligasi
+        LANGUAGE_UZ: "Konferensiya ligasi",
+        LANGUAGE_RU: "Лига конференций",
+        LANGUAGE_EN: "Conference League",
+    },
     "mode_name_qm": {        # 2026-10-19: tezkor o'yin
         LANGUAGE_UZ: "Tezkor o'yin",
         LANGUAGE_RU: "Быстрая игра",

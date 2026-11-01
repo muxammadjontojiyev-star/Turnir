@@ -12,11 +12,11 @@ NOTICE_BATCH = 50                    # bir chaqiruvda ko'pi bilan (Telegram chek
 
 TITLES = {
     "uz": {"league": "Liga", "cl": "Chempionlar ligasi", "el": "Yevropa ligasi", "ac": "Osiyo Chempionlar ligasi",
-           "wc": "Jahon chempionati"},
+           "wc": "Jahon chempionati", "co": "Konferensiya ligasi"},
     "ru": {"league": "Лига", "cl": "Лига чемпионов", "el": "Лига Европы", "ac": "Азиатская лига чемпионов",
-           "wc": "Чемпионат мира"},
+           "wc": "Чемпионат мира", "co": "Лига конференций"},
     "en": {"league": "League", "cl": "Champions League", "el": "Europa League", "ac": "Asian Champions League",
-           "wc": "World Cup"},
+           "wc": "World Cup", "co": "Conference League"},
 }
 STAGES = {
     "uz": {"league": "Liga bosqichi", "group": "Guruh bosqichi", "playin": "Pley-in", "r32": "1/16 final",

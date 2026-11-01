@@ -156,6 +156,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
             "registrations", "club_offers", "chat_typing", "wc_chat_typing",
             "cl_qualifiers", "el_qualifiers", "cl_participants", "el_participants",
             "ac_qualifiers", "ac_participants",   # 2026-10-15
+            "co_qualifiers", "co_participants",   # 2026-11-01: Konferensiya ligasi
             "div_registrations",
             "div_bans", "wc_registrations",
         ]
@@ -180,6 +181,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
             "matches", "cl_matches", "div_matches", "wc_matches",
             "wc_playoff_matches", "cl_playoff_matches", "el_matches",
             "el_playoff_matches", "ac_matches", "ac_playoff_matches",
+            "co_matches", "co_playoff_matches",   # 2026-11-01
         ]
         # YeL: o'chiriladigan o'yinlardagi RAQIB xabarlari ham (el_messages.match_id
         # FK el_matches'ga) — aks holda el_matches DELETE "FOREIGN KEY failed" beradi.
@@ -207,7 +209,9 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         for msg_t, match_t in (("el_messages", "el_matches"),
                                ("el_po_messages", "el_playoff_matches"),
                                ("ac_messages", "ac_matches"),
-                               ("ac_po_messages", "ac_playoff_matches")):
+                               ("ac_po_messages", "ac_playoff_matches"),
+                               ("co_messages", "co_matches"),
+                               ("co_po_messages", "co_playoff_matches")):
             cursor.execute(
                 f"DELETE FROM {msg_t} WHERE match_id IN "
                 f"(SELECT id FROM {match_t} WHERE player1_id = ? OR player2_id = ?)",
@@ -228,7 +232,7 @@ def remove_user_completely(user_id: int) -> tuple[bool, str]:
         # Chat xabarlari (sender_id)
         for t in ["messages", "cl_messages", "div_messages", "wc_messages",
                   "cl_po_messages", "el_messages", "el_po_messages",
-                  "ac_messages", "ac_po_messages"]:
+                  "ac_messages", "ac_po_messages", "co_messages", "co_po_messages"]:
             cursor.execute(f"DELETE FROM {t} WHERE sender_id = ?", (user_id,))
         # 2026-10-15: Teamlar jangi — sardor bo'lsa sardorlik eng eski a'zoga o'tadi,
         # a'zo qolmasa team o'chiriladi; so'ng a'zolik o'chiriladi (FK users).

@@ -173,6 +173,19 @@ async def _check_and_notify_once() -> None:
     except Exception as exc:
         logger.warning("Scheduler: OChL tur siljitishda xato: %s", exc)
 
+    # === KONFERENSIYA LIGASI (2026-11-01): YeL/OChL bilan bir xil tur siljitish ===
+    try:
+        from co_rounds import co_tick
+        co_res = co_tick()
+        if co_res:
+            logger.info(
+                "Scheduler: KL %d-tur yopildi (awaiting: %d, 0:0: %d) → %d-tur ochildi.",
+                co_res["closed_matchday"], co_res["awaiting_resolved"],
+                co_res["pending_resolved"], co_res["opened_matchday"],
+            )
+    except Exception as exc:
+        logger.warning("Scheduler: KL tur siljitishda xato: %s", exc)
+
     # === TEZKOR O'YIN (2026-10-19): xona ID / natija / tasdiq muddatlari ===
     try:
         from qm_core import qm_tick
@@ -268,6 +281,15 @@ async def _check_and_notify_once() -> None:
                                 acp["confirmed"], acp["advanced"])
             except Exception as exc:
                 logger.warning("Scheduler: OChL play-off auto-confirmda xato: %s", exc)
+            # KL play-off (2026-11-01, OChL bilan bir xil)
+            try:
+                from co_playoff_results import co_po_auto_confirm_awaiting
+                cop = co_po_auto_confirm_awaiting()
+                if cop["confirmed"]:
+                    logger.info("Scheduler: KL play-off deadline — %d awaiting → confirmed, %d advance.",
+                                cop["confirmed"], cop["advanced"])
+            except Exception as exc:
+                logger.warning("Scheduler: KL play-off auto-confirmda xato: %s", exc)
             # WC play-off
             try:
                 from queries_wc_playoff_results import wc_playoff_auto_confirm_awaiting

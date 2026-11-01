@@ -1288,6 +1288,9 @@ def init_db():
     # 2026-10-15: Osiyo Chempionlar ligasi jadvallari (ac_models.py — models.py shishmasin)
     from ac_models import init_ac_tables  # lokal import — circular oldini olish
     init_ac_tables()
+    # 2026-11-01: Konferensiya ligasi jadvallari (co_models.py — OChL nusxasi)
+    from co_models import init_co_tables
+    init_co_tables()
     # 2026-10-15: Teamlar jangi jadvallari (tb_models.py)
     from tb_models import init_tb_tables
     init_tb_tables()

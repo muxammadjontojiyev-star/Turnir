@@ -64,6 +64,12 @@ _AC_TABLES = [
     "ac_playoff_matches", "ac_matches", "ac_participants", "ac_qualifiers",
 ]
 
+# 2026-11-01: Konferensiya ligasi kontenti (OChL bilan bir xil tuzilma).
+_CO_TABLES = [
+    "co_po_messages", "co_messages",
+    "co_playoff_matches", "co_matches", "co_participants", "co_qualifiers",
+]
+
 
 def reset_league_data() -> dict:
     """
@@ -257,3 +263,32 @@ def reset_ac_data() -> dict:
     conn.close()
     return {"tables": counts}
 
+
+
+def reset_co_data() -> dict:
+    """
+    2026-11-01: Konferensiya ligasi ma'lumotlarini tozalaydi (mavsum yakunlangach) — reset_ac_data naqshi.
+    O'chiriladi: _CO_TABLES + co_state, co_playoff_state (barcha mavsum qatorlari).
+    users, season_prizes — TEGILMAYDI (kubok tarixi saqlanadi).
+    """
+    conn = _reset_connection()
+    cursor = conn.cursor()
+    counts = {}
+    try:
+        cursor.execute("BEGIN")
+        for tbl in _CO_TABLES + ["co_state", "co_playoff_state"]:
+            cursor.execute(f"DELETE FROM {tbl}")   # nomlar KODDAN (qoida #29)
+            counts[tbl] = cursor.rowcount
+        from match_ids import restart_ids          # keyingi mavsum o'yinlari #1 dan
+        restart_ids(cursor, ["co_matches", "co_playoff_matches"])
+        cursor.execute("COMMIT")
+    except Exception:
+        try:
+            cursor.execute("ROLLBACK")
+        except Exception:
+            logger.exception("reset_co_data: ROLLBACK xatosi")
+        conn.close()
+        logger.exception("reset_co_data xatosi")
+        raise
+    conn.close()
+    return {"tables": counts}

@@ -23,7 +23,7 @@ import logging
 import re
 import secrets
 
-from admin_roles import (SCOPE_AC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, SCOPE_LEAGUE,
+from admin_roles import (SCOPE_AC, SCOPE_CO, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL, SCOPE_LEAGUE,
                          SCOPE_WC, is_scope_admin, is_super_admin)
 from chat_report import MODES
 from models import get_connection
@@ -46,6 +46,7 @@ _MODE_SCOPES = {
     "wc": SCOPE_WC, "wc_po": SCOPE_WC,
     "el": SCOPE_EL, "el_po": SCOPE_EL,
     "ac": SCOPE_AC, "ac_po": SCOPE_AC,   # 2026-10-15
+    "co": SCOPE_CO, "co_po": SCOPE_CO,   # 2026-11-01: Konferensiya ligasi
     "pt": None,
     "tb": None,    # 2026-10-16: Teamlar jangi — ishtirokchilar + bosh admin (+ liga admini, get_chat_image)
     "qm": None,    # 2026-10-19: tezkor o'yin

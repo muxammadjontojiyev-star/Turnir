@@ -32,12 +32,14 @@ CUP_REWARDS = {
     "cl": dict(zip(CUP_STAGES, (50, 80, 120, 180, 250, 350, 500))),
     "el": dict(zip(CUP_STAGES, (30, 50, 80, 120, 170, 230, 350))),
     "ac": dict(zip(CUP_STAGES, (30, 50, 80, 120, 170, 230, 350))),   # egasi: Osiyo ChL — YeL summalari
+    "co": dict(zip(CUP_STAGES, (20, 35, 50, 80, 110, 160, 250))),   # 2026-11-01: Konferensiya ligasi
 }
 WC_STAGES = ("group", "r32", "r16", "r8", "r4", "third", "finalist", "champion")
 WC_REWARDS = dict(zip(WC_STAGES, (50, 80, 120, 180, 250, 300, 350, 500)))
 _CUP_TABLES = {"cl": ("cl_participants", "cl_matches", "cl_playoff_matches"),
                "el": ("el_participants", "el_matches", "el_playoff_matches"),
-               "ac": ("ac_participants", "ac_matches", "ac_playoff_matches")}   # nomlar KODDAN (qoida #29)
+               "ac": ("ac_participants", "ac_matches", "ac_playoff_matches"),
+               "co": ("co_participants", "co_matches", "co_playoff_matches")}   # nomlar KODDAN (qoida #29)
 TX_PREFIX = "reward_"
 
 

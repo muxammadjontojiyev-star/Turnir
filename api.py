@@ -3120,6 +3120,7 @@ CHAT_REPORT_SCOPES = {
     "wc": SCOPE_WC, "wc_po": SCOPE_WC,
     "el": SCOPE_EL, "el_po": SCOPE_EL,
     "ac": "ac", "ac_po": "ac",   # 2026-10-15: admin_roles.SCOPE_AC
+    "co": "co", "co_po": "co",   # 2026-11-01: admin_roles.SCOPE_CO (Konferensiya ligasi)
     "tb": "tb",                  # 2026-10-16: Teamlar jangi — scope admini yo'q, faqat bosh admin o'tadi
     "qm": "qm",                  # 2026-10-19: tezkor o'yin — faqat bosh admin
 }
@@ -3733,6 +3734,14 @@ from ac_api_admin import router as ac_admin_router  # noqa: E402
 app.include_router(ac_router)
 app.include_router(ac_playoff_router)
 app.include_router(ac_admin_router)
+
+# ============ KONFERENSIYA LIGASI (2026-11-01, router — co_api*.py; OChL nusxasi) ============
+from co_api import router as co_router  # noqa: E402
+from co_api_playoff import router as co_playoff_router  # noqa: E402
+from co_api_admin import router as co_admin_router  # noqa: E402
+app.include_router(co_router)
+app.include_router(co_playoff_router)
+app.include_router(co_admin_router)
 
 # ============ TEAMLAR JANGI (2026-10-15, 1-bosqich — router: tb_api.py) ============
 from tb_api import router as tb_router  # noqa: E402
