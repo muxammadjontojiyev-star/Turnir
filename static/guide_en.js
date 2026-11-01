@@ -73,6 +73,7 @@ GUIDE_I18N.en = {
       steps: [
         "**Champions League** — from 13 European leagues by league strength: LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1 — places 1–4; Liga Portugal, Eredivisie — 1–3; Jupiler Pro League, Süper Lig, Chance Liga, RPL — 1–2; Eliteserien, Greek Super League — 1st: **36** players.",
         "**Europa League** — the next places after the UCL quota: top-5 leagues — 5–8; Portugal, Netherlands — 4–6; Belgium, Turkey, Czechia, Russia — 3–4; Norway, Greece — 2nd: **36** players.",
+        "**Conference League** — the next places after the UEL quota in the same 13 leagues: top-5 leagues — 9th–12th; Portugal, Netherlands — 7th–9th; Belgium, Turkey, Czechia, Russia — 5th–6th; Norway, Greece — 3rd: **36** players, 6-round league phase.",
         "**Asian Champions League** — places 1–8 from the Superliga, Saudi Pro League, UAE Pro League and J1 League: **32** players.",
       ],
       tips_title: "FORMAT",

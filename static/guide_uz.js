@@ -75,6 +75,7 @@ GUIDE_I18N.uz = {
       steps: [
         "**Chempionlar ligasi** — 13 ta Yevropa ligasidan, liga kuchiga qarab: LaLiga, Premier Liga, Bundesliga, Serie A, Ligue 1 — 1–4-o'rin; Liga Portugal, Eredivisie — 1–3; Jupiler Pro League, Süper Lig, Chance Liga, RPL — 1–2; Eliteserien, Greek Super League — 1-o'rin: jami **36** kishi.",
         "**Yevropa ligasi** — o'sha ligalardan ChL o'rinlaridan keyingilari: katta 5 liga — 5–8-o'rin; Portugaliya, Niderlandiya — 4–6; Belgiya, Turkiya, Chexiya, Rossiya — 3–4; Norvegiya, Gretsiya — 2-o'rin: jami **36** kishi.",
+        "**Konferensiya ligasi** — o'sha 13 ligadan YeL o'rinlaridan keyingilar: katta 5 liga — 9–12-o'rin; Portugaliya, Niderlandiya — 7–9; Belgiya, Turkiya, Chexiya, Rossiya — 5–6; Norvegiya, Gretsiya — 3-o'rin: jami **36** kishi, liga bosqichi 6 tur.",
         "**Osiyo Chempionlar ligasi** — Superliga, Saudi Pro Liga, UAE Pro Liga va J1 Liga'ning 1–8-o'rinlari: jami **32** kishi.",
       ],
       tips_title: "FORMAT",

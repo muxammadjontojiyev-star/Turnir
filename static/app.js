@@ -1451,6 +1451,10 @@ function showModeSelect() {
         <img class="mode-banner" src="ac-banner.jpg?v=2" alt="${escHtml(t.mode_ac || "Osiyo Chempionlar ligasi")}"
              onerror="this.style.display='none'">
       </div>
+      <div class="mode-card mode-card--co mode-card--photo" id="mode-card-co">
+        <img class="mode-banner" src="co-banner.jpg?v=1" alt="${escHtml(t.mode_co || "Konferensiya ligasi")}"
+             onerror="this.style.display='none'">
+      </div>
       <div class="mode-card mode-card--division mode-card--photo" id="mode-card-division">
         <img class="mode-banner" src="division-banner.jpg?v=6" alt=""
              onerror="this.style.display='none'">
@@ -1471,6 +1475,8 @@ function showModeSelect() {
     .addEventListener("click", enterEuropaLeagueMode);
   document.getElementById("mode-card-ac")
     .addEventListener("click", enterAsianChampionsLeagueMode);
+  document.getElementById("mode-card-co")
+    .addEventListener("click", enterConferenceLeagueMode);
   document.getElementById("mode-hub-back")
     .addEventListener("click", showHubSelect);
 }
@@ -1614,6 +1620,15 @@ function enterAsianChampionsLeagueMode() {
     showAsianChampionsLeague();
   } else {
     showToast("Osiyo Chempionlar ligasi tez orada ishga tushadi!");
+  }
+}
+
+// 2026-11-01: Konferensiya ligasi rejimini ochadi (co.js — OChL nusxasi)
+function enterConferenceLeagueMode() {
+  if (typeof showConferenceLeague === "function") {
+    showConferenceLeague();
+  } else {
+    showToast("Konferensiya ligasi tez orada ishga tushadi!");
   }
 }
 

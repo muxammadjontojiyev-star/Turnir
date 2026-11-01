@@ -1173,6 +1173,10 @@ function prizeVisual(p) {
   if (p.prize_type === "ac_cup") {
     return { img: "ac-trophy.png?v=2", name: t.ac_trophy_name || "OChL Kubogi" };
   }
+  // 2026-11-01: Konferensiya ligasi kubogi
+  if (p.prize_type === "co_cup") {
+    return { img: "co-trophy.png?v=1", name: t.co_trophy_name || "KL Kubogi" };
+  }
   if (p.prize_type === "league_cup") {
     const trophyFile = LEAGUE_TROPHIES[p.league_name] || null;
     return { img: trophyFile, name: (p.league_name || "") + " " + (t.league_trophy || "Kubogi") };
@@ -1700,7 +1704,7 @@ async function finalizeSeason() {
 // Zaxira: eski javoblar uchun mahalliy jadval.
 const LEAGUE_PRIZE_LABELS = {
   league_cup: "Liga kubogi", wc_cup: "JCh kubogi", cl_cup: "ChL kubogi",
-  div_cup: "Divizion kubogi", el_cup: "YeL kubogi", ac_cup: "OChL kubogi", golden_ball: "Oltin to'p", golden_boot: "Oltin butsa",
+  div_cup: "Divizion kubogi", el_cup: "YeL kubogi", ac_cup: "OChL kubogi", co_cup: "KL kubogi", golden_ball: "Oltin to'p", golden_boot: "Oltin butsa",
   wc_golden_boot: "JCh oltin butsa", div_boot: "Divizion oltin butsa",
 };
 
@@ -1727,7 +1731,7 @@ async function leagueLoadPrizeTransfer() {
     // Liga kubogi qaysi liga ekani (bir necha liga bo'lishi mumkin)
     const lg = p.league_name ? " (" + escHtml(p.league_name) + ")" : "";
     // Kubok yulduzcha beradi — vizual farqlaymiz
-    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup", "ac_cup"].includes(p.prize_type);
+    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup", "ac_cup", "co_cup"].includes(p.prize_type);
     const icon = isCup ? "🏆" : "👟";
     return `
       <label class="admin-radio-row" style="display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer">
@@ -1770,7 +1774,7 @@ async function leaguePrizeTransferSubmit(btn) {
     });
     const label = LEAGUE_PRIZE_LABELS[r.prize_type] || r.prize_type;
     const who = r.new_username ? "@" + r.new_username : (r.new_nickname || ("#" + r.new_user_id));
-    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup", "ac_cup"].includes(r.prize_type);
+    const isCup = ["league_cup", "wc_cup", "cl_cup", "div_cup", "el_cup", "ac_cup", "co_cup"].includes(r.prize_type);
     const starNote = isCup ? "\n\n⭐ Yulduzcha ham yangi akkauntga o'tdi." : "";
     window.alert(`✅ ${label} (${r.season_number}-mavsum) endi ${who} ga tegishli.${starNote}`);
     if (tgInput) tgInput.value = "";
@@ -3124,6 +3128,7 @@ setInterval(() => {
   if (vis("cl-root") && typeof clRefreshUnreadBadge === "function") { void clRefreshUnreadBadge(); return; }
   if (vis("el-root") && typeof elRefreshUnreadBadge === "function") { void elRefreshUnreadBadge(); return; }
   if (vis("ac-root") && typeof acRefreshUnreadBadge === "function") { void acRefreshUnreadBadge(); return; }
+  if (vis("co-root") && typeof coRefreshUnreadBadge === "function") { void coRefreshUnreadBadge(); return; }   // 2026-11-01
   if (vis("div-root") && typeof divRefreshUnreadBadge === "function") { void divRefreshUnreadBadge(); return; }
   if (vis("worldcup-root") && typeof wcRefreshUnreadBadge === "function") { void wcRefreshUnreadBadge(); return; }
   void refreshUnreadBadge(); // liga rejimi (yashirin bo'lsa ham zararsiz)
