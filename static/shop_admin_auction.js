@@ -2,7 +2,8 @@
 //  shop_admin_auction.js — Admin → «🛒 DO'KON» ichida AUKSION boshqaruvi (faqat bosh admin, 2026-10-30)
 //  Klubni sotuvga qo'yish (liga, klub, boshlang'ich narx, qadam, muddat), faol savdolar (bekor qilish),
 //  oxirgi natijalar. shop_admin.js dagi shopAdmLoad'dan keyin #auc-adm ga chiziladi.
-//  API: GET/POST /shop/admin/auction, POST /shop/admin/auction/{id}/cancel.
+//  API: GET/POST /shop/admin/auction, POST /shop/admin/auction/{id}/cancel,
+//       POST /shop/admin/auction/end-all (2026-11-01: hamma faol lotni bitta vaqtda tugatish, Toshkent vaqti).
 //  Global: shopAdmLoad (shop_admin.js), shopNum, shopToken, aucLeft (shop_auction.js), LEAGUE_CLUBS (api.js).
 // =============================================================
 
@@ -12,7 +13,16 @@ const AUC_ADM_ERR = {
   bad_club: "Klub shu ligada topilmadi.", league_not_found: "Liga topilmadi.", bad_price: "Boshlang'ich narx noto'g'ri.",
   bad_step: "Qadam noto'g'ri.", bad_hours: "Muddat noto'g'ri.", club_on_auction: "Bu klub allaqachon savdoda yoki g'olibi bor (yangi mavsumni kutmoqda).",
   wrong_status: "Savdo allaqachon yakunlangan.", not_found: "Topilmadi.",
+  bad_time: "Vaqt noto'g'ri.", time_past: "Vaqt kamida 1 daqiqa keyin bo'lishi kerak.",
+  time_too_far: "Vaqt juda uzoq (ko'pi bilan 14 kun).", no_active: "Faol savdo yo'q.",
 };
+const AUC_ADM_TZ_MS = 5 * 3600 * 1000;   // Toshkent = UTC+5 (backend TOURNAMENT_TIMEZONE_OFFSET)
+
+// Keyingi to'liq soat (Toshkent) — 'YYYY-MM-DDTHH:MM' (datetime-local qiymati)
+function aucAdmDefaultEnd() {
+  const d = new Date(Date.now() + AUC_ADM_TZ_MS + 3600 * 1000);
+  return d.toISOString().slice(0, 13) + ":00";
+}
 const AUC_ADM_ST = { ended: "keyingi mavsumni kutmoqda", applied: "klubga yozildi", failed: "yozilmadi, pul qaytdi", cancelled: "bekor qilindi" };
 
 async function aucAdmLoad() {
@@ -60,7 +70,13 @@ function aucAdmListHtml(d) {
     </div>`).join("");
   const rec = (d.recent || []).map(l => `<div class="shop-adm-order-who">#${Number(l.id)} ${escHtml(l.club_name)} (${escHtml(l.league_name)}) —
       ${l.winner_user_id ? `${escHtml(who(l))}, ${shopNum(l.current_bid)} eF` : "takliflarsiz"} · ${escHtml(AUC_ADM_ST[l.status] || l.status)}</div>`).join("");
-  return `<div class="adm-pp-hint" style="margin-top:10px"><b>Faol savdolar</b></div>${act || `<div class="adm-pp-hint">Faol savdo yo'q.</div>`}
+  // 2026-11-01: hamma faol lotni bitta vaqtda tugatish (masalan, yangi mavsum boshlanishidan oldin)
+  const endAll = act ? `<div class="auc-adm-form" style="margin-top:6px">
+      <div class="adm-pp-hint">⏱ <b>Hammasi bir vaqtda tugasin</b> (Toshkent vaqti):</div>
+      <input class="modal-input" id="auc-adm-endall" type="datetime-local" value="${aucAdmDefaultEnd()}">
+      <button class="btn btn--primary" data-auc-adm="endall">⏱ Barcha lotlarni shu vaqtda tugatish</button>
+    </div>` : "";
+  return `<div class="adm-pp-hint" style="margin-top:10px"><b>Faol savdolar</b></div>${endAll}${act || `<div class="adm-pp-hint">Faol savdo yo'q.</div>`}
     ${rec ? `<div class="adm-pp-hint" style="margin-top:10px"><b>Oxirgi natijalar</b></div>${rec}` : ""}`;
 }
 
@@ -74,6 +90,12 @@ async function aucAdmAction(btn) {
              min_step: Number(v("auc-adm-step")), hours: Number(v("auc-adm-hours")) };
     if (!window.confirm(`${body.club_name} — ${shopNum(body.start_price)} eF dan, qadam ${shopNum(body.min_step)} eF. Sotuvga qo'yilsinmi?`)) return;
     path = "/shop/admin/auction";
+  } else if (a === "endall") {
+    const v = document.getElementById("auc-adm-endall").value;
+    if (!v) { showToast("❌ " + AUC_ADM_ERR.bad_time); return; }
+    if (!window.confirm(`Barcha faol savdolar ${v.replace("T", " ")} (Toshkent) da tugasinmi? Oxirgi daqiqalardagi taklif baribir savdoni uzaytiradi.`)) return;
+    body = { ends_local: v };
+    path = "/shop/admin/auction/end-all";
   } else if (a === "cancel") {
     if (!window.confirm("Savdo bekor qilinsinmi? Yetakchining eF Tokeni qaytariladi.")) return;
     path = `/shop/admin/auction/${encodeURIComponent(btn.dataset.id)}/cancel`;
