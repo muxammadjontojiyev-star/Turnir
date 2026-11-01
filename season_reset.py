@@ -123,6 +123,10 @@ def reset_wc_data() -> dict:
         # Play-off holatini boshlang'ich (boshlanmagan) holatga qaytaramiz
         cursor.execute("UPDATE wc_playoff_state SET started = 0, start_date = NULL WHERE id = 1")
         counts["wc_playoff_state_reset"] = cursor.rowcount
+        # 2026-11-01: JCh yo'llanmalari (wc_eligible) shu JCh uchun ishlatildi — tozalanadi. Keyingi JCh'ga
+        # ro'yxat faqat navbatdagi Divizion mavsumi yakunlanganda (yangi top-48) ochiladi.
+        cursor.execute("DELETE FROM wc_eligible")
+        counts["wc_eligible"] = cursor.rowcount
         from match_ids import restart_ids          # 2026-11-01: keyingi JCh o'yinlari #1 dan
         restart_ids(cursor, ["wc_matches", "wc_playoff_matches"])
         cursor.execute("COMMIT")

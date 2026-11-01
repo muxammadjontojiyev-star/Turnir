@@ -40,6 +40,9 @@ def main() -> None:
     # 2026-11-01: joriy liga o'yin raqamlari 4 xonadan oshgan bo'lsa — bir martalik qayta raqamlash (match_ids.py)
     from match_ids import renumber_league_matches
     renumber_league_matches()
+    # 2026-11-01: o'tgan JCh uchun berilgan yo'llanmalar yangi JCh'ga amal qilmasin (wc_eligibility.py)
+    from wc_eligibility import clear_stale_wc_eligible
+    clear_stale_wc_eligible()
     logger.info("Ma'lumotlar bazasi va ligalar tayyor.")
 
     # Play-off ta'mirlash: ilgari confirmed bo'lib, g'olibi o'tmay qolgan

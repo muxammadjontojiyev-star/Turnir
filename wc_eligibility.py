@@ -294,3 +294,27 @@ def wc_eligible_revoke_unregistered() -> int:
         return n
     finally:
         conn.close()
+
+
+# ============================================================
+#  2026-11-01: ESKIRGAN YO'LLANMALAR (egasi: JCh 10-sanada Divizion yakunlangach ochilishi kerak edi,
+#  lekin o'tgan Divizion top-48 i yangi JCh'ga yozilyapti)
+# ============================================================
+# Sabab: JCh yakunlanganda (reset_wc_data) wc_eligible tozalanmasdi — o'tgan JCh uchun berilgan
+# yo'llanmalar keyingi JCh'ga ham amal qilardi. Endi reset tozalaydi; bu funksiya esa ALLAQACHON
+# shunday qolgan bazani bir marta tuzatadi (main.py startida, idempotent): ro'yxat oxirgi JCh
+# yakunlanishidan OLDIN yaratilgan bo'lsa — eskirgan, o'chiriladi. Ro'yxatdan o'tganlarga tegilmaydi.
+
+def clear_stale_wc_eligible() -> int:
+    conn = get_connection()
+    try:
+        r = conn.execute("SELECT wc_last_finalized_at AS f FROM season_state WHERE id = 1").fetchone()
+        if not r or not r["f"]:
+            return 0
+        cur = conn.execute("DELETE FROM wc_eligible WHERE julianday(created_at) < julianday(?)", (r["f"],))
+        conn.commit()
+        if cur.rowcount:
+            logger.info("JCh: %s ta eskirgan yo'llanma o'chirildi (JCh %s da yakunlangan)", cur.rowcount, r["f"])
+        return cur.rowcount
+    finally:
+        conn.close()
