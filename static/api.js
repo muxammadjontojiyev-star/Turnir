@@ -457,7 +457,9 @@ async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || res.statusText);
+    // 2026-11-02: 422 (maydon xatosi) detail — ro'yxat; «[object Object]» o'rniga matn
+    const d = Array.isArray(err.detail) ? (err.detail[0] && err.detail[0].msg) : err.detail;
+    throw new Error((typeof d === "string" ? d : "") || res.statusText || String(res.status));
   }
   return res.json();
 }
@@ -2775,6 +2777,11 @@ function closeResultModal() {
   if (typeof CLPO !== "undefined") CLPO._resultMatchId = null;  // 2026-07-21: ChL play-off
   if (typeof EL !== "undefined") EL._resultMatchId = null;      // 2026-10-02: Yevropa ligasi
   if (typeof ELPO !== "undefined") ELPO._resultMatchId = null;  // 2026-10-02: YeL play-off
+  // 2026-11-02: OChL va Konferensiya ligasi (guruh + play-off) ham tozalanadi
+  if (typeof AC !== "undefined") AC._resultMatchId = null;
+  if (typeof ACPO !== "undefined") ACPO._resultMatchId = null;
+  if (typeof CO !== "undefined") CO._resultMatchId = null;
+  if (typeof COPO !== "undefined") COPO._resultMatchId = null;
   APP.activeMatchId = null;
   document.getElementById("modal-result").classList.add("hidden");
   document.getElementById("input-score1").value = "0";
@@ -3520,6 +3527,12 @@ async function submitMatchResult() {
   if (typeof EL !== "undefined" && EL._resultMatchId != null) {
     return elSubmitResultFromModal();
   }
+  // 2026-11-02: XATO TUZATILDI — OChL va Konferensiya ligasi yo'naltirilmagan edi, natija liga
+  // endpointiga match_id=null bilan ketib «[object Object]» (422) chiqardi
+  if (typeof ACPO !== "undefined" && ACPO._resultMatchId != null) return acpoSubmitResultFromModal();
+  if (typeof AC !== "undefined" && AC._resultMatchId != null) return acSubmitResultFromModal();
+  if (typeof COPO !== "undefined" && COPO._resultMatchId != null) return copoSubmitResultFromModal();
+  if (typeof CO !== "undefined" && CO._resultMatchId != null) return coSubmitResultFromModal();
   const matchId = APP.activeMatchId;
   const score1  = parseInt(document.getElementById("input-score1").value) || 0;
   const score2  = parseInt(document.getElementById("input-score2").value) || 0;

@@ -21,7 +21,7 @@ async function coCheckAdmin() {
   try {
     const who = await apiFetch("/admin/whoami");
     CO_ADMIN.isSuper = !!who.is_super;
-    CO_ADMIN.isCl = !!who.is_cl_admin;
+    CO_ADMIN.isCl = !!who.is_co_admin;   // 2026-11-02: XATO — avval is_cl_admin edi (ChL admini ko'rib, 403 olardi)
   } catch (_) {
     CO_ADMIN.isSuper = false;
     CO_ADMIN.isCl = false;
@@ -303,8 +303,10 @@ function coFixIdChanged(raw) {
       if (CO_ADMIN.fixInfo && typeof CO_ADMIN.fixInfo.is_playoff !== "undefined") {
         CO_ADMIN.fixIsPlayoff = !!CO_ADMIN.fixInfo.is_playoff;
       }
-    } catch (_) {
+    } catch (e) {
+      // 2026-11-02: faqat haqiqatan topilmasa «topilmadi»; huquq/tarmoq xatosi — o'z matni bilan
       CO_ADMIN.fixInfo = "notfound";
+      if (e && e.message && e.message !== "match_not_found") showToast("❌ " + e.message);
     }
     coRerenderPanel();
   }, 350);
