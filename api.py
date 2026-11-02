@@ -836,9 +836,9 @@ def club_priority_switch_set(on: bool = Body(..., embed=True), admin: dict = Dep
 
 @app.get("/admin/club-priority/abandoned")
 def club_priority_abandoned(q: str | None = None, admin: dict = Depends(get_authenticated_super_admin)):
-    """2026-11-02: «tashlab ketgan»lar ro'yxati; q berilsa — shu odamning navbat holati (club_priority_admin.py)."""
-    from club_priority_admin import abandoned_list, find_user
-    return {**abandoned_list(), "found": find_user(q) if q else None}
+    """2026-11-02: «tashlab ketgan»lar SONI; q berilsa — shu odam: qachon, qaysi liga/klub, navbat holati."""
+    from club_priority_admin import abandoned_count, find_user
+    return {**abandoned_count(), "found": find_user(q) if q else None}
 
 
 @app.post("/admin/club-priority/clear")

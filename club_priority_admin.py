@@ -5,7 +5,8 @@ Egasi: «navbatingiz oxirida (tashlab ketgan)» yozuvi yangilarga ham chiqyapti.
 mavsum bo'yicha YOZUVI YO'Q odam «yangi» bo'ladi (club_priority.club_priority_for). Demak bu yozuv
 chiqqanlarda club_reliability'da 'abandoned' belgisi bor (masalan, kanalni tark etgani uchun klubi
 boshqaga o'tgan, admin akkauntni ko'chirgan yoki o'yinlari bor holda chiqarilgan) va ular qaytib kirgan.
-Bosh admin endi: ro'yxatni ko'radi (sababi bilan), istalgan odamni tekshiradi va belgini olib tashlaydi.
+Bosh admin: @username yoki ID bo'yicha tekshiradi — qachon chiqib ketgani, qaysi ligadagi qaysi klubni
+tashlab ketgani, sababi (2026-11-02: to'liq ro'yxat ko'rsatilmaydi — egasi so'rovi) va belgini olib tashlaydi.
 """
 
 import logging
@@ -22,27 +23,35 @@ def _prev_season(cur) -> int:
     return (r["current_season"] if r else 1) - 1
 
 
-def abandoned_list() -> dict:
-    """O'tgan mavsumda «tashlab ketgan» deb belgilanganlar (sabab, sana, hozirgi nik)."""
+def abandoned_count() -> dict:
+    """O'tgan mavsumda «tashlab ketgan» deb belgilanganlar SONI (ro'yxat emas)."""
     conn = get_connection()
     try:
         cur = conn.cursor()
         prev = _prev_season(cur)
-        cols = {r["name"] for r in cur.execute("PRAGMA table_info(club_reliability)")}
-        reason = "c.reason" if "reason" in cols else "NULL"
-        rows = cur.execute(
-            f"SELECT c.telegram_id, {reason} AS reason, c.created_at, "
-            "(SELECT nickname FROM users u WHERE u.telegram_id = c.telegram_id ORDER BY u.id DESC LIMIT 1) AS nickname, "
-            "(SELECT username FROM users u WHERE u.telegram_id = c.telegram_id ORDER BY u.id DESC LIMIT 1) AS username "
-            "FROM club_reliability c WHERE c.season_number = ? AND c.status = ? ORDER BY c.created_at DESC",
-            (prev, ST_ABANDONED)).fetchall()
-        return {"season": prev, "list": [dict(r) for r in rows]}
+        n = cur.execute("SELECT COUNT(*) AS c FROM club_reliability WHERE season_number = ? AND status = ?",
+                        (prev, ST_ABANDONED)).fetchone()["c"]
+        return {"season": prev, "count": n}
     finally:
         conn.close()
 
 
+def _record(cur, tg: int) -> dict | None:
+    cols = {r["name"] for r in cur.execute("PRAGMA table_info(club_reliability)")}
+    extra = ", ".join(c if c in cols else f"NULL AS {c}" for c in ("reason", "league_name", "club_name"))
+    rec = cur.execute(f"SELECT status, created_at, {extra} FROM club_reliability "
+                      "WHERE telegram_id = ? AND season_number = ?", (tg, _prev_season(cur))).fetchone()
+    if not rec:
+        return None
+    from pt_rounds import utc_to_local_text
+    d = dict(rec)
+    d["left_at"] = utc_to_local_text(str(d["created_at"])[:19]) if d["created_at"] else None   # Toshkent
+    return d
+
+
 def find_user(query: str) -> dict | None:
-    """@username yoki Telegram ID bo'yicha: {telegram_id, nickname, username, record, priority}."""
+    """@username yoki Telegram ID: {telegram_id, nickname, username, record{status, left_at, reason, league_name,
+    club_name}, priority}."""
     q = (query or "").strip().lstrip("@")
     if not q:
         return None
@@ -59,12 +68,11 @@ def find_user(query: str) -> dict | None:
             tg = u["telegram_id"] if u else None
         if tg is None:
             return None
-        rec = cur.execute("SELECT status, created_at FROM club_reliability WHERE telegram_id = ? AND season_number = ?",
-                          (tg, _prev_season(cur))).fetchone()
+        rec = _record(cur, tg)
     finally:
         conn.close()
     return {"telegram_id": tg, "nickname": u["nickname"] if u else None, "username": u["username"] if u else None,
-            "record": dict(rec) if rec else None, "priority": club_priority_for(tg)}
+            "record": rec, "priority": club_priority_for(tg)}
 
 
 def clear_abandoned(telegram_id: int) -> bool:

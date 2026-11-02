@@ -51,6 +51,10 @@ def migrate_priority_switch(cur) -> None:
     rcols = {r["name"] for r in cur.execute("PRAGMA table_info(club_reliability)")}
     if "reason" not in rcols:
         cur.execute("ALTER TABLE club_reliability ADD COLUMN reason TEXT")
+    # 2026-11-02: qaysi ligadagi qaysi klubni tashlab ketgani (admin tekshiruvi; eski yozuvlarda NULL)
+    for col in ("league_name", "club_name"):
+        if col not in rcols:
+            cur.execute(f"ALTER TABLE club_reliability ADD COLUMN {col} TEXT")
 
 
 def priority_enabled(cur) -> bool:
@@ -79,17 +83,31 @@ def _current_season(cur) -> int:
     return r["current_season"] if r else 1
 
 
+def _current_club(cur, telegram_id: int) -> tuple[str | None, str | None]:
+    """Hozirgi ro'yxat: (liga, klub) — ko'chirish/o'chirishdan OLDIN chaqiriladi."""
+    r = cur.execute("SELECT l.name AS league_name, r.club_name FROM registrations r JOIN users u ON u.id = r.user_id "
+                    "JOIN leagues l ON l.id = r.league_id WHERE u.telegram_id = ? ORDER BY r.id DESC LIMIT 1",
+                    (telegram_id,)).fetchone()
+    return (r["league_name"], r["club_name"]) if r else (None, None)
+
+
 def mark_abandoned_cur(cur, telegram_id: int, reason: str | None = None) -> None:
-    """Joriy liga mavsumida tashlab ketdi (abandoned 'finished'dan ustun — REPLACE). reason — 2026-11-02."""
+    """Joriy liga mavsumida tashlab ketdi (abandoned 'finished'dan ustun — REPLACE).
+    2026-11-02: sabab, vaqt (created_at yangilanadi), liga va klub ham saqlanadi."""
+    season = _current_season(cur)
+    league, club = _current_club(cur, telegram_id)
     try:
-        cur.execute("INSERT INTO club_reliability (telegram_id, season_number, status, reason) VALUES (?, ?, ?, ?) "
-                    "ON CONFLICT(telegram_id, season_number) DO UPDATE SET status = excluded.status, "
-                    "reason = excluded.reason", (telegram_id, _current_season(cur), ST_ABANDONED, reason))
-    except Exception:          # reason ustuni hali yo'q (migratsiyadan oldin) — eski usul
+        cur.execute("INSERT INTO club_reliability (telegram_id, season_number, status, reason, league_name, club_name) "
+                    "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(telegram_id, season_number) DO UPDATE SET "
+                    "status = excluded.status, reason = excluded.reason, created_at = CURRENT_TIMESTAMP, "
+                    "league_name = COALESCE(excluded.league_name, league_name), "
+                    "club_name = COALESCE(excluded.club_name, club_name)",
+                    (telegram_id, season, ST_ABANDONED, reason, league, club))
+    except Exception:          # ustunlar hali yo'q (migratsiyadan oldin) — eski usul
         cur.execute("INSERT INTO club_reliability (telegram_id, season_number, status) VALUES (?, ?, ?) "
                     "ON CONFLICT(telegram_id, season_number) DO UPDATE SET status = excluded.status",
-                    (telegram_id, _current_season(cur), ST_ABANDONED))
-    logger.info("Klub navbati: tg %s — tashlab ketdi deb belgilandi (%s)", telegram_id, reason)
+                    (telegram_id, season, ST_ABANDONED))
+    logger.info("Klub navbati: tg %s — tashlab ketdi (%s; %s — %s)", telegram_id, reason, league, club)
 
 
 def mark_if_league_player_cur(cur, user_id: int) -> None:
