@@ -1,7 +1,7 @@
 // =============================================================
 //  club_priority.js — liga klubini tanlashda NAVBAT (bosh sahifa banneri, 2026-10-18)
-//  Yangi mavsum ochilgach: o'tgan mavsumni oxirigacha o'ynaganlar darhol, yangilar keyinroq,
-//  tashlab ketganlar eng oxirida klub tanlaydi. Backend: club_priority.py, GET /club-priority/me;
+//  Yangi mavsum ochilgach: oxirigacha o'ynaganlar va yangilar darhol (2026-11-02), faqat
+//  tashlab ketganlar keyinroq klub tanlaydi. Backend: club_priority.py, GET /club-priority/me;
 //  /register navbat kelmagan bo'lsa "priority_wait" qaytaradi.
 //  api.js loadHome() -> clubPriorityLoad(); registerToLeague xatosi -> clubPriorityWaitText().
 //  Global: APP, apiFetch, escHtml.
@@ -12,21 +12,21 @@ const CLUB_PRIO_TXT = {
     finished: "✅ Siz o'tgan mavsumni oxirigacha o'ynadingiz — klubni birinchilardan bo'lib tanlaysiz!",
     wait_new: "⏳ Hozir o'tgan mavsumni oxirigacha o'ynaganlar klub tanlayapti. Sizning navbatingiz: {t}",
     wait_abandoned: "⏳ O'tgan mavsumda turnirni tashlab ketganingiz sababli klub tanlash navbatingiz oxirida: {t}",
-    open_after: "Navbat: oxirigacha o'ynaganlar birinchi, keyin yangilar, oxirida tashlab ketganlar. Mavsumni oxirigacha o'ynang — keyingi mavsumda birinchi tanlaysiz.",
+    open_after: "Oxirigacha o'ynaganlar va yangilar darhol tanlaydi, o'tgan mavsumda tashlab ketganlar — 24 soatdan keyin. Mavsumni oxirigacha o'ynang!",
     toast: "Klub tanlash navbatingiz hali kelmadi: {t}",
   },
   ru: {
     finished: "✅ Вы доиграли прошлый сезон до конца — выбираете клуб одним из первых!",
     wait_new: "⏳ Сейчас клубы выбирают те, кто доиграл прошлый сезон. Ваша очередь: {t}",
     wait_abandoned: "⏳ Вы бросили турнир в прошлом сезоне, поэтому выбираете клуб последним: {t}",
-    open_after: "Очередь: сначала доигравшие до конца, затем новые, в конце — бросившие. Доиграйте сезон — в следующем выберете первым.",
+    open_after: "Доигравшие и новые выбирают сразу, бросившие прошлый сезон — через 24 ч. Доиграйте сезон до конца!",
     toast: "Ваша очередь выбора клуба ещё не наступила: {t}",
   },
   en: {
     finished: "✅ You finished last season — you pick your club among the first!",
     wait_new: "⏳ Players who finished last season are picking clubs now. Your turn: {t}",
     wait_abandoned: "⏳ You left the tournament last season, so you pick your club last: {t}",
-    open_after: "Order: those who finished first, then new players, then those who left. Finish the season to pick first next time.",
+    open_after: "Finishers and new players pick right away; those who left last season — after 24 h. Finish the season!",
     toast: "Your turn to pick a club hasn't come yet: {t}",
   },
 };

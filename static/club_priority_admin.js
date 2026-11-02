@@ -1,6 +1,6 @@
 // =============================================================
 //  club_priority_admin.js — Admin → «LIGA MAVSUMI»: klub tanlash NAVBATI kaliti (2026-11-01)
-//  Yoqilgan: o'tgan mavsumni oxirigacha o'ynaganlar darhol, yangilar keyinroq, tashlab ketganlar oxirida
+//  Yoqilgan: oxirigacha o'ynaganlar va yangilar darhol, faqat tashlab ketganlar 24 soatdan keyin (2026-11-02)
 //  (club_priority.py). O'chiq: hamma darhol klub tanlaydi. API: GET/POST /admin/club-priority {on}.
 //  loadSeasonInfo (api.js / season_break.js) qayta tayinlash orqali o'raladi — index.html da season_break.js
 //  dan KEYIN ulanadi. Global: APP, apiFetch, showToast.
@@ -9,8 +9,8 @@
 const CPA_TXT = {
   uz: { on: "🟢 Klub tanlash navbati: YOQILGAN", off: "⚪ Klub tanlash navbati: O'CHIQ",
         btn_off: "O'chirish", btn_on: "Yoqish",
-        hint: "Yoqilganda: oxirigacha o'ynaganlar darhol, yangilar 24 soatdan, tashlab ketganlar 48 soatdan keyin klub tanlaydi (yangi mavsum ochilgan paytdan). O'chiq — hamma darhol.",
-        c_off: "Navbat o'chirilsinmi? Hamma darhol klub tanlay oladi.", c_on: "Navbat yoqilsinmi? Yangilar va tashlab ketganlar kutadi.",
+        hint: "Yoqilganda: oxirigacha o'ynaganlar va yangilar darhol, faqat tashlab ketganlar 24 soatdan keyin klub tanlaydi (yangi mavsum ochilgan paytdan). O'chiq — hamma darhol.",
+        c_off: "Navbat o'chirilsinmi? Hamma darhol klub tanlay oladi.", c_on: "Navbat yoqilsinmi? Tashlab ketganlar kutadi.",
         ab_title: "Ishtirokchini tekshirish ({s}-mavsum bo'yicha)",
         ab_hint: "@username yoki Telegram ID yozing: qachon chiqib ketgani va qaysi ligadagi qaysi klubni tashlab ketgani ko'rsatiladi.",
         l_left: "Chiqib ketgan", l_club: "Tashlab ketgan klubi", l_reason: "Sababi", l_unknown: "noma'lum (eski yozuv)",
@@ -22,12 +22,12 @@ const CPA_TXT = {
         t_off: "navbat o'chiq — darhol", t_open: "hozir tanlay oladi" },
   ru: { on: "🟢 Очередь выбора клуба: ВКЛЮЧЕНА", off: "⚪ Очередь выбора клуба: ВЫКЛЮЧЕНА",
         btn_off: "Выключить", btn_on: "Включить",
-        hint: "Включена: доигравшие — сразу, новые — через 24 ч, бросившие — через 48 ч (от старта сезона). Выключена — все сразу.",
-        c_off: "Выключить очередь? Все смогут выбрать клуб сразу.", c_on: "Включить очередь? Новые и бросившие будут ждать." },
+        hint: "Включена: доигравшие и новые — сразу, только бросившие — через 24 ч (от старта сезона). Выключена — все сразу.",
+        c_off: "Выключить очередь? Все смогут выбрать клуб сразу.", c_on: "Включить очередь? Бросившие будут ждать." },
   en: { on: "🟢 Club pick queue: ON", off: "⚪ Club pick queue: OFF",
         btn_off: "Turn off", btn_on: "Turn on",
-        hint: "On: players who finished pick at once, new ones after 24 h, those who left after 48 h (from season start). Off — everyone at once.",
-        c_off: "Turn the queue off? Everyone can pick a club right away.", c_on: "Turn the queue on? New players and leavers will wait." },
+        hint: "On: finishers and new players pick at once, only those who left — after 24 h (from season start). Off — everyone at once.",
+        c_off: "Turn the queue off? Everyone can pick a club right away.", c_on: "Turn the queue on? Leavers will wait." },
 };
 
 function cpaT(k) { return (CPA_TXT[APP.lang] || CPA_TXT.uz)[k] || CPA_TXT.uz[k]; }

@@ -55,7 +55,7 @@ GUIDE_I18N.en = {
       intro: "Leagues are the main mode: everyone plays with one club, all in one table, and everyone plays everyone home and away.",
       steps: [
         "**Official tournaments → Leagues**. Pick an open league: leagues open in order — the next one stays locked until the previous one is full.",
-        "Pick a free club. In a new season, players who **finished the last season** choose first, newcomers a bit later, and those who quit last.",
+        "Pick a free club. In a new season, players who **finished the last season** and newcomers choose right away, those who quit — 24 hours later.",
         "When the league is full, the draw is made and rounds begin: **2** new rounds open every day at **23:30**.",
         "You can enter a result **1 hour 45 minutes** after a round opens — so nobody records a score for an unplayed match in advance.",
       ],

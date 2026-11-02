@@ -57,7 +57,7 @@ GUIDE_I18N.uz = {
       intro: "Ligalar — asosiy rejim: har kim bitta klub bilan o'ynaydi, hamma bitta jadvalda, har kim har kim bilan uy va mehmonda uchrashadi.",
       steps: [
         "**Rasmiy turnirlar → Ligalar**. Ochiq ligani tanlang: ligalar navbat bilan ochiladi — oldingisi to'lmaguncha keyingisi yopiq.",
-        "Bo'sh klublardan birini tanlang. Yangi mavsumda o'tgan mavsumni **oxirigacha o'ynaganlar birinchi** tanlaydi, yangilar biroz keyin, o'yinni tashlab ketganlar eng oxirida.",
+        "Bo'sh klublardan birini tanlang. Yangi mavsumda o'tgan mavsumni **oxirigacha o'ynaganlar birinchi** va yangilar darhol tanlaydi, o'yinni tashlab ketganlar esa 24 soatdan keyin.",
         "Liga to'lgach qur'a tashlanadi va turlar boshlanadi: har kuni **23:30** da **2 ta** yangi tur ochiladi.",
         "Natijani tur ochilgandan **1 soat 45 daqiqa** o'tgach kiritish mumkin — o'ynalmagan o'yinga oldindan natija yozilmasligi uchun.",
       ],
