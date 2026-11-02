@@ -2994,7 +2994,7 @@ def admin_whoami(x_telegram_init_data: str = Header(...)):
     """
     telegram_user = verify_telegram_init_data(x_telegram_init_data)
     tid = telegram_user["id"]
-    from admin_roles import SCOPE_AC, SCOPE_CL, SCOPE_DIVISION, SCOPE_EL
+    from admin_roles import SCOPE_AC, SCOPE_CL, SCOPE_CO, SCOPE_DIVISION, SCOPE_EL
     return {
         "is_super": is_super_admin(tid),
         "is_league_admin": is_scope_admin(tid, SCOPE_LEAGUE),
@@ -3003,6 +3003,7 @@ def admin_whoami(x_telegram_init_data: str = Header(...)):
         "is_div_admin": is_scope_admin(tid, SCOPE_DIVISION),
         "is_el_admin": is_scope_admin(tid, SCOPE_EL),
         "is_ac_admin": is_scope_admin(tid, SCOPE_AC),   # 2026-10-15
+        "is_co_admin": is_scope_admin(tid, SCOPE_CO),   # 2026-11-02: Konferensiya ligasi
     }
 
 
