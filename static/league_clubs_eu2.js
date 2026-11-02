@@ -24,10 +24,12 @@
     "Brasileirão": [["Athletico Paranaense", 10273], ["Atlético Mineiro", 10272], ["Bahia", 7877], ["Botafogo", 8517], ["Chapecoense", 197693], ["Corinthians", 9808], ["Coritiba", 9767], ["Cruzeiro", 9781], ["Flamengo", 9770], ["Fluminense", 9863], ["Grêmio", 9769], ["Internacional", 8702], ["Mirassol", 163782], ["Palmeiras", 10283], ["RB Bragantino", 109705], ["Remo", 1626], ["Santos", 8514], ["São Paulo", 10277], ["Vasco da Gama", 10276], ["Vitória", 7733]],
     // 2026-11-02: Kolumbiya Primera A (2026 mavsumi, FotMob jadvalidan)
     "Primera A": [["Águilas Doradas", 193025], ["Alianza", 193029], ["América de Cali", 10280], ["Atlético Nacional", 6368], ["Boyacá Chicó", 6255], ["Bucaramanga", 4401], ["Cúcuta Deportivo", 6254], ["Deportivo Cali", 6387], ["Deportivo Pasto", 4405], ["Deportivo Pereira", 4404], ["Fortaleza", 244167], ["Independiente Medellín", 2528], ["Internacional de Bogotá", 47240], ["Jaguares de Córdoba", 424270], ["Junior", 2254], ["Llaneros", 348397], ["Millonarios", 4403], ["Once Caldas", 6024], ["Santa Fe", 7818], ["Tolima", 1894]],
+    // 2026-11-02: Shimoliy Amerika — MLS (2026 mavsumi, 30 klub, FotMob jadvalidan)
+    "MLS": [["Atlanta United", 773958], ["Austin FC", 1218886], ["CF Montréal", 161195], ["Charlotte FC", 1323940], ["Chicago Fire", 6397], ["Colorado Rapids", 8314], ["Columbus Crew", 6001], ["DC United", 6602], ["FC Cincinnati", 722265], ["FC Dallas", 6399], ["Houston Dynamo", 8259], ["Inter Miami", 960720], ["LA Galaxy", 6637], ["Los Angeles FC", 867280], ["Minnesota United", 207242], ["Nashville SC", 915807], ["New England Revolution", 6580], ["New York City FC", 546238], ["New York Red Bulls", 6514], ["Orlando City", 267810], ["Philadelphia Union", 191716], ["Portland Timbers", 307690], ["Real Salt Lake", 6606], ["San Diego FC", 1701119], ["San Jose Earthquakes", 6603], ["Seattle Sounders", 130394], ["Sporting Kansas City", 6604], ["St. Louis City", 1427963], ["Toronto FC", 56453], ["Vancouver Whitecaps", 307691]],
   };
   const LOGOS = {   // FotMob liga ID'lari
     "RPL": 63, "Eredivisie": 57, "Jupiler Pro League": 40, "Chance Liga": 122, "Eliteserien": 59,
-    "Greek Super League": 135, "Brasileirão": 268, "Primera A": 274,
+    "Greek Super League": 135, "Brasileirão": 268, "Primera A": 274, "MLS": 130,
   };
 
   if (typeof LEAGUE_CLUBS === "undefined") return;

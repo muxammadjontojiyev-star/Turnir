@@ -8,7 +8,7 @@
 //  dan KEYIN ulanadi). Tab matnlari — TEXTS.tier1_tab / tier2_tab (league_tiers.js). Global: APP.
 // =============================================================
 
-const REGION_ORDER = ["eu", "asia", "sa"];   // 2026-11-02: + Janubiy Amerika
+const REGION_ORDER = ["eu", "asia", "sa", "na"];   // 2026-11-02: + Janubiy va Shimoliy Amerika
 
 function regionOf(league) {
   return (league && league.region) || "eu";
@@ -38,7 +38,7 @@ function regionRenderTabs(regions) {
   regions.forEach(r => {
     const b = document.createElement("button");
     b.className = "tier-tab" + (APP.homeRegion === r ? " active" : "");
-    b.textContent = r === "asia" ? (t.tier2_tab || "Osiyo") : r === "sa" ? (t.tier3_tab || "J. Amerika") : (t.tier1_tab || "Yevropa");
+    b.textContent = r === "asia" ? (t.tier2_tab || "Osiyo") : r === "sa" ? (t.tier3_tab || "J. Amerika") : r === "na" ? (t.tier4_tab || "Sh. Amerika") : (t.tier1_tab || "Yevropa");
     b.addEventListener("click", () => {
       if (APP.homeRegion === r) return;
       APP.homeRegion = r;

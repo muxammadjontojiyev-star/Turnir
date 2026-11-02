@@ -6228,6 +6228,12 @@ details.pt-table-card:not([open]) > summary { margin-bottom: 0; }
   border: none;
   transition: all 0.2s;
 }
+/* 2026-11-02: 4 ta mintaqa tabi (+ Sh. Amerika) telefonga sig'sin */
+.tier-tab { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tier-tabs:has(.tier-tab:nth-child(3)) .tier-tab { padding: 9px 4px; letter-spacing: 0; }
+.tier-tabs:not(:has(.tier-tab:nth-child(3))) .tier-tab { flex: 1; }   /* 2 tab — avvalgidek teng */
+.tier-tabs:has(.tier-tab:nth-child(4)) { gap: 2px; }
+.tier-tabs:has(.tier-tab:nth-child(4)) .tier-tab { padding: 9px 2px; font-size: 10.5px; }
 .tier-tab.active {
   color: #fff;
   background: linear-gradient(90deg, #7c5cff, #4cc3ff);
