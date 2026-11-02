@@ -161,8 +161,8 @@ AUCTION_SET_END_MIN_AHEAD = 1         # 2026-11-01: «hammasini bir vaqtda tugat
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
 
 # 2026-10-18: liga klubini tanlashda NAVBAT (club_priority.py). Yangi mavsum ochilgach:
-# oxirigacha o'ynaganlar darhol, yangilar CLUB_PRIORITY_HOURS soatdan keyin, tashlab ketganlar
-# yana CLUB_ABANDON_EXTRA_HOURS soatdan keyin klub tanlay oladi.
+# oxirigacha o'ynaganlar va yangilar darhol, tashlab ketganlar CLUB_ABANDON_EXTRA_HOURS soatdan keyin
+# klub tanlay oladi (2026-11-02; CLUB_PRIORITY_HOURS endi ishlatilmaydi — eski .env buzilmasin deb qoldi).
 CLUB_PRIORITY_HOURS = int(os.getenv("CLUB_PRIORITY_HOURS", "24") or 0)
 CLUB_ABANDON_EXTRA_HOURS = int(os.getenv("CLUB_ABANDON_EXTRA_HOURS", "24") or 0)
 # 2026-11-01: navbat kaliti endi bosh admin panelida (season_state.club_priority_on); bu — faqat admin hali

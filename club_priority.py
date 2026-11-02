@@ -4,8 +4,8 @@ club_priority.py — liga klubini tanlashda NAVBAT (2026-10-18).
 Egasi so'rovi: klub tanlaganlar mavsum o'rtasida kanalni tark etmasligi, oxirigacha o'ynashi uchun.
 Qoida: yangi liga mavsumi ochilgach (season_state.last_finalized_at = t0) klub tanlash navbat bilan:
   1) o'tgan mavsumni OXIRIGACHA o'ynaganlar ('finished') — darhol (t0);
-  2) yangi / o'tgan mavsumda qatnashmaganlar — t0 + CLUB_PRIORITY_HOURS;
-  3) o'tgan mavsumda TASHLAB KETGANLAR ('abandoned') — yana CLUB_ABANDON_EXTRA_HOURS keyin.
+  2) yangi / o'tgan mavsumda qatnashmaganlar — darhol (2026-11-02: egasi so'rovi, avval t0 + 24 soat);
+  3) o'tgan mavsumda TASHLAB KETGANLAR ('abandoned') — t0 + CLUB_ABANDON_EXTRA_HOURS.
 O'tgan mavsum bo'yicha yozuv yo'q bo'lsa (funksiya ishga tushgandan keyingi birinchi mavsum) —
 navbat qo'llanmaydi.
 
@@ -19,7 +19,7 @@ Yozuvlar (club_reliability, telegram_id bo'yicha — akkount o'chsa ham saqlanad
 import logging
 from datetime import datetime, timedelta, timezone
 
-from config import CLUB_ABANDON_EXTRA_HOURS, CLUB_PRIORITY_ENABLED, CLUB_PRIORITY_HOURS
+from config import CLUB_ABANDON_EXTRA_HOURS, CLUB_PRIORITY_ENABLED
 from models import get_connection
 
 logger = logging.getLogger(__name__)
@@ -159,10 +159,10 @@ def club_priority_for(telegram_id: int, now: datetime | None = None) -> dict:
                         (telegram_id, prev)).fetchone()
         tier = TIER_FINISHED if r and r["status"] == ST_FINISHED else (
             TIER_ABANDONED if r and r["status"] == ST_ABANDONED else TIER_NEW)
-        delay = {TIER_FINISHED: 0, TIER_NEW: CLUB_PRIORITY_HOURS,
-                 TIER_ABANDONED: CLUB_PRIORITY_HOURS + CLUB_ABANDON_EXTRA_HOURS}[tier]
+        # 2026-11-02: cheklov FAQAT tashlab ketganlarga — yangilar ham darhol (egasi so'rovi)
+        delay = {TIER_FINISHED: 0, TIER_NEW: 0, TIER_ABANDONED: CLUB_ABANDON_EXTRA_HOURS}[tier]
         opens = t0 + timedelta(hours=delay)
-        last_open = t0 + timedelta(hours=CLUB_PRIORITY_HOURS + CLUB_ABANDON_EXTRA_HOURS)
+        last_open = t0 + timedelta(hours=CLUB_ABANDON_EXTRA_HOURS)
         return {**base, "active": now < last_open, "tier": tier, "open": now >= opens,
                 "opens_at": opens.isoformat()}
     finally:
