@@ -11,8 +11,10 @@ const CPA_TXT = {
         btn_off: "O'chirish", btn_on: "Yoqish",
         hint: "Yoqilganda: oxirigacha o'ynaganlar darhol, yangilar 24 soatdan, tashlab ketganlar 48 soatdan keyin klub tanlaydi (yangi mavsum ochilgan paytdan). O'chiq — hamma darhol.",
         c_off: "Navbat o'chirilsinmi? Hamma darhol klub tanlay oladi.", c_on: "Navbat yoqilsinmi? Yangilar va tashlab ketganlar kutadi.",
-        ab_title: "«Tashlab ketgan» deb belgilanganlar ({s}-mavsum): {n}",
-        ab_hint: "Yozuvi yo'q odam «yangi» hisoblanadi. Bu ro'yxatdagilarga «navbatingiz oxirida» chiqadi — kerak bo'lsa belgini olib tashlang.",
+        ab_title: "Ishtirokchini tekshirish ({s}-mavsum bo'yicha)",
+        ab_hint: "@username yoki Telegram ID yozing: qachon chiqib ketgani va qaysi ligadagi qaysi klubni tashlab ketgani ko'rsatiladi.",
+        l_left: "Chiqib ketgan", l_club: "Tashlab ketgan klubi", l_reason: "Sababi", l_unknown: "noma'lum (eski yozuv)",
+        l_finished: "O'tgan mavsumni oxirigacha o'ynagan", l_norec: "O'tgan mavsumda yozuvi yo'q — yangi hisoblanadi",
         ab_clear: "Belgini olib tashlash", ab_c: "Belgi olib tashlansinmi? Odam «yangi» navbatiga o'tadi.",
         r_club_taken: "klubi boshqaga o'tgan (topshirgan yoki kanaldan chiqqan)", r_admin: "admin akkauntni ko'chirgan", r_removed: "o'yinlari bor holda chiqarilgan",
         r_null: "sababi yozilmagan (eski)", find_ph: "@username yoki Telegram ID", find_btn: "Tekshirish",
@@ -34,12 +36,20 @@ function cpaTime(iso) {
   return typeof clubPrioTime === "function" ? clubPrioTime(iso) : String(iso || "").slice(0, 16).replace("T", " ");
 }
 
-// 2026-11-02: «tashlab ketgan»lar ro'yxati, qidiruv va belgini olib tashlash (GET/POST /admin/club-priority/...)
+// 2026-11-02: faqat QIDIRUV — @username yoki ID: qachon chiqib ketgan, qaysi liga/klub, sabab, belgini olib tashlash
+function cpaRecordHtml(f) {
+  const r = f.record, row = (k, v) => `<div><span style="opacity:.65">${escHtml(cpaT(k))}:</span> ${escHtml(v)}</div>`;
+  if (!r) return `<div style="opacity:.8">${escHtml(cpaT("l_norec"))}</div>`;
+  if (r.status !== "abandoned") return `<div>✅ ${escHtml(cpaT("l_finished"))}</div>`;
+  const club = r.league_name || r.club_name ? `${r.league_name || "?"} — ${r.club_name || "?"}` : cpaT("l_unknown");
+  return row("l_left", r.left_at || "—") + row("l_club", club) + row("l_reason", cpaT("r_" + (r.reason || "null")))
+    + `<button class="btn" style="margin-top:8px;padding:6px 10px;font-size:12px" data-cpa-clear="${Number(f.telegram_id)}">${escHtml(cpaT("ab_clear"))}</button>`;
+}
+
 async function cpaRenderAbandoned(box, q) {
   let d;
   try { d = await apiFetch("/admin/club-priority/abandoned" + (q ? "?q=" + encodeURIComponent(q) : "")); }
   catch (_) { return; }
-  const list = d.list || [];
   let found = "";
   if (q) {
     const f = d.found;
@@ -48,19 +58,18 @@ async function cpaRenderAbandoned(box, q) {
       const p = f.priority || {};
       const st = !p.active ? cpaT(p.tier ? "t_open" : "t_off")
         : p.tier === "finished" ? cpaT("t_finished") : cpaT(p.tier === "abandoned" ? "t_abandoned" : "t_new").replace("{t}", cpaTime(p.opens_at));
-      found = `<div class="admin-player-league" style="margin:6px 2px">${escHtml(f.username ? "@" + f.username : (f.nickname || ""))} · ID ${escHtml(f.telegram_id)} — <b>${escHtml(st)}</b></div>`;
+      found = `<div class="admin-player-league" style="margin:8px 2px;line-height:1.5">
+        <div>${escHtml(f.username ? "@" + f.username : (f.nickname || ""))} · ID ${escHtml(f.telegram_id)} — <b>${escHtml(st)}</b></div>
+        ${cpaRecordHtml(f)}</div>`;
     }
   }
-  const rows = list.map(r => `<div style="display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid rgba(255,255,255,.06)">
-      <span style="flex:1;min-width:0">${escHtml(r.username ? "@" + r.username : (r.nickname || "—"))} <small style="opacity:.6">· ID ${escHtml(r.telegram_id)}</small><br>
-        <small style="opacity:.7">${escHtml(cpaT("r_" + (r.reason || "null")))} · ${escHtml(String(r.created_at || "").slice(0, 16))}</small></span>
-      <button class="btn" style="padding:6px 10px;font-size:12px" data-cpa-clear="${Number(r.telegram_id)}">${escHtml(cpaT("ab_clear"))}</button>
-    </div>`).join("");
-  box.innerHTML = `<div class="admin-player-league" style="margin:12px 2px 4px"><b>${escHtml(cpaT("ab_title").replace("{s}", d.season).replace("{n}", list.length))}</b></div>
+  box.innerHTML = `<div class="admin-player-league" style="margin:12px 2px 4px"><b>${escHtml(cpaT("ab_title").replace("{s}", d.season))}</b></div>
     <div class="admin-player-league" style="margin:0 2px 6px;opacity:.75">${escHtml(cpaT("ab_hint"))}</div>
     <div style="display:flex;gap:6px"><input class="modal-input" id="cpa-find" placeholder="${escHtml(cpaT("find_ph"))}" value="${escHtml(q || "")}" style="flex:1">
-      <button class="btn" id="cpa-find-btn">${escHtml(cpaT("find_btn"))}</button></div>${found}${rows}`;
-  document.getElementById("cpa-find-btn").addEventListener("click", () => cpaRenderAbandoned(box, document.getElementById("cpa-find").value));
+      <button class="btn" id="cpa-find-btn">${escHtml(cpaT("find_btn"))}</button></div>${found}`;
+  const inp = document.getElementById("cpa-find");
+  document.getElementById("cpa-find-btn").addEventListener("click", () => cpaRenderAbandoned(box, inp.value.trim()));
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") cpaRenderAbandoned(box, inp.value.trim()); });
   box.querySelectorAll("[data-cpa-clear]").forEach(b => b.addEventListener("click", async () => {
     if (!window.confirm(cpaT("ab_c"))) return;
     b.disabled = true;
