@@ -153,7 +153,7 @@ def club_offer_take(taker: dict, owner_user_id: int) -> tuple[bool, str | dict]:
     if not club_priority_for(taker["telegram_id"])["open"]:
         return False, "priority_wait"
     from participant_admin import league_reassign_participant
-    ok, res = league_reassign_participant(owner_user_id, taker["telegram_id"], abandoned=True)
+    ok, res = league_reassign_participant(owner_user_id, taker["telegram_id"], abandoned=True, reason="club_taken")
     if not ok:
         return False, res
     club_offer_set(owner_user_id, False)

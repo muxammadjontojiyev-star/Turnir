@@ -47,6 +47,10 @@ def migrate_priority_switch(cur) -> None:
     cols = {r["name"] for r in cur.execute("PRAGMA table_info(season_state)")}
     if "club_priority_on" not in cols:
         cur.execute("ALTER TABLE season_state ADD COLUMN club_priority_on INTEGER")
+    # 2026-11-02: «tashlab ketgan» belgisi SABABI (admin tekshirishi uchun): club_taken | admin | removed
+    rcols = {r["name"] for r in cur.execute("PRAGMA table_info(club_reliability)")}
+    if "reason" not in rcols:
+        cur.execute("ALTER TABLE club_reliability ADD COLUMN reason TEXT")
 
 
 def priority_enabled(cur) -> bool:
@@ -75,12 +79,17 @@ def _current_season(cur) -> int:
     return r["current_season"] if r else 1
 
 
-def mark_abandoned_cur(cur, telegram_id: int) -> None:
-    """Joriy liga mavsumida tashlab ketdi (abandoned 'finished'dan ustun — REPLACE)."""
-    cur.execute("INSERT INTO club_reliability (telegram_id, season_number, status) VALUES (?, ?, ?) "
-                "ON CONFLICT(telegram_id, season_number) DO UPDATE SET status = excluded.status",
-                (telegram_id, _current_season(cur), ST_ABANDONED))
-    logger.info("Klub navbati: tg %s — tashlab ketdi deb belgilandi", telegram_id)
+def mark_abandoned_cur(cur, telegram_id: int, reason: str | None = None) -> None:
+    """Joriy liga mavsumida tashlab ketdi (abandoned 'finished'dan ustun — REPLACE). reason — 2026-11-02."""
+    try:
+        cur.execute("INSERT INTO club_reliability (telegram_id, season_number, status, reason) VALUES (?, ?, ?, ?) "
+                    "ON CONFLICT(telegram_id, season_number) DO UPDATE SET status = excluded.status, "
+                    "reason = excluded.reason", (telegram_id, _current_season(cur), ST_ABANDONED, reason))
+    except Exception:          # reason ustuni hali yo'q (migratsiyadan oldin) — eski usul
+        cur.execute("INSERT INTO club_reliability (telegram_id, season_number, status) VALUES (?, ?, ?) "
+                    "ON CONFLICT(telegram_id, season_number) DO UPDATE SET status = excluded.status",
+                    (telegram_id, _current_season(cur), ST_ABANDONED))
+    logger.info("Klub navbati: tg %s — tashlab ketdi deb belgilandi (%s)", telegram_id, reason)
 
 
 def mark_if_league_player_cur(cur, user_id: int) -> None:
@@ -90,7 +99,7 @@ def mark_if_league_player_cur(cur, user_id: int) -> None:
         "AND EXISTS (SELECT 1 FROM matches m WHERE m.player1_id = u.id OR m.player2_id = u.id)",
         (user_id,)).fetchone()
     if r:
-        mark_abandoned_cur(cur, r["telegram_id"])
+        mark_abandoned_cur(cur, r["telegram_id"], "removed")
 
 
 def record_finishers_cur(cur, season: int) -> int:

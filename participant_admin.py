@@ -94,8 +94,8 @@ def resolve_telegram_id(query: str) -> int | None:
         conn.close()
 
 
-def league_reassign_participant(old_user_id: int, new_telegram_id: int, abandoned: bool = False
-                                ) -> tuple[bool, str | dict]:
+def league_reassign_participant(old_user_id: int, new_telegram_id: int, abandoned: bool = False,
+                                reason: str = "admin") -> tuple[bool, str | dict]:
     """
     Liga ishtirokchisini (old_user_id) yangi akkountga bog'laydi:
     registrations.user_id, matches.player1/2_id + submitted_by,
@@ -138,7 +138,7 @@ def league_reassign_participant(old_user_id: int, new_telegram_id: int, abandone
             old = cursor.execute("SELECT telegram_id FROM users WHERE id = ?", (old_user_id,)).fetchone()
             if old:
                 from club_priority import mark_abandoned_cur
-                mark_abandoned_cur(cursor, old["telegram_id"])
+                mark_abandoned_cur(cursor, old["telegram_id"], reason)   # 2026-11-02: sabab
         regs = _swap_user_columns(cursor, "registrations", ["user_id"],
                                   old_user_id, new_user_id)
         matches = _swap_user_columns(

@@ -834,6 +834,20 @@ def club_priority_switch_set(on: bool = Body(..., embed=True), admin: dict = Dep
     return {"status": "ok", "on": set_priority_enabled(on)}
 
 
+@app.get("/admin/club-priority/abandoned")
+def club_priority_abandoned(q: str | None = None, admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-02: «tashlab ketgan»lar ro'yxati; q berilsa — shu odamning navbat holati (club_priority_admin.py)."""
+    from club_priority_admin import abandoned_list, find_user
+    return {**abandoned_list(), "found": find_user(q) if q else None}
+
+
+@app.post("/admin/club-priority/clear")
+def club_priority_clear(telegram_id: int = Body(..., embed=True), admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-02: «tashlab ketgan» belgisini olib tashlash (odam «yangi» navbatiga o'tadi)."""
+    from club_priority_admin import clear_abandoned
+    return {"status": "ok", "cleared": clear_abandoned(telegram_id)}
+
+
 @app.get("/club-priority/me")
 def club_priority_me(user: dict = Depends(get_authenticated_user)):
     """2026-10-18: klub tanlash navbatidagi holatim (bosh sahifa banneri uchun)."""
