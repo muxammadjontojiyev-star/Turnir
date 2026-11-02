@@ -36,4 +36,8 @@ NEW_EU_CLUBS: dict[str, tuple[str, ...]] = {
     "Brasileirão": (
         "Athletico Paranaense", "Atlético Mineiro", "Bahia", "Botafogo", "Chapecoense", "Corinthians", "Coritiba", "Cruzeiro", "Flamengo", "Fluminense", "Grêmio", "Internacional", "Mirassol", "Palmeiras", "RB Bragantino", "Remo", "Santos", "São Paulo", "Vasco da Gama", "Vitória",
     ),
+    # 2026-11-02: Janubiy Amerika — Kolumbiya Primera A (2026 mavsumi, FotMob jadvalidan)
+    "Primera A": (
+        "Águilas Doradas", "Alianza", "América de Cali", "Atlético Nacional", "Boyacá Chicó", "Bucaramanga", "Cúcuta Deportivo", "Deportivo Cali", "Deportivo Pasto", "Deportivo Pereira", "Fortaleza", "Independiente Medellín", "Internacional de Bogotá", "Jaguares de Córdoba", "Junior", "Llaneros", "Millonarios", "Once Caldas", "Santa Fe", "Tolima",
+    ),
 }

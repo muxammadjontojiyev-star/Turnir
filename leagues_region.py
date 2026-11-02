@@ -34,6 +34,8 @@ LEAGUE_ORDER = (
     ("UAE Pro Liga", None, REGION_ASIA, 23), ("J1 Liga", None, REGION_ASIA, 24),
     # 2026-11-02: Janubiy Amerika — Braziliya Seriya A (2026 mavsumi, 20 klub)
     ("Brasileirão", 20, REGION_SA, 31),
+    # 2026-11-02: Janubiy Amerika — Kolumbiya Primera A (2026 mavsumi, 20 klub)
+    ("Primera A", 20, REGION_SA, 32),
 )
 SECOND_TIER_SORT = 90          # nofaol 2-ligalar ro'yxat oxirida (qayta yoqilsa)
 
