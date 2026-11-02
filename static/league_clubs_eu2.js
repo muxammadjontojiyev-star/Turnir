@@ -20,10 +20,12 @@
     "Chance Liga": [["Baník Ostrava", 6362], ["Bohemians 1905", 1670], ["Hradec Králové", 1712], ["Jablonec", 7758], ["Líšeň", 106189], ["Mladá Boleslav", 10180], ["Pardubice", 2406], ["Sigma Olomouc", 6461], ["Slavia Praha", 7787], ["Slovácko", 2021], ["Slovan Liberec", 10245], ["Sparta Praha", 10247], ["Teplice", 4721], ["Viktoria Plzeň", 6033], ["Zbrojovka Brno", 1673], ["Zlín", 1860]],
     "Eliteserien": [["Aalesund", 8404], ["Bodø/Glimt", 8402], ["Brann", 8468], ["Fredrikstad", 8417], ["HamKam", 8448], ["IK Start", 9919], ["KFUM Oslo", 2305], ["Kristiansund", 8605], ["Lillestrøm", 8476], ["Molde", 9917], ["Rosenborg", 8422], ["Sandefjord", 8609], ["Sarpsborg 08", 8509], ["Tromsø", 8608], ["Viking", 8478], ["Vålerenga", 8007]],
     "Greek Super League": [["AEK Athens", 8563], ["Aris", 8239], ["Asteras Tripolis", 80654], ["Atromitos", 10187], ["Iraklis", 8675], ["Kalamata", 1585], ["Kifisia", 488099], ["Levadiakos", 4493], ["OFI", 7753], ["Olympiacos", 8638], ["Panathinaikos", 10200], ["Panetolikos", 162386], ["PAOK", 8619], ["Volos", 885256]],
+    // 2026-11-02: Janubiy Amerika — Braziliya Seriya A (2026 mavsumi, FotMob jadvalidan)
+    "Brasileirão": [["Athletico Paranaense", 10273], ["Atlético Mineiro", 10272], ["Bahia", 7877], ["Botafogo", 8517], ["Chapecoense", 197693], ["Corinthians", 9808], ["Coritiba", 9767], ["Cruzeiro", 9781], ["Flamengo", 9770], ["Fluminense", 9863], ["Grêmio", 9769], ["Internacional", 8702], ["Mirassol", 163782], ["Palmeiras", 10283], ["RB Bragantino", 109705], ["Remo", 1626], ["Santos", 8514], ["São Paulo", 10277], ["Vasco da Gama", 10276], ["Vitória", 7733]],
   };
   const LOGOS = {   // FotMob liga ID'lari
     "RPL": 63, "Eredivisie": 57, "Jupiler Pro League": 40, "Chance Liga": 122, "Eliteserien": 59,
-    "Greek Super League": 135,
+    "Greek Super League": 135, "Brasileirão": 268,
   };
 
   if (typeof LEAGUE_CLUBS === "undefined") return;

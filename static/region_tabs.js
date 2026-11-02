@@ -1,5 +1,5 @@
 // =============================================================
-//  region_tabs.js — BOSH SAHIFA: ligalar «🌍 Yevropa | 🌏 Osiyo» tablarida (2026-11-01)
+//  region_tabs.js — BOSH SAHIFA: ligalar «🌍 Yevropa | 🌏 Osiyo | 🌎 J. Amerika» tablarida (2026-11-01; J. Amerika — 2026-11-02)
 //  /leagues har ligada "region" ('eu' | 'asia') qaytaradi; navbat bilan ochilish har mintaqada alohida.
 //  Tab — faqat ikkala mintaqa bo'lsa. Tanlangan mintaqa: ko'tarilgan bo'lsa — o'z ligasi mintaqasi,
 //  aks holda oxirgi tanlangan / tanlangan liganing mintaqasi.
@@ -8,7 +8,7 @@
 //  dan KEYIN ulanadi). Tab matnlari — TEXTS.tier1_tab / tier2_tab (league_tiers.js). Global: APP.
 // =============================================================
 
-const REGION_ORDER = ["eu", "asia"];
+const REGION_ORDER = ["eu", "asia", "sa"];   // 2026-11-02: + Janubiy Amerika
 
 function regionOf(league) {
   return (league && league.region) || "eu";
@@ -38,7 +38,7 @@ function regionRenderTabs(regions) {
   regions.forEach(r => {
     const b = document.createElement("button");
     b.className = "tier-tab" + (APP.homeRegion === r ? " active" : "");
-    b.textContent = r === "asia" ? (t.tier2_tab || "Osiyo") : (t.tier1_tab || "Yevropa");
+    b.textContent = r === "asia" ? (t.tier2_tab || "Osiyo") : r === "sa" ? (t.tier3_tab || "J. Amerika") : (t.tier1_tab || "Yevropa");
     b.addEventListener("click", () => {
       if (APP.homeRegion === r) return;
       APP.homeRegion = r;

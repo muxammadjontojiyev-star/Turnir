@@ -48,13 +48,13 @@ const AQ_TOP = 8;
 
 const TIER_TEXTS = {
   uz: { zone_cl: "Chempionlar ligasi", zone_clx: "6-o'rin: eng yaxshisi ChL, qolganlari YeL", zone_el: "Yevropa ligasi", zone_co: "Konferensiya ligasi", zone_elx: "11-o'rin: eng yaxshi 2 tasi YeL", zone_acl: "Osiyo Chempionlar ligasi",
-        tier1_tab: "🌍 Yevropa", tier2_tab: "🌏 Osiyo",
+        tier1_tab: "🌍 Yevropa", tier2_tab: "🌏 Osiyo", tier3_tab: "🌎 J. Amerika",
         zone_releg: "Quyi ligaga tushish zonasi", zone_promo: "Yuqori ligaga ko'tarilish zonasi" },
   ru: { zone_cl: "Лига чемпионов", zone_clx: "6-е место: лучшее — ЛЧ, остальные — ЛЕ", zone_el: "Лига Европы", zone_co: "Лига конференций", zone_elx: "11-е место: 2 лучших — ЛЕ", zone_acl: "Азиатская лига чемпионов",
-        tier1_tab: "🌍 Европа", tier2_tab: "🌏 Азия",
+        tier1_tab: "🌍 Европа", tier2_tab: "🌏 Азия", tier3_tab: "🌎 Ю. Америка",
         zone_releg: "Зона вылета", zone_promo: "Зона повышения" },
   en: { zone_cl: "Champions League", zone_clx: "6th: best one UCL, others UEL", zone_el: "Europa League", zone_co: "Conference League", zone_elx: "11th: best two UEL", zone_acl: "Asian Champions League",
-        tier1_tab: "🌍 Europe", tier2_tab: "🌏 Asia",
+        tier1_tab: "🌍 Europe", tier2_tab: "🌏 Asia", tier3_tab: "🌎 S. America",
         zone_releg: "Relegation zone", zone_promo: "Promotion zone" },
 };
 if (typeof TEXTS !== "undefined") {
@@ -68,12 +68,12 @@ function isSecondTier(name) {
   return !!LEAGUE_SECOND_TIERS[name];
 }
 
-// 2026-11-01: reyting tab guruhi — 1 = Yevropa, 2 = Osiyo (liga.region; zaxira — Osiyo ro'yxati).
+// 2026-11-01: reyting tab guruhi — 1 = Yevropa, 2 = Osiyo, 3 = Janubiy Amerika (2026-11-02) (liga.region).
 // (Nomi tarixiy: api.js renderRatingFilter shu funksiyani chaqiradi.)
 function leagueTier(name) {
   const lg = (APP.leagues || []).find(l => l.name === name);
   const region = (lg && lg.region) || (ASIA_QUAL_LEAGUES.includes(name) ? "asia" : "eu");
-  return region === "asia" ? 2 : 1;
+  return region === "asia" ? 2 : region === "sa" ? 3 : 1;
 }
 
 function hasSecondTierLeagues() {   // ikkala mintaqa ham bor bo'lsa — tablar chiziladi
@@ -152,7 +152,8 @@ function renderRatingTierTabs(container, onSelect) {
   const t = APP.t || {};
   const row = document.createElement("div");
   row.className = "tier-tabs";
-  [[1, t.tier1_tab || "1"], [2, t.tier2_tab || "2"]].forEach(([tier, label]) => {
+  const present = new Set((APP.leagues || []).map(l => leagueTier(l.name)));   // 2026-11-02: faqat bor mintaqalar
+  [[1, t.tier1_tab || "1"], [2, t.tier2_tab || "2"], [3, t.tier3_tab || "3"]].filter(([tier]) => present.has(tier)).forEach(([tier, label]) => {
     const b = document.createElement("button");
     b.className = "tier-tab" + (APP.ratingTier === tier ? " active" : "");
     b.textContent = label;
