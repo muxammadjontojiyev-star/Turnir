@@ -797,6 +797,24 @@ async def club_offers_take(owner_user_id: int = Body(..., embed=True), user: dic
     return {"status": "ok", "league_name": res["league_name"], "club_name": res["club_name"]}
 
 
+@app.get("/admin/leagues/all")
+def admin_leagues_all(admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-02: barcha ligalar (nofaollar ham) — yoqish/o'chirish paneli uchun (leagues_admin.py)."""
+    from leagues_admin import leagues_all
+    return {"leagues": leagues_all()}
+
+
+@app.post("/admin/leagues/{league_id}/active")
+def admin_league_active(league_id: int, on: bool = Body(..., embed=True),
+                        admin: dict = Depends(get_authenticated_super_admin)):
+    """2026-11-02: ligani yoqish / o'chirish. Xato (400): not_found, has_players."""
+    from leagues_admin import league_set_active
+    ok, r = league_set_active(league_id, on)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    return {"status": "ok", **r}
+
+
 @app.get("/admin/club-priority")
 def club_priority_switch_get(admin: dict = Depends(get_authenticated_super_admin)):
     """2026-11-01: klub tanlash navbati yoqilganmi (bosh admin paneli kaliti)."""

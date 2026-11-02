@@ -5,7 +5,10 @@ Egasi so'rovi:
   * 6 ta yangi Yevropa ligasi — Rossiya, Niderlandiya, Belgiya, Chexiya, Norvegiya, Gretsiya
     (ChL va YeL'ga yo'llanma beradi — cl_qualification.EURO_QUOTAS);
   * 2-ligalar O'CHIRILMAYDI — nofaol (is_active = 0): botda ko'rinmaydi, ma'lumot bazada qoladi;
-  * ligalar ikki tabga — Yevropa va Osiyo; navbat bilan ochilish har mintaqada alohida.
+  * ligalar mintaqa tablarida — Yevropa, Osiyo, Janubiy Amerika (2026-11-02); navbat bilan ochilish har
+    mintaqada alohida;
+  * 2026-11-02: bosh admin har ligani yoqib/o'chira oladi (leagues_admin.py) — migratsiya is_active ga
+    tegmaydi (faqat bo'sh 2-ligalar bir marta nofaol qilinadi, admin qayta yoqsa — yoqilgan qoladi).
 
 Migratsiya (qoida #31, idempotent — har ishga tushishda xavfsiz):
   leagues ga region ('eu' | 'asia'), is_active (1/0), sort_order ustunlari; yangi ligalar INSERT OR IGNORE;
@@ -18,7 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-REGION_EU, REGION_ASIA = "eu", "asia"
+REGION_EU, REGION_ASIA, REGION_SA = "eu", "asia", "sa"   # 2026-11-02: Janubiy Amerika
 # (nom, max_players = klublar soni, mintaqa, tartib) — tartib: mintaqa ichida navbat bilan ochilish
 LEAGUE_ORDER = (
     ("LaLiga", None, REGION_EU, 1), ("Premier Liga", None, REGION_EU, 2), ("Bundesliga", None, REGION_EU, 3),
@@ -29,6 +32,8 @@ LEAGUE_ORDER = (
     ("Chance Liga", 16, REGION_EU, 11), ("Eliteserien", 16, REGION_EU, 12), ("Greek Super League", 14, REGION_EU, 13),
     ("Superliga", None, REGION_ASIA, 21), ("Saudi Pro Liga", None, REGION_ASIA, 22),
     ("UAE Pro Liga", None, REGION_ASIA, 23), ("J1 Liga", None, REGION_ASIA, 24),
+    # 2026-11-02: Janubiy Amerika — Braziliya Seriya A (2026 mavsumi, 20 klub)
+    ("Brasileirão", 20, REGION_SA, 31),
 )
 SECOND_TIER_SORT = 90          # nofaol 2-ligalar ro'yxat oxirida (qayta yoqilsa)
 
@@ -41,6 +46,8 @@ def migrate_leagues_region(cur) -> None:
         cur.execute("ALTER TABLE leagues ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
     if "sort_order" not in cols:
         cur.execute("ALTER TABLE leagues ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0")
+    if "admin_set" not in cols:      # 2026-11-02: admin yoqib/o'chirgan — avtomatik nofaol qilish tegmaydi
+        cur.execute("ALTER TABLE leagues ADD COLUMN admin_set INTEGER")
     for name, max_players, region, order in LEAGUE_ORDER:
         if max_players:
             cur.execute("INSERT OR IGNORE INTO leagues (name, max_players, status) VALUES (?, ?, 'open')",
@@ -56,7 +63,7 @@ def deactivate_empty_second_tiers(cur) -> int:
     """2-ligalarni nofaol qiladi — faqat ro'yxati bo'sh bo'lsa (mavsum yakunlanib tozalangan)."""
     from config import SECOND_TIER_LEAGUES
     q = ",".join("?" * len(SECOND_TIER_LEAGUES))
-    cur.execute(f"UPDATE leagues SET is_active = 0 WHERE is_active = 1 AND name IN ({q}) "
+    cur.execute(f"UPDATE leagues SET is_active = 0 WHERE is_active = 1 AND admin_set IS NULL AND name IN ({q}) "
                 "AND NOT EXISTS (SELECT 1 FROM registrations r WHERE r.league_id = leagues.id)",
                 SECOND_TIER_LEAGUES)
     if cur.rowcount:

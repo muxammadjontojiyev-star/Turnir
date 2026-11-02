@@ -32,4 +32,8 @@ NEW_EU_CLUBS: dict[str, tuple[str, ...]] = {
         "AEK Athens", "Aris", "Asteras Tripolis", "Atromitos", "Iraklis", "Kalamata", "Kifisia", "Levadiakos",
         "OFI", "Olympiacos", "Panathinaikos", "Panetolikos", "PAOK", "Volos",
     ),
+    # 2026-11-02: Janubiy Amerika — Braziliya Seriya A (2026 mavsumi)
+    "Brasileirão": (
+        "Athletico Paranaense", "Atlético Mineiro", "Bahia", "Botafogo", "Chapecoense", "Corinthians", "Coritiba", "Cruzeiro", "Flamengo", "Fluminense", "Grêmio", "Internacional", "Mirassol", "Palmeiras", "RB Bragantino", "Remo", "Santos", "São Paulo", "Vasco da Gama", "Vitória",
+    ),
 }
