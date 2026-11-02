@@ -22,10 +22,12 @@
     "Greek Super League": [["AEK Athens", 8563], ["Aris", 8239], ["Asteras Tripolis", 80654], ["Atromitos", 10187], ["Iraklis", 8675], ["Kalamata", 1585], ["Kifisia", 488099], ["Levadiakos", 4493], ["OFI", 7753], ["Olympiacos", 8638], ["Panathinaikos", 10200], ["Panetolikos", 162386], ["PAOK", 8619], ["Volos", 885256]],
     // 2026-11-02: Janubiy Amerika — Braziliya Seriya A (2026 mavsumi, FotMob jadvalidan)
     "Brasileirão": [["Athletico Paranaense", 10273], ["Atlético Mineiro", 10272], ["Bahia", 7877], ["Botafogo", 8517], ["Chapecoense", 197693], ["Corinthians", 9808], ["Coritiba", 9767], ["Cruzeiro", 9781], ["Flamengo", 9770], ["Fluminense", 9863], ["Grêmio", 9769], ["Internacional", 8702], ["Mirassol", 163782], ["Palmeiras", 10283], ["RB Bragantino", 109705], ["Remo", 1626], ["Santos", 8514], ["São Paulo", 10277], ["Vasco da Gama", 10276], ["Vitória", 7733]],
+    // 2026-11-02: Kolumbiya Primera A (2026 mavsumi, FotMob jadvalidan)
+    "Primera A": [["Águilas Doradas", 193025], ["Alianza", 193029], ["América de Cali", 10280], ["Atlético Nacional", 6368], ["Boyacá Chicó", 6255], ["Bucaramanga", 4401], ["Cúcuta Deportivo", 6254], ["Deportivo Cali", 6387], ["Deportivo Pasto", 4405], ["Deportivo Pereira", 4404], ["Fortaleza", 244167], ["Independiente Medellín", 2528], ["Internacional de Bogotá", 47240], ["Jaguares de Córdoba", 424270], ["Junior", 2254], ["Llaneros", 348397], ["Millonarios", 4403], ["Once Caldas", 6024], ["Santa Fe", 7818], ["Tolima", 1894]],
   };
   const LOGOS = {   // FotMob liga ID'lari
     "RPL": 63, "Eredivisie": 57, "Jupiler Pro League": 40, "Chance Liga": 122, "Eliteserien": 59,
-    "Greek Super League": 135, "Brasileirão": 268,
+    "Greek Super League": 135, "Brasileirão": 268, "Primera A": 274,
   };
 
   if (typeof LEAGUE_CLUBS === "undefined") return;
