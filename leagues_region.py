@@ -5,7 +5,7 @@ Egasi so'rovi:
   * 6 ta yangi Yevropa ligasi — Rossiya, Niderlandiya, Belgiya, Chexiya, Norvegiya, Gretsiya
     (ChL va YeL'ga yo'llanma beradi — cl_qualification.EURO_QUOTAS);
   * 2-ligalar O'CHIRILMAYDI — nofaol (is_active = 0): botda ko'rinmaydi, ma'lumot bazada qoladi;
-  * ligalar mintaqa tablarida — Yevropa, Osiyo, Janubiy Amerika (2026-11-02); navbat bilan ochilish har
+  * ligalar mintaqa tablarida — Yevropa, Osiyo, Janubiy Amerika, Shimoliy Amerika (2026-11-02); navbat bilan ochilish har
     mintaqada alohida;
   * 2026-11-02: bosh admin har ligani yoqib/o'chira oladi (leagues_admin.py) — migratsiya is_active ga
     tegmaydi (faqat bo'sh 2-ligalar bir marta nofaol qilinadi, admin qayta yoqsa — yoqilgan qoladi).
@@ -22,6 +22,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 REGION_EU, REGION_ASIA, REGION_SA = "eu", "asia", "sa"   # 2026-11-02: Janubiy Amerika
+REGION_NA = "na"   # 2026-11-02: Shimoliy Amerika (MLS)
+MLS_SEATS = 20     # MLS o'rinlari (klublar 30 ta) — boshqa ligalar bilan bir xil 38 tur
 # (nom, max_players = klublar soni, mintaqa, tartib) — tartib: mintaqa ichida navbat bilan ochilish
 LEAGUE_ORDER = (
     ("LaLiga", None, REGION_EU, 1), ("Premier Liga", None, REGION_EU, 2), ("Bundesliga", None, REGION_EU, 3),
@@ -36,6 +38,9 @@ LEAGUE_ORDER = (
     ("Brasileirão", 20, REGION_SA, 31),
     # 2026-11-02: Janubiy Amerika — Kolumbiya Primera A (2026 mavsumi, 20 klub)
     ("Primera A", 20, REGION_SA, 32),
+    # 2026-11-02: Shimoliy Amerika — MLS (2026 mavsumi). 30 klubdan tanlanadi, lekin O'RIN 20 ta
+    # (MLS_SEATS): 30 kishida 58 tur bo'lib, mavsum boshqa ligalardan ~10 kun uzoq cho'zilardi.
+    ("MLS", MLS_SEATS, REGION_NA, 41),
 )
 SECOND_TIER_SORT = 90          # nofaol 2-ligalar ro'yxat oxirida (qayta yoqilsa)
 

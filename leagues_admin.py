@@ -23,7 +23,7 @@ def leagues_all() -> list[dict]:
         rows = conn.execute(
             "SELECT l.id, l.name, l.region, l.max_players, COALESCE(l.is_active, 1) AS is_active, "
             "(SELECT COUNT(*) FROM registrations r WHERE r.league_id = l.id) AS players "
-            "FROM leagues l ORDER BY CASE l.region WHEN 'eu' THEN 1 WHEN 'asia' THEN 2 ELSE 3 END, "
+            "FROM leagues l ORDER BY CASE l.region WHEN 'eu' THEN 1 WHEN 'asia' THEN 2 WHEN 'sa' THEN 3 ELSE 4 END, "
             "l.sort_order, l.id").fetchall()
         return [dict(r) for r in rows]
     finally:

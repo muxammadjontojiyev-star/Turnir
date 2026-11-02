@@ -40,4 +40,8 @@ NEW_EU_CLUBS: dict[str, tuple[str, ...]] = {
     "Primera A": (
         "Águilas Doradas", "Alianza", "América de Cali", "Atlético Nacional", "Boyacá Chicó", "Bucaramanga", "Cúcuta Deportivo", "Deportivo Cali", "Deportivo Pasto", "Deportivo Pereira", "Fortaleza", "Independiente Medellín", "Internacional de Bogotá", "Jaguares de Córdoba", "Junior", "Llaneros", "Millonarios", "Once Caldas", "Santa Fe", "Tolima",
     ),
+    # 2026-11-02: Shimoliy Amerika — AQSh/Kanada MLS (2026 mavsumi, 30 klub, FotMob jadvalidan)
+    "MLS": (
+        "Atlanta United", "Austin FC", "CF Montréal", "Charlotte FC", "Chicago Fire", "Colorado Rapids", "Columbus Crew", "DC United", "FC Cincinnati", "FC Dallas", "Houston Dynamo", "Inter Miami", "LA Galaxy", "Los Angeles FC", "Minnesota United", "Nashville SC", "New England Revolution", "New York City FC", "New York Red Bulls", "Orlando City", "Philadelphia Union", "Portland Timbers", "Real Salt Lake", "San Diego FC", "San Jose Earthquakes", "Seattle Sounders", "Sporting Kansas City", "St. Louis City", "Toronto FC", "Vancouver Whitecaps",
+    ),
 }
