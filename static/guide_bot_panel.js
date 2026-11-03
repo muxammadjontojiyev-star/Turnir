@@ -3,7 +3,9 @@
 //  Robot katta bo'lib chiqadi, gaplar navbat bilan «yozilib» aytiladi (har harfga «bip» —
 //  guide_bot_voice.js), gapirayotganda og'zi qimirlaydi, oxirida xursand bo'ladi.
 //  Tugmalar: ‹ Ortga / Keyingisi ›, oxirida — Boshidan, Batafsil (guide.js qo'llanmasi), Rahmat.
-//  Yuqorida: ovoz 🔊/🔇, haqiqiy nutq 🗣 (qurilmada bo'lsa), Yashirish, ✕.
+//  Yuqorida: ovoz 🔊/🔇, haqiqiy nutq 🗣 (server yoki qurilma ovozi bo'lsa), Yashirish, ✕.
+//  2026-11-03: haqiqiy ovoz (guide_bot_tts.js) — yozish tezligi ovozga moslanadi (GBOT._retime), og'iz
+//  ovoz tugaguncha qimirlaydi; har gap ostida «💬 Savol berish» (guide_bot_ask.js).
 //  Matn bosilsa — yozish darhol tugaydi. guide_bot.js dan KEYIN ulanadi.
 // =============================================================
 
@@ -29,9 +31,11 @@ function gbotPanelEnsure() {
   return p;
 }
 
-function gbotOpen() {
+async function gbotOpen() {
   const d = gbotT();
   if (!d || !GBOT.ctx || !d[GBOT.ctx]) return;
+  gbotAc();                                               // ovoz ruxsati — aynan shu bosishda
+  if (typeof gbotAskReset === "function") gbotAskReset();
   clearTimeout(GBOT.hintT);
   document.getElementById("gbot-hint")?.classList.add("hidden");
   if (GBOT.mini) { GBOT.mini = false; gbotSavePrefs(); }
@@ -44,11 +48,14 @@ function gbotOpen() {
   gbotHaptic("light");
   gbotSfx("hello");
   gbotAct(document.getElementById("gbot-big-bot"), "is-wave");
-  gbotRender();
+  if (typeof gbotTtsStatus === "function") await gbotTtsStatus();   // server ovozi bormi (ko'pi bilan 1.5 s)
+  if (GBOT.open) gbotRender();
 }
 
 function gbotClose(sfx) {
   clearInterval(GBOT.typeT);
+  GBOT.typeT = null;
+  if (typeof gbotMicCancel === "function") gbotMicCancel();
   gbotSpeakStop();
   if (sfx) gbotSfx("bye");
   GBOT.open = false;
@@ -60,7 +67,7 @@ function gbotToolsHtml(u) {
   const btn = (act, label, title, on) =>
     `<button class="gbot-tool${on ? " is-on" : ""}" data-gbot="${act}" title="${escHtml(title)}" aria-label="${escHtml(title)}">${escHtml(label)}</button>`;
   return btn("mute", GBOT_VOICE.muted ? u.sound_off : u.sound_on, u.sound_on, !GBOT_VOICE.muted)
-    + (gbotSpeechVoice() ? btn("speak", u.speak, u.speak, GBOT_VOICE.speak) : "")
+    + (gbotCanSpeak() ? btn("speak", u.speak, u.speak, GBOT_VOICE.speak) : "")
     + btn("hide", "🙈", u.hide, false)
     + btn("close", "✕", u.close, false);
 }
@@ -79,7 +86,11 @@ function gbotRender() {
   document.getElementById("gbot-actions").innerHTML = last
     ? a("again", u.again) + (typeof openGuide === "function" ? a("more", u.more) : "") + a("bye", u.bye, "gbot-act--main")
     : (GBOT.i > 0 ? a("prev", u.prev) : "") + a("next", u.next, "gbot-act--main");
+  if (typeof gbotAskButtonHtml === "function") {
+    document.getElementById("gbot-actions").insertAdjacentHTML("beforeend", gbotAskButtonHtml());
+  }
   gbotType(say[GBOT.i], last);
+  if (typeof gbotTtsPrefetch === "function") gbotTtsPrefetch(say[GBOT.i + 1]);
 }
 
 // Matnni harfma-harf «yozadi» (emoji bo'linmaydi — Array.from), **qalin** saqlanadi
@@ -101,20 +112,29 @@ function gbotType(text, last) {
   const done = () => {
     clearInterval(GBOT.typeT);
     GBOT.typeT = null;
+    GBOT._retime = null;
     box.innerHTML = html(total);
-    bot.classList.remove("is-talk");
+    if (!gbotIsSpeaking()) bot.classList.remove("is-talk");   // ovoz davom etsa — og'iz ham
     if (last) { gbotAct(bot, "is-happy"); gbotSfx("happy"); }
   };
-  GBOT._finish = done;
-  bot.classList.add("is-talk");
-  gbotSpeak(text);
-  GBOT.typeT = setInterval(() => {
+  const step = () => {
     n += 1;
     const ch = flat[n - 1];
     if (ch && /\p{L}/u.test(ch) && n % GBOT_CHIRP_EVERY === 0) gbotChirp(ch);
     box.innerHTML = html(n);
     if (n >= total) done();
-  }, GBOT_TYPE_MS);
+  };
+  // Ovoz davomiyligi ma'lum bo'lsa — qolgan harflar ovoz bilan birga tugaydi
+  GBOT._retime = (ms) => {
+    if (!GBOT.typeT || n >= total) return;
+    const per = Math.max(GBOT_TYPE_MS, Math.min(GBOT_TYPE_MAX_MS, (ms * GBOT_TYPE_SYNC) / (total - n)));
+    clearInterval(GBOT.typeT);
+    GBOT.typeT = setInterval(step, per);
+  };
+  GBOT._finish = done;
+  bot.classList.add("is-talk");
+  GBOT.typeT = setInterval(step, GBOT_TYPE_MS);
+  gbotSpeak(text);
 }
 
 function gbotGo(i) {
@@ -162,7 +182,8 @@ function gbotPanelClick(e) {
     document.getElementById("gbot-tools").innerHTML = gbotToolsHtml(gbotT().ui);
   } else if (act === "speak") {
     GBOT_VOICE.speak = !GBOT_VOICE.speak;
+    if (!GBOT_VOICE.speak) gbotSpeakStop();
     gbotSavePrefs();
-    gbotRender();
+    document.getElementById("gbot-tools").innerHTML = gbotToolsHtml(gbotT().ui);
   }
 }

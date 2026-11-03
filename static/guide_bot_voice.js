@@ -2,13 +2,14 @@
 //  guide_bot_voice.js — «Robi» OVOZI (2026-11-03)
 //  1) O'z ovozi — robotcha «bip-bup» (WebAudio, fayl kerak emas, hamma tilda ishlaydi):
 //     matn yozilayotganda har harfga qisqa ohang, ochilish/yopilish/xursandlik ohanglari.
-//  2) Haqiqiy nutq (ixtiyoriy) — qurilmada shu til ovozi bo'lsa (speechSynthesis). Ko'p Android
-//     Telegram'larida yo'q, o'zbek ovozi kam uchraydi — bo'lmasa tugma ko'rinmaydi.
+//  2) Haqiqiy nutq — server ovozi (guide_bot_tts.js, Azure bepul tarif) bo'lsa o'sha, aks holda
+//     qurilmadagi shu til ovozi (speechSynthesis). Ikkalasi ham yo'q bo'lsa 🗣 tugma ko'rinmaydi.
+//     2026-11-03: haqiqiy nutq standart YOQILGAN (GBOT_VOICE.speak = true).
 //  Brauzer tovushni faqat bosishdan keyin ruxsat beradi — birinchi ohang panel ochilganda.
 //  Global: APP. guide_bot.js dan OLDIN ulanadi.
 // =============================================================
 
-const GBOT_VOICE = { ac: null, muted: false, speak: false };
+const GBOT_VOICE = { ac: null, muted: false, speak: true };
 const GBOT_TONE_BASE = 520;      // Hz — robot «ovozi» asosiy balandligi
 const GBOT_TONE_STEP = 38;       // Hz — harfga qarab o'zgarish qadami
 const GBOT_TONE_STEPS = 9;       // nechta xil balandlik
@@ -52,7 +53,7 @@ function gbotTone(freq, slide, dur, delay, vol, type) {
 
 // Harf «bip»i — matn yozilayotganda (haqiqiy nutq yoqilgan bo'lsa — jim)
 function gbotChirp(ch) {
-  if (GBOT_VOICE.speak && gbotSpeechVoice()) return;
+  if (GBOT_VOICE.speak && gbotCanSpeak()) return;
   const c = (ch || "a").toLowerCase();
   const f = GBOT_TONE_BASE + (c.codePointAt(0) % GBOT_TONE_STEPS) * GBOT_TONE_STEP
     + (GBOT_VOWELS.includes(c) ? GBOT_TONE_VOWEL : 0);
@@ -67,7 +68,13 @@ const GBOT_SFX = {
 };
 function gbotSfx(name) { if (GBOT_SFX[name]) GBOT_SFX[name](); }
 
-// ---- haqiqiy nutq (ixtiyoriy) ----
+// ---- haqiqiy nutq ----
+// guide_bot_tts.js server ovozi bilan qayta tayinlaydi (gbotCanSpeak, gbotSpeak, gbotSpeakStop, gbotIsSpeaking)
+function gbotCanSpeak() { return !!gbotSpeechVoice(); }
+function gbotIsSpeaking() {
+  try { return !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (_) { return false; }
+}
+
 function gbotSpeechVoice() {
   const s = window.speechSynthesis;
   if (!s || typeof s.getVoices !== "function") return null;

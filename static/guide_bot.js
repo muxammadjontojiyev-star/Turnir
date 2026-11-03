@@ -13,6 +13,8 @@ const GBOT = { ctx: null, open: false, i: 0, n: 0, typeT: null, hintT: null, idl
 const GBOT_KEY = "gbot_v1";
 const GBOT_TICK_MS = 700;       // kontekstni tekshirish oralig'i
 const GBOT_TYPE_MS = 24;        // bitta harf yozilish vaqti
+const GBOT_TYPE_MAX_MS = 110;   // ovozga moslanganda eng sekin
+const GBOT_TYPE_SYNC = 0.92;    // yozuv ovozdan biroz oldin tugaydi
 const GBOT_CHIRP_EVERY = 2;     // har nechta harfga bitta «bip»
 const GBOT_HINT_DELAY_MS = 900;
 const GBOT_HINT_MS = 7000;      // hint qancha turadi
@@ -38,13 +40,13 @@ const GBOT_ROOTS = [
 function gbotLoadPrefs() {
   try {
     const p = JSON.parse(localStorage.getItem(GBOT_KEY) || "{}");
-    GBOT_VOICE.muted = !!p.muted; GBOT_VOICE.speak = !!p.speak; GBOT.mini = !!p.mini;
+    GBOT_VOICE.muted = !!p.muted; GBOT_VOICE.speak = p.voice !== false; GBOT.mini = !!p.mini;   // ovoz — standart yoqilgan
     GBOT.seen = p.seen && typeof p.seen === "object" ? p.seen : {};
   } catch (_) { /* xotira yopiq — standart sozlamalar */ }
 }
 function gbotSavePrefs() {
   try {
-    localStorage.setItem(GBOT_KEY, JSON.stringify({ muted: GBOT_VOICE.muted, speak: GBOT_VOICE.speak,
+    localStorage.setItem(GBOT_KEY, JSON.stringify({ muted: GBOT_VOICE.muted, voice: GBOT_VOICE.speak,
       mini: GBOT.mini, seen: GBOT.seen }));
   } catch (_) { /* xotira yopiq */ }
 }

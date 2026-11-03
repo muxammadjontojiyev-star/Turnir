@@ -88,6 +88,29 @@
   box-shadow: 0 6px 18px -6px rgba(124, 92, 255, .8); }
 .gbot-act:active, .gbot-tool:active { transform: scale(.96); }
 
+/* 2026-11-03: savol berish oynasi (guide_bot_ask.js) */
+.gbot-dots.hidden { display: none; }
+.gbot-ask-open { width: 100%; margin-top: 8px; min-height: 42px; padding: 9px 14px; border-radius: 14px; font-size: 14px;
+  font-weight: 600; color: #8fe8ff; border: 1px dashed rgba(76, 195, 255, .55); background: rgba(76, 195, 255, .08); cursor: pointer; }
+.gbot-you { margin: 12px 0 0 auto; width: fit-content; max-width: 85%; padding: 9px 13px; border-radius: 16px 16px 4px 16px;
+  font-size: 14px; line-height: 1.4; color: #fff; background: linear-gradient(135deg, #7c5cff, #3aa8ff); word-break: break-word; }
+.gbot-you small { display: block; font-size: 11px; opacity: .75; }
+.gbot-chips { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.gbot-chip { padding: 7px 11px; border-radius: 14px; font-size: 13px; color: #dfe6ff; text-align: left;
+  border: 1px solid rgba(124, 92, 255, .5); background: rgba(124, 92, 255, .14); cursor: pointer; }
+.gbot-ask-row { display: flex; gap: 6px; width: 100%; }
+.gbot-ask-in { flex: 1; min-width: 0; height: 44px; padding: 0 13px; border-radius: 14px; font-size: 15px; color: #fff;
+  border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .07); outline: none; }
+.gbot-ask-in:focus { border-color: rgba(76, 195, 255, .7); }
+.gbot-ask-btn { flex: none; width: 44px; height: 44px; border-radius: 14px; font-size: 18px; color: #fff; border: none;
+  background: linear-gradient(135deg, #7c5cff, #4cc3ff); cursor: pointer; }
+.gbot-ask-mic { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18); }
+.gbot-ask-mic.is-rec { background: #ff4d5e; border-color: #ff4d5e; animation: gbot-rec 1s ease-in-out infinite; }
+.gbot-ask-back { flex: 1 1 100%; }
+.gbot-bot.is-listen .gbot-bulb { animation: gbot-glow .45s ease-in-out infinite; }
+.gbot-bot.is-listen .gbot-head { animation: gbot-nod 1.4s ease-in-out infinite; }
+@keyframes gbot-rec { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 94, .6); } 50% { box-shadow: 0 0 0 8px rgba(255, 77, 94, 0); } }
+
 @keyframes gbot-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes gbot-shadow { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(.75); opacity: .35; } }
 @keyframes gbot-blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.1); } }
