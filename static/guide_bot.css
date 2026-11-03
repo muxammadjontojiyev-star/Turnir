@@ -1,0 +1,110 @@
+/* =============================================================
+   guide_bot.css — yo'l ko'rsatuvchi robot «Robi» (2026-11-03)
+   Suzuvchi robot (pastki chap burchak, ⚡ tugmasi o'ngda), hint, gaplashish oynasi va
+   harakatlar: suzish, ko'z qisish, chiroq, olov, gapirish, qo'l silkitish, sakrash, xursandlik.
+   «Harakatni kamaytirish» yoqilgan qurilmada animatsiyalar o'chadi.
+   ============================================================= */
+
+.gbot { position: fixed; z-index: 26; left: max(12px, calc(50% - 228px));
+  bottom: calc(var(--nav-height) + 18px + env(safe-area-inset-bottom, 0px));
+  transition: transform .35s ease, opacity .35s ease; }
+.gbot.hidden { display: none; }
+.gbot.is-enter { animation: gbot-enter .7s cubic-bezier(.3, 1.5, .5, 1); }
+.gbot.is-mini { transform: translateX(-34px) scale(.72); opacity: .8; }
+.gbot.is-mini .gbot-hint { display: none; }
+
+.gbot-btn { display: block; position: relative; width: 62px; height: 74px; padding: 0; border: none;
+  background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.gbot-btn:active .gbot-bot { transform: scale(.92); }
+.gbot-bot { display: block; width: 100%; height: 100%; transition: transform .15s;
+  filter: drop-shadow(0 6px 14px rgba(124, 92, 255, .55)); }
+.gbot-btn .gbot-bot { animation: gbot-float 3s ease-in-out infinite; }
+.gbot-svg { width: 100%; height: 100%; overflow: visible; }
+.gbot-shadow { position: absolute; left: 50%; bottom: -6px; width: 34px; height: 7px; margin-left: -17px;
+  border-radius: 50%; background: rgba(0, 0, 0, .35); filter: blur(2px); animation: gbot-shadow 3s ease-in-out infinite; }
+
+/* SVG qismlari */
+.gbot-svg * { transform-box: fill-box; }
+.gbot-eye { transform-origin: center; animation: gbot-blink 4.2s infinite; }
+.gbot-eyes { transition: transform .3s; }
+.gbot-bulb { transform-origin: center; animation: gbot-glow 1.8s ease-in-out infinite; }
+.gbot-flame { transform-origin: 50% 0; animation: gbot-flame .22s ease-in-out infinite alternate; }
+.gbot-core { transform-origin: center; animation: gbot-glow 2.4s ease-in-out infinite; }
+.gbot-mouth { transform-origin: center; }
+.gbot-arm-l { transform-origin: 50% 8%; }
+.gbot-arm-r { transform-origin: 50% 8%; }
+.gbot-head { transform-origin: 50% 90%; }
+
+/* holatlar */
+.gbot-bot.is-talk .gbot-mouth { animation: gbot-talk .16s ease-in-out infinite alternate; }
+.gbot-bot.is-talk .gbot-head { animation: gbot-nod .9s ease-in-out infinite; }
+.gbot-bot.is-wave .gbot-arm-r { animation: gbot-wave .42s ease-in-out 4 alternate; }
+.gbot-bot.is-hop .gbot-svg { animation: gbot-hop .8s cubic-bezier(.3, 1.6, .5, 1) 2; }
+.gbot-bot.is-look .gbot-eyes { animation: gbot-look 1.6s ease-in-out; }
+.gbot-bot.is-happy .gbot-svg { animation: gbot-hop .7s cubic-bezier(.3, 1.6, .5, 1) 2; }
+.gbot-bot.is-happy .gbot-eye { animation: none; transform: scaleY(.35); }
+.gbot-bot.is-happy .gbot-arm-l { animation: gbot-cheer-l .35s ease-in-out 4 alternate; }
+.gbot-bot.is-happy .gbot-arm-r { animation: gbot-cheer-r .35s ease-in-out 4 alternate; }
+
+/* hint — robot ustidagi qisqa gap */
+.gbot-hint { position: absolute; left: 6px; bottom: 82px; width: max-content; max-width: min(250px, 72vw);
+  padding: 10px 13px; border-radius: 16px 16px 16px 4px; font-size: 13px; line-height: 1.4; color: #fff;
+  background: linear-gradient(135deg, #7c5cff, #3aa8ff); box-shadow: 0 10px 26px -8px rgba(76, 195, 255, .7);
+  cursor: pointer; animation: gbot-pop .45s cubic-bezier(.3, 1.6, .5, 1); }
+.gbot-hint.hidden { display: none; }
+
+/* gaplashish oynasi */
+.gbot-panel { position: fixed; inset: 0; z-index: 97; display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(4, 6, 20, .55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  animation: gbot-fade .25s ease; }
+.gbot-panel.hidden { display: none; }
+.gbot-sheet { width: 100%; max-width: 480px; padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  border-radius: 24px 24px 0 0; border: 1px solid rgba(124, 92, 255, .45); border-bottom: none;
+  background: linear-gradient(180deg, #1b1f4a 0%, #11142f 100%); color: var(--text-primary, #fff);
+  box-shadow: 0 -18px 40px -12px rgba(124, 92, 255, .55); animation: gbot-up .4s cubic-bezier(.3, 1.3, .5, 1); }
+.gbot-top { display: flex; align-items: center; gap: 10px; }
+.gbot-bot--big { width: 74px; height: 86px; flex: none; margin-top: -40px; animation: gbot-float 3s ease-in-out infinite; }
+.gbot-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gbot-name b { font-family: var(--font-display, inherit); font-size: 20px; letter-spacing: 1px; }
+.gbot-name small { font-size: 12px; color: var(--text-secondary, #aab); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gbot-tools { display: flex; gap: 6px; flex: none; }
+.gbot-tool { min-width: 34px; height: 34px; padding: 0 8px; border-radius: 12px; font-size: 15px; color: #fff;
+  border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); cursor: pointer; }
+.gbot-tool.is-on { border-color: rgba(76, 195, 255, .6); background: rgba(76, 195, 255, .16); }
+.gbot-bubble { position: relative; margin: 12px 0 10px; padding: 14px 15px; min-height: 96px; border-radius: 18px;
+  font-size: 15px; line-height: 1.5; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); }
+.gbot-bubble::before { content: ""; position: absolute; left: 30px; top: -8px; width: 14px; height: 14px;
+  transform: rotate(45deg); background: #22264f; border-left: 1px solid rgba(255, 255, 255, .1);
+  border-top: 1px solid rgba(255, 255, 255, .1); }
+.gbot-text b { color: #8fe8ff; }
+.gbot-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
+.gbot-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .18); transition: all .25s; }
+.gbot-dots i.is-done { background: rgba(124, 92, 255, .7); }
+.gbot-dots i.is-on { width: 20px; border-radius: 4px; background: linear-gradient(90deg, #7c5cff, #4cc3ff); }
+.gbot-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.gbot-act { flex: 1 1 auto; min-height: 44px; padding: 10px 14px; border-radius: 14px; font-size: 14px; font-weight: 600;
+  color: #fff; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); cursor: pointer; }
+.gbot-act--main { border: none; background: linear-gradient(90deg, #7c5cff, #4cc3ff);
+  box-shadow: 0 6px 18px -6px rgba(124, 92, 255, .8); }
+.gbot-act:active, .gbot-tool:active { transform: scale(.96); }
+
+@keyframes gbot-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes gbot-shadow { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(.75); opacity: .35; } }
+@keyframes gbot-blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.1); } }
+@keyframes gbot-glow { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(.82); } }
+@keyframes gbot-flame { from { transform: scaleY(.78) scaleX(.9); opacity: .8; } to { transform: scaleY(1.15) scaleX(1.05); opacity: 1; } }
+@keyframes gbot-talk { from { transform: scaleY(.6) scaleX(1); } to { transform: scaleY(2) scaleX(.8); } }
+@keyframes gbot-nod { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes gbot-wave { from { transform: rotate(-115deg); } to { transform: rotate(-155deg); } }
+@keyframes gbot-cheer-l { from { transform: rotate(110deg); } to { transform: rotate(150deg); } }
+@keyframes gbot-cheer-r { from { transform: rotate(-110deg); } to { transform: rotate(-150deg); } }
+@keyframes gbot-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } }
+@keyframes gbot-look { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 65% { transform: translateX(4px); } }
+@keyframes gbot-enter { from { transform: translateX(-130%) rotate(-25deg); } to { transform: none; } }
+@keyframes gbot-pop { from { transform: scale(.4) translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes gbot-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gbot-up { from { transform: translateY(100%); } to { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .gbot *, .gbot, .gbot-panel, .gbot-panel * { animation: none !important; }
+}
