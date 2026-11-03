@@ -88,7 +88,7 @@
   box-shadow: 0 6px 18px -6px rgba(124, 92, 255, .8); }
 .gbot-act:active, .gbot-tool:active { transform: scale(.96); }
 
-/* 2026-11-03: savol berish oynasi (guide_bot_ask.js) */
+/* 2026-11-03: savol berish oynasi (guide_bot_ask.js) — qo'llanma havolalari va adminga yozish tugmasi */
 .gbot-dots.hidden { display: none; }
 .gbot-ask-open { width: 100%; margin-top: 8px; min-height: 42px; padding: 9px 14px; border-radius: 14px; font-size: 14px;
   font-weight: 600; color: #8fe8ff; border: 1px dashed rgba(76, 195, 255, .55); background: rgba(76, 195, 255, .08); cursor: pointer; }
@@ -104,12 +104,11 @@
 .gbot-ask-in:focus { border-color: rgba(76, 195, 255, .7); }
 .gbot-ask-btn { flex: none; width: 44px; height: 44px; border-radius: 14px; font-size: 18px; color: #fff; border: none;
   background: linear-gradient(135deg, #7c5cff, #4cc3ff); cursor: pointer; }
-.gbot-ask-mic { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18); }
-.gbot-ask-mic.is-rec { background: #ff4d5e; border-color: #ff4d5e; animation: gbot-rec 1s ease-in-out infinite; }
 .gbot-ask-back { flex: 1 1 100%; }
-.gbot-bot.is-listen .gbot-bulb { animation: gbot-glow .45s ease-in-out infinite; }
-.gbot-bot.is-listen .gbot-head { animation: gbot-nod 1.4s ease-in-out infinite; }
-@keyframes gbot-rec { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 94, .6); } 50% { box-shadow: 0 0 0 8px rgba(255, 77, 94, 0); } }
+.gbot-links { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.gbot-link { flex: 1 1 auto; min-height: 40px; padding: 8px 12px; border-radius: 14px; font-size: 13px; font-weight: 600;
+  color: #fff; border: 1px solid rgba(76, 195, 255, .6); background: rgba(76, 195, 255, .16); cursor: pointer; }
+.gbot-link--admin { border-color: rgba(255, 200, 87, .7); background: rgba(255, 200, 87, .14); color: #ffe3a3; }
 
 @keyframes gbot-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes gbot-shadow { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(.75); opacity: .35; } }

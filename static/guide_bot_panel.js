@@ -4,8 +4,8 @@
 //  guide_bot_voice.js), gapirayotganda og'zi qimirlaydi, oxirida xursand bo'ladi.
 //  Tugmalar: ‹ Ortga / Keyingisi ›, oxirida — Boshidan, Batafsil (guide.js qo'llanmasi), Rahmat.
 //  Yuqorida: ovoz 🔊/🔇, haqiqiy nutq 🗣 (server yoki qurilma ovozi bo'lsa), Yashirish, ✕.
-//  2026-11-03: haqiqiy ovoz (guide_bot_tts.js) — yozish tezligi ovozga moslanadi (GBOT._retime), og'iz
-//  ovoz tugaguncha qimirlaydi; har gap ostida «💬 Savol berish» (guide_bot_ask.js).
+//  2026-11-03: har gap ostida «💬 Robiga savol berish» (guide_bot_ask.js). Haqiqiy ovoz ulansa (hozircha
+//  yo'q) — yozish tezligi ovozga moslanadi (GBOT._retime), og'iz ovoz tugaguncha qimirlaydi.
 //  Matn bosilsa — yozish darhol tugaydi. guide_bot.js dan KEYIN ulanadi.
 // =============================================================
 
@@ -31,7 +31,7 @@ function gbotPanelEnsure() {
   return p;
 }
 
-async function gbotOpen() {
+function gbotOpen() {
   const d = gbotT();
   if (!d || !GBOT.ctx || !d[GBOT.ctx]) return;
   gbotAc();                                               // ovoz ruxsati — aynan shu bosishda
@@ -48,14 +48,12 @@ async function gbotOpen() {
   gbotHaptic("light");
   gbotSfx("hello");
   gbotAct(document.getElementById("gbot-big-bot"), "is-wave");
-  if (typeof gbotTtsStatus === "function") await gbotTtsStatus();   // server ovozi bormi (ko'pi bilan 1.5 s)
-  if (GBOT.open) gbotRender();
+  gbotRender();
 }
 
 function gbotClose(sfx) {
   clearInterval(GBOT.typeT);
   GBOT.typeT = null;
-  if (typeof gbotMicCancel === "function") gbotMicCancel();
   gbotSpeakStop();
   if (sfx) gbotSfx("bye");
   GBOT.open = false;
@@ -90,7 +88,6 @@ function gbotRender() {
     document.getElementById("gbot-actions").insertAdjacentHTML("beforeend", gbotAskButtonHtml());
   }
   gbotType(say[GBOT.i], last);
-  if (typeof gbotTtsPrefetch === "function") gbotTtsPrefetch(say[GBOT.i + 1]);
 }
 
 // Matnni harfma-harf «yozadi» (emoji bo'linmaydi — Array.from), **qalin** saqlanadi
@@ -133,7 +130,7 @@ function gbotType(text, last) {
   };
   GBOT._finish = done;
   bot.classList.add("is-talk");
-  GBOT.typeT = setInterval(step, GBOT_TYPE_MS);
+  GBOT.typeT = setInterval(step, Math.min(GBOT_TYPE_MS, GBOT_TYPE_MAX_TOTAL_MS / Math.max(1, total)));
   gbotSpeak(text);
 }
 

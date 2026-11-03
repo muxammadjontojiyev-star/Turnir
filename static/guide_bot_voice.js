@@ -2,14 +2,14 @@
 //  guide_bot_voice.js — «Robi» OVOZI (2026-11-03)
 //  1) O'z ovozi — robotcha «bip-bup» (WebAudio, fayl kerak emas, hamma tilda ishlaydi):
 //     matn yozilayotganda har harfga qisqa ohang, ochilish/yopilish/xursandlik ohanglari.
-//  2) Haqiqiy nutq — server ovozi (guide_bot_tts.js, Azure bepul tarif) bo'lsa o'sha, aks holda
-//     qurilmadagi shu til ovozi (speechSynthesis). Ikkalasi ham yo'q bo'lsa 🗣 tugma ko'rinmaydi.
-//     2026-11-03: haqiqiy nutq standart YOQILGAN (GBOT_VOICE.speak = true).
+//  2) Haqiqiy nutq (ixtiyoriy, standart o'chiq) — qurilmada shu til ovozi bo'lsa (speechSynthesis);
+//     bo'lmasa 🗣 tugma ko'rinmaydi. Server ovozi (Azure) — egasi qarori bilan hozircha qo'shilmagan:
+//     gbotCanSpeak / gbotSpeak / gbotSpeakStop / gbotIsSpeaking keyin qayta tayinlanishi mumkin.
 //  Brauzer tovushni faqat bosishdan keyin ruxsat beradi — birinchi ohang panel ochilganda.
 //  Global: APP. guide_bot.js dan OLDIN ulanadi.
 // =============================================================
 
-const GBOT_VOICE = { ac: null, muted: false, speak: true };
+const GBOT_VOICE = { ac: null, muted: false, speak: false };
 const GBOT_TONE_BASE = 520;      // Hz — robot «ovozi» asosiy balandligi
 const GBOT_TONE_STEP = 38;       // Hz — harfga qarab o'zgarish qadami
 const GBOT_TONE_STEPS = 9;       // nechta xil balandlik
@@ -69,7 +69,6 @@ const GBOT_SFX = {
 function gbotSfx(name) { if (GBOT_SFX[name]) GBOT_SFX[name](); }
 
 // ---- haqiqiy nutq ----
-// guide_bot_tts.js server ovozi bilan qayta tayinlaydi (gbotCanSpeak, gbotSpeak, gbotSpeakStop, gbotIsSpeaking)
 function gbotCanSpeak() { return !!gbotSpeechVoice(); }
 function gbotIsSpeaking() {
   try { return !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (_) { return false; }

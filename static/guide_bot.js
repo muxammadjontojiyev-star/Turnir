@@ -14,6 +14,7 @@ const GBOT_KEY = "gbot_v1";
 const GBOT_TICK_MS = 700;       // kontekstni tekshirish oralig'i
 const GBOT_TYPE_MS = 24;        // bitta harf yozilish vaqti
 const GBOT_TYPE_MAX_MS = 110;   // ovozga moslanganda eng sekin
+const GBOT_TYPE_MAX_TOTAL_MS = 4000;   // uzun javob ham ko'pi bilan shuncha vaqtda yoziladi
 const GBOT_TYPE_SYNC = 0.92;    // yozuv ovozdan biroz oldin tugaydi
 const GBOT_CHIRP_EVERY = 2;     // har nechta harfga bitta «bip»
 const GBOT_HINT_DELAY_MS = 900;
@@ -40,7 +41,7 @@ const GBOT_ROOTS = [
 function gbotLoadPrefs() {
   try {
     const p = JSON.parse(localStorage.getItem(GBOT_KEY) || "{}");
-    GBOT_VOICE.muted = !!p.muted; GBOT_VOICE.speak = p.voice !== false; GBOT.mini = !!p.mini;   // ovoz — standart yoqilgan
+    GBOT_VOICE.muted = !!p.muted; GBOT_VOICE.speak = p.voice === true; GBOT.mini = !!p.mini;   // qurilma nutqi — standart o'chiq
     GBOT.seen = p.seen && typeof p.seen === "object" ? p.seen : {};
   } catch (_) { /* xotira yopiq — standart sozlamalar */ }
 }
