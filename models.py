@@ -1317,6 +1317,8 @@ def init_db():
         init_promotion_table(_c.cursor())
         from season_rewards import init_rewards_table       # 2026-11-01: mavsum mukofoti (eF Token)
         init_rewards_table(_c.cursor())
+        from robi_usage import init_robi_tables             # 2026-11-03: «Robi» ovozi — bepul limit hisobi
+        init_robi_tables(_c.cursor())
         # 2026-10-30: bir martalik sovg'a — o'sha paytdagi barcha foydalanuvchilarga 100 eF Token (wallet_grants.py)
         from wallet_grants import LAUNCH_GIFT_AMOUNT, LAUNCH_GIFT_KEY, grant_once, init_grants_table
         init_grants_table(_c.cursor())
