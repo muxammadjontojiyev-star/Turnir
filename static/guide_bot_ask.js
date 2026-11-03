@@ -3,6 +3,8 @@
 //  Gaplashish oynasida «💬 Robiga savol berish» -> savol yoziladi (yoki namuna tugma bosiladi) -> javob
 //  bilimlar bazasidan (guide_bot_faq.js, BEPUL, faqat bot qoidalari va turnirlar) topiladi va Robi uni
 //  yozib aytadi. Javobga kanal qo'llanmasi havolasi bo'lsa — tugma (Telegram ichida ochiladi).
+//  2026-11-03: «dyn» savollarda (bo'sh joy, ro'yxatdan o'tish, topshirilayotgan klublar) javob botdagi
+//  HOZIRGI holatdan tuziladi (guide_bot_live.js) — joy bo'lmasa klub olish yo'li + Divizion/Tezkor o'yin.
 //  Topilmasa yoki savol murakkab bo'lsa — bosh adminga (APP.adminContact, standart @Tojiyev_M)
 //  murojaat qilishni aytadi va «✉️ yozish» tugmasini beradi + savol namunalari.
 //  Foydalanuvchi matni faqat escHtml bilan chiqariladi (qoida: XSS); havola faqat https://t.me/.
@@ -10,7 +12,7 @@
 //  Global: APP, GBOT, escHtml, gbotType, gbotFmt, gbotRender, gbotSpeakStop, gbotAct, gbotHaptic, gbotSfx, gbotFaq*.
 // =============================================================
 
-const GBOT_ASK = { on: false };
+const GBOT_ASK = { on: false, busy: false, seq: 0 };
 const GBOT_ASK_MAX = 200;              // savol uzunligi
 const GBOT_ASK_CHIPS = 3;              // namuna savollar soni
 const GBOT_ASK_CHIPS_AFTER = 2;        // javobdan keyingi namunalar
@@ -76,15 +78,35 @@ function gbotAskOpen() {
   gbotType(gbotAskUi().hello, false);
 }
 
-function gbotAskSend(raw) {
+function gbotAskItems(lang, ids) {
+  const items = gbotFaqData(lang).items;
+  return ids.map(id => items.find(it => it.id === id)).filter(Boolean);
+}
+
+async function gbotAskSend(raw) {
   const text = String(raw || "").replace(/\s+/g, " ").trim().slice(0, GBOT_ASK_MAX);
-  if (!text) return;
+  if (!text || GBOT_ASK.busy) return;
   gbotHaptic("light");
   gbotAskYou(text);
   const lang = gbotAskLang();
   const hit = gbotFaqFind(text, lang, GBOT.ctx);
   const bot = document.getElementById("gbot-big-bot");
-  if (hit) {
+  if (hit && hit.dyn && typeof gbotLiveAnswer === "function") {
+    // Botdagi hozirgi holat — serverdan (bir necha soniya)
+    const seq = ++GBOT_ASK.seq;
+    GBOT_ASK.busy = true;
+    gbotAct(bot, "is-look");
+    clearInterval(GBOT.typeT);
+    GBOT.typeT = null;
+    document.getElementById("gbot-text").innerHTML = gbotFmt(gbotFaqData(lang).live.checking);
+    let live;
+    try { live = await gbotLiveAnswer(hit.dyn, lang); } finally { GBOT_ASK.busy = false; }
+    if (seq !== GBOT_ASK.seq || !GBOT.open || !GBOT_ASK.on) return;
+    gbotAct(bot, "is-happy");
+    gbotType((hit.a ? hit.a + "\n\n" : "") + live.text, false);
+    const chips = live.chips.length ? gbotAskItems(lang, live.chips) : gbotFaqSuggest(lang, GBOT.ctx, GBOT_ASK_CHIPS_AFTER, hit.id);
+    gbotAskControls(chips, hit.l, !!hit.admin);
+  } else if (hit) {
     gbotAct(bot, "is-happy");
     gbotType(hit.a.replace("{admin}", gbotAskAdmin().username), false);
     gbotAskControls(gbotFaqSuggest(lang, GBOT.ctx, GBOT_ASK_CHIPS_AFTER, hit.id), hit.l, !!hit.admin);

@@ -76,6 +76,7 @@
 .gbot-bubble::before { content: ""; position: absolute; left: 30px; top: -8px; width: 14px; height: 14px;
   transform: rotate(45deg); background: #22264f; border-left: 1px solid rgba(255, 255, 255, .1);
   border-top: 1px solid rgba(255, 255, 255, .1); }
+.gbot-text { white-space: pre-line; }   /* jonli javobda qatorlar */
 .gbot-text b { color: #8fe8ff; }
 .gbot-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
 .gbot-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .18); transition: all .25s; }
