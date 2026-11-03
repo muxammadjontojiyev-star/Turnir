@@ -215,28 +215,3 @@ TRANSLATE_MAX_CHARS = int(os.getenv("TRANSLATE_MAX_CHARS", "2000"))
 # Suiiste'moldan himoya (qoida #39): har user 60 sekundda 20 ta tarjima
 TRANSLATE_RATE_LIMIT_MAX = int(os.getenv("TRANSLATE_RATE_LIMIT_MAX", "20"))
 TRANSLATE_RATE_LIMIT_WINDOW = int(os.getenv("TRANSLATE_RATE_LIMIT_WINDOW", "60"))
-
-# ============================================================
-#  «ROBI» OVOZI (2026-11-03) — yo'l ko'rsatuvchi robot gapiradi va ovozli savolni tushunadi
-# ============================================================
-# Microsoft Azure AI Speech, BEPUL F0 tarif: oyiga 0.5 mln belgi ovozlashtirish (TTS) va 5 soat
-# nutqni matnga aylantirish (STT). F0 tarif pul yechmaydi — limit tugasa keyingi oygacha to'xtaydi.
-# Kalit bo'lmasa Robi avvalgidek «bip-bup» ovozida gapiradi (hech narsa buzilmaydi).
-ROBI_AZURE_KEY = os.getenv("ROBI_AZURE_KEY", "").strip()
-ROBI_AZURE_REGION = os.getenv("ROBI_AZURE_REGION", "").strip().lower()   # masalan: westeurope
-# Ovozlar (Azure neural): o'zbek — Madina (ayol), Sardor (erkak) ham bor: uz-UZ-SardorNeural
-ROBI_VOICE_UZ = os.getenv("ROBI_VOICE_UZ", "uz-UZ-MadinaNeural").strip()
-ROBI_VOICE_RU = os.getenv("ROBI_VOICE_RU", "ru-RU-SvetlanaNeural").strip()
-ROBI_VOICE_EN = os.getenv("ROBI_VOICE_EN", "en-US-JennyNeural").strip()
-ROBI_VOICE_PITCH = os.getenv("ROBI_VOICE_PITCH", "+8%").strip()   # biroz baland — robotchaga mos
-ROBI_VOICE_RATE = os.getenv("ROBI_VOICE_RATE", "+4%").strip()
-# Bepul limitdan OSHMASLIK uchun zaxira bilan (500 000 belgi / 5 soat dan kam)
-ROBI_TTS_MONTHLY_CHARS = int(os.getenv("ROBI_TTS_MONTHLY_CHARS", "450000") or 0)
-ROBI_STT_MONTHLY_SEC = int(os.getenv("ROBI_STT_MONTHLY_SEC", "16200") or 0)        # 4.5 soat
-ROBI_TTS_USER_DAILY = int(os.getenv("ROBI_TTS_USER_DAILY", "80") or 0)    # yangi (keshda yo'q) ovozlar
-ROBI_STT_USER_DAILY = int(os.getenv("ROBI_STT_USER_DAILY", "20") or 0)    # ovozli savollar
-ROBI_TTS_MAX_CHARS = int(os.getenv("ROBI_TTS_MAX_CHARS", "600") or 600)
-ROBI_STT_MAX_SEC = int(os.getenv("ROBI_STT_MAX_SEC", "15") or 15)
-ROBI_HTTP_TIMEOUT = float(os.getenv("ROBI_HTTP_TIMEOUT", "12") or 12)
-# Tayyor ovozlar keshi (bir marta yaratiladi, keyin limit sarflanmaydi). Bo'sh — baza yonida.
-ROBI_TTS_CACHE_DIR = os.getenv("ROBI_TTS_CACHE_DIR", "").strip()

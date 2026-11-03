@@ -3795,5 +3795,3 @@ from auction_api import router as auction_router  # noqa: E402  (2026-10-30, auk
 app.include_router(auction_router)
 from cosmetics_api import router as cosmetics_router  # noqa: E402  (2026-10-30, bezaklar)
 app.include_router(cosmetics_router)
-from robi_api import router as robi_router  # noqa: E402  (2026-11-03, «Robi» ovozi: TTS / STT)
-app.include_router(robi_router)
