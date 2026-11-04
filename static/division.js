@@ -248,8 +248,10 @@ function divTodayMatchCard() {
   // 2026-07-19: QAT'IY TARTIB — ikkala telefonda ham bir xil ko'rinishi uchun
   // chapda DOIM player1, o'ngda DOIM player2 (nisbiy "raqib/men" emas).
   // Hisob ham doim score1 : score2 (bazadagi tartib) — adashish yo'qoladi.
-  const p1 = { id: m.player1_id, name: m.player1_name, username: m.player1_username, isMe: p1IsMe };
-  const p2 = { id: m.player2_id, name: m.player2_name, username: m.player2_username, isMe: !p1IsMe };
+  // 2026-11-04: pcard — o'yinchining SHAXSIY KARTASI (player_card.js); bo'lmasa — avvalgidek avatar
+  const p1 = { id: m.player1_id, name: m.player1_name, username: m.player1_username, isMe: p1IsMe, pcard: m.player1_pcard };
+  const p2 = { id: m.player2_id, name: m.player2_name, username: m.player2_username, isMe: !p1IsMe, pcard: m.player2_pcard };
+  const hasPc = (p) => !!(p.pcard && typeof pcardHtml === "function");
 
   const score1 = (m.score1 !== null && m.score1 !== undefined) ? m.score1 : "—";
   const score2 = (m.score1 !== null && m.score1 !== undefined) ? m.score2 : "—";
@@ -275,9 +277,10 @@ function divTodayMatchCard() {
       <div class="div-glass div-match-chip">${DT("div_today_match")}</div>
       <div style="display:flex;align-items:stretch;justify-content:space-between;gap:8px">
         ${[p1, p2].map(p => `
-        <div class="div-vs-player div-glass div-match-side" ${p.isMe ? "" : 'id="div-opp-profile-open"'} style="flex:1">
+        <div class="div-vs-player div-glass div-match-side${hasPc(p) ? " div-match-side--pcard" : ""}" ${p.isMe ? "" : 'id="div-opp-profile-open"'} style="flex:1">
+          ${hasPc(p) ? pcardHtml(pcRemember(p.pcard), { size: "sm" }) : `
           ${divAvatarHtml(p.id, p.name, 56, p.isMe ? (APP.currentUser && APP.currentUser.photo_url) : null)}
-          <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(p.name || "—")}</div>
+          <div style="font-size:14px;font-weight:800;text-align:center">${escHtml(p.name || "—")}</div>`}
           ${p.username
             ? `<div style="font-size:11.5px;${p.isMe ? "opacity:.85" : "color:var(--cyan)"}">@${escHtml(p.username)}</div>`
             : ""}

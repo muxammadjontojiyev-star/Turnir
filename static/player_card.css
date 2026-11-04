@@ -1,0 +1,125 @@
+/* =============================================================
+   player_card.css — SHAXSIY O'YINCHI KARTASI (2026-11-04, player_card.js)
+   eFootball kartasi nisbati (720×1020). O'lchamlar konteyner kengligiga nisbatan (cqw) — bir xil
+   karta Divizion ustunida (kichik), profilda (o'rta) va katta ko'rinishda bir xil ko'rinadi.
+   Standart ramka — CSS (bepul). Do'kondagi «karta foni» — .pcard-bg-<id> (rasmda ramka bor).
+   ============================================================= */
+
+.pcard {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 720 / 1020;
+  cursor: pointer;
+  user-select: none;
+  /* standart ramka: oltin-bronza hoshiya */
+  padding: 2.4%;
+  background: linear-gradient(150deg, #f6dc94 0%, #9a6a2f 22%, #f2cf7c 45%, #7b4a1c 70%, #e7bd6a 100%);
+  clip-path: polygon(7% 0, 93% 0, 100% 5%, 100% 95%, 93% 100%, 7% 100%, 0 95%, 0 5%);
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .55));
+}
+.pcard-in {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  clip-path: polygon(6.5% 0, 93.5% 0, 100% 4.6%, 100% 95.4%, 93.5% 100%, 6.5% 100%, 0 95.4%, 0 4.6%);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 36%, rgba(255, 196, 110, .17) 0deg 3deg, transparent 3deg 13deg),
+    radial-gradient(circle at 50% 36%, #ff8a2e 0%, #c7361a 30%, #5c1208 62%, #1c0705 100%);
+}
+.pcard-in::after {                       /* pastki qism qorayadi — nik o'qilsin */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 52%, rgba(0, 0, 0, .55) 78%, rgba(0, 0, 0, .8) 100%);
+}
+
+/* do'kondagi ramkali fon: rasmning o'zida ramka bor */
+.pcard--bg { padding: 0; background: none; }
+.pcard--bg .pcard-in { clip-path: none; border-radius: 4cqw; background-size: cover; background-position: center; }
+
+/* ishtirokchi rasmi — futbolchi o'rnida; chetlari fon bilan qo'shilib ketadi */
+.pcard-photo {
+  position: absolute; left: 20%; top: 7%; width: 74%; height: 66%;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-mask-image: radial-gradient(ellipse 58% 62% at 50% 44%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 58% 62% at 50% 44%, #000 62%, transparent 100%);
+}
+.pcard-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.pcard-letter {
+  font-size: 34cqw; font-weight: 900; color: rgba(255, 255, 255, .92);
+  text-shadow: 0 1cqw 4cqw rgba(0, 0, 0, .6);
+}
+
+.pcard-side {
+  position: absolute; left: 6%; top: 4%; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 1cqw;
+}
+.pcard-ovr {
+  font-family: Impact, "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  font-size: 19cqw; line-height: .9; font-weight: 900; color: #ffe93b;
+  -webkit-text-stroke: .5cqw #3b1a00;
+  text-shadow: 0 .8cqw 0 #6b3a00, 0 1.5cqw 3cqw rgba(0, 0, 0, .6);
+}
+.pcard-pos {
+  font-size: 9.5cqw; line-height: 1; font-weight: 900; color: #fff; letter-spacing: .02em;
+  text-shadow: 0 .6cqw 2cqw rgba(0, 0, 0, .85);
+}
+.pcard-flag { font-size: 11cqw; line-height: 1; filter: drop-shadow(0 .5cqw 1.5cqw rgba(0, 0, 0, .7)); }
+
+.pcard-name {
+  position: absolute; left: 4%; right: 4%; bottom: 15%; z-index: 2;
+  text-align: center; color: #fff; font-weight: 800; font-size: 10.5cqw; line-height: 1.05;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 .6cqw 0 rgba(0, 0, 0, .7), 0 1cqw 4cqw rgba(0, 0, 0, .9);
+}
+.pcard-name--long { font-size: 8cqw; }
+
+.pcard-plate {
+  position: absolute; left: 50%; bottom: 3.5%; transform: translateX(-50%); z-index: 2;
+  width: 56%; height: 9%; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #2a2016, #0d0a07);
+  border-top: .5cqw solid #c9974e;
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+}
+.pcard-stars { color: #ffe23b; font-size: 6.4cqw; letter-spacing: .6cqw; text-shadow: 0 0 2cqw rgba(255, 220, 60, .6); }
+
+/* o'lchamlar */
+.pcard--sm { max-width: 118px; margin: 0 auto; }
+.pcard--md { max-width: 210px; margin: 0 auto; }
+.pcard--lg { width: min(78vw, 340px); }
+
+/* profil bloki */
+.pcard-block { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 16px; }
+.pcard-edit-btn { width: 100%; max-width: 260px; }
+.pcard-hint { font-size: 11.5px; line-height: 1.4; opacity: .65; text-align: center; max-width: 320px; }
+
+/* katta ko'rinish */
+.pcard-ov {
+  position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  background: rgba(0, 0, 0, .82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: pcard-pop .22s cubic-bezier(.2, .9, .3, 1.2);
+}
+.pcard-ov-meta { color: #fff; font-weight: 700; font-size: 14px; }
+.pcard-ov-hint { color: rgba(255, 255, 255, .55); font-size: 12px; }
+@keyframes pcard-pop { from { opacity: 0; transform: scale(.92); } }
+
+/* Divizion ustuni: karta + @username */
+.div-match-side.div-match-side--pcard { padding: 8px 6px; gap: 6px; justify-content: flex-start; }
+
+/* sozlash oynasi */
+.pce-box { max-height: 86vh; overflow-y: auto; }
+.pce-label { font-size: 12px; font-weight: 700; opacity: .7; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: .06em; }
+.pce-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pce-chip {
+  min-width: 48px; padding: 7px 10px; border-radius: 10px; font-weight: 800; font-size: 13px;
+  color: var(--text-heading, #fff); background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .14);
+}
+.pce-chip.active { background: linear-gradient(135deg, #7c5cff, #1fb6ff); border-color: transparent; color: #fff; }
+.pce-box .modal-actions { margin-top: 16px; }
+
+/* do'kon → «O'YIN KARTASI FONLARI»: namuna — o'z kartasi shu ramkada (cosmetics.js) */
+.cos-grid--card .cos-name { white-space: normal; line-height: 1.25; min-height: 2.5em; display: flex; align-items: center; justify-content: center; }
+.cos-card-note { font-size: 11px; line-height: 1.35; color: #ffd666; margin: 2px 0 4px; }
+/* Egasi yuboradigan ramkali fonlar (cosmetics_cards.CARD_ITEMS) — har biriga bir qator:
+   .pcard-bg-card_<nom> .pcard-in { background-image: url("images/card-<nom>.jpg?v=..."); } */

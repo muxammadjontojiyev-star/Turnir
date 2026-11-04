@@ -8,7 +8,7 @@
 // =============================================================
 
 const COS = { data: null, busy: false };
-const COS_KINDS = ["frame", "bg"];
+const COS_KINDS = ["frame", "bg", "card"];   // card — shaxsiy karta ramkasi (2026-11-04, player_card.css)
 
 function cosClassFor(kind, id) { return id ? `cos-${kind}-${id}` : ""; }
 
@@ -90,6 +90,9 @@ async function cosLoad() {
 }
 
 function cosPreview(item, me) {
+  if (item.kind === "card" && typeof pcardHtml === "function") {   // o'z shaxsiy kartasi shu ramkada (player_card.js)
+    return pcardHtml({ user_id: me && me.user_id, nickname: (me && me.nickname) || "?", ovr: 60, bg: item.id }, { size: "sm" });
+  }
   const letter = escHtml(((me && me.nickname) || "?")[0].toUpperCase());
   const frame = item.kind === "frame" ? cosClassFor("frame", item.id) : "";
   const bg = item.kind === "bg" ? cosClassFor("bg", item.id) : "";
@@ -100,21 +103,23 @@ function cosPreview(item, me) {
 }
 
 function cosItemHtml(item, d) {
-  const owned = d.owned.includes(item.id), on = d.equipped[item.kind] === item.id;
+  // preview — sotuvda emas, faqat bosh admin bepul qo'llab ko'radi (server cos_equip ruxsat beradi)
+  const owned = d.owned.includes(item.id) || !!item.preview, on = d.equipped[item.kind] === item.id;
   const btn = on
     ? `<button class="btn btn--ghost cos-btn" data-cos="off" data-kind="${item.kind}">${escHtml(shopT("cos_remove"))}</button>`
     : owned
       ? `<button class="btn btn--primary cos-btn" data-cos="on" data-id="${escHtml(item.id)}" data-kind="${item.kind}">${escHtml(shopT("cos_apply"))}</button>`
       : `<button class="btn btn--primary cos-btn" data-cos="buy" data-id="${escHtml(item.id)}">${shopToken("shop-tk shop-tk--xs")} ${shopNum(item.price)}</button>`;
   return `<div class="cos-item ${on ? "cos-item--on" : ""}">
-      <div class="cos-prev-wrap" data-cos-try="${escHtml(item.id)}" role="button">
+      <div class="cos-prev-wrap"${item.kind === "card" ? "" : ` data-cos-try="${escHtml(item.id)}" role="button"`}>
         ${cosPreview(item, APP.profileData || { nickname: document.getElementById("header-nickname")?.textContent || "" })}
-        <span class="cos-eye">👁</span>
+        ${item.kind === "card" ? "" : `<span class="cos-eye">👁</span>`}
       </div>
       <div class="cos-name">${escHtml(shopT("cos_" + item.id))}${on ? ` <span class="cos-on">✓</span>` : ""}</div>
       <div class="cos-buyers">${escHtml(shopT("cos_buyers", { n: shopNum(item.buyers || 0) }))}</div>
+      ${item.preview ? `<div class="cos-card-note">${escHtml(shopT("cos_card_preview"))}</div>` : ""}
       ${btn}
-      <button class="cos-look" data-cos-try="${escHtml(item.id)}">${escHtml(shopT("cos_try_btn"))}</button>
+      ${item.kind === "card" ? "" : `<button class="cos-look" data-cos-try="${escHtml(item.id)}">${escHtml(shopT("cos_try_btn"))}</button>`}
     </div>`;
 }
 
@@ -134,7 +139,9 @@ function cosTabHtml() {
   return `<div class="auc-rules">${escHtml(shopT("cos_rules"))}</div>
     <div class="section-label">${escHtml(shopT("cos_frames"))}</div><div class="cos-grid">${group("frame")}</div>
     <div class="section-label">${escHtml(shopT("cos_players"))}</div><div class="cos-grid cos-grid--bg">${group("bg", true)}</div>
-    <div class="section-label">${escHtml(shopT("cos_bgs"))}</div><div class="cos-grid cos-grid--bg">${group("bg", false)}</div>`;
+    <div class="section-label">${escHtml(shopT("cos_bgs"))}</div><div class="cos-grid cos-grid--bg">${group("bg", false)}</div>
+    ${d.catalog.some(x => x.kind === "card") ? `<div class="section-label">${escHtml(shopT("cos_cards"))}</div>
+      <div class="auc-rules">${escHtml(shopT("cos_cards_hint"))}</div><div class="cos-grid cos-grid--card">${group("card")}</div>` : ""}`;
 }
 
 function cosErr(e) {
