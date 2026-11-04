@@ -138,3 +138,54 @@ def div_banned_days_month(user_id: int, month: str) -> list[str]:
                 break
             d += timedelta(days=1)
     return sorted(banned)
+
+
+# ============ 2026-11-04: BANNI OLIB TASHLASH (bosh admin) ============
+# Ban o'chirilmaydi — until_day KECHAGA qisqartiriladi: bugundan boshlab ishtirokchi yana ro'yxatdan
+# o'ta oladi (div_is_banned), o'tgan ban kunlari kalendarda tarix sifatida qoladi. Takror chaqirilsa —
+# not_banned (idempotent, qoida #38).
+
+def div_active_bans() -> list[dict]:
+    """Hozir (bugun yoki keyin) amal qilayotgan banlar — admin ro'yxati uchun, tugash sanasi bo'yicha."""
+    today = _tournament_now().strftime("%Y-%m-%d")
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT b.telegram_id, MIN(b.start_day) AS start_day, MAX(b.until_day) AS until_day, "
+            "u.nickname, u.username FROM div_bans b LEFT JOIN users u ON u.telegram_id = b.telegram_id "
+            "WHERE b.until_day >= ? GROUP BY b.telegram_id ORDER BY until_day",
+            (today,)).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def div_unban_by_query(query: str) -> tuple[bool, str | dict]:
+    """
+    Telegram ID yoki @username bo'yicha amaldagi banni bekor qiladi.
+    Qaytaradi: (True, {telegram_id, language, nickname, username, lifted}) yoki (False, sabab).
+    Sabablar: user_not_found, not_banned.
+    """
+    from pt_members import _find_user
+    now = _tournament_now()
+    today = now.strftime("%Y-%m-%d")
+    yesterday = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        u = _find_user(cur, query)
+        tg = u["telegram_id"] if u else (int(query) if str(query or "").strip().isdigit() else None)
+        if tg is None:
+            return False, "user_not_found"
+        cur.execute("UPDATE div_bans SET until_day = ? WHERE telegram_id = ? AND until_day >= ?",
+                    (yesterday, tg, today))
+        lifted = cur.rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    if not lifted:
+        return False, "not_banned"
+    logger.info("Divizion ban olib tashlandi: tg %s (%d ta yozuv)", tg, lifted)
+    return True, {"telegram_id": tg, "language": u["language"] if u else None,
+                  "nickname": u["nickname"] if u else None, "username": u["username"] if u else None,
+                  "lifted": lifted}

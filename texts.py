@@ -666,6 +666,11 @@ TEXTS = {
         LANGUAGE_RU: "🚫 Вы получили БАН в дивизионе на {days} дн. за нарушение правил. До {until} (включительно) вы не сможете зарегистрироваться в дивизионе.",
         LANGUAGE_EN: "🚫 You have been BANNED from the Division for {days} day(s) due to a rules violation. You cannot register in the Division until {until} (inclusive).",
     },
+    "notify_div_unban": {   # 2026-11-04: bosh admin banni olib tashladi (division_bans_api.py)
+        LANGUAGE_UZ: "✅ Divizion bo'yicha baningiz olib tashlandi. Bugundan boshlab yana Divizion ro'yxatidan o'tishingiz mumkin. Omad! ⚽",
+        LANGUAGE_RU: "✅ Ваш бан в дивизионе снят. С сегодняшнего дня вы снова можете регистрироваться в дивизионе. Удачи! ⚽",
+        LANGUAGE_EN: "✅ Your Division ban has been lifted. Starting today you can register in the Division again. Good luck! ⚽",
+    },
     "notify_div_bye": {
         LANGUAGE_UZ: "🎲 Divizion qur'asi: bugun ishtirokchilar soni toq bo'lgani uchun sizga AVTOMATIK G'ALABA (+15 achko) berildi! 🎉",
         LANGUAGE_RU: "🎲 Жеребьёвка дивизиона: сегодня нечётное число участников — вам присуждена АВТОМАТИЧЕСКАЯ ПОБЕДА (+15 очков)! 🎉",
