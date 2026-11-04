@@ -1,6 +1,7 @@
 // =============================================================
 //  player_card.js — ISHTIROKCHINING SHAXSIY O'YINCHI KARTASI (2026-11-04, player_card.py)
-//  eFootball kartasi uslubida: ramka foni, futbolchi o'rnida — ishtirokchi rasmi, chap tepada OVR,
+//  eFootball kartasi uslubida: ramka foni (images/card-showtime.jpg), futbolchi o'rnida — ishtirokchi rasmidan
+//  qirqilgan ODAMNING O'ZI (GET /players/{id}/cutout; bo'lmasa — butun rasm), chap tepada OVR,
 //  pozitsiya, bayroq; pastda nik va yulduzlar. Dizayn — player_card.css.
 //  Ko'rinadi: Profil sahifasi (renderProfile o'raladi), reytingdan ochilgan profil (renderPlayerModal),
 //  Divizion o'z profili / o'yinchi profili (renderDivision o'raladi), Divizion qur'a kartasi (division.js
@@ -37,6 +38,15 @@ function pcPhotoSrc(c) {
   return (me && APP.currentUser && APP.currentUser.photo_url) || `${API_BASE}/players/${Number(c.user_id)}/photo`;
 }
 
+// Qirqilgan rasm (faqat odam, player_cutout.py) bo'lmasa — butun rasm, chetlari xira; u ham bo'lmasa — ism harfi
+function pcCutFail(img) {
+  const fb = img.dataset.fb;
+  if (!fb) { img.remove(); return; }
+  delete img.dataset.fb;
+  img.parentElement.classList.add("pcard-photo--plain");
+  img.src = fb;
+}
+
 // c — /pcard javobi; opts.size: "sm" (Divizion ustuni) | "md" (profil) | "lg" (katta ko'rinish)
 function pcardHtml(c, opts = {}) {
   if (!c) return "";
@@ -48,8 +58,8 @@ function pcardHtml(c, opts = {}) {
   return `<div class="pcard pcard--${opts.size || "md"}${bg}" data-pcard="${Number(c.user_id)}" role="button">
       <div class="pcard-in">
         <div class="pcard-photo">
-          <img src="${escHtml(pcPhotoSrc(c))}" alt="" loading="lazy"
-            onerror="this.remove()"><span class="pcard-letter">${escHtml(name[0].toUpperCase())}</span>
+          <img src="${API_BASE}/players/${Number(c.user_id)}/cutout" data-fb="${escHtml(pcPhotoSrc(c))}" alt="" loading="lazy"
+            onerror="pcCutFail(this)"><span class="pcard-letter">${escHtml(name[0].toUpperCase())}</span>
         </div>
         <div class="pcard-side">
           <div class="pcard-ovr">${ovr}</div>
