@@ -323,6 +323,14 @@ def div_get_my_match(user_id: int, day: str | None = None) -> dict | None:
         m["opponent"] = {"user_id": m["player1_id"], "nickname": m["player1_name"],
                          "username": m["player1_username"], "telegram_id": m["player1_tg"]}
         m["is_bye"] = False
+    # 2026-11-04: o'yinchilarning SHAXSIY KARTASI (OVR, pozitsiya, davlat, ramka — player_card.py)
+    try:
+        from player_card import pcards_for_users
+        pc = pcards_for_users([m["player1_id"], m["player2_id"]])
+    except Exception:
+        logger.exception("Divizion: o'yinchi kartalari o'qilmadi")
+        pc = {}
+    m["player1_pcard"], m["player2_pcard"] = pc.get(m["player1_id"]), pc.get(m["player2_id"])
     return m
 
 

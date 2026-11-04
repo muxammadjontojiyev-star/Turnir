@@ -9,10 +9,13 @@ Katalog — COSMETICS (id -> tur, narx). Dizayn — static/cosmetics.css (.cos-f
 nomlar — static/texts_shop.js (cos_<id>). Yangi bezak: shu yerga bir qator + CSS + nom.
 Sotib olish bir martalik va doimiy; bir vaqtda bitta ramka va bitta fon qo'llanadi (yechib qo'yish mumkin).
 Pul — wallet.wallet_change ('cosmetic', ref = user_cosmetics.id); BEGIN IMMEDIATE (qoida #38).
+2026-11-04: 3-tur — «o'yin kartasi foni» (card, cosmetics_cards.py): Divizion o'yin kartasida; sotuvi bosh admin
+kaliti bilan (o'chiq paytda faqat bosh admin ko'radi va bepul qo'llab ko'radi).
 """
 
 import logging
 
+from cosmetics_cards import CARD_ITEMS, KIND_CARD, card_sale_on
 from models import get_connection
 from shop_core import _tx
 from wallet import get_balance, wallet_change
@@ -57,7 +60,15 @@ COSMETICS: dict[str, dict] = {
     "pl_shevchenko":  {"kind": KIND_BG, "price": 350},
     "pl_gullit":      {"kind": KIND_BG, "price": 350},
 }
-_EQUIP_COL = {KIND_FRAME: "frame", KIND_BG: "bg"}
+COSMETICS.update(CARD_ITEMS)                 # 2026-11-04: o'yin kartasi fonlari
+_EQUIP_COL = {KIND_FRAME: "frame", KIND_BG: "bg", KIND_CARD: "card"}
+
+
+def _on_sale(cur, item: dict) -> bool:
+    """Sotuvdami: oddiy bezak — katalogdagi "sale"; karta foni — yana bosh admin kaliti."""
+    if not item.get("sale", True):
+        return False
+    return card_sale_on(cur) if item["kind"] == KIND_CARD else True
 
 
 def init_cosmetics_tables(cur) -> None:
@@ -83,9 +94,10 @@ def init_cosmetics_tables(cur) -> None:
 
 
 def _equipped(cur, user_id: int) -> dict:
-    cur.execute("SELECT frame, bg FROM user_cosmetic_equip WHERE user_id = ?", (user_id,))
+    cur.execute("SELECT * FROM user_cosmetic_equip WHERE user_id = ?", (user_id,))
     r = cur.fetchone()
-    eq = {"frame": r["frame"], "bg": r["bg"]} if r else {"frame": None, "bg": None}
+    keys = r.keys() if r else []
+    eq = {col: (r[col] if col in keys else None) for col in _EQUIP_COL.values()}
     return {k: v if v in COSMETICS else None for k, v in eq.items()}       # katalogdan olib tashlangan bo'lsa
 
 
@@ -98,7 +110,7 @@ def get_equipped(user_id: int) -> dict:
         conn.close()
 
 
-def cos_state(user_id: int) -> dict:
+def cos_state(user_id: int, is_super: bool = False) -> dict:
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -108,10 +120,15 @@ def cos_state(user_id: int) -> dict:
         # 2026-10-31: har bezakni nechta kishi sotib olgan (egasi so'rovi — do'konda raqam bilan)
         cur.execute("SELECT item_id, COUNT(*) AS n FROM user_cosmetics GROUP BY item_id")
         buyers = {r["item_id"]: r["n"] for r in cur.fetchall()}
-        catalog = [{"id": k, **v, "sale": v.get("sale", True), "buyers": buyers.get(k, 0)} for k, v in COSMETICS.items()
-                   if v.get("sale", True) or k in owned]
+        # 2026-11-04: karta foni sotuvi o'chiq bo'lsa — faqat bosh admin ko'radi (preview: bepul qo'llab ko'rish)
+        catalog = []
+        for k, v in COSMETICS.items():
+            sale = _on_sale(cur, v)
+            preview = bool(is_super and v["kind"] == KIND_CARD and k not in owned)
+            if sale or k in owned or preview:
+                catalog.append({"id": k, **v, "sale": sale, "preview": preview and not sale, "buyers": buyers.get(k, 0)})
         return {"balance": get_balance(cur, user_id), "owned": owned, "equipped": _equipped(cur, user_id),
-                "catalog": catalog}
+                "catalog": catalog, "card_sale": card_sale_on(cur)}
     finally:
         conn.close()
 
@@ -127,7 +144,7 @@ def cos_buy(user_id: int, item_id: str) -> tuple[bool, str | dict]:
     item = COSMETICS.get(item_id or "")
 
     def run(cur):
-        if not item or not item.get("sale", True):          # sotuvdan olingan — yangi xarid yo'q
+        if not item or not _on_sale(cur, item):             # sotuvdan olingan / hali sotuvda emas
             return False, "not_found"
         cur.execute("SELECT 1 FROM user_cosmetics WHERE user_id = ? AND item_id = ?", (user_id, item_id))
         if cur.fetchone():
@@ -146,8 +163,9 @@ def cos_buy(user_id: int, item_id: str) -> tuple[bool, str | dict]:
     return ok, r
 
 
-def cos_equip(user_id: int, kind: str, item_id: str | None) -> tuple[bool, str | dict]:
-    """Qo'llash (item_id) yoki yechish (None). Sabablar: bad_kind, not_found, not_owned."""
+def cos_equip(user_id: int, kind: str, item_id: str | None, is_super: bool = False) -> tuple[bool, str | dict]:
+    """Qo'llash (item_id) yoki yechish (None). Sabablar: bad_kind, not_found, not_owned.
+    2026-11-04: bosh admin karta fonini sotib olmasdan qo'llab ko'ra oladi (ko'rib chiqish)."""
     if kind not in _EQUIP_COL:
         return False, "bad_kind"
 
@@ -157,7 +175,7 @@ def cos_equip(user_id: int, kind: str, item_id: str | None) -> tuple[bool, str |
             if not item or item["kind"] != kind:
                 return False, "not_found"
             cur.execute("SELECT 1 FROM user_cosmetics WHERE user_id = ? AND item_id = ?", (user_id, item_id))
-            if not cur.fetchone():
+            if not cur.fetchone() and not (is_super and kind == KIND_CARD):
                 return False, "not_owned"
         _set_equip(cur, user_id, kind, item_id)
         return True, {"equipped": _equipped(cur, user_id)}
