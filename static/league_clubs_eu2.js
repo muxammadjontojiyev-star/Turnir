@@ -41,6 +41,8 @@
     "RPL": "images/rpl-trophy.png", "Eredivisie": "images/eredivisie-trophy.png",
     "Jupiler Pro League": "images/jupiler-trophy.png", "Chance Liga": "images/chance-trophy.png",
     "Eliteserien": "images/eliteserien-trophy.png", "Greek Super League": "images/greek-trophy.png",
+    // 2026-11-04: Amerika ligalari kuboklari (egasi yuborgan rasmlar, shaffof fonli PNG)
+    "Brasileirão": "images/brasileirao-trophy.png", "Primera A": "images/primera-trophy.png", "MLS": "images/mls-trophy.png",
   };
   if (typeof LEAGUE_TROPHIES !== "undefined") Object.assign(LEAGUE_TROPHIES, TROPHIES);
   if (typeof LEAGUE_LOGOS !== "undefined") {
