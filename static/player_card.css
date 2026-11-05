@@ -40,6 +40,15 @@
   object-fit: cover; object-position: 50% 0;
   filter: drop-shadow(0 0 2.5cqw rgba(255, 80, 200, .45));
 }
+/* o'zi yuklagan, fon olib tashlangan — BUTUN TANA: bo'yiga sig'diriladi, oyog'i pastga tayanadi */
+.pcard-photo--cut { -webkit-mask-image: none; mask-image: none; }
+.pcard-photo--cut img { object-fit: contain; object-position: 50% 100%; }
+/* o'zi yuklagan, odam aniqlanmagan — rasm butunicha, chetlari biroz xira */
+.pcard-photo--own img { object-fit: contain; object-position: 50% 50%; filter: none; border-radius: 3cqw; }
+.pcard-photo--own {
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 75%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 75%, transparent 100%);
+}
 /* qirqib bo'lmadi — butun rasm, chetlari xira */
 .pcard-photo--plain {
   -webkit-mask-image: radial-gradient(ellipse 58% 60% at 50% 45%, #000 60%, transparent 100%);
@@ -121,3 +130,12 @@
 .cos-card-note { font-size: 11px; line-height: 1.35; color: #ffd666; margin: 2px 0 4px; }
 /* Do'kondagi ramkali fonlar (cosmetics_cards.CARD_ITEMS) — har biriga bir qator (720×1020, yulduzlarsiz taxta):
    .pcard-bg-card_<nom> .pcard-in { background-image: url("images/card-<nom>.jpg?v=..."); } */
+
+/* «Kartani sozlash» — karta rasmi bo'limi (player_card_photo.js) */
+.pcp-row { display: flex; gap: 12px; align-items: flex-start; margin: 4px 0 6px; }
+.pcp-prev { width: 104px; flex: 0 0 104px; pointer-events: none; }
+.pcp-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.pcp-hint { font-size: 11.5px; line-height: 1.4; opacity: .7; }
+.pcp-btn { width: 100%; text-align: center; cursor: pointer; }
+.pcp-btn--busy { opacity: .6; pointer-events: none; }
+.pcard-ov-del { margin-top: 4px; }

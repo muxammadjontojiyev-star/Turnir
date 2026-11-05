@@ -1,7 +1,7 @@
 // =============================================================
 //  player_card.js — ISHTIROKCHINING SHAXSIY O'YINCHI KARTASI (2026-11-04, player_card.py)
 //  eFootball kartasi uslubida: ramka foni (images/card-showtime.jpg), futbolchi o'rnida — ishtirokchi rasmidan
-//  qirqilgan ODAMNING O'ZI (GET /players/{id}/cutout; bo'lmasa — butun rasm), chap tepada OVR,
+//  o'zi YUKLAGAN rasm (fon olib tashlangan, butun tana — GET /players/{id}/cardphoto; bo'lmasa — Telegram rasmi), chap tepada OVR,
 //  pozitsiya, bayroq; pastda nik va yulduzlar. Dizayn — player_card.css.
 //  Ko'rinadi: Profil sahifasi (renderProfile o'raladi), reytingdan ochilgan profil (renderPlayerModal),
 //  Divizion o'z profili / o'yinchi profili (renderDivision o'raladi), Divizion qur'a kartasi (division.js
@@ -38,13 +38,16 @@ function pcPhotoSrc(c) {
   return (me && APP.currentUser && APP.currentUser.photo_url) || `${API_BASE}/players/${Number(c.user_id)}/photo`;
 }
 
-// Qirqilgan rasm (faqat odam, player_cutout.py) bo'lmasa — butun rasm, chetlari xira; u ham bo'lmasa — ism harfi
-function pcCutFail(img) {
-  const fb = img.dataset.fb;
-  if (!fb) { img.remove(); return; }
-  delete img.dataset.fb;
-  img.parentElement.classList.add("pcard-photo--plain");
-  img.src = fb;
+// Karta rasmi: o'zi yuklagani (fon olib tashlangan — butun tana / fonli) yoki Telegram profil rasmi (chetlari xira)
+function pcPhotoHtml(c, name) {
+  const letter = `<span class="pcard-letter">${escHtml(name[0].toUpperCase())}</span>`;
+  const ph = c.photo && Number.isInteger(c.photo.v) ? c.photo : null;
+  if (ph) {
+    return `<div class="pcard-photo ${ph.cut ? "pcard-photo--cut" : "pcard-photo--own"}">
+        <img src="${API_BASE}/players/${Number(c.user_id)}/cardphoto?v=${ph.v}" alt="" onerror="this.remove()">${letter}</div>`;
+  }
+  return `<div class="pcard-photo pcard-photo--plain">
+      <img src="${escHtml(pcPhotoSrc(c))}" alt="" loading="lazy" onerror="this.remove()">${letter}</div>`;
 }
 
 // c — /pcard javobi; opts.size: "sm" (Divizion ustuni) | "md" (profil) | "lg" (katta ko'rinish)
@@ -57,10 +60,7 @@ function pcardHtml(c, opts = {}) {
   const stars = "★".repeat(pcStars(ovr));
   return `<div class="pcard pcard--${opts.size || "md"}${bg}" data-pcard="${Number(c.user_id)}" role="button">
       <div class="pcard-in">
-        <div class="pcard-photo">
-          <img src="${API_BASE}/players/${Number(c.user_id)}/cutout" data-fb="${escHtml(pcPhotoSrc(c))}" alt="" loading="lazy"
-            onerror="pcCutFail(this)"><span class="pcard-letter">${escHtml(name[0].toUpperCase())}</span>
-        </div>
+        ${pcPhotoHtml(c, name)}
         <div class="pcard-side">
           <div class="pcard-ovr">${ovr}</div>
           ${pos ? `<div class="pcard-pos">${escHtml(pos)}</div>` : ""}
@@ -83,6 +83,29 @@ function pcOpenBig(c) {
     <div class="pcard-ov-hint">${escHtml(pcT("pc_tap_close"))}</div>`;
   ov.addEventListener("click", () => ov.remove());
   document.body.appendChild(ov);
+  if (c.photo) void pcAdminDeleteBtn(ov, c);
+}
+
+// Bosh admin — nomaqbul karta rasmini o'chirish (katta ko'rinishda tugma)
+let _pcWhoami = null;
+async function pcAdminDeleteBtn(ov, c) {
+  _pcWhoami = _pcWhoami || apiFetch("/admin/whoami").catch(() => ({}));
+  if (!(await _pcWhoami).is_super || !ov.isConnected) return;
+  const b = document.createElement("button");
+  b.className = "btn btn--danger pcard-ov-del";
+  b.textContent = pcT("pc_admin_del");
+  b.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!window.confirm(pcT("pc_admin_del_q"))) return;
+    b.disabled = true;
+    try {
+      await apiFetch(`/pcard/admin/${Number(c.user_id)}/photo`, { method: "DELETE" });
+      pcRemember({ ...c, photo: null });
+      ov.remove();
+      showToast("✅");
+    } catch (err) { b.disabled = false; showToast("❌ " + err.message); }
+  });
+  ov.appendChild(b);
 }
 document.addEventListener("click", (e) => {
   const el = e.target.closest ? e.target.closest("[data-pcard]") : null;

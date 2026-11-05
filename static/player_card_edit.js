@@ -1,11 +1,12 @@
 // =============================================================
 //  player_card_edit.js — «⚙️ Kartani sozlash» oynasi (2026-11-04): pozitsiya va davlat (bayroq) tanlash.
+//  2026-11-05: tepada — karta rasmi bo'limi (player_card_photo.js, pcpSectionHtml).
 //  API: GET /pcard/options, POST /pcard/me {position, country}. Davlat nomi — Intl.DisplayNames
 //  (foydalanuvchi tilida), bo'lmasa — kod. Global: pcardHtml, pcT, pcFlag, pcRemember, pcRefreshMine
 //  (player_card.js), APP, apiFetch, escHtml, showToast.
 // =============================================================
 
-const PCE = { opts: null, uid: null, pos: null, cc: null, busy: false };
+const PCE = { opts: null, uid: null, card: null, pos: null, cc: null, busy: false };
 
 function pceCountryName(cc) {
   try { return new Intl.DisplayNames([APP.lang || "uz", "en"], { type: "region" }).of(cc) || cc; }
@@ -19,6 +20,7 @@ function pceHtml() {
     .sort((a, b) => (a.cc === "UZ" ? -1 : b.cc === "UZ" ? 1 : a.n.localeCompare(b.n)));
   return `<div class="modal-box pce-box">
       <div class="modal-title">${escHtml(pcT("pc_edit_title"))}</div>
+      ${typeof pcpSectionHtml === "function" ? pcpSectionHtml() : ""}
       <div class="pce-label">${escHtml(pcT("pc_pos"))}</div>
       <div class="pce-chips">${chip(null, pcT("pc_none"))}${o.positions.map(p => chip(p, p)).join("")}</div>
       <div class="pce-label">${escHtml(pcT("pc_country"))}</div>
@@ -39,7 +41,7 @@ async function pceOpen(uid) {
   try {
     PCE.opts = PCE.opts || await apiFetch("/pcard/options");
     const c = await apiFetch(`/pcard/${Number(uid)}`);
-    PCE.pos = c.position || null; PCE.cc = c.country || null;
+    PCE.card = c; PCE.pos = c.position || null; PCE.cc = c.country || null;
   } catch (_) { showToast(pcT("pc_err")); return; }
   document.getElementById("pce-modal")?.remove();
   const m = document.createElement("div");
