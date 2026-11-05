@@ -54,6 +54,11 @@ function aucStartTimer() {
   }, AUC_TICK_MS);
 }
 
+// 2026-11-05: qayta chizishda taymer «orqaga sakramasin» — yuklangandan beri o'tgan vaqt ayiriladi
+function aucLeftNow(l) {
+  return (Number(l.left_s) || 0) - Math.floor((Date.now() - (AUC.loadedAt || Date.now())) / 1000);
+}
+
 function shopAuctionHtml() {
   const d = AUC.data;
   if (!d) return `<div class="shop-loading">…</div>`;
@@ -66,7 +71,7 @@ function shopAuctionHtml() {
     return `<div class="card auc-lot ${l.is_leader ? "auc-lot--lead" : ""}">
         <div class="auc-head">${aucClubLogo(l.league_name, l.club_name)}
           <div class="auc-title"><b>${escHtml(l.club_name)}</b><small>${escHtml(l.league_name)}</small></div>
-          <div class="auc-timer"><small>${escHtml(shopT("auc_left"))}</small><span data-auc-left="${Number(l.left_s) || 0}">${escHtml(aucLeft(Number(l.left_s) || 0))}</span></div>
+          <div class="auc-timer"><small>${escHtml(shopT("auc_left"))}</small><span data-auc-left="${Number(l.left_s) || 0}"${aucLeftNow(l) < (d.snipe_minutes || 5) * 60 ? ' class="auc-hot"' : ""}>${escHtml(aucLeft(aucLeftNow(l)))}</span></div>
         </div>
         <div class="auc-grid">
           <div><small>${escHtml(shopT(l.current_bid != null ? "auc_current" : "auc_start"))}</small><b>${shopToken("shop-tk shop-tk--xs")} ${shopNum(l.current_bid ?? l.start_price)}</b></div>

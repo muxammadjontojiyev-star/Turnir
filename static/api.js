@@ -1144,8 +1144,11 @@ async function loadPrizesInto(userId, containerId) {
       ? apiFetch(`/users/${userId}/pt-prizes`).then(d => d.prizes || []).catch(() => [])
       : Promise.resolve([]),
   ]);
-  box.innerHTML = (official.length ? renderMyPrizes(official) : "")
+  const html = (official.length ? renderMyPrizes(official) : "")
     + (pt.length ? ptProfilePrizesSectionHtml(pt) : "");
+  if (box._prizesHtml === html && box.innerHTML) return;      // 2026-11-05: o'zgarmagan bo'lsa — miltillamasin
+  box.innerHTML = html;
+  box._prizesHtml = html;
 }
 
 // Sovrin turini rasm + nomga aylantirish

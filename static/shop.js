@@ -35,7 +35,9 @@ function shopRender() {
   const root = document.getElementById("shop-root");
   const d = SHOP.data;
   if (!root || !d) return;
-  root.innerHTML = `
+  // 2026-11-05: domMorph — faqat o'zgargan joy yangilanadi (bezaklar/auksion yuklanganda miltillamasin)
+  const paint = typeof domMorph === "function" ? (h) => domMorph(root, h) : (h) => { root.innerHTML = h; };
+  paint(`
     <div class="card shop-hero">
       ${shopToken("shop-tk shop-tk--hero")}
       <div class="shop-hero-txt">
@@ -48,7 +50,7 @@ function shopRender() {
       <button class="shop-seg-btn ${SHOP.tab === "cos" ? "active" : ""}" data-shop-tab="cos">🎨 ${escHtml(shopT("shop_tab_cos"))}</button>
       <button class="shop-seg-btn ${SHOP.tab === "auction" ? "active" : ""}" data-shop-tab="auction">🔨 ${escHtml(shopT("shop_tab_auction"))}</button>
     </div>
-    ${SHOP.tab === "auction" ? shopAuctionHtml() : SHOP.tab === "cos" && typeof cosTabHtml === "function" ? cosTabHtml() : shopCoinsHtml(d)}`;
+    ${SHOP.tab === "auction" ? shopAuctionHtml() : SHOP.tab === "cos" && typeof cosTabHtml === "function" ? cosTabHtml() : shopCoinsHtml(d)}`);
 }
 
 function shopCoinsHtml(d) {

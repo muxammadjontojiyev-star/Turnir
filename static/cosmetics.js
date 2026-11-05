@@ -91,7 +91,7 @@ async function cosLoad() {
 
 function cosPreview(item, me) {
   if (item.kind === "card" && typeof pcardHtml === "function") {   // o'z shaxsiy kartasi shu ramkada (player_card.js)
-    return pcardHtml({ user_id: me && me.user_id, nickname: (me && me.nickname) || "?", ovr: 60, bg: item.id }, { size: "sm" });
+    return pcardHtml({ user_id: me && me.user_id, nickname: (me && me.nickname) || "?", ovr: 70, bg: item.id }, { size: "sm" });
   }
   const letter = escHtml(((me && me.nickname) || "?")[0].toUpperCase());
   const frame = item.kind === "frame" ? cosClassFor("frame", item.id) : "";

@@ -21,7 +21,7 @@ const PCARD_TEXTS = {
     pc_pos: "Pozitsiya", pc_country: "Davlat", pc_none: "Ko'rsatilmasin",
     pc_save: "Saqlash", pc_cancel: "Bekor qilish", pc_saved: "✅ Karta saqlandi",
     pc_err: "❌ Saqlanmadi, qayta urinib ko'ring",
-    pc_ovr_hint: "Reyting (OVR) Divizion joriy mavsumidagi o'yinlaringizdan avtomatik hisoblanadi: g'alabalar, gol farqi va o'yinlar soni. Yangi mavsumda yana 60 dan boshlanadi.",
+    pc_ovr_hint: "Reyting (OVR) Divizion joriy mavsumidagi o'yinlaringizdan avtomatik hisoblanadi: g'alabalar, gol farqi va o'yinlar soni. Eng kichigi — 70, yangi mavsumda yana 70 dan boshlanadi.",
     pc_games: "{n} o'yin · {w} g'alaba", pc_tap_close: "Yopish uchun bosing",
   },
   ru: {
@@ -41,7 +41,7 @@ const PCARD_TEXTS = {
     pc_pos: "Позиция", pc_country: "Страна", pc_none: "Не показывать",
     pc_save: "Сохранить", pc_cancel: "Отмена", pc_saved: "✅ Карточка сохранена",
     pc_err: "❌ Не сохранено, попробуйте ещё раз",
-    pc_ovr_hint: "Рейтинг (OVR) считается автоматически по вашим матчам текущего сезона Дивизиона: победы, разница голов и число матчей. В новом сезоне снова начинается с 60.",
+    pc_ovr_hint: "Рейтинг (OVR) считается автоматически по вашим матчам текущего сезона Дивизиона: победы, разница голов и число матчей. Минимум — 70, в новом сезоне снова начинается с 70.",
     pc_games: "{n} матчей · {w} побед", pc_tap_close: "Нажмите, чтобы закрыть",
   },
   en: {
@@ -61,7 +61,7 @@ const PCARD_TEXTS = {
     pc_pos: "Position", pc_country: "Country", pc_none: "Don't show",
     pc_save: "Save", pc_cancel: "Cancel", pc_saved: "✅ Card saved",
     pc_err: "❌ Not saved, please try again",
-    pc_ovr_hint: "Rating (OVR) is calculated automatically from your matches in the current Division season: wins, goal difference and games played. It starts again from 60 each new season.",
+    pc_ovr_hint: "Rating (OVR) is calculated automatically from your matches in the current Division season: wins, goal difference and games played. Minimum is 70; it starts again from 70 each new season.",
     pc_games: "{n} games · {w} wins", pc_tap_close: "Tap to close",
   },
 };

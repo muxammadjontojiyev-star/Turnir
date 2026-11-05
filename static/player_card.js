@@ -8,7 +8,7 @@
 //  Global: APP, API_BASE, apiFetch, escHtml. Ulanish: api.js, cosmetics.js, division.js dan KEYIN.
 // =============================================================
 
-const PC_STAR_TIERS = [90, 80, 70, 60];          // OVR ≥ shu → 5/4/3/2 yulduz, qolgani — 1
+const PC_STAR_TIERS = [95, 90, 85, 80];          // OVR ≥ shu → 5/4/3/2 yulduz, qolgani (70–79) — 1
 const PC_LONG_NAME = 11;                         // shundan uzun nik — kichikroq shrift
 const PC_BG_RE = /^card_[a-z0-9_]{1,30}$/;
 const PC_POS_RE = /^[A-Z]{2,3}$/;
@@ -46,7 +46,7 @@ function pcPhotoHtml(c, name) {
         <img src="${API_BASE}/players/${Number(c.user_id)}/cardphoto?v=${ph.v}" alt="" onerror="this.remove()">${letter}</div>`;
   }
   return `<div class="pcard-photo pcard-photo--plain">
-      <img src="${escHtml(pcPhotoSrc(c))}" alt="" loading="lazy" onerror="this.remove()">${letter}</div>`;
+      <img src="${escHtml(pcPhotoSrc(c))}" alt="" onerror="this.remove()">${letter}</div>`;
 }
 
 // c — /pcard javobi; opts.size: "sm" (Divizion ustuni) | "md" (profil) | "lg" (katta ko'rinish)
@@ -115,54 +115,86 @@ document.addEventListener("click", (e) => {
   pcOpenBig(c);
 }, true);
 
-function pcRemember(c) { if (c && c.user_id) PC_CACHE.set(Number(c.user_id), c); return c; }
+const PC_AT = new Map();                          // user_id → keshga tushgan vaqt
+function pcRemember(c) {
+  if (c && c.user_id) { PC_CACHE.set(Number(c.user_id), c); PC_AT.set(Number(c.user_id), Date.now()); }
+  return c;
+}
 
 // Profil / o'yinchi sahifasiga blok: sarlavha + karta (+ o'zimniki bo'lsa — «Kartani sozlash»)
 function pcBlockHtml(c, mine) {
   return `<div class="section-label">${escHtml(pcT(mine ? "pc_title" : "pc_player_title"))}</div>
-    <div class="pcard-block">${pcardHtml(pcRemember(c), { size: "md" })}
+    <div class="pcard-block">${pcardHtml(c, { size: "md" })}
       ${mine ? `<button class="btn btn--ghost pcard-edit-btn" data-pcard-edit="${Number(c.user_id)}">${escHtml(pcT("pc_edit"))}</button>
         <div class="pcard-hint">${escHtml(pcT("pc_ovr_hint"))}</div>` : ""}
     </div>`;
 }
 
-async function pcMount(slotKey, anchor, userId, mine) {
+// 2026-11-05: MILTILLASHSIZ — keshdagi karta darhol chiziladi, server javobi faqat o'zgargan bo'lsa DOM'ga
+// tegadi, PC_TTL_MS ichida qayta so'ralmaydi (Divizion sahifasi bir ochilishda 3 marta qayta chiziladi).
+const PC_TTL_MS = 60 * 1000;
+function pcPaint(slot, c, mine) {
+  const html = pcBlockHtml(c, mine);
+  if (slot._pcHtml === html) return;
+  slot.innerHTML = html;
+  slot._pcHtml = html;
+}
+
+async function pcMount(slotKey, anchor, userId, mine, force = false) {
   if (!anchor || !userId) return;
-  const seq = ++PC_SEQ[slotKey];
+  const uid = Number(userId);
   let slot = anchor.parentElement.querySelector(`:scope > [data-pcard-slot="${slotKey}"]`);
   if (!slot) {
     slot = document.createElement("div");
     slot.dataset.pcardSlot = slotKey;
     anchor.insertAdjacentElement("afterend", slot);
   }
+  const cached = PC_CACHE.get(uid);
+  if (slot.dataset.pcardUser !== String(uid) && !cached) { slot.innerHTML = ""; slot._pcHtml = ""; }
+  slot.dataset.pcardUser = String(uid);
+  if (cached) pcPaint(slot, cached, mine);
+  if (!force && cached && Date.now() - (PC_AT.get(uid) || 0) < PC_TTL_MS) return;
+  const seq = ++PC_SEQ[slotKey];
   try {
-    const c = await apiFetch(`/pcard/${Number(userId)}`);
-    if (seq !== PC_SEQ[slotKey]) return;
-    slot.innerHTML = pcBlockHtml(c, mine);
+    const c = pcRemember(await apiFetch(`/pcard/${uid}`));
+    if (seq === PC_SEQ[slotKey] && slot.isConnected) pcPaint(slot, c, mine);
   } catch (_) {
-    if (seq === PC_SEQ[slotKey]) slot.innerHTML = "";        // karta chiqmasa ham profil ishlayveradi
+    if (seq === PC_SEQ[slotKey] && !cached) slot.innerHTML = "";   // karta chiqmasa ham profil ishlayveradi
   }
 }
 
 // 2026-11-05: karta FAQAT Divizionda (egasi: «ligalar rejimidan olib tashlang») — asosiy Profil va
 // reytingdan ochilgan profilga qo'shilmaydi.
 function pcRefreshMine() {
-  if (typeof DIV !== "undefined" && DIV.section === "profile") pcDivHook();
+  if (typeof DIV !== "undefined" && DIV.section === "profile") pcDivHook(true);
 }
 
 // Divizion: o'z profilim va o'yinchi profili — birinchi kartadan keyin
-function pcDivHook() {
+function pcDivUid() {
+  if (typeof DIV === "undefined") return null;
+  if (DIV.section === "profile") return (DIV.status && DIV.status.me_id) || null;
+  if (DIV.section === "player") return (DIV.player && DIV.player.user_id) || null;
+  return null;
+}
+function pcDivHook(force = false) {
   const root = document.getElementById("div-root");
   if (!root || typeof DIV === "undefined") return;
   const mine = DIV.section === "profile";
-  const uid = mine ? DIV.status && DIV.status.me_id : DIV.section === "player" ? DIV.player && DIV.player.user_id : null;
+  const uid = pcDivUid();
   const first = root.querySelector(".card");
-  if (uid && first) void pcMount("div", first, uid, mine);
+  if (uid && first) void pcMount("div", first, uid, mine, force);
 }
 if (typeof renderDivision === "function") {
   const _pcPrevRenderDivision = renderDivision;
   renderDivision = function (...args) {                                              // eslint-disable-line no-global-assign
+    const root = document.getElementById("div-root");
+    const old = root && root.querySelector("[data-pcard-slot]");
     const r = _pcPrevRenderDivision(...args);
+    // qayta chizilganda o'sha DOM tugunini qaytaramiz — rasm qayta yuklanmaydi, karta yo'qolib-chiqmaydi
+    if (old && !old.isConnected && old.dataset.pcardUser === String(pcDivUid())) {
+      const first = root.querySelector(".card");
+      if (first) first.insertAdjacentElement("afterend", old);
+    }
     pcDivHook();
     return r;
   };

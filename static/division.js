@@ -151,7 +151,7 @@ function renderDivision() {
         <span class="nav-label">Admin</span>
       </button>` : "";
 
-  root.innerHTML = `
+  const html = `
     <div class="wc-header">
       <button class="wc-back" id="div-back-btn">←</button>
       <div class="wc-header-title">Divizion</div>
@@ -177,6 +177,14 @@ function renderDivision() {
     </nav>
   `;
 
+  // 2026-11-05: MILTILLASHSIZ — ma'lumot o'zgarmagan bo'lsa DOM'ga tegmaymiz (profil bir ochilishda status,
+  // kalendar va h.k. yuklanganda 3 marta chiziladi). Boshqa kod div-root'ni almashtirgan bo'lsa — qayta chizamiz.
+  if (root._divHtml === html && root._divFirst && root._divFirst === root.firstElementChild) return;
+  const keepPrizes = divKeepPrizes(root);
+  root.innerHTML = html;
+  root._divHtml = html;
+  root._divFirst = root.firstElementChild;
+
   if (typeof applyIcons === "function") applyIcons(root);
   // 2026-07-19: nav har renderda qayta quriladi — rozetkani qayta qo'yamiz
   divUpdateNavBadge();
@@ -189,12 +197,36 @@ function renderDivision() {
   // loadPrizesInto (api.js) universal: /users/{id}/prizes -> renderMyPrizes (DRY).
   if (DIV.section === "profile" && typeof loadPrizesInto === "function") {
     const meId = DIV.status?.me_id || DIV.ratingMeId;
-    if (meId) void loadPrizesInto(meId, "div-my-prizes-section");
+    if (meId) divPrizesInto(meId, "div-my-prizes-section", keepPrizes);
   }
   if (DIV.section === "player" && typeof loadPrizesInto === "function") {
     const pid = DIV.player?.user_id;
-    if (pid) void loadPrizesInto(pid, "div-player-prizes-section");
+    if (pid) divPrizesInto(pid, "div-player-prizes-section", keepPrizes);
   }
+}
+
+// 2026-11-05: sovrinlar bo'limi qayta chizishda bo'shab-to'lmasin: oldingi mazmun darhol qaytariladi,
+// serverdan esa DIV_PRIZES_TTL_MS da bir marta yangilanadi.
+const DIV_PRIZES_TTL_MS = 60 * 1000;
+const DIV_PRIZES_AT = {};
+function divKeepPrizes(root) {
+  const keep = {};
+  root.querySelectorAll("#div-my-prizes-section, #div-player-prizes-section").forEach(el => {
+    if (el.dataset.uid) keep[el.id] = { uid: el.dataset.uid, html: el.innerHTML };
+  });
+  return keep;
+}
+function divPrizesInto(uid, id, keep) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  box.dataset.uid = String(uid);
+  const k = keep[id], key = `${id}:${uid}`;
+  if (k && k.uid === String(uid)) {
+    box.innerHTML = k.html;
+    if (Date.now() - (DIV_PRIZES_AT[key] || 0) < DIV_PRIZES_TTL_MS) return;
+  }
+  DIV_PRIZES_AT[key] = Date.now();
+  void loadPrizesInto(uid, id);
 }
 
 
