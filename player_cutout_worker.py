@@ -1,5 +1,5 @@
 """
-player_cutout_worker.py — Telegram rasmidan FAQAT INSON TANASINI qirqib olish (2026-11-04, player_cutout.py).
+player_cutout_worker.py — yuklangan rasmdan INSONNI BUTUN TANASI bilan qirqib olish (2026-11-04/05, player_cutout.py).
 
 ALOHIDA JARAYONDA ishga tushiriladi (python player_cutout_worker.py <model_yo'li>): model ~600 MB xotira
 oladi, ish tugashi bilan jarayon yopilib xotira to'liq qaytadi (bot jarayoni og'irlashmaydi).
@@ -16,8 +16,8 @@ SEG_SIZE = 320                       # model kirish o'lchami
 MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 ALPHA_LO, ALPHA_HI = 0.15, 0.85      # niqob chetini aniqlashtirish (shundan pasti — fon, yuqorisi — odam)
 MIN_COVER = 0.04                     # odam rasmning shundan kam qismi bo'lsa — «odam yo'q»
-PAD_SIDE, PAD_TOP = 0.04, 0.03       # qirqishda odam atrofida qoldiriladigan joy (o'lchamga nisbatan)
-OUT_MAX = 640                        # natija rasmining eng katta tomoni
+PAD_SIDE, PAD_TOP, PAD_BOTTOM = 0.04, 0.03, 0.01   # qirqishda odam atrofida qoldiriladigan joy (butun tana saqlanadi)
+OUT_MAX = 1000                       # natija rasmining eng katta tomoni
 WEBP_Q = 85
 EXIT_NO_PERSON, EXIT_ERR = 3, 2
 
@@ -49,7 +49,7 @@ def cutout(raw: bytes, model_path: str) -> bytes | None:
     ys, xs = np.where(solid)
     w, h = im.size
     x0 = max(0, int(xs.min() - w * PAD_SIDE)); x1 = min(w, int(xs.max() + w * PAD_SIDE) + 1)
-    y0 = max(0, int(ys.min() - h * PAD_TOP));  y1 = int(ys.max()) + 1
+    y0 = max(0, int(ys.min() - h * PAD_TOP));  y1 = min(h, int(ys.max() + h * PAD_BOTTOM) + 1)
     rgba = im.copy()
     rgba.putalpha(Image.fromarray((a * 255).astype(np.uint8)))
     out = io.BytesIO()

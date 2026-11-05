@@ -84,6 +84,8 @@ def pcards_for_users(user_ids) -> dict[int, dict]:
         logger.exception("Karta: Divizion statistikasi o'qilmadi")
     from cosmetics_cards import cards_for_users
     bgs = cards_for_users(ids)
+    from player_cutout import photo_meta
+    photos = photo_meta(ids)                  # o'zi yuklagan karta rasmi (2026-11-05)
     conn = get_connection()
     try:
         q = ",".join("?" * len(ids))
@@ -106,5 +108,6 @@ def pcards_for_users(user_ids) -> dict[int, dict]:
             "ovr": card_ovr(played, wins, st.get("goals_for", 0), st.get("goals_against", 0)),
             "position": inf["position"] if inf else None, "country": inf["country"] if inf else None,
             "bg": bgs.get(uid), "played": played, "wins": wins,
+            "photo": photos.get(uid),         # {"v": versiya, "cut": fon olib tashlanganmi} | None — Telegram rasmi
         }
     return out

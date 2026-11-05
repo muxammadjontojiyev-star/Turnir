@@ -3,15 +3,15 @@ player_card_api.py — SHAXSIY O'YINCHI KARTASI endpointlari (2026-11-04). Manti
   GET  /pcard/options      — tanlanadigan pozitsiyalar va davlatlar
   GET  /pcard/{user_id}    — karta (OVR, pozitsiya, davlat, ramka); har kim ko'ra oladi (ommaviy profil kabi)
   POST /pcard/me           — {position, country} (null — ko'rsatilmasin). Xato (400): bad_position, bad_country
-  GET  /players/{user_id}/cutout — rasmdan qirqilgan odam (WEBP, shaffof; player_cutout.py). Auth yo'q —
-       <img src> orqali yuklanadi (/players/{id}/photo kabi). 404 — odam/rasm yo'q, 503 — navbat band.
+  POST   /pcard/me/photo           — o'zi tanlagan rasm {image: dataURL}; fon olib tashlanadi (player_cutout.py)
+  DELETE /pcard/me/photo           — rasmni olib tashlash (kartada yana Telegram rasmi)
+  DELETE /pcard/admin/{id}/photo   — bosh admin: nomaqbul rasmni o'chirish
+  GET    /players/{id}/cardphoto   — karta rasmi (<img src>, auth yo'q). 404 — yuklanmagan
 """
-
-import asyncio
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Response
 
-from api import get_authenticated_user
+from api import get_authenticated_super_admin, get_authenticated_user
 
 router = APIRouter()
 
@@ -41,20 +41,54 @@ def pcard_set(position: str | None = Body(None), country: str | None = Body(None
     return pcards_for_users([user["id"]]).get(user["id"]) or {}
 
 
-CUTOUT_CACHE_HDR = "public, max-age=3600"
+
+PHOTO_CACHE_HDR = "public, max-age=604800, immutable"   # URL'da ?v=versiya — rasm almashsa URL ham almashadi
+PHOTO_ERRORS = {"too_big", "bad_image", "too_small", "daily_limit"}
 
 
-@router.get("/players/{user_id}/cutout")
-async def pcard_cutout(user_id: int):
-    from player_cutout import get_cutout
-    from queries_users import get_user_by_id
-    target = get_user_by_id(user_id)
-    if target is None:
-        raise HTTPException(status_code=404, detail="user_not_found")
+@router.post("/pcard/me/photo")
+async def pcard_photo_upload(image: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    """{image: "data:image/jpeg;base64,..."} — frontend kichraytirib yuboradi. Xato (400): PHOTO_ERRORS."""
+    import base64
+    import binascii
+    from player_cutout import PHOTO_MAX_BYTES, save_upload
+    b64 = image.split(",", 1)[-1]
+    if len(b64) > PHOTO_MAX_BYTES * 4 // 3 + 16:
+        raise HTTPException(status_code=400, detail="too_big")
     try:
-        img = await get_cutout(user_id, target["telegram_id"])
-    except (TimeoutError, asyncio.TimeoutError):
-        raise HTTPException(status_code=503, detail="busy")
-    if not img:
-        raise HTTPException(status_code=404, detail="no_cutout")
-    return Response(content=img, media_type="image/webp", headers={"Cache-Control": CUTOUT_CACHE_HDR})
+        raw = base64.b64decode(b64, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=400, detail="bad_image")
+    ok, r = await save_upload(user["id"], raw)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r if r in PHOTO_ERRORS else "bad_image")
+    from player_card import pcards_for_users
+    return pcards_for_users([user["id"]]).get(user["id"]) or {}
+
+
+@router.delete("/pcard/me/photo")
+def pcard_photo_delete(user: dict = Depends(get_authenticated_user)):
+    from player_card import pcards_for_users
+    from player_cutout import delete_photo
+    delete_photo(user["id"])
+    return pcards_for_users([user["id"]]).get(user["id"]) or {}
+
+
+@router.delete("/pcard/admin/{user_id}/photo")
+def pcard_photo_admin_delete(user_id: int, admin: dict = Depends(get_authenticated_super_admin)):
+    """Bosh admin — nomaqbul karta rasmini o'chirish."""
+    import logging
+    from player_cutout import delete_photo
+    delete_photo(user_id)
+    logging.getLogger(__name__).info("KARTA: bosh admin %s user %s karta rasmini o'chirdi", admin.get("id"), user_id)
+    return {"ok": True}
+
+
+@router.get("/players/{user_id}/cardphoto")
+def pcard_photo_get(user_id: int):
+    """Karta rasmi (<img src> — auth yo'q, /players/{id}/photo kabi). 404 — yuklanmagan."""
+    from player_cutout import get_photo
+    r = get_photo(user_id)
+    if r is None:
+        raise HTTPException(status_code=404, detail="no_photo")
+    return Response(content=r[0], media_type=r[1], headers={"Cache-Control": PHOTO_CACHE_HDR})
