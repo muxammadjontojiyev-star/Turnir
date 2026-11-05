@@ -4,7 +4,7 @@ player_card.py — ISHTIROKCHINING SHAXSIY O'YINCHI KARTASI (2026-11-04, egasi s
 eFootball kartasi uslubida: fonda karta ramkasi, futbolchi o'rnida — ISHTIROKCHINING Telegram rasmi,
 chap tepada katta reyting (OVR), ostida pozitsiya va bayroq, pastda nik va yulduzlar.
   * OVR — Divizion JORIY MAVSUM statistikasidan avtomatik (div_rating): o'ynagan sari o'sadi, yangi —
-    OVR_BASE. Formula — card_ovr (hamma koeffitsient shu yerda nomlangan).
+    OVR_BASE (70), hech qachon 70 dan pastga tushmaydi. Formula — card_ovr (hamma koeffitsient shu yerda nomlangan).
   * Pozitsiya va davlat — ishtirokchi o'zi tanlaydi (Profil → «Kartani sozlash»); tanlamasa ko'rsatilmaydi.
   * Ramka — do'kondagi «karta foni» bezagi (cosmetics_cards.py, user_cosmetic_equip.card); bo'lmasa —
     standart (bepul, CSS) ramka.
@@ -28,8 +28,8 @@ COUNTRIES = (
 )
 
 # OVR formulasi (Divizion joriy mavsumi)
-OVR_BASE = 60            # hali o'ynamagan (va 50% g'alabali o'rtacha o'yinchi, tajribasiz)
-OVR_MIN, OVR_MAX = 50, 99
+OVR_BASE = 70            # hali o'ynamagan (va 50% g'alabali o'rtacha o'yinchi, tajribasiz)
+OVR_MIN, OVR_MAX = 70, 99   # 2026-11-05: egasi — «eng kichik reyting 70»
 OVR_WINRATE_K = 0.4      # (g'alaba foizi − 50) × K: 100% → +20, 0% → −20 (yutqazgan pasayadi)
 OVR_CONF_GAMES = 10      # g'alaba foizi shuncha o'yindan keyin to'liq hisoblanadi (1 ta tasodifiy g'alaba ≠ 85)
 OVR_EXP_K = 0.25         # har o'yin uchun tajriba ...
