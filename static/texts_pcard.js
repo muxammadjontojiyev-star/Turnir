@@ -5,8 +5,12 @@
 
 const PCARD_TEXTS = {
   uz: {
+    pc_photo_err_no_person: "❌ Rasmda odam aniqlanmadi. Bo'yingiz to'liq va aniq ko'rinadigan rasm tanlang",
+    pc_photo_err_cutout_off: "❌ Fonni olib tashlash hozir o'chirilgan", pc_photo_err_busy: "❌ Navbat band, bir daqiqadan keyin urinib ko'ring",
+    pc_photo_err_cutout_failed: "❌ Fonni olib tashlab bo'lmadi, keyinroq urinib ko'ring",
+    pc_cut_status: "Fon xizmati (faqat siz ko'rasiz)",
     pc_photo: "Karta rasmi", pc_photo_pick: "📷 Rasm yuklash", pc_photo_del: "Olib tashlash",
-    pc_photo_hint: "Bo'yingiz to'liq ko'rinadigan rasm tanlang — fonni o'zimiz olib tashlaymiz. Kuniga 5 marta.",
+    pc_photo_hint: "Bo'yingiz to'liq ko'rinadigan rasm tanlang — faqat o'zingiz qirqib olinadi, orqada karta foni turadi. Kuniga 5 marta.",
     pc_photo_busy: "Rasm tayyorlanmoqda: fon olib tashlanmoqda… 10–30 soniya.", pc_photo_wait: "⏳ Tayyorlanmoqda…",
     pc_photo_ok: "✅ Rasm qo'yildi", pc_photo_ok_plain: "✅ Rasm qo'yildi (odam aniqlanmadi — fon bilan)",
     pc_photo_err_too_big: "❌ Rasm juda katta", pc_photo_err_bad_image: "❌ Bu rasm fayli emas",
@@ -21,6 +25,10 @@ const PCARD_TEXTS = {
     pc_games: "{n} o'yin · {w} g'alaba", pc_tap_close: "Yopish uchun bosing",
   },
   ru: {
+    pc_photo_err_no_person: "❌ На фото не найден человек. Выберите чёткое фото в полный рост",
+    pc_photo_err_cutout_off: "❌ Удаление фона сейчас отключено", pc_photo_err_busy: "❌ Очередь занята, попробуйте через минуту",
+    pc_photo_err_cutout_failed: "❌ Не удалось убрать фон, попробуйте позже",
+    pc_cut_status: "Сервис фона (видите только вы)",
     pc_photo: "Фото карточки", pc_photo_pick: "📷 Загрузить фото", pc_photo_del: "Убрать",
     pc_photo_hint: "Выберите фото в полный рост — фон уберём сами. До 5 раз в день.",
     pc_photo_busy: "Фото обрабатывается: убираем фон… 10–30 секунд.", pc_photo_wait: "⏳ Обработка…",
@@ -37,6 +45,10 @@ const PCARD_TEXTS = {
     pc_games: "{n} матчей · {w} побед", pc_tap_close: "Нажмите, чтобы закрыть",
   },
   en: {
+    pc_photo_err_no_person: "❌ No person found. Pick a clear full-body photo",
+    pc_photo_err_cutout_off: "❌ Background removal is turned off", pc_photo_err_busy: "❌ Queue is busy, try again in a minute",
+    pc_photo_err_cutout_failed: "❌ Couldn't remove the background, try later",
+    pc_cut_status: "Background service (only you see this)",
     pc_photo: "Card photo", pc_photo_pick: "📷 Upload photo", pc_photo_del: "Remove",
     pc_photo_hint: "Pick a full-body photo — we remove the background. Up to 5 times a day.",
     pc_photo_busy: "Processing photo: removing background… 10–30 seconds.", pc_photo_wait: "⏳ Processing…",

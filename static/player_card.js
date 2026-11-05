@@ -3,8 +3,7 @@
 //  eFootball kartasi uslubida: ramka foni (images/card-showtime.jpg), futbolchi o'rnida — ishtirokchi rasmidan
 //  o'zi YUKLAGAN rasm (fon olib tashlangan, butun tana — GET /players/{id}/cardphoto; bo'lmasa — Telegram rasmi), chap tepada OVR,
 //  pozitsiya, bayroq; pastda nik va yulduzlar. Dizayn — player_card.css.
-//  Ko'rinadi: Profil sahifasi (renderProfile o'raladi), reytingdan ochilgan profil (renderPlayerModal),
-//  Divizion o'z profili / o'yinchi profili (renderDivision o'raladi), Divizion qur'a kartasi (division.js
+//  Ko'rinadi: FAQAT Divizionda (2026-11-05) — o'z profili / o'yinchi profili (renderDivision o'raladi), qur'a kartasi (division.js
 //  pcardHtml'ni chaqiradi). Kartani bosish — katta ko'rinish. API: GET /pcard/{user_id}.
 //  Global: APP, API_BASE, apiFetch, escHtml. Ulanish: api.js, cosmetics.js, division.js dan KEYIN.
 // =============================================================
@@ -14,7 +13,7 @@ const PC_LONG_NAME = 11;                         // shundan uzun nik — kichikr
 const PC_BG_RE = /^card_[a-z0-9_]{1,30}$/;
 const PC_POS_RE = /^[A-Z]{2,3}$/;
 const PC_CC_RE = /^[A-Z]{2}$/;
-const PC_SEQ = { profile: 0, player: 0, div: 0 }; // eski javob yangisini bosib ketmasin
+const PC_SEQ = { div: 0 }; // eski javob yangisini bosib ketmasin
 
 function pcT(key, vars) {
   let s = (APP.t && APP.t[key]) || (PCARD_TEXTS.uz[key] ?? key);
@@ -145,28 +144,10 @@ async function pcMount(slotKey, anchor, userId, mine) {
   }
 }
 
+// 2026-11-05: karta FAQAT Divizionda (egasi: «ligalar rejimidan olib tashlang») — asosiy Profil va
+// reytingdan ochilgan profilga qo'shilmaydi.
 function pcRefreshMine() {
-  const uid = (APP.profileData && APP.profileData.user_id) || PCE.uid;
-  const card = document.getElementById("profile-avatar-letter")?.closest(".card--profile");
-  if (uid && card) void pcMount("profile", card, uid, true);
   if (typeof DIV !== "undefined" && DIV.section === "profile") pcDivHook();
-}
-
-if (typeof renderProfile === "function") {
-  const _pcPrevRenderProfile = renderProfile;
-  renderProfile = function (data) {                                                   // eslint-disable-line no-global-assign
-    _pcPrevRenderProfile(data);
-    const card = document.getElementById("profile-avatar-letter")?.closest(".card--profile");
-    if (data && data.user_id) void pcMount("profile", card, data.user_id, true);
-  };
-}
-if (typeof renderPlayerModal === "function") {
-  const _pcPrevRenderPlayer = renderPlayerModal;
-  renderPlayerModal = function (data) {                                               // eslint-disable-line no-global-assign
-    _pcPrevRenderPlayer(data);
-    const card = document.getElementById("player-avatar-letter")?.closest(".card--profile");
-    if (data && data.user_id) void pcMount("player", card, data.user_id, false);
-  };
 }
 
 // Divizion: o'z profilim va o'yinchi profili — birinchi kartadan keyin

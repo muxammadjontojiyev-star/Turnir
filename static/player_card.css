@@ -139,3 +139,5 @@
 .pcp-btn { width: 100%; text-align: center; cursor: pointer; }
 .pcp-btn--busy { opacity: .6; pointer-events: none; }
 .pcard-ov-del { margin-top: 4px; }
+.pcp-status { font-size: 11px; line-height: 1.5; opacity: .8; margin: 2px 0 6px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .05); }
+.pcp-status-err { color: #ff8a8a; word-break: break-word; margin-top: 4px; }
