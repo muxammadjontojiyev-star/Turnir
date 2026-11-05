@@ -43,7 +43,7 @@ def pcard_set(position: str | None = Body(None), country: str | None = Body(None
 
 
 PHOTO_CACHE_HDR = "public, max-age=604800, immutable"   # URL'da ?v=versiya — rasm almashsa URL ham almashadi
-PHOTO_ERRORS = {"too_big", "bad_image", "too_small", "daily_limit"}
+PHOTO_ERRORS = {"too_big", "bad_image", "too_small", "daily_limit", "no_person", "cutout_off", "cutout_failed", "busy"}
 
 
 @router.post("/pcard/me/photo")
@@ -92,3 +92,10 @@ def pcard_photo_get(user_id: int):
     if r is None:
         raise HTTPException(status_code=404, detail="no_photo")
     return Response(content=r[0], media_type=r[1], headers={"Cache-Control": PHOTO_CACHE_HDR})
+
+
+@router.get("/pcard/admin/cutout-status")
+def pcard_cutout_status(admin: dict = Depends(get_authenticated_super_admin)):
+    """Bosh admin — fonni olib tashlash xizmati holati (enabled, onnxruntime, model, last_error)."""
+    from player_cutout import cutout_status
+    return cutout_status()

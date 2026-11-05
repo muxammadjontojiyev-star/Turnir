@@ -43,7 +43,10 @@ MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(DB_PATH)), "models")
 MODEL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 WORKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "player_cutout_worker.py")
 EXIT_NO_PERSON = 3
-KIND_CUT, KIND_PLAIN = "cut", "plain"
+KIND_CUT, KIND_PLAIN = "cut", "plain"          # plain — 2026-11-04 dagi fonli rasmlar (endi ko'rsatilmaydi)
+ERR_NO_PERSON, ERR_OFF, ERR_FAILED, ERR_BUSY = "no_person", "cutout_off", "cutout_failed", "busy"
+OOM_CODES = (-9, 137)                # SIGKILL — odatda xotira yetmaganda
+_STATE = {"last_error": ""}
 
 _job_lock = asyncio.Lock()
 _model_lock = asyncio.Lock()
@@ -62,7 +65,7 @@ def photo_meta(user_ids) -> dict[int, dict]:
     conn = get_connection()
     try:
         q = ",".join("?" * len(ids))
-        rows = conn.execute(f"SELECT user_id, ver, kind FROM player_card_photos WHERE user_id IN ({q}) AND img IS NOT NULL", ids)
+        rows = conn.execute(f"SELECT user_id, ver, kind FROM player_card_photos WHERE user_id IN ({q}) AND img IS NOT NULL AND kind = ?", [*ids, KIND_CUT])
         return {r["user_id"]: {"v": r["ver"], "cut": r["kind"] == KIND_CUT} for r in rows}
     except Exception:            # migratsiyadan oldin
         return {}
@@ -106,20 +109,23 @@ def _normalize(raw: bytes) -> bytes:
     return out.getvalue()
 
 
-def _take_quota(user_id: int) -> bool:
+def _quota_left(user_id: int) -> bool:
+    conn = get_connection()
+    try:
+        r = conn.execute("SELECT day, day_count FROM player_card_photos WHERE user_id = ?", (user_id,)).fetchone()
+    finally:
+        conn.close()
+    return not (r and r["day"] == date.today().isoformat() and r["day_count"] >= PHOTO_DAILY_LIMIT)
+
+
+def _use_quota(user_id: int) -> None:
     today = date.today().isoformat()
     conn = get_connection()
     try:
-        conn.execute("BEGIN IMMEDIATE")
-        r = conn.execute("SELECT day, day_count FROM player_card_photos WHERE user_id = ?", (user_id,)).fetchone()
-        used = r["day_count"] if r and r["day"] == today else 0
-        if used >= PHOTO_DAILY_LIMIT:
-            conn.rollback()
-            return False
         conn.execute("INSERT INTO player_card_photos (user_id, day, day_count) VALUES (?, ?, 1) "
-                     "ON CONFLICT(user_id) DO UPDATE SET day = excluded.day, day_count = ?", (user_id, today, used + 1))
+                     "ON CONFLICT(user_id) DO UPDATE SET day_count = CASE WHEN day = excluded.day THEN day_count + 1 ELSE 1 END, "
+                     "day = excluded.day", (user_id, today))
         conn.commit()
-        return True
     finally:
         conn.close()
 
@@ -127,7 +133,9 @@ def _take_quota(user_id: int) -> bool:
 def _store(user_id: int, kind: str, img: bytes) -> int:
     conn = get_connection()
     try:
-        conn.execute("UPDATE player_card_photos SET kind = ?, img = ?, ver = ver + 1 WHERE user_id = ?", (kind, img, user_id))
+        conn.execute("INSERT INTO player_card_photos (user_id, kind, img, ver) VALUES (?, ?, ?, 1) "
+                     "ON CONFLICT(user_id) DO UPDATE SET kind = excluded.kind, img = excluded.img, ver = ver + 1",
+                     (user_id, kind, img))
         conn.commit()
         return conn.execute("SELECT ver FROM player_card_photos WHERE user_id = ?", (user_id,)).fetchone()["ver"]
     finally:
@@ -163,7 +171,8 @@ async def _ensure_model() -> bool:
             return False
 
 
-async def _run_worker(raw: bytes) -> bytes | None:
+async def _run_worker(raw: bytes) -> tuple[bytes | None, str]:
+    """(WEBP, "") yoki (None, sabab): no_person | sabab matni (oxirgi xato — LAST_ERROR)."""
     proc = await asyncio.create_subprocess_exec(
         sys.executable, WORKER, MODEL_PATH,
         stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
@@ -172,36 +181,59 @@ async def _run_worker(raw: bytes) -> bytes | None:
     except asyncio.TimeoutError:
         proc.kill()
         await proc.wait()
-        return None
+        return None, "timeout"
     if proc.returncode == 0 and out:
-        return out
-    if proc.returncode != EXIT_NO_PERSON:
-        logger.warning("KARTA: qirqish xatosi (kod %s): %s", proc.returncode, (err or b"")[-300:].decode("utf-8", "ignore"))
-    return None
+        return out, ""
+    if proc.returncode == EXIT_NO_PERSON:
+        return None, ERR_NO_PERSON
+    tail = (err or b"")[-300:].decode("utf-8", "ignore").strip()
+    why = f"kod {proc.returncode}" + (" — xotira yetmadi (jarayon o'ldirildi)" if proc.returncode in OOM_CODES else "")
+    logger.warning("KARTA: qirqish xatosi (%s): %s", why, tail)
+    return None, f"{why}: {tail}"[:300]
+
+
+def cutout_status() -> dict:
+    """Bosh admin uchun tashxis (Kartani sozlash oynasida ko'rinadi)."""
+    import importlib.util
+    return {
+        "enabled": CUTOUT_ENABLED,
+        "onnxruntime": importlib.util.find_spec("onnxruntime") is not None,
+        "model": os.path.exists(MODEL_PATH),
+        "last_error": _STATE["last_error"],
+    }
 
 
 async def save_upload(user_id: int, raw: bytes) -> tuple[bool, str | dict]:
-    """Yuklangan rasm → (True, {"v", "cut"}) yoki (False, xato kodi)."""
+    """Yuklangan rasm → (True, {"v", "cut"}) yoki (False, xato kodi).
+    2026-11-05: faqat FONI OLIB TASHLANGAN odam saqlanadi (egasi: «orqadagi manzara kartada ko'rinmasligi kerak»);
+    qirqib bo'lmasa — rasm saqlanmaydi, kunlik limit ham kamaymaydi."""
     if not raw or len(raw) > PHOTO_MAX_BYTES:
         return False, "too_big"
     try:
         jpeg = await asyncio.to_thread(_normalize, raw)
     except ValueError as exc:
         return False, str(exc)
-    if not _take_quota(user_id):
+    if not _quota_left(user_id):
         return False, "daily_limit"
-    cut = None
-    if CUTOUT_ENABLED and await _ensure_model():
-        try:
-            await asyncio.wait_for(_job_lock.acquire(), CUTOUT_WAIT_S)
-        except (TimeoutError, asyncio.TimeoutError):
-            logger.warning("KARTA: qirqish navbati band — rasm fonli saqlanadi (user %s)", user_id)
-        else:
-            try:
-                cut = await _run_worker(jpeg)
-            finally:
-                _job_lock.release()
-    kind = KIND_CUT if cut else KIND_PLAIN
-    ver = _store(user_id, kind, cut or jpeg)
-    logger.info("KARTA: user %s rasm yukladi — %s", user_id, kind)
-    return True, {"v": ver, "cut": kind == KIND_CUT}
+    if not CUTOUT_ENABLED:
+        return False, ERR_OFF
+    if not await _ensure_model():
+        _STATE["last_error"] = "model yuklab olinmadi (GitHub)"
+        return False, ERR_FAILED
+    try:
+        await asyncio.wait_for(_job_lock.acquire(), CUTOUT_WAIT_S)
+    except (TimeoutError, asyncio.TimeoutError):
+        return False, ERR_BUSY
+    try:
+        cut, why = await _run_worker(jpeg)
+    finally:
+        _job_lock.release()
+    if cut is None:
+        if why != ERR_NO_PERSON:
+            _STATE["last_error"] = why
+        return False, ERR_NO_PERSON if why == ERR_NO_PERSON else ERR_FAILED
+    _STATE["last_error"] = ""
+    _use_quota(user_id)
+    ver = _store(user_id, KIND_CUT, cut)
+    logger.info("KARTA: user %s rasm yukladi (fon olib tashlandi)", user_id)
+    return True, {"v": ver, "cut": True}
