@@ -110,7 +110,9 @@ function msNickPaintProfile() {
       slot.className = "ms-nick-slot";
       box.appendChild(slot);
     }
-    if (slot._html !== html && !slot.contains(document.activeElement)) { slot.innerHTML = html; slot._html = html; }
+    // faqat maydonga yozilayotgan paytda qayta chizilmaydi (✏️ tugmasi fokusda bo'lsa — chiziladi; 2026-11-06 xato)
+    const typing = document.activeElement && document.activeElement.classList.contains("ms-nick-input") && slot.contains(document.activeElement);
+    if (slot._html !== html && !typing) { slot.innerHTML = html; slot._html = html; }
   }
 }
 
