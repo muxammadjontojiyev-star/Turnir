@@ -4,7 +4,7 @@
 //  API: GET/POST /ef-nick. Global: APP, apiFetch, escHtml, showToast, msT, msErr, msShotRender (mshot.js).
 // =============================================================
 
-const MSN = { info: null, busy: false };
+const MSN = { info: null, busy: false, edit: false };
 
 async function msNickLoad(force = false) {
   if (MSN.info && !force) return MSN.info;
@@ -13,16 +13,19 @@ async function msNickLoad(force = false) {
 }
 function msNickHas() { return !!(MSN.info && MSN.info.nick); }
 
+// 2026-11-06 (egasi): ixcham — profil kartasida username ostida; ortiqcha tushuntirishsiz
 function msNickFormHtml(where) {
   const i = MSN.info || {};
-  const left = i.nick ? (i.free_left > 0 ? msT("ms_nick_free", { n: i.free_left }) : msT("ms_nick_paid", { price: i.price })) : "";
-  return `<div class="ms-nick" data-ms-nick-where="${where}">
-      <div class="ms-nick-hint">${escHtml(msT("ms_nick_hint"))}</div>
-      <div class="ms-nick-row">
-        <input class="modal-input ms-nick-input" maxlength="24" placeholder="${escHtml(msT("ms_nick_ph"))}" value="${escHtml(i.nick || "")}">
-        <button class="btn btn--primary" data-ms-nick-save="1" ${MSN.busy ? "disabled" : ""}>${escHtml(msT("ms_nick_save"))}</button>
-      </div>
-      ${left ? `<div class="ms-nick-left">${escHtml(left)}</div>` : ""}
+  if (i.nick && !MSN.edit) {
+    return `<div class="ms-nick ms-nick--set" data-ms-nick-where="${where}">
+        <span class="ms-nick-ic">🎮</span><span class="ms-nick-val">${escHtml(i.nick)}</span>
+        <button class="ms-nick-edit" data-ms-nick-edit="1" aria-label="edit">✏️</button>
+      </div>`;
+  }
+  return `<div class="ms-nick ms-nick--form" data-ms-nick-where="${where}">
+      <input class="ms-nick-input" maxlength="24" placeholder="${escHtml(msT("ms_nick_ph"))}" value="${escHtml(i.nick || "")}"
+        autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="ms-nick-ok" data-ms-nick-save="1" ${MSN.busy ? "disabled" : ""} aria-label="save">✓</button>
     </div>`;
 }
 
@@ -45,6 +48,7 @@ async function msNickSave(btn) {
       if (!window.confirm(msT("ms_nick_pay_q", { price: (MSN.info && MSN.info.price) || 5 }))) return;
       MSN.info = await send(true);
     }
+    MSN.edit = false;
     showToast(msT("ms_nick_saved"));
   } catch (e) {
     showToast(msErr(e));
@@ -57,23 +61,36 @@ async function msNickSave(btn) {
 
 document.addEventListener("click", (e) => {
   const b = e.target.closest ? e.target.closest("[data-ms-nick-save]") : null;
-  if (b) { e.preventDefault(); e.stopPropagation(); void msNickSave(b); }
+  if (b) { e.preventDefault(); e.stopPropagation(); void msNickSave(b); return; }
+  const ed = e.target.closest ? e.target.closest("[data-ms-nick-edit]") : null;
+  if (ed) {
+    e.preventDefault(); e.stopPropagation();
+    MSN.edit = true;
+    msNickPaintProfile();
+    document.querySelector(".ms-nick-slot .ms-nick-input")?.focus();
+  }
 }, true);
 
-// ---- Profil sahifasi: «eFOOTBALL NIKNAMEINGIZ» bo'limi (profil kartasidan keyin) ----
+// ---- Profil kartasi: username ostida ixcham qator ----
 function msNickPaintProfile() {
-  const card = document.getElementById("profile-avatar-letter")?.closest(".card--profile");
-  if (!card) return;
-  let slot = card.parentElement.querySelector(":scope > .ms-nick-slot");
+  const info = document.getElementById("profile-nickname")?.closest(".profile-info");
+  if (!info) return;
+  let slot = info.querySelector(":scope > .ms-nick-slot");
   if (!slot) {
     slot = document.createElement("div");
     slot.className = "ms-nick-slot";
-    card.insertAdjacentElement("afterend", slot);
+    info.appendChild(slot);
   }
-  const html = `<div class="section-label">${escHtml(msT("ms_nick_title"))}</div>
-    <div class="card ms-nick-card">${msNickFormHtml("profile")}</div>`;
+  const html = `${!(MSN.info && MSN.info.nick) ? `<div class="ms-nick-label">${escHtml(msT("ms_nick_need"))}</div>` : ""}${msNickFormHtml("profile")}`;
   if (slot._html !== html) { slot.innerHTML = html; slot._html = html; }
 }
+
+// Enter — saqlash
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || !e.target.classList || !e.target.classList.contains("ms-nick-input")) return;
+  const b = e.target.closest(".ms-nick")?.querySelector("[data-ms-nick-save]");
+  if (b) { e.preventDefault(); void msNickSave(b); }
+});
 
 if (typeof renderProfile === "function") {
   const _msPrevRenderProfile = renderProfile;
