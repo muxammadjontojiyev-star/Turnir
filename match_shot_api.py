@@ -1,0 +1,172 @@
+"""
+match_shot_api.py — eF nikname, SKRINSHOTLI NATIJA, TEXNIK G'ALABA so'rovi va ADMIN KO'RIB CHIQISHI (2026-11-06).
+Mantiq: ef_nick.py, match_shot.py, match_claims.py, match_modes.py.
+
+  GET  /ef-nick                      — {nick, free_left, price, free_per_season}
+  POST /ef-nick {nick, pay}          — xato: bad_nick, same_nick, nick_taken, need_pay, insufficient
+  POST /mshot/read {image}           — {token, rows[]}; xato: ocr_unavailable, no_rows, bad_image, daily_limit
+  POST /mshot/apply {mode, match_id, token, row} — natija yoziladi; xato: expired, no_my_nick, no_opp_nick,
+       nick_mismatch, bad_date, shot_used, playoff_draw, opp_other_score, my_other_score, already_confirmed, ...
+  GET  /mshot/incoming               — men haqimda skrinshot bilan yozilgan natijalar (e'tiroz muddati ichida)
+  POST /mshot/{id}/dispute           — e'tiroz → adminga
+  POST /mshot/tech {mode, match_id, images[], note} — texnik g'alaba so'rovi
+  GET  /mshot/admin/list             — ochiq ishlar (bosh admin + rejim/liga admini)
+  GET  /mshot/admin/img/{kind}/{id}/{idx} — rasm (base64)
+  POST /mshot/admin/decide {kind, id, action, s1, s2}
+Rasmlar JSON'da dataURL (base64) — frontend kichraytirib yuboradi.
+"""
+
+import base64
+import binascii
+import logging
+
+from fastapi import APIRouter, Body, Depends, HTTPException
+
+from api import get_authenticated_admin, get_authenticated_user
+
+logger = logging.getLogger(__name__)
+router = APIRouter()
+
+IMG_MAX_BYTES = 8 * 1024 * 1024
+MODE_LABEL_KEY = "mshot_mode_{}"
+
+
+def _b64(data_url: str) -> bytes:
+    b = (data_url or "").split(",", 1)[-1]
+    if len(b) > IMG_MAX_BYTES * 4 // 3 + 16:
+        raise HTTPException(status_code=400, detail="too_big")
+    try:
+        return base64.b64decode(b, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=400, detail="bad_image")
+
+
+def _fail(ok_r):
+    ok, r = ok_r
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    return r
+
+
+async def _tell(user_id: int, key: str, **fmt) -> None:
+    from notify import notify_user
+    from queries_users import get_user_by_id
+    u = get_user_by_id(user_id)
+    if u:
+        try:
+            await notify_user(u["telegram_id"], key, u.get("language"), open_button_key="btn_open_app", **fmt)
+        except Exception as exc:
+            logger.warning("MATCH SHOT: xabar yuborilmadi (%s): %s", user_id, exc)
+
+
+async def _tell_admins(mode: str, match_id: int, key: str, **fmt) -> None:
+    from match_modes import get_match, reviewer_tgs
+    from notify import notify_user
+    m = get_match(mode, match_id)
+    for tg in reviewer_tgs(mode, m or {}):
+        try:
+            await notify_user(tg, key, None, open_button_key="btn_open_app", **fmt)
+        except Exception as exc:
+            logger.warning("MATCH SHOT: adminga xabar yuborilmadi (%s): %s", tg, exc)
+
+
+# ---------------- eF nikname ----------------
+
+@router.get("/ef-nick")
+def ef_nick_get(user: dict = Depends(get_authenticated_user)):
+    from ef_nick import get_nick_info
+    return get_nick_info(user["id"])
+
+
+@router.post("/ef-nick")
+def ef_nick_set(nick: str = Body(..., embed=True), pay: bool = Body(False, embed=True),
+                user: dict = Depends(get_authenticated_user)):
+    from ef_nick import set_nick
+    return _fail(set_nick(user["id"], nick, pay))
+
+
+# ---------------- skrinshotli natija ----------------
+
+@router.post("/mshot/read")
+async def mshot_read(image: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    from match_shot import read_shot
+    return _fail(await read_shot(user["id"], _b64(image)))
+
+
+@router.post("/mshot/apply")
+async def mshot_apply(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
+                      token: str = Body(..., embed=True), row: int = Body(..., embed=True),
+                      user: dict = Depends(get_authenticated_user)):
+    from match_shot import DISPUTE_HOURS, apply_shot
+    r = _fail(await apply_shot(user, mode, match_id, token, row))
+    if r["admin_pending"]:
+        await _tell_admins(mode, match_id, "mshot_admin_pending", score=f"{r['score1']}:{r['score2']}")
+    else:
+        await _tell(r["opponent"]["id"], "mshot_notify_applied", score=f"{r['their']}:{r['my']}", hours=DISPUTE_HOURS)
+    return {"status": "admin_pending" if r["admin_pending"] else "ok", "score1": r["score1"], "score2": r["score2"]}
+
+
+@router.get("/mshot/incoming")
+def mshot_incoming(user: dict = Depends(get_authenticated_user)):
+    from match_shot import incoming
+    return {"items": incoming(user["id"])}
+
+
+@router.post("/mshot/{shot_id}/dispute")
+async def mshot_dispute(shot_id: int, user: dict = Depends(get_authenticated_user)):
+    from match_shot import dispute
+    r = _fail(dispute(user["id"], shot_id))
+    await _tell_admins(r["mode"], r["match_id"], "mshot_admin_dispute", score=f"{r['score1']}:{r['score2']}")
+    return {"status": "ok"}
+
+
+@router.post("/mshot/tech")
+async def mshot_tech(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
+                     images: list[str] = Body(..., embed=True), note: str = Body("", embed=True),
+                     user: dict = Depends(get_authenticated_user)):
+    from match_claims import CLAIM_MAX_IMAGES, create_claim
+    raws = [_b64(i) for i in (images or [])[:CLAIM_MAX_IMAGES]]
+    r = _fail(create_claim(user["id"], mode, match_id, raws, note))
+    await _tell_admins(mode, match_id, "mshot_admin_tech")
+    await _tell(r["opponent_id"], "mshot_notify_tech_claim")
+    return {"status": "ok", "id": r["id"]}
+
+
+# ---------------- admin ----------------
+
+@router.get("/mshot/admin/list")
+def mshot_admin_list(admin: dict = Depends(get_authenticated_admin)):
+    from match_claims import admin_list
+    return {"items": admin_list(admin["telegram_id"])}
+
+
+@router.get("/mshot/admin/img/{kind}/{item_id}/{idx}")
+def mshot_admin_img(kind: str, item_id: int, idx: int, admin: dict = Depends(get_authenticated_admin)):
+    from match_claims import admin_list, claim_image
+    from match_shot import shot_image
+    if not any(i["kind"] == kind and i["id"] == item_id for i in admin_list(admin["telegram_id"])):
+        raise HTTPException(status_code=404, detail="not_found")
+    img = shot_image(item_id) if kind == "shot" else claim_image(item_id, idx)
+    if not img:
+        raise HTTPException(status_code=404, detail="not_found")
+    return {"data": "data:image/jpeg;base64," + base64.b64encode(img).decode()}
+
+
+@router.post("/mshot/admin/decide")
+async def mshot_admin_decide(kind: str = Body(..., embed=True), id: int = Body(..., embed=True),
+                             action: str = Body(..., embed=True), s1: int | None = Body(None, embed=True),
+                             s2: int | None = Body(None, embed=True), admin: dict = Depends(get_authenticated_admin)):
+    from match_claims import decide
+    from queries_users import get_user_by_telegram_id
+    me = get_user_by_telegram_id(admin["telegram_id"]) or {}
+    r = _fail(decide({**admin, "id": me.get("id")}, kind, id, action, s1, s2))
+    it = r["item"]
+    if kind == "tech":
+        key = "mshot_notify_tech_ok" if r["result"] == "tech_win" else "mshot_notify_tech_no"
+        await _tell(it["claimant_id"], key)
+        if r["result"] == "tech_win":
+            await _tell(it["opponent_id"], "mshot_notify_tech_lost")
+    elif r["result"] == "fixed":
+        for uid in (it["uploader_id"], it["opponent_id"]):
+            await _tell(uid, "mshot_notify_fixed", score=f"{r['score'][0]}:{r['score'][1]}")
+    return {"status": "ok", "result": r["result"]}

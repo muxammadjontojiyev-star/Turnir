@@ -738,6 +738,10 @@ TEXTS = {
 }
 
 
+# 2026-11-06: skrinshotli natija / texnik g'alaba xabarlari (alohida fayl — texts.py katta)
+from texts_mshot import MSHOT_TEXTS  # noqa: E402
+TEXTS.update(MSHOT_TEXTS)
+
 def t(key: str, language: str) -> str:
     """
     Berilgan kalit va til uchun matnni qaytaradi.

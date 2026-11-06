@@ -3799,3 +3799,5 @@ from division_bans_api import router as div_bans_router  # noqa: E402  (2026-11-
 app.include_router(div_bans_router)
 from player_card_api import router as player_card_router  # noqa: E402  (2026-11-04, shaxsiy o'yinchi kartasi)
 app.include_router(player_card_router)
+from match_shot_api import router as match_shot_router  # noqa: E402  (2026-11-06, skrinshotli natija / texnik g'alaba)
+app.include_router(match_shot_router)

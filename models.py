@@ -1315,6 +1315,12 @@ def init_db():
         migrate_player_card(_c.cursor())
         from player_cutout import migrate_cutouts           # 2026-11-04: kartadagi qirqilgan rasm keshi
         migrate_cutouts(_c.cursor())
+        from ef_nick import migrate_ef_nick                 # 2026-11-06: eFootball nikname, skrinshotli natija, texnik g'alaba
+        from match_claims import migrate_match_claims
+        from match_shot import migrate_match_shots
+        migrate_ef_nick(_c.cursor())
+        migrate_match_shots(_c.cursor())
+        migrate_match_claims(_c.cursor())
         from season_break import migrate_season_break       # 2026-11-01: mavsumlar orasidagi tanaffus (ustun)
         from club_priority import migrate_priority_switch   # 2026-11-01: navbat kaliti (bosh admin paneli)
         migrate_priority_switch(_c.cursor())
