@@ -46,8 +46,8 @@ const MS_CTX = [
 
 function msSlotHtml(c) {
   return `<div class="ms-slot${MS.only ? " ms-slot--only" : ""}" data-ms-mode="${escHtml(c.mode)}" data-ms-id="${Number(c.id)}">
-      ${MS.only ? `<div class="ms-only-hint">${escHtml(msT("ms_only_hint"))}</div>` : ""}
-      <button class="btn ${MS.only ? "btn--primary btn--glow" : "btn--ghost"} ms-btn" data-ms="shot">${escHtml(msT("ms_btn_shot"))}</button>
+      <div class="ms-only-hint">${escHtml(msT(MS.only ? "ms_only_hint" : "ms_or_hint"))}</div>
+      <button class="btn ${MS.only ? "btn--primary btn--glow" : "btn--ghost ms-btn--shot"} ms-btn" data-ms="shot">${escHtml(msT("ms_btn_shot"))}</button>
       <button class="btn btn--ghost ms-btn ms-btn--warn" data-ms="tech">${escHtml(msT("ms_btn_tech"))}</button>
       ${MS.only && MS_PLAYOFF.has(c.mode) ? `<button class="ms-pen-link" data-ms="pen">${escHtml(msT("ms_pen_manual"))}</button>` : ""}
     </div>`;

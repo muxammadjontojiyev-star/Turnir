@@ -4,6 +4,7 @@
 
 const MSHOT_TEXTS = {
   uz: {
+    ms_or_hint: "Yoki Match History skrinshoti bilan — raqib tasdig'ini kutmasdan darhol yoziladi:",
     ms_err_read: "bot o'qigan sana",
     ms_done_await: "✅ Yuborildi — raqibingiz niknameini kiritmagan, u tasdiqlashi kerak (unga xabar ketdi)",
     ms_aw_nick: "Skrinshotdagi eFootball niknameingiz:", ms_aw_accept: "Tasdiqlash", ms_aw_reject: "Noto'g'ri",
@@ -65,6 +66,7 @@ const MSHOT_TEXTS = {
     },
   },
   ru: {
+    ms_or_hint: "Или скриншотом Match History — запишется сразу, без ожидания подтверждения:",
     ms_err_read: "бот прочитал дату",
     ms_done_await: "✅ Отправлено — соперник не указал ник, он должен подтвердить (ему отправлено сообщение)",
     ms_aw_nick: "Ваш ник eFootball на скриншоте:", ms_aw_accept: "Подтвердить", ms_aw_reject: "Неверно",
@@ -126,6 +128,7 @@ const MSHOT_TEXTS = {
     },
   },
   en: {
+    ms_or_hint: "Or with a Match History screenshot — recorded at once, no waiting for confirmation:",
     ms_err_read: "date read by the bot",
     ms_done_await: "✅ Sent — your opponent hasn't set a nickname, they need to confirm (they were notified)",
     ms_aw_nick: "Your eFootball nickname on the screenshot:", ms_aw_accept: "Confirm", ms_aw_reject: "Wrong",
