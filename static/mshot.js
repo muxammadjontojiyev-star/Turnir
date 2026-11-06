@@ -70,7 +70,8 @@ function msSync() {
   }
 }
 let _msSyncT = 0;
-new MutationObserver(() => { cancelAnimationFrame(_msSyncT); _msSyncT = requestAnimationFrame(msSync); })
+// throttle (debounce emas): DOM har kadrda o'zgarsa ham (animatsiyalar) — ishlaydi
+new MutationObserver(() => { if (_msSyncT) return; _msSyncT = requestAnimationFrame(() => { _msSyncT = 0; msSync(); }); })
   .observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
 
 // ---- natija oynasini yopib, rejim ro'yxatini yangilash (rejimning o'z yangilovchisi) ----

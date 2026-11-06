@@ -120,9 +120,10 @@ function msNickPaintProfile() {
 }
 
 let _msnT = 0;
-new MutationObserver(() => {
-  cancelAnimationFrame(_msnT);
+new MutationObserver(() => {                         // throttle — doimiy animatsiyada ham ishlaydi
+  if (_msnT) return;
   _msnT = requestAnimationFrame(() => {
+    _msnT = 0;
     if (!MSN.info && !MSN.loading) { MSN.loading = true; void msNickLoad().finally(() => { MSN.loading = false; msNickPaintProfile(); }); }
     msNickPaintProfile();
   });

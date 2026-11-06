@@ -1,6 +1,7 @@
 // =============================================================
-//  mshot_admin.js — Admin → «📸 SKRINSHOT VA TEXNIK G'ALABA» (2026-11-06). Bosh admin — hammasi,
-//  liga admini — o'z ligalari (server: match_claims.admin_list). Guruh ochilganda yuklanadi.
+//  mshot_admin.js — «📸 SKRINSHOT VA TEXNIK G'ALABA» (2026-11-06). Bosh admin — hammasi (asosiy Admin panel),
+//  liga admini — o'z ligasi (asosiy Admin panel), rejim adminlari — o'z rejimining Admin bo'limida
+//  (server: match_claims.admin_list + can_review). Guruh ochilganda yuklanadi.
 //  Ishlar: texnik g'alaba so'rovi (3:0 / rad), skrinshotli natijaga e'tiroz va katta hisob (to'g'ri / tuzatish).
 //  API: GET /mshot/admin/list, GET /mshot/admin/img/{kind}/{id}/{idx}, POST /mshot/admin/decide.
 //  Global: apiFetch, escHtml, showToast, msT, msErr.
@@ -37,16 +38,60 @@ function msaItemHtml(it) {
       </div></div>`;
 }
 
-async function msaLoad() {
-  const box = document.getElementById("mshot-adm-list");
+// Guruh — <details class="msa-group" data-msa-modes="cl,cl_po">: asosiy Admin panelda (hammasi, server huquq bo'yicha
+// filtrlaydi) va har rejimning o'z Admin bo'limida (faqat o'sha rejim) — 2026-11-06.
+const MSA_TTL_MS = 30 * 1000;
+const MSA_CACHE = new Map();                 // modes → {items, at}
+
+async function msaLoad(group, force = true) {
+  group = group || document.getElementById("mshot-adm-group");
+  if (!group) return;
+  const box = group.querySelector(".msa-list");
+  const modes = group.dataset.msaModes || "";
+  const c = MSA_CACHE.get(modes);
+  let items;
+  if (!force && c && Date.now() - c.at < MSA_TTL_MS) items = c.items;
+  else {
+    try { items = (await apiFetch(`/mshot/admin/list${modes ? `?modes=${encodeURIComponent(modes)}` : ""}`)).items || []; }
+    catch (e) { if (box) box.innerHTML = `<div class="adm-pp-hint">${escHtml(msErr(e))}</div>`; return; }
+    MSA_CACHE.set(modes, { items, at: Date.now() });
+  }
+  MSA.items = items;
+  const cnt = group.querySelector(".msa-count");
+  if (cnt) cnt.textContent = items.length ? String(items.length) : "";
   if (!box) return;
-  try { MSA.items = (await apiFetch("/mshot/admin/list")).items || []; }
-  catch (e) { box.innerHTML = `<div class="adm-pp-hint">${escHtml(msErr(e))}</div>`; return; }
-  const cnt = document.getElementById("mshot-adm-count");
-  if (cnt) cnt.textContent = MSA.items.length ? String(MSA.items.length) : "";
-  box.innerHTML = (await msaOnlyHtml()) + (MSA.items.length ? MSA.items.map(msaItemHtml).join("")
+  const head = modes ? "" : await msaOnlyHtml();
+  box.innerHTML = head + (items.length ? items.map(msaItemHtml).join("")
     : `<div class="adm-pp-hint">${escHtml(msT("ms_adm_empty"))}</div>`);
 }
+
+// rejimlarning o'z Admin bo'limiga guruh qo'shiladi (rejim fayllariga tegilmaydi — DOM kuzatiladi)
+const MSA_TARGETS = [
+  { modes: "div", box: () => (typeof DIV !== "undefined" && DIV.section === "admin" ? document.querySelector("#div-root .wc-body") : null) },
+  { modes: "cl,cl_po", box: () => document.getElementById("cl-admin-page") },
+  { modes: "el,el_po", box: () => document.getElementById("el-admin-page") },
+  { modes: "ac,ac_po", box: () => document.getElementById("ac-admin-page") },
+  { modes: "co,co_po", box: () => document.getElementById("co-admin-page") },
+  { modes: "wc,wc_po", box: () => { const b = document.getElementById("wc-admin-panel"); return b && !b.classList.contains("hidden") ? b : null; } },
+];
+function msaGroupHtml(modes) {
+  return `<details class="adm-group msa-group" data-msa-modes="${escHtml(modes)}">
+      <summary><span class="adm-group-ic">📸</span><span>${escHtml(msT("ms_adm_title"))}</span><span class="adm-group-sub msa-count"></span></summary>
+      <div class="msa-list"></div>
+    </details>`;
+}
+function msaMount() {
+  for (const t of MSA_TARGETS) {
+    const box = t.box();
+    if (!box || box.querySelector(":scope > .msa-group")) continue;
+    box.insertAdjacentHTML("afterbegin", msaGroupHtml(t.modes));
+    void msaLoad(box.querySelector(":scope > .msa-group"), false);
+  }
+}
+let _msaT = 0;
+// throttle (debounce emas): DOM har kadrda o'zgarsa ham (animatsiyalar) — ishlaydi
+new MutationObserver(() => { if (_msaT) return; _msaT = requestAnimationFrame(() => { _msaT = 0; msaMount(); }); })
+  .observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
 
 // Bosh admin — «natija faqat skrinshot bilan» kaliti (favqulodda: skrinshot o'qish ishlamay qolsa — o'chiriladi)
 async function msaOnlyHtml() {
@@ -68,7 +113,7 @@ async function msaToggleOnly(btn) {
     showToast(msT("ms_adm_done"));
     if (typeof msLoadConfig === "function") void msLoadConfig();
   } catch (e) { showToast(msErr(e)); }
-  await msaLoad();
+  await msaLoad(btn.closest(".msa-group"));
 }
 
 async function msaShowImg(card, idx) {
@@ -95,7 +140,8 @@ async function msaDecide(card, btn) {
   try {
     await apiFetch("/mshot/admin/decide", { method: "POST", body: JSON.stringify(body) });
     showToast(msT("ms_adm_done"));
-    await msaLoad();
+    MSA_CACHE.clear();
+    await msaLoad(card.closest(".msa-group"));
   } catch (e) { showToast(msErr(e)); btn.disabled = false; }
   finally { MSA.busy = false; }
 }
@@ -111,5 +157,5 @@ document.addEventListener("click", (e) => {
   if (act) void msaDecide(card, act);
 });
 document.addEventListener("toggle", (e) => {
-  if (e.target && e.target.id === "mshot-adm-group" && e.target.open) void msaLoad();
+  if (e.target && e.target.classList && e.target.classList.contains("msa-group") && e.target.open) void msaLoad(e.target);
 }, true);
