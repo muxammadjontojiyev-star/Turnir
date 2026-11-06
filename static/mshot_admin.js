@@ -44,8 +44,31 @@ async function msaLoad() {
   catch (e) { box.innerHTML = `<div class="adm-pp-hint">${escHtml(msErr(e))}</div>`; return; }
   const cnt = document.getElementById("mshot-adm-count");
   if (cnt) cnt.textContent = MSA.items.length ? String(MSA.items.length) : "";
-  box.innerHTML = MSA.items.length ? MSA.items.map(msaItemHtml).join("")
-    : `<div class="adm-pp-hint">${escHtml(msT("ms_adm_empty"))}</div>`;
+  box.innerHTML = (await msaOnlyHtml()) + (MSA.items.length ? MSA.items.map(msaItemHtml).join("")
+    : `<div class="adm-pp-hint">${escHtml(msT("ms_adm_empty"))}</div>`);
+}
+
+// Bosh admin — «natija faqat skrinshot bilan» kaliti (favqulodda: skrinshot o'qish ishlamay qolsa — o'chiriladi)
+async function msaOnlyHtml() {
+  try {
+    if (!(await apiFetch("/admin/whoami")).is_super) return "";
+    const on = !!(await apiFetch("/mshot/config")).shot_only;
+    return `<div class="card msa-only"><div class="msa-line"><b>${escHtml(msT(on ? "ms_adm_only_on" : "ms_adm_only_off"))}</b></div>
+      <div class="adm-pp-hint">${escHtml(msT("ms_adm_only_hint"))}</div>
+      <button class="btn ${on ? "" : "btn--primary"}" data-msa-only="${on ? "0" : "1"}" style="width:100%;margin-top:6px">${escHtml(msT(on ? "ms_adm_only_disable" : "ms_adm_only_enable"))}</button></div>`;
+  } catch (_) { return ""; }
+}
+
+async function msaToggleOnly(btn) {
+  const on = btn.dataset.msaOnly === "1";
+  if (!window.confirm(msT(on ? "ms_adm_only_q_on" : "ms_adm_only_q_off"))) return;
+  btn.disabled = true;
+  try {
+    await apiFetch("/mshot/admin/only", { method: "POST", body: JSON.stringify({ on }) });
+    showToast(msT("ms_adm_done"));
+    if (typeof msLoadConfig === "function") void msLoadConfig();
+  } catch (e) { showToast(msErr(e)); }
+  await msaLoad();
 }
 
 async function msaShowImg(card, idx) {
@@ -78,6 +101,8 @@ async function msaDecide(card, btn) {
 }
 
 document.addEventListener("click", (e) => {
+  const only = e.target.closest ? e.target.closest("[data-msa-only]") : null;
+  if (only) { void msaToggleOnly(only); return; }
   const card = e.target.closest ? e.target.closest(".msa-item") : null;
   if (!card) return;
   const img = e.target.closest("[data-msa-img]");

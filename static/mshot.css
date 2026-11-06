@@ -56,3 +56,12 @@
 .msa-pic { width: 100%; border-radius: 10px; margin-bottom: 6px; }
 .msa-acts { display: flex; gap: 8px; }
 .msa-acts .btn { flex: 1; }
+
+/* «natija faqat skrinshot bilan» — qo'lda kiritish yashiriladi (mshot.js msSync, match_guard.py) */
+.ms-only .score-input-row,
+.ms-only .modal-actions .btn--primary { display: none !important; }
+.ms-slot--only { border-top: 0; padding-top: 0; margin-top: 4px; }
+.ms-only-hint { font-size: 12px; opacity: .7; text-align: center; margin-bottom: 2px; }
+.ms-pen-link { background: none; border: 0; color: inherit; opacity: .6; font-size: 12px; text-decoration: underline; padding: 4px; cursor: pointer; }
+.ms-row--marked { border-color: rgba(255, 214, 102, .75); box-shadow: 0 0 0 1px rgba(255, 214, 102, .35) inset; }
+.msa-only { padding: 12px; margin-bottom: 10px; }

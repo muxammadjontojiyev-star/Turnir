@@ -8,7 +8,16 @@
 
 const MS_IMG_MAX = 1800;          // skrinshot shu o'lchamgacha kichraytiriladi (o'qish uchun yetarli)
 const MS_IMG_Q = 0.88;
-const MS = { ctx: null, rows: null, token: null, busy: false };
+const MS = { ctx: null, rows: null, token: null, busy: false, only: true, pick: null };
+const MS_PLAYOFF = new Set(["wc_po", "cl_po", "el_po", "ac_po", "co_po"]);
+
+// «Natija faqat skrinshot bilan» (bosh admin kaliti, match_guard.py) — yoqiq bo'lsa qo'lda kiritish yashiriladi
+async function msLoadConfig() {
+  try { MS.only = !!(await apiFetch("/mshot/config")).shot_only; } catch (_) { /* standart — yoqiq */ }
+  document.querySelectorAll(".ms-slot").forEach(el => el.remove());
+  msSync();
+}
+setTimeout(msLoadConfig, 1200);
 
 // Ochiq natija oynasi → {mode, id}. Umumiy #modal-result (liga, ChL, YeL, OChL, KL — guruh va pley-off).
 function msResultModalCtx() {
@@ -36,9 +45,11 @@ const MS_CTX = [
 ];
 
 function msSlotHtml(c) {
-  return `<div class="ms-slot" data-ms-mode="${escHtml(c.mode)}" data-ms-id="${Number(c.id)}">
-      <button class="btn btn--ghost ms-btn" data-ms="shot">${escHtml(msT("ms_btn_shot"))}</button>
+  return `<div class="ms-slot${MS.only ? " ms-slot--only" : ""}" data-ms-mode="${escHtml(c.mode)}" data-ms-id="${Number(c.id)}">
+      ${MS.only ? `<div class="ms-only-hint">${escHtml(msT("ms_only_hint"))}</div>` : ""}
+      <button class="btn ${MS.only ? "btn--primary btn--glow" : "btn--ghost"} ms-btn" data-ms="shot">${escHtml(msT("ms_btn_shot"))}</button>
       <button class="btn btn--ghost ms-btn ms-btn--warn" data-ms="tech">${escHtml(msT("ms_btn_tech"))}</button>
+      ${MS.only && MS_PLAYOFF.has(c.mode) ? `<button class="ms-pen-link" data-ms="pen">${escHtml(msT("ms_pen_manual"))}</button>` : ""}
     </div>`;
 }
 
@@ -49,11 +60,13 @@ function msSync() {
     const open = !box.classList.contains("hidden");
     const slot = box.querySelector(".ms-slot");
     const c = open ? d.ctx() : null;
-    if (!c || !c.id) { slot?.remove(); continue; }
+    if (!c || !c.id) { slot?.remove(); box.classList.remove("ms-only"); continue; }
     if (slot && slot.dataset.msMode === c.mode && Number(slot.dataset.msId) === c.id) continue;
     slot?.remove();
     const actions = box.querySelector(".modal-actions");
-    if (actions) actions.insertAdjacentHTML("afterend", msSlotHtml(c));
+    if (!actions) continue;
+    actions.insertAdjacentHTML("afterend", msSlotHtml(c));
+    box.classList.toggle("ms-only", MS.only);           // qo'lda hisob va «Yuborish» yashiriladi (mshot.css)
   }
 }
 let _msSyncT = 0;
@@ -105,18 +118,35 @@ function msModal(id, html) {
 function msCloseModal(id) { document.getElementById(id)?.remove(); }
 
 // ---- 📸 skrinshot oynasi ----
+function msRowInner(r) {
+  return `<span class="ms-row-dt">${escHtml(r.date)} ${escHtml(r.time || "")}</span>
+    <span class="ms-row-main"><b>${escHtml(r.left)}</b><span class="ms-row-sc">${Number(r.s_left)} – ${Number(r.s_right)}</span><b>${escHtml(r.right)}</b></span>`;
+}
+function msRowHtml(r, i) {
+  return `<button class="ms-row${r.marked ? " ms-row--marked" : ""}" data-ms-row="${i}" ${MS.busy ? "disabled" : ""}>${msRowInner(r)}</button>`;
+}
+
+function msAskHtml() {
+  const r = MS.rows[MS.pick];
+  return `<div class="ms-hint">${escHtml(msT(r.marked ? "ms_ask_marked" : "ms_ask_one"))}</div>
+    <div class="ms-rows"><div class="ms-row ms-row--marked">${msRowInner(r)}</div></div>
+    <button class="btn btn--primary btn--glow ms-wide" data-ms-row="${MS.pick}" ${MS.busy ? "disabled" : ""}>${escHtml(msT(MS.busy ? "ms_applying" : "ms_ask_yes"))}</button>
+    ${MS.rows.length > 1 ? `<button class="btn btn--ghost ms-wide" data-ms="list">${escHtml(msT("ms_ask_other"))}</button>` : ""}
+    <button class="btn btn--ghost ms-wide" data-ms="again">${escHtml(msT("ms_back"))}</button>`;
+}
+
 function msShotHtml() {
   const rows = MS.rows;
+  if (rows && MS.pick != null && rows[MS.pick]) {
+    return `<div class="modal-title">${escHtml(msT("ms_shot_title"))}</div>${msAskHtml()}
+      <div class="modal-actions"><button class="btn btn--ghost" data-ms="close">${escHtml(msT("ms_close"))}</button></div>`;
+  }
   const body = !rows
     ? `<div class="ms-hint">${escHtml(msT("ms_shot_hint"))}</div>
        <label class="btn btn--primary ms-wide${MS.busy ? " ms-busy" : ""}">${escHtml(msT(MS.busy ? "ms_reading" : "ms_pick_file"))}
          <input type="file" accept="image/*" id="ms-shot-file" hidden ${MS.busy ? "disabled" : ""}></label>`
     : `<div class="ms-hint">${escHtml(msT("ms_pick_row"))}</div>
-       <div class="ms-rows">${rows.map((r, i) => `
-         <button class="ms-row" data-ms-row="${i}" ${MS.busy ? "disabled" : ""}>
-           <span class="ms-row-dt">${escHtml(r.date)} ${escHtml(r.time || "")}</span>
-           <span class="ms-row-main"><b>${escHtml(r.left)}</b><span class="ms-row-sc">${Number(r.s_left)} – ${Number(r.s_right)}</span><b>${escHtml(r.right)}</b></span>
-         </button>`).join("")}</div>
+       <div class="ms-rows">${rows.map(msRowHtml).join("")}</div>
        <button class="btn btn--ghost ms-wide" data-ms="again">${escHtml(msT("ms_back"))}</button>`;
   return `<div class="modal-title">${escHtml(msT("ms_shot_title"))}</div>
     ${typeof msNickInlineHtml === "function" ? msNickInlineHtml() : ""}
@@ -126,7 +156,7 @@ function msShotHtml() {
 function msShotRender() { if (document.getElementById("ms-shot")) msModal("ms-shot", msShotHtml()); }
 
 async function msShotOpen(c) {
-  MS.ctx = c; MS.rows = null; MS.token = null; MS.busy = false;
+  MS.ctx = c; MS.rows = null; MS.token = null; MS.busy = false; MS.pick = null;
   if (typeof msNickLoad === "function") await msNickLoad();
   msModal("ms-shot", msShotHtml());
 }
@@ -139,6 +169,8 @@ async function msShotRead(file) {
     const image = await msShrink(file);
     const r = await apiFetch("/mshot/read", { method: "POST", body: JSON.stringify({ image }) });
     MS.rows = r.rows; MS.token = r.token;
+    const mk = r.rows.findIndex(x => x.marked);
+    MS.pick = mk >= 0 ? mk : (r.rows.length === 1 ? 0 : null);   // belgilangan (yoki yagona) o'yin — so'raymiz
   } catch (e) { showToast(msErr(e)); }
   finally { MS.busy = false; msShotRender(); }
 }
@@ -171,10 +203,12 @@ document.addEventListener("click", (e) => {
     const c = { mode: slot.dataset.msMode, id: Number(slot.dataset.msId) };
     if (b.dataset.ms === "shot") void msShotOpen(c);
     if (b.dataset.ms === "tech" && typeof msTechOpen === "function") void msTechOpen(c);
+    if (b.dataset.ms === "pen") { slot.closest(".modal")?.classList.remove("ms-only"); b.remove(); }   // pley-off durang
     return;
   }
   if (!b.closest("#ms-shot")) return;
   if (b.dataset.msRow != null) { void msShotApply(Number(b.dataset.msRow)); return; }
-  if (b.dataset.ms === "again") { MS.rows = null; MS.token = null; msShotRender(); return; }
+  if (b.dataset.ms === "again") { MS.rows = null; MS.token = null; MS.pick = null; msShotRender(); return; }
+  if (b.dataset.ms === "list") { MS.pick = null; msShotRender(); return; }
   if (b.dataset.ms === "close") msCloseModal("ms-shot");
 }, true);
