@@ -17,9 +17,11 @@ function msNickHas() { return !!(MSN.info && MSN.info.nick); }
 // 2026-11-06 (egasi): ixcham — profil kartasida username ostida; ortiqcha tushuntirishsiz
 function msNickFormHtml(where) {
   const i = MSN.info || {};
-  if (i.nick && !MSN.edit) {
-    return `<div class="ms-nick ms-nick--set" data-ms-nick-where="${where}">
-        <span class="ms-nick-ic">🎮</span><span class="ms-nick-val">${escHtml(i.nick)}</span>
+  if ((i.nick || i.pending) && !MSN.edit) {
+    const pend = !i.nick && i.pending;                   // ikkinchi akkaunt — egasining tasdig'i kutilmoqda
+    return `<div class="ms-nick ms-nick--set${pend ? " ms-nick--pending" : ""}" data-ms-nick-where="${where}"
+        title="${escHtml(pend ? msT("ms_nick_pending") : i.linked ? msT("ms_nick_linked") : "")}">
+        <span class="ms-nick-ic">${pend ? "⏳" : i.linked ? "🔗" : "🎮"}</span><span class="ms-nick-val">${escHtml(i.nick || i.pending)}</span>
         <button class="ms-nick-edit" data-ms-nick-edit="1" aria-label="edit">✏️</button>
       </div>`;
   }
@@ -50,7 +52,7 @@ async function msNickSave(btn) {
       MSN.info = await send(true);
     }
     MSN.edit = false;
-    showToast(msT("ms_nick_saved"));
+    showToast(msT(MSN.info && MSN.info.link_requested ? "ms_nick_link_sent" : "ms_nick_saved"));
   } catch (e) {
     showToast(msErr(e));
   } finally {
@@ -95,7 +97,8 @@ const MSN_TARGETS = [
 ];
 
 function msNickSlotHtml() {
-  return `${!(MSN.info && MSN.info.nick) ? `<div class="ms-nick-label">${escHtml(msT("ms_nick_need"))}</div>` : ""}${msNickFormHtml("profile")}`;
+  const i = MSN.info || {};
+  return `${!(i.nick || i.pending) ? `<div class="ms-nick-label">${escHtml(msT("ms_nick_need"))}</div>` : ""}${msNickFormHtml("profile")}`;
 }
 
 function msNickPaintProfile() {

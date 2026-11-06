@@ -86,3 +86,5 @@
 .ms-pen-link { background: none; border: 0; color: inherit; opacity: .6; font-size: 12px; text-decoration: underline; padding: 4px; cursor: pointer; }
 .ms-row--marked { border-color: rgba(255, 214, 102, .75); box-shadow: 0 0 0 1px rgba(255, 214, 102, .35) inset; }
 .msa-only { padding: 12px; margin-bottom: 10px; }
+.ms-nick--pending { background: rgba(255, 214, 102, .12); border-color: rgba(255, 214, 102, .4); }
+.msl-box { border-color: rgba(124, 92, 255, .55); bottom: calc(180px + env(safe-area-inset-bottom)); }
