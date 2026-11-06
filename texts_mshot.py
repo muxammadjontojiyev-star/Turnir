@@ -62,6 +62,19 @@ MSHOT_TEXTS = {
         LANGUAGE_EN: "🎮 Your opponent wants to submit the result by screenshot, but you haven't set your eFootball nickname. "
                      "App → Profile → «YOUR eFOOTBALL NICKNAME» (eFootball → Extras, the name under your picture).",
     },
+    "mshot_notify_await": {
+        LANGUAGE_UZ: "📸 Raqibingiz natijani Match History skrinshoti bilan yubordi: {score} (sizning golingiz birinchi).\n"
+                     "Skrinshotdagi niknameingiz: «{nick}». Ilovani oching va tasdiqlang — niknameingiz ham saqlanadi.",
+        LANGUAGE_RU: "📸 Соперник отправил результат скриншотом Match History: {score} (ваши голы первыми).\n"
+                     "Ваш ник на скриншоте: «{nick}». Откройте приложение и подтвердите — ник тоже сохранится.",
+        LANGUAGE_EN: "📸 Your opponent submitted a result with a Match History screenshot: {score} (your goals first).\n"
+                     "Your nickname on it: «{nick}». Open the app to confirm — your nickname will be saved too.",
+    },
+    "mshot_notify_await_ok": {
+        LANGUAGE_UZ: "✅ Raqibingiz skrinshotli natijani tasdiqladi: {score}.",
+        LANGUAGE_RU: "✅ Соперник подтвердил результат со скриншотом: {score}.",
+        LANGUAGE_EN: "✅ Your opponent confirmed the screenshot result: {score}.",
+    },
     "efnick_link_request": {
         LANGUAGE_UZ: "🔗 {who} sizning eFootball niknameingizni o'z akkauntiga ulamoqchi. Bu sizning ikkinchi Telegram akkauntingizmi? "
                      "Ilovani ochib tasdiqlang yoki rad eting.",

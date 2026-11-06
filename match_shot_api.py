@@ -11,6 +11,7 @@ Mantiq: ef_nick.py, match_shot.py, match_claims.py, match_modes.py.
        nick_mismatch, bad_date, shot_used, playoff_draw, opp_other_score, my_other_score, already_confirmed, ...
   GET  /mshot/incoming               — men haqimda skrinshot bilan yozilgan natijalar (e'tiroz muddati ichida)
   POST /mshot/{id}/dispute           — e'tiroz → adminga
+  POST /mshot/{id}/accept {nick}     — raqib niknamesi yo'q edi: tasdiqlash (+ niknamesi saqlanadi); /reject — rad
   POST /mshot/tech {mode, match_id, images[], note} — texnik g'alaba so'rovi
   GET  /mshot/admin/list             — ochiq ishlar (bosh admin + rejim/liga admini)
   GET  /mshot/admin/img/{kind}/{id}/{idx} — rasm (base64)
@@ -137,6 +138,9 @@ async def mshot_apply(mode: str = Body(..., embed=True), match_id: int = Body(..
     r = _fail((ok, r))
     if r["admin_pending"]:
         await _tell_admins(mode, match_id, "mshot_admin_pending", score=f"{r['score1']}:{r['score2']}")
+    elif r.get("await_opp"):
+        await _tell(r["opponent"]["id"], "mshot_notify_await", score=f"{r['their']}:{r['my']}", nick=r["opp_nick"])
+        return {"status": "await_opp", "score1": r["score1"], "score2": r["score2"]}
     else:
         await _tell(r["opponent"]["id"], "mshot_notify_applied", score=f"{r['their']}:{r['my']}", hours=DISPUTE_HOURS)
     return {"status": "admin_pending" if r["admin_pending"] else "ok", "score1": r["score1"], "score2": r["score2"]}
@@ -152,6 +156,23 @@ def mshot_incoming(user: dict = Depends(get_authenticated_user)):
 async def mshot_dispute(shot_id: int, user: dict = Depends(get_authenticated_user)):
     from match_shot import dispute
     r = _fail(dispute(user["id"], shot_id))
+    await _tell_admins(r["mode"], r["match_id"], "mshot_admin_dispute", score=f"{r['score1']}:{r['score2']}")
+    return {"status": "ok"}
+
+
+@router.post("/mshot/{shot_id}/accept")
+async def mshot_accept(shot_id: int, nick: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    """Raqib niknamesi yo'q edi: «bu mening niknamem» → niknamesi saqlanadi, natija tasdiqlanadi."""
+    from match_shot_await import accept_await
+    r = _fail(await accept_await(user, shot_id, nick))
+    await _tell(r["uploader_id"], "mshot_notify_await_ok", score=f"{r['score1']}:{r['score2']}")
+    return {"status": "ok"}
+
+
+@router.post("/mshot/{shot_id}/reject")
+async def mshot_reject(shot_id: int, user: dict = Depends(get_authenticated_user)):
+    from match_shot_await import reject_await
+    r = _fail(await reject_await(user, shot_id))
     await _tell_admins(r["mode"], r["match_id"], "mshot_admin_dispute", score=f"{r['score1']}:{r['score2']}")
     return {"status": "ok"}
 

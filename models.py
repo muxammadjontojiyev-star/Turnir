@@ -1322,6 +1322,8 @@ def init_db():
         from ef_nick_link import migrate_ef_nick_link       # 2026-11-06: 1 eFootball akkaunt → 2 Telegram (shu mavsum)
         migrate_ef_nick_link(_c.cursor())
         migrate_match_shots(_c.cursor())
+        from match_shot_await import migrate_shot_await     # 2026-11-06: raqib niknamesi yo'q — u tasdiqlaydi
+        migrate_shot_await(_c.cursor())
         migrate_match_claims(_c.cursor())
         from match_guard import migrate_flags               # 2026-11-06: «natija faqat skrinshot bilan» kaliti
         migrate_flags(_c.cursor())

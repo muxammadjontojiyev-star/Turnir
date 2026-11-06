@@ -157,7 +157,7 @@ def _check_row(mode: str, match: dict, user_id: int, row: dict) -> tuple[str | N
     if user_id not in nicks:
         return "no_my_nick", {}
     if opp not in nicks:
-        return "no_opp_nick", {"opponent_id": opp}
+        return "no_opp_nick", {"opponent_id": opp, "my_nick": nicks[user_id]}
     if _key(nicks[p1]) == _key(nicks[p2]):
         return "same_person", {}                        # bitta eFootball akkaunt ikkala tomonda (ef_nick_link)
     straight = min(nick_sim(row["left"], nicks[p1]), nick_sim(row["right"], nicks[p2]))
@@ -189,8 +189,10 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
         return False, "already_confirmed"
     row = rd["rows"][row_idx]
     why, r = _check_row(mode, match, user["id"], row)
-    if why == "no_opp_nick":
-        _NICK_REMIND.add(r["opponent_id"])
+    awaiting = why == "no_opp_nick"
+    if awaiting:                                        # raqib niknamesi yo'q — u tasdiqlaydi (match_shot_await)
+        from match_shot_await import check_await
+        why, r = check_await(mode, match, user["id"], row, r["my_nick"])
     if why in ("nick_mismatch", "bad_date") and row.get("marked"):
         return False, "mark_over_text"                 # belgi chizig'i nikname/sana ustidan o'tib, o'qib bo'lmadi
     if why:
@@ -203,6 +205,16 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
     finally:
         conn.close()
     s1, s2, opp = r["s1"], r["s2"], get_user_by_id(r["opponent_id"])
+    if awaiting:
+        from match_shot_await import apply_await
+        ok, res = await apply_await(user, mode, match, r, fp, rd["img"])
+        if not ok:
+            return False, res
+        _READS.pop(token, None)
+        my = s1 if user["id"] == match["player1_id"] else s2
+        their = s2 if user["id"] == match["player1_id"] else s1
+        return True, {"score1": s1, "score2": s2, "admin_pending": res["admin_pending"], "await_opp": res["await_opp"],
+                      "opponent": opp, "my": my, "their": their, "opp_nick": r["opp_nick"]}
     sub = match.get("submitted_by")
     if sub and sub == opp["id"]:
         if (match.get("score1"), match.get("score2")) != (s1, s2):
@@ -232,7 +244,7 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
     logger.info("MATCH SHOT: %s #%s — %s:%s (user %s, skrinshot)", mode, match_id, s1, s2, user["id"])
     my = s1 if user["id"] == match["player1_id"] else s2
     their = s2 if user["id"] == match["player1_id"] else s1
-    return True, {"score1": s1, "score2": s2, "admin_pending": pending, "opponent": opp, "my": my, "their": their}
+    return True, {"score1": s1, "score2": s2, "admin_pending": pending, "await_opp": False, "opponent": opp, "my": my, "their": their}
 
 
 def incoming(user_id: int) -> list[dict]:
@@ -254,7 +266,8 @@ def incoming(user_id: int) -> list[dict]:
         out.append({"id": r["id"], "mode": r["mode"], "match_id": r["match_id"], "nickname": r["nickname"],
                     "my_goals": r["score1"] if p1_me else r["score2"], "their_goals": r["score2"] if p1_me else r["score1"],
                     "left_s": int(r["created_at"] + DISPUTE_HOURS * 3600 - time.time())})
-    return out
+    from match_shot_await import incoming_await
+    return incoming_await(user_id) + out
 
 
 def dispute(user_id: int, shot_id: int) -> tuple[bool, str | dict]:

@@ -123,6 +123,12 @@ async def confirm_as(mode: str, match_id: int, user: dict):
     return await _call(cfg["confirm"](), match_id=match_id, user=user, **extra)
 
 
+async def reject_as(mode: str, match_id: int, user: dict):
+    cfg = MODES[mode]
+    extra = {"action": "reject"} if cfg["kind"] == "action" else {"accept": False}
+    return await _call(cfg["confirm"](), match_id=match_id, user=user, **extra)
+
+
 def force_set(mode: str, match_id: int, s1: int, s2: int) -> tuple[bool, str]:
     try:
         ok, why = MODES[mode]["force"]()(match_id, s1, s2)

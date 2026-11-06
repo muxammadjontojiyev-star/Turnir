@@ -167,7 +167,7 @@ def decide(admin: dict, kind: str, item_id: int, action: str, s1: int | None = N
         _set_status(table, item_id, "rejected", admin["id"], open_st)
         return True, {"result": "rejected", "item": dict(r)}
     if kind == "shot" and action == "uphold":
-        if r["status"] == "admin_pending":
+        if r["status"] == "admin_pending" or m.get("status") != "confirmed":   # rad etilgan bo'lsa ham — skrinshot hisobi
             ok, why = force_set(r["mode"], r["match_id"], r["score1"], r["score2"])
             if not ok:
                 return False, why
