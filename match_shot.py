@@ -158,6 +158,8 @@ def _check_row(mode: str, match: dict, user_id: int, row: dict) -> tuple[str | N
         return "no_my_nick", {}
     if opp not in nicks:
         return "no_opp_nick", {"opponent_id": opp}
+    if _key(nicks[p1]) == _key(nicks[p2]):
+        return "same_person", {}                        # bitta eFootball akkaunt ikkala tomonda (ef_nick_link)
     straight = min(nick_sim(row["left"], nicks[p1]), nick_sim(row["right"], nicks[p2]))
     swapped = min(nick_sim(row["left"], nicks[p2]), nick_sim(row["right"], nicks[p1]))
     if max(straight, swapped) < NICK_MATCH_MIN:

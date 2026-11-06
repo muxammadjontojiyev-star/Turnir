@@ -3,7 +3,9 @@ match_shot_api.py — eF nikname, SKRINSHOTLI NATIJA, TEXNIK G'ALABA so'rovi va 
 Mantiq: ef_nick.py, match_shot.py, match_claims.py, match_modes.py.
 
   GET  /ef-nick                      — {nick, free_left, price, free_per_season}
-  POST /ef-nick {nick, pay}          — xato: bad_nick, same_nick, nick_taken, need_pay, insufficient
+  POST /ef-nick {nick, pay}          — xato: bad_nick, same_nick, nick_taken, nick_link_full, need_pay, insufficient;
+                                       band nikname (shu mavsum) — egasiga ulash so'rovi, javobda link_requested
+  GET  /ef-nick/links                — mening niknamemga ulash so'rovlari; POST /ef-nick/links/{id} {accept}
   POST /mshot/read {image}           — {token, rows[]}; xato: ocr_unavailable, no_rows, bad_image, daily_limit
   POST /mshot/apply {mode, match_id, token, row} — natija yoziladi; xato: expired, no_my_nick, no_opp_nick,
        nick_mismatch, bad_date, shot_used, playoff_draw, opp_other_score, my_other_score, already_confirmed, ...
@@ -82,10 +84,35 @@ def ef_nick_get(user: dict = Depends(get_authenticated_user)):
 
 
 @router.post("/ef-nick")
-def ef_nick_set(nick: str = Body(..., embed=True), pay: bool = Body(False, embed=True),
+async def ef_nick_set(nick: str = Body(..., embed=True), pay: bool = Body(False, embed=True),
                 user: dict = Depends(get_authenticated_user)):
-    from ef_nick import set_nick
-    return _fail(set_nick(user["id"], nick, pay))
+    from ef_nick import get_nick_info, set_nick
+    r = _fail(set_nick(user["id"], nick, pay))
+    if isinstance(r, dict) and r.get("pending"):         # band nikname — egasiga tasdiq so'rovi (ef_nick_link)
+        if not r.get("repeat"):
+            await _tell(r["owner_id"], "efnick_link_request", who=_who_name(user))
+        return {**get_nick_info(user["id"]), "link_requested": True}
+    return r
+
+
+def _who_name(user: dict) -> str:
+    return ("@" + user["username"]) if user.get("username") else (user.get("nickname") or str(user.get("id")))
+
+
+@router.get("/ef-nick/links")
+def ef_nick_links(user: dict = Depends(get_authenticated_user)):
+    """Mening niknamemga ulanmoqchi bo'lgan (ikkinchi) akkauntlar — tasdiq kutilmoqda."""
+    from ef_nick_link import requests_for_owner
+    return {"items": requests_for_owner(user["id"])}
+
+
+@router.post("/ef-nick/links/{link_id}")
+async def ef_nick_link_decide(link_id: int, accept: bool = Body(..., embed=True),
+                              user: dict = Depends(get_authenticated_user)):
+    from ef_nick_link import decide_link
+    r = _fail(decide_link(user["id"], link_id, accept))
+    await _tell(r["user_id"], "efnick_link_ok" if accept else "efnick_link_no")
+    return {"status": "ok"}
 
 
 # ---------------- skrinshotli natija ----------------

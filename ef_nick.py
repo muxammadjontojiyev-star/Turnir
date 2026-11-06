@@ -52,21 +52,42 @@ def get_nick_info(user_id: int) -> dict:
     finally:
         conn.close()
     used = (r["changes"] if r and r["season"] == season else 0)
-    return {"nick": r["nick"] if r else None, "free_left": max(0, NICK_FREE_CHANGES - used),
-            "price": NICK_PAID_PRICE, "free_per_season": NICK_FREE_CHANGES}
+    info = {"nick": r["nick"] if r else None, "free_left": max(0, NICK_FREE_CHANGES - used),
+            "price": NICK_PAID_PRICE, "free_per_season": NICK_FREE_CHANGES, "linked": False, "pending": None}
+    # 2026-11-06: ikkinchi Telegram akkaunt — egasining niknamesi (ef_nick_link)
+    from ef_nick_link import my_link
+    conn = get_connection()
+    try:
+        lk = my_link(conn.cursor(), user_id)
+    finally:
+        conn.close()
+    if lk and lk["status"] == "ok":
+        info.update(nick=lk["nick"], linked=True)
+    elif lk:
+        info["pending"] = lk["nick"]
+    return info
 
 
 def nicks_for_users(user_ids) -> dict[int, str]:
     ids = [int(u) for u in user_ids if u]
     if not ids:
         return {}
+    from ef_nick_link import active_links
     conn = get_connection()
     try:
-        q = ",".join("?" * len(ids))
-        return {r["user_id"]: r["nick"] for r in conn.execute(
-            f"SELECT user_id, nick FROM ef_nicknames WHERE user_id IN ({q})", ids)}
+        cur = conn.cursor()
+        links = active_links(cur, ids)                  # ikkinchi akkaunt → egasi (faqat shu mavsum)
+        want = sorted(set(ids) | set(links.values()))
+        q = ",".join("?" * len(want))
+        own = {r["user_id"]: r["nick"] for r in cur.execute(
+            f"SELECT user_id, nick FROM ef_nicknames WHERE user_id IN ({q})", want)}
     finally:
         conn.close()
+    out = {u: own[u] for u in ids if u in own}
+    for u, owner in links.items():
+        if owner in own:
+            out[u] = own[owner]
+    return out
 
 
 def set_nick(user_id: int, nick: str, pay: bool = False) -> tuple[bool, str | dict]:
@@ -86,8 +107,16 @@ def set_nick(user_id: int, nick: str, pay: bool = False) -> tuple[bool, str | di
             return False, "same_nick"
         other = cur.execute("SELECT user_id FROM ef_nicknames WHERE nick_norm = ? AND user_id != ?", (nn, user_id)).fetchone()
         if other:
-            conn.rollback()
-            return False, "nick_taken"
+            # 2026-11-06: band — egasiga «ikkinchi akkauntingizmi?» so'rovi (faqat shu mavsum, ef_nick_link)
+            from ef_nick_link import request_link
+            ok, res = request_link(cur, user_id, other["user_id"])
+            if not ok:
+                conn.rollback()
+                return False, res
+            conn.commit()
+            return True, {**res, "info": None}
+        from ef_nick_link import drop_my_link
+        drop_my_link(cur, user_id)                      # o'z niknameini kiritdi — eski ulanish bekor
         paid = False
         if r is None:
             cur.execute("INSERT INTO ef_nicknames (user_id, nick, nick_norm, season, changes) VALUES (?, ?, ?, ?, 0)",

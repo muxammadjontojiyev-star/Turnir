@@ -62,6 +62,24 @@ MSHOT_TEXTS = {
         LANGUAGE_EN: "🎮 Your opponent wants to submit the result by screenshot, but you haven't set your eFootball nickname. "
                      "App → Profile → «YOUR eFOOTBALL NICKNAME» (eFootball → Extras, the name under your picture).",
     },
+    "efnick_link_request": {
+        LANGUAGE_UZ: "🔗 {who} sizning eFootball niknameingizni o'z akkauntiga ulamoqchi. Bu sizning ikkinchi Telegram akkauntingizmi? "
+                     "Ilovani ochib tasdiqlang yoki rad eting.",
+        LANGUAGE_RU: "🔗 {who} хочет привязать ваш ник eFootball к своему аккаунту. Это ваш второй Telegram-аккаунт? "
+                     "Откройте приложение, чтобы подтвердить или отклонить.",
+        LANGUAGE_EN: "🔗 {who} wants to link your eFootball nickname to their account. Is this your second Telegram account? "
+                     "Open the app to confirm or reject.",
+    },
+    "efnick_link_ok": {
+        LANGUAGE_UZ: "✅ eFootball nikname akkauntingizga ulandi (shu mavsum uchun).",
+        LANGUAGE_RU: "✅ Ник eFootball привязан к вашему аккаунту (на этот сезон).",
+        LANGUAGE_EN: "✅ The eFootball nickname is linked to your account (for this season).",
+    },
+    "efnick_link_no": {
+        LANGUAGE_UZ: "❌ Nikname egasi ulashni rad etdi. O'zingizning eFootball niknameingizni kiriting.",
+        LANGUAGE_RU: "❌ Владелец ника отклонил привязку. Укажите свой ник eFootball.",
+        LANGUAGE_EN: "❌ The nickname owner rejected the link. Enter your own eFootball nickname.",
+    },
     "mshot_notify_fixed": {
         LANGUAGE_UZ: "🛠 Admin e'tirozni ko'rib chiqdi va natijani tuzatdi: {score}.",
         LANGUAGE_RU: "🛠 Админ рассмотрел спор и исправил результат: {score}.",
