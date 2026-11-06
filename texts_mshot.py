@@ -54,6 +54,14 @@ MSHOT_TEXTS = {
         LANGUAGE_RU: "❌ Вам засчитано техническое поражение (0:3) за неявку.",
         LANGUAGE_EN: "❌ You were given a technical loss (0:3) for not showing up.",
     },
+    "mshot_notify_set_nick": {
+        LANGUAGE_UZ: "🎮 Raqibingiz natijani skrinshot bilan yubormoqchi, lekin siz eFootball niknameingizni kiritmagansiz. "
+                     "Ilova → Profil → «eFOOTBALL NIKNAMEINGIZ» bo'limida kiriting (eFootball → Extras, rasmingiz ostidagi nom).",
+        LANGUAGE_RU: "🎮 Соперник хочет отправить результат скриншотом, но вы не указали ник eFootball. "
+                     "Приложение → Профиль → «ВАШ НИК В eFOOTBALL» (eFootball → Extras, имя под фото).",
+        LANGUAGE_EN: "🎮 Your opponent wants to submit the result by screenshot, but you haven't set your eFootball nickname. "
+                     "App → Profile → «YOUR eFOOTBALL NICKNAME» (eFootball → Extras, the name under your picture).",
+    },
     "mshot_notify_fixed": {
         LANGUAGE_UZ: "🛠 Admin e'tirozni ko'rib chiqdi va natijani tuzatdi: {score}.",
         LANGUAGE_RU: "🛠 Админ рассмотрел спор и исправил результат: {score}.",

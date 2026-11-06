@@ -1321,6 +1321,8 @@ def init_db():
         migrate_ef_nick(_c.cursor())
         migrate_match_shots(_c.cursor())
         migrate_match_claims(_c.cursor())
+        from match_guard import migrate_flags               # 2026-11-06: «natija faqat skrinshot bilan» kaliti
+        migrate_flags(_c.cursor())
         from season_break import migrate_season_break       # 2026-11-01: mavsumlar orasidagi tanaffus (ustun)
         from club_priority import migrate_priority_switch   # 2026-11-01: navbat kaliti (bosh admin paneli)
         migrate_priority_switch(_c.cursor())

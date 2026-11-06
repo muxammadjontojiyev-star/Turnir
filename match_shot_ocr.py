@@ -72,6 +72,8 @@ BRIGHT = 170                     # hisob raqamlari — oq, qalin (kulrang niknam
 TALL_K, DASH_K = 0.6, 0.35       # baland belgi (raqam) / past-keng belgi (chiziqcha) — eng baland belgiga nisbatan
 GLUE_K = 0.6                     # bir son raqamlari orasidagi bo'shliq (balandlikka nisbatan)
 PAD = 20
+WHOLE_PSMS = ("7", "13", "6")
+WHOLE_RE = re.compile(r"(?<!\d)(\d{1,2})\s*-+\s*(\d{1,2})(?!\d)")
 
 
 def _ocr_digits(im) -> str:
@@ -138,10 +140,52 @@ def _score(img, cx: float, y0: int, y1: int) -> tuple[int, int] | None:
 
     L = side([c for c in tall if c[1] <= d[0]], True)
     R = side([c for c in tall if c[0] >= d[1]], False)
-    if not L or not R:
-        return None
-    sl, sr = read(L), read(R)
-    return (int(sl), int(sr)) if sl and sr else None
+    if L and R:
+        sl, sr = read(L), read(R)
+        if sl and sr:
+            return int(sl), int(sr)
+    return _score_whole(crop)
+
+
+def _score_whole(crop) -> tuple[int, int] | None:
+    """Zaxira: butun hisob qismini «X-Y» sifatida o'qish (belgi chizig'i raqamlarga tegib ketgan bo'lsa)."""
+    from PIL import Image, ImageOps
+    im = ImageOps.expand(ImageOps.invert(crop), PAD, 255)
+    im = im.resize((im.width * SCORE_UPSCALE, im.height * SCORE_UPSCALE), Image.LANCZOS)
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        im.save(f, "PNG")
+        path = f.name
+    try:
+        votes: dict[tuple[int, int], int] = {}
+        for psm in WHOLE_PSMS:
+            t = _tess(path, "--psm", psm, "-c", "tessedit_char_whitelist=0123456789-")
+            mm = WHOLE_RE.search(t)
+            if mm:
+                k = (int(mm.group(1)), int(mm.group(2)))
+                votes[k] = votes.get(k, 0) + 1
+    finally:
+        os.remove(path)
+    return max(votes, key=votes.get) if votes else None
+
+
+TIME_ZONE_W = 0.95              # vaqt sana o'ngida, taxminan sana kengligicha joyda
+
+
+def _time_near(img, d: dict) -> str | None:
+    from PIL import Image, ImageOps
+    x0 = int(d["x"] + d["w"]); x1 = int(min(img.width, x0 + d["w"] * TIME_ZONE_W))
+    crop = img.convert("L").crop((x0, int(d["y"] - d["h"] * 0.25), x1, int(d["y"] + d["h"] * 1.25)))
+    im = ImageOps.expand(ImageOps.invert(crop), PAD, 255)
+    im = im.resize((im.width * SCORE_UPSCALE, im.height * SCORE_UPSCALE), Image.LANCZOS)
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        im.save(f, "PNG")
+        path = f.name
+    try:
+        t = _tess(path, "--psm", "7", "-c", "tessedit_char_whitelist=0123456789:")
+    finally:
+        os.remove(path)
+    mm = re.search(r"(\d{1,2}):(\d{2})", t)
+    return f"{mm.group(1)}:{mm.group(2)}" if mm else None
 
 
 def read_rows(raw: bytes) -> list[dict]:
@@ -153,6 +197,8 @@ def read_rows(raw: bytes) -> list[dict]:
     if img.width < MIN_WIDTH:
         k = MIN_WIDTH / img.width
         img = img.resize((MIN_WIDTH, int(img.height * k)), Image.LANCZOS)
+    orig = img
+    img = _erase_marks(img)                    # rangli chiziqlar matn ustidan o'tgan bo'lsa ham o'qilsin
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
         img.save(f, "PNG")
         path = f.name
@@ -169,6 +215,8 @@ def read_rows(raw: bytes) -> list[dict]:
         y_end = dates[i + 1]["y"] - h * 0.3 if i + 1 < len(dates) else d["y"] + h * ROW_MAX_H
         tm = next((w["t"] for w in words if TIME_RE.match(w["t"]) and abs(w["cy"] - d["cy"]) < h * 0.6
                    and 0 < w["x"] - d["x"] < d["w"] * 3), None)
+        if tm is None:                                            # belgi chizig'i vaqt ustidan o'tgan bo'lsa
+            tm = _time_near(img, d)
         # sana+vaqt guruhining markazi — kartochka markazi (hisob shu yerda)
         tw = next((w for w in words if w["t"] == tm and abs(w["cy"] - d["cy"]) < h * 0.6), None)
         cx = ((d["x"] + (tw["x"] + tw["w"] if tw else d["x"] + d["w"])) / 2)
@@ -182,5 +230,60 @@ def read_rows(raw: bytes) -> list[dict]:
         if not (left and right and sc):
             logger.info("MATCH SHOT: qator o'qilmadi (%s %s): %r | %r | %r", d["t"], tm, left, right, sc)
             continue
-        rows.append({"date": d["t"], "time": tm, "left": left, "right": right, "s_left": sc[0], "s_right": sc[1]})
+        nick_bot = max((w["y"] + w["h"] for w in nick_line), default=int(d["y"] + h * 4))
+        rows.append({"date": d["t"], "time": tm, "left": left, "right": right, "s_left": sc[0], "s_right": sc[1],
+                     "_box": (cx, d["y"] - h * MARK_PAD_H, nick_bot + h * MARK_PAD_H)})
+    _marks(orig, rows)
+    for r in rows:
+        r.pop("_box", None)
     return rows
+
+
+# ---- ishtirokchi rangli chiziq bilan belgilagan qator (2026-11-06) ----
+# O'yin qatorining matn qismi (logotiplar orasi) odatda faqat oq/kulrang/qora — u yerdagi YORQIN RANGLI
+# piksellar — ishtirokchi chizgan belgi (aylana, ostiga chiziq, galochka). Eng ko'p bo'lgan qator — belgilangan.
+MARK_PAD_H = 0.6                 # qator chegarasi sana/nikname dan shuncha (sana balandligi) tashqariga
+MARK_HALF_W = 0.30               # tekshiriladigan kenglik: markazdan ± (rasm kengligiga nisbatan; logotiplar tashqarida)
+MARK_SAT, MARK_VAL = 0.45, 0.35  # «rangli» piksel: to'yinganlik va yorqinlik chegarasi
+MARK_MIN_RATIO = 0.004           # qatordagi rangli piksellar ulushi shundan kam bo'lsa — belgi yo'q
+MARK_LEAD = 2.0                  # eng ko'p belgilangan qator keyingisidan kamida shuncha barobar ko'p bo'lsin
+
+
+MARK_BG = (30, 31, 36)           # o'chirilgan belgi o'rniga — Match History qator foni
+MARK_GROW = 2                    # belgi chetini shuncha piksel kengaytirib o'chirish
+
+
+def _colored_mask(img):
+    import numpy as np
+    hsv = np.asarray(img.convert("HSV"), dtype=np.float32) / 255.0
+    return (hsv[..., 1] > MARK_SAT) & (hsv[..., 2] > MARK_VAL)
+
+
+def _erase_marks(img):
+    """Yorqin rangli piksellarni (belgi, logotip, nuqtalar) fon rangiga bo'yaydi — matn (oq/kulrang) qoladi."""
+    import numpy as np
+    from PIL import Image, ImageFilter
+    m = Image.fromarray((_colored_mask(img) * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(MARK_GROW * 2 + 1))
+    out = img.copy()
+    out.paste(Image.new("RGB", img.size, MARK_BG), mask=m)
+    return out
+
+
+def _marks(img, rows: list[dict]) -> None:
+    import numpy as np
+    if not rows:
+        return
+    colored = _colored_mask(img)
+    H, W = colored.shape
+    ratios = []
+    for r in rows:
+        cx, y0, y1 = r["_box"]
+        x0, x1 = int(max(0, cx - W * MARK_HALF_W)), int(min(W, cx + W * MARK_HALF_W))
+        y0, y1 = int(max(0, y0)), int(min(H, y1))
+        band = colored[y0:y1, x0:x1]
+        ratios.append(float(band.mean()) if band.size else 0.0)
+    best = max(range(len(rows)), key=lambda i: ratios[i])
+    others = sorted(ratios, reverse=True)[1:2]
+    lead_ok = not others or ratios[best] >= MARK_LEAD * max(others[0], MARK_MIN_RATIO / MARK_LEAD)
+    for i, r in enumerate(rows):
+        r["marked"] = bool(i == best and ratios[best] >= MARK_MIN_RATIO and lead_ok)

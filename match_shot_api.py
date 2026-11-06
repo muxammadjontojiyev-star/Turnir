@@ -13,6 +13,8 @@ Mantiq: ef_nick.py, match_shot.py, match_claims.py, match_modes.py.
   GET  /mshot/admin/list             — ochiq ishlar (bosh admin + rejim/liga admini)
   GET  /mshot/admin/img/{kind}/{id}/{idx} — rasm (base64)
   POST /mshot/admin/decide {kind, id, action, s1, s2}
+  GET  /mshot/config                 — {shot_only}: natija faqat skrinshot bilanmi (match_guard)
+  POST /mshot/admin/only {on}        — bosh admin: kalitni yoqish/o'chirish
 Rasmlar JSON'da dataURL (base64) — frontend kichraytirib yuboradi.
 """
 
@@ -22,13 +24,14 @@ import logging
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 
-from api import get_authenticated_admin, get_authenticated_user
+from api import get_authenticated_admin, get_authenticated_super_admin, get_authenticated_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 IMG_MAX_BYTES = 8 * 1024 * 1024
 MODE_LABEL_KEY = "mshot_mode_{}"
+_NICK_REMINDED: set[int] = set()   # jarayon davomida bir martadan
 
 
 def _b64(data_url: str) -> bytes:
@@ -97,8 +100,14 @@ async def mshot_read(image: str = Body(..., embed=True), user: dict = Depends(ge
 async def mshot_apply(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
                       token: str = Body(..., embed=True), row: int = Body(..., embed=True),
                       user: dict = Depends(get_authenticated_user)):
-    from match_shot import DISPUTE_HOURS, apply_shot
-    r = _fail(await apply_shot(user, mode, match_id, token, row))
+    from match_shot import _NICK_REMIND, DISPUTE_HOURS, apply_shot
+    ok, r = await apply_shot(user, mode, match_id, token, row)
+    for uid in list(_NICK_REMIND):                     # raqib niknameini kiritmagan — unga eslatma (bir marta)
+        _NICK_REMIND.discard(uid)
+        if uid not in _NICK_REMINDED:
+            _NICK_REMINDED.add(uid)
+            await _tell(uid, "mshot_notify_set_nick")
+    r = _fail((ok, r))
     if r["admin_pending"]:
         await _tell_admins(mode, match_id, "mshot_admin_pending", score=f"{r['score1']}:{r['score2']}")
     else:
@@ -170,3 +179,17 @@ async def mshot_admin_decide(kind: str = Body(..., embed=True), id: int = Body(.
         for uid in (it["uploader_id"], it["opponent_id"]):
             await _tell(uid, "mshot_notify_fixed", score=f"{r['score'][0]}:{r['score'][1]}")
     return {"status": "ok", "result": r["result"]}
+
+
+# ---------------- «natija faqat skrinshot bilan» kaliti (match_guard.py) ----------------
+
+@router.get("/mshot/config")
+def mshot_config(user: dict = Depends(get_authenticated_user)):
+    from match_guard import shot_only
+    return {"shot_only": shot_only()}
+
+
+@router.post("/mshot/admin/only")
+def mshot_admin_only(on: bool = Body(..., embed=True), admin: dict = Depends(get_authenticated_super_admin)):
+    from match_guard import set_shot_only
+    return {"shot_only": set_shot_only(on)}

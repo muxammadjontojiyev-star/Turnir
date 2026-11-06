@@ -34,6 +34,7 @@ SHOT_IMG_MAX = 1600
 SHOT_IMG_Q = 80
 _READS: dict[str, dict] = {}      # token → {user_id, rows, img, at}
 _READ_COUNT: dict[tuple[int, str], int] = {}
+_NICK_REMIND: set[int] = set()    # niknameini kiritmagan raqiblar — API eslatma yuboradi (match_shot_api)
 
 
 def migrate_match_shots(cur) -> None:
@@ -120,9 +121,29 @@ async def read_shot(user_id: int, raw: bytes) -> tuple[bool, str | dict]:
     return True, {"token": token, "rows": rows}
 
 
-def _fp(row: dict, played: datetime) -> str:
+FP_TIME_TOL_MIN = 10             # belgi chizig'i ostidagi vaqt biroz noto'g'ri o'qilsa ham — o'sha o'yin
+
+
+def _fp_prefix(row: dict, played: datetime) -> str:
     nicks = "|".join(sorted([_key(row["left"]), _key(row["right"])]))
-    return f"{nicks}|{played:%Y-%m-%d %H:%M}|{row['s_left']}-{row['s_right']}"
+    return f"{nicks}|{played:%Y-%m-%d}|{row['s_left']}-{row['s_right']}|"
+
+
+def _fp(row: dict, played: datetime) -> str:
+    return _fp_prefix(row, played) + f"{played:%H:%M}"
+
+
+def _shot_used(conn, row: dict, played: datetime) -> bool:
+    """Shu eFootball o'yini (niknamelar, sana, hisob, vaqt ±FP_TIME_TOL_MIN) avval ishlatilganmi."""
+    pre = _fp_prefix(row, played)
+    for r in conn.execute("SELECT fp FROM match_shots WHERE substr(fp, 1, ?) = ?", (len(pre), pre)):
+        try:
+            hh, mm = r["fp"][len(pre):].split(":")
+        except ValueError:
+            return True
+        if abs((int(hh) * 60 + int(mm)) - (played.hour * 60 + played.minute)) <= FP_TIME_TOL_MIN:
+            return True
+    return False
 
 
 def _check_row(mode: str, match: dict, user_id: int, row: dict) -> tuple[str | None, dict]:
@@ -136,7 +157,7 @@ def _check_row(mode: str, match: dict, user_id: int, row: dict) -> tuple[str | N
     if user_id not in nicks:
         return "no_my_nick", {}
     if opp not in nicks:
-        return "no_opp_nick", {}
+        return "no_opp_nick", {"opponent_id": opp}
     straight = min(nick_sim(row["left"], nicks[p1]), nick_sim(row["right"], nicks[p2]))
     swapped = min(nick_sim(row["left"], nicks[p2]), nick_sim(row["right"], nicks[p1]))
     if max(straight, swapped) < NICK_MATCH_MIN:
@@ -166,12 +187,16 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
         return False, "already_confirmed"
     row = rd["rows"][row_idx]
     why, r = _check_row(mode, match, user["id"], row)
+    if why == "no_opp_nick":
+        _NICK_REMIND.add(r["opponent_id"])
+    if why in ("nick_mismatch", "bad_date") and row.get("marked"):
+        return False, "mark_over_text"                 # belgi chizig'i nikname/sana ustidan o'tib, o'qib bo'lmadi
     if why:
         return False, why
     fp = _fp(row, r["played"])
     conn = get_connection()
     try:
-        if conn.execute("SELECT 1 FROM match_shots WHERE fp = ?", (fp,)).fetchone():
+        if _shot_used(conn, row, r["played"]):
             return False, "shot_used"
     finally:
         conn.close()

@@ -3801,3 +3801,5 @@ from player_card_api import router as player_card_router  # noqa: E402  (2026-11
 app.include_router(player_card_router)
 from match_shot_api import router as match_shot_router  # noqa: E402  (2026-11-06, skrinshotli natija / texnik g'alaba)
 app.include_router(match_shot_router)
+from match_guard import install as install_shot_only_guard  # noqa: E402  (2026-11-06: natija faqat skrinshot bilan)
+install_shot_only_guard(app)
