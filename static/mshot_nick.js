@@ -1,10 +1,11 @@
 // =============================================================
-//  mshot_nick.js — eFOOTBALL NIKNAME (2026-11-06): Profil sahifasida bo'lim + skrinshot oynasida (kiritilmagan bo'lsa).
+//  mshot_nick.js — eFOOTBALL NIKNAME (2026-11-06): barcha rejimlarda O'Z profil kartasida (username ostida, ixcham)
+//  + skrinshot oynasida (kiritilmagan bo'lsa).
 //  Qoida (egasi): har mavsumda 2 marta bepul almashtirish, keyin — 5 eF Token (server: ef_nick.py).
 //  API: GET/POST /ef-nick. Global: APP, apiFetch, escHtml, showToast, msT, msErr, msShotRender (mshot.js).
 // =============================================================
 
-const MSN = { info: null, busy: false, edit: false };
+const MSN = { info: null, busy: false, edit: false, loading: false };
 
 async function msNickLoad(force = false) {
   if (MSN.info && !force) return MSN.info;
@@ -67,23 +68,60 @@ document.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     MSN.edit = true;
     msNickPaintProfile();
-    document.querySelector(".ms-nick-slot .ms-nick-input")?.focus();
+    Array.from(document.querySelectorAll(".ms-nick-slot .ms-nick-input")).find(x => x.offsetParent)?.focus();
   }
 }, true);
 
-// ---- Profil kartasi: username ostida ixcham qator ----
-function msNickPaintProfile() {
-  const info = document.getElementById("profile-nickname")?.closest(".profile-info");
-  if (!info) return;
-  let slot = info.querySelector(":scope > .ms-nick-slot");
-  if (!slot) {
-    slot = document.createElement("div");
-    slot.className = "ms-nick-slot";
-    info.appendChild(slot);
-  }
-  const html = `${!(MSN.info && MSN.info.nick) ? `<div class="ms-nick-label">${escHtml(msT("ms_nick_need"))}</div>` : ""}${msNickFormHtml("profile")}`;
-  if (slot._html !== html) { slot.innerHTML = html; slot._html = html; }
+// ---- O'z profil kartasi — BARCHA REJIMLARDA username ostida ixcham qator (2026-11-06, egasi) ----
+// Har rejimda faqat O'Z profilim (boshqa o'yinchi profili emas). Rejim fayllariga tegilmaydi — DOM kuzatiladi.
+function msMyUsername() { return (APP.currentUser && APP.currentUser.username) || ""; }
+const MSN_TARGETS = [
+  () => document.getElementById("profile-nickname")?.closest(".profile-info"),                       // liga
+  () => (typeof DIV !== "undefined" && DIV.section === "profile"
+    ? document.querySelector('#div-root .card div[style*="flex:1"]') : null),                         // Divizion
+  () => (typeof CL !== "undefined" && CL.section === "profile" ? document.querySelector("#cl-root .card--profile .profile-info") : null),
+  () => (typeof EL !== "undefined" && EL.section === "profile" ? document.querySelector("#el-root .card--profile .profile-info") : null),
+  () => (typeof AC !== "undefined" && AC.section === "profile" ? document.querySelector("#ac-root .card--profile .profile-info") : null),
+  () => (typeof CO !== "undefined" && CO.section === "profile" ? document.querySelector("#co-root .card--profile .profile-info") : null),
+  () => (typeof WC !== "undefined" && WC.section === "profile"
+    ? document.querySelector("#worldcup-root .card--profile .profile-info") : null),                  // JCh
+  () => {                                                                                             // xususiy turnir
+    const me = msMyUsername();
+    if (!me) return null;
+    const a = Array.from(document.querySelectorAll(".pt-profile-card .profile-username"))
+      .find(x => x.textContent.trim().toLowerCase() === "@" + me.toLowerCase());
+    return a ? a.closest(".profile-info") : null;
+  },
+];
+
+function msNickSlotHtml() {
+  return `${!(MSN.info && MSN.info.nick) ? `<div class="ms-nick-label">${escHtml(msT("ms_nick_need"))}</div>` : ""}${msNickFormHtml("profile")}`;
 }
+
+function msNickPaintProfile() {
+  const html = msNickSlotHtml();
+  for (const get of MSN_TARGETS) {
+    let box = null;
+    try { box = get(); } catch (_) { box = null; }
+    if (!box || !box.isConnected) continue;
+    let slot = box.querySelector(":scope > .ms-nick-slot");
+    if (!slot) {
+      slot = document.createElement("div");
+      slot.className = "ms-nick-slot";
+      box.appendChild(slot);
+    }
+    if (slot._html !== html && !slot.contains(document.activeElement)) { slot.innerHTML = html; slot._html = html; }
+  }
+}
+
+let _msnT = 0;
+new MutationObserver(() => {
+  cancelAnimationFrame(_msnT);
+  _msnT = requestAnimationFrame(() => {
+    if (!MSN.info && !MSN.loading) { MSN.loading = true; void msNickLoad().finally(() => { MSN.loading = false; msNickPaintProfile(); }); }
+    msNickPaintProfile();
+  });
+}).observe(document.body, { subtree: true, childList: true });
 
 // Enter — saqlash
 document.addEventListener("keydown", (e) => {
