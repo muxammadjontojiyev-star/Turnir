@@ -4,6 +4,7 @@
 
 const MSHOT_TEXTS = {
   uz: {
+    ms_err_read: "bot o'qigan sana",
     ms_done_await: "✅ Yuborildi — raqibingiz niknameini kiritmagan, u tasdiqlashi kerak (unga xabar ketdi)",
     ms_aw_nick: "Skrinshotdagi eFootball niknameingiz:", ms_aw_accept: "Tasdiqlash", ms_aw_reject: "Noto'g'ri",
     ms_aw_ok: "✅ Natija tasdiqlandi, niknameingiz saqlandi", ms_aw_reject_q: "Natija noto'g'rimi? U rad etiladi va skrinshot adminga yuboriladi.",
@@ -52,7 +53,7 @@ const MSHOT_TEXTS = {
       same_person: "Ikkala akkaunt bitta eFootball akkauntga ulangan — bu o'yin admin orqali hal qilinadi (@Tojiyev_M)",
       nick_link_full: "Bu niknamega allaqachon ikkinchi akkaunt ulangan",
       nick_not_in_shot: "Bu nikname skrinshotdagi bilan mos emas — skrinshotdagi niknameingizni yozing",
-      nick_mismatch: "Bu o'yinda siz va raqibingizning niknamelari topilmadi", bad_date: "Bu o'yin sanasi mos emas (o'yin ochilishidan oldin yoki juda eski)",
+      nick_mismatch: "Bu o'yinda siz va raqibingizning niknamelari topilmadi", bad_date: "Bu o'yin vaqti mos emas: o'yin ochilishidan oldin yoki 3 kundan eski",
       mark_over_text: "Belgi chizig'i yozuvlar ustidan o'tib ketgan — o'yinni kengroq o'rab qayta yuboring yoki belgisiz yuborib ro'yxatdan tanlang",
       shot_used: "Bu o'yin avval boshqa natija uchun ishlatilgan", playoff_draw: "Pley-offda durang — «Penaltili durang — qo'lda kiritish» tugmasidan foydalaning",
       screenshot_only: "Natija faqat skrinshot bilan kiritiladi — «📸 Skrinshot bilan yuborish» tugmasini bosing",
@@ -64,6 +65,7 @@ const MSHOT_TEXTS = {
     },
   },
   ru: {
+    ms_err_read: "бот прочитал дату",
     ms_done_await: "✅ Отправлено — соперник не указал ник, он должен подтвердить (ему отправлено сообщение)",
     ms_aw_nick: "Ваш ник eFootball на скриншоте:", ms_aw_accept: "Подтвердить", ms_aw_reject: "Неверно",
     ms_aw_ok: "✅ Результат подтверждён, ник сохранён", ms_aw_reject_q: "Результат неверный? Он будет отклонён, скриншот уйдёт админу.",
@@ -124,6 +126,7 @@ const MSHOT_TEXTS = {
     },
   },
   en: {
+    ms_err_read: "date read by the bot",
     ms_done_await: "✅ Sent — your opponent hasn't set a nickname, they need to confirm (they were notified)",
     ms_aw_nick: "Your eFootball nickname on the screenshot:", ms_aw_accept: "Confirm", ms_aw_reject: "Wrong",
     ms_aw_ok: "✅ Result confirmed, nickname saved", ms_aw_reject_q: "Is the result wrong? It will be rejected and the screenshot sent to an admin.",
@@ -195,8 +198,9 @@ function msT(key, vars) {
   return s;
 }
 function msErr(e) {
-  const code = String((e && e.message) || e || "");
+  const raw = String((e && e.message) || e || "");
+  const [code, extra] = raw.split("|");                 // «bad_date|06/11/2026 20:45» — bot o'qigan qiymat
   const map = (APP.t && APP.t.ms_err) || MSHOT_TEXTS.uz.ms_err;
   const k = Object.keys(map).find(x => code === x || code.includes(x));
-  return "❌ " + (k ? map[k] : code);
+  return "❌ " + (k ? map[k] : code) + (k && extra ? ` (${msT("ms_err_read")}: ${extra.trim()})` : "");
 }
