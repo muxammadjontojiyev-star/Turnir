@@ -1,0 +1,145 @@
+// =============================================================
+//  texts_mshot.js — skrinshotli natija, texnik g'alaba, eF nikname matnlari (2026-11-06). TEXTS[lang] ga qo'shiladi.
+// =============================================================
+
+const MSHOT_TEXTS = {
+  uz: {
+    ms_btn_shot: "📸 Skrinshot bilan yuborish", ms_btn_tech: "⚠️ Raqib yozmadi / o'ynamadi",
+    ms_shot_title: "SKRINSHOT BILAN NATIJA",
+    ms_shot_hint: "eFootball → Extras → User Information → Match History ekranini skrinshot qiling va yuklang. Bot ikkalangizning niknameingizni, sana va hisobni tekshirib, natijani o'zi yozadi.",
+    ms_pick_file: "🖼 Skrinshot tanlash", ms_reading: "⏳ O'qilmoqda…", ms_pick_row: "Aynan shu raqib bilan o'ynalgan o'yinni tanlang:",
+    ms_apply: "✅ Shu o'yin", ms_applying: "⏳ Yozilmoqda…", ms_done: "✅ Natija skrinshot orqali yozildi",
+    ms_done_pending: "✅ Yuborildi — katta hisob, admin tasdiqlaydi", ms_close: "Yopish", ms_back: "← Boshqa skrinshot",
+    ms_nick_title: "eFOOTBALL NIKNAMEINGIZ", ms_nick_hint: "eFootball → Extras sahifasida, rasmingiz ostidagi nom (masalan «Mukhammadjon04»). Katta-kichik harfi bilan aynan o'shanday yozing.",
+    ms_nick_ph: "eFootball nikname", ms_nick_save: "Saqlash", ms_nick_saved: "✅ Nikname saqlandi",
+    ms_nick_free: "Bu mavsumda bepul almashtirish: {n} ta qoldi", ms_nick_paid: "Bepul almashtirishlar tugagan — {price} eF Token",
+    ms_nick_pay_q: "Bu mavsumdagi bepul almashtirishlar tugagan. {price} eF Token to'lab almashtirasizmi?",
+    ms_nick_none: "kiritilmagan", ms_nick_need: "Avval eFootball niknameingizni kiriting",
+    ms_tech_title: "RAQIB YOZMADI / O'YNAMADI",
+    ms_tech_hint: "Raqibingizga 3 xil vaqtda (oralig'i kamida 40 daqiqa) yozganingizni ko'rsatuvchi yozishma skrinshotlarini yuklang (3 tagacha). Admin ko'rib chiqadi — tasdiqlansa, natija 3:0 sizning foydangizga.",
+    ms_tech_pick: "🖼 Skrinshotlar tanlash", ms_tech_note: "Izoh (ixtiyoriy)", ms_tech_send: "Adminga yuborish",
+    ms_tech_sent: "✅ So'rov adminga yuborildi", ms_tech_n: "{n} ta rasm tanlandi",
+    ms_in_title: "📸 Skrinshot bilan yozilgan natija", ms_in_text: "{who} natijani yozdi: {score} (sizning golingiz birinchi).",
+    ms_in_left: "E'tiroz uchun {h} soat qoldi", ms_in_ok: "To'g'ri", ms_in_dispute: "E'tiroz", ms_in_sent: "✅ E'tiroz adminga yuborildi",
+    ms_in_q: "Bu natijaga e'tiroz bildirasizmi? Admin skrinshotni ko'rib chiqadi.",
+    ms_adm_title: "📸 SKRINSHOT VA TEXNIK G'ALABA", ms_adm_empty: "Ko'rib chiqiladigan ish yo'q",
+    ms_adm_tech: "Texnik g'alaba so'rovi", ms_adm_dispute: "Skrinshotli natijaga e'tiroz", ms_adm_pending: "Katta hisob (skrinshot bilan)",
+    ms_adm_show: "🖼 Rasmni ko'rish", ms_adm_win: "3:0 berish", ms_adm_reject: "Rad etish", ms_adm_uphold: "Natija to'g'ri",
+    ms_adm_fix: "Tuzatish", ms_adm_q_win: "{who} foydasiga 3:0 texnik g'alaba berilsinmi?", ms_adm_done: "✅ Bajarildi",
+    ms_mode_league: "Liga", ms_mode_wc: "JCh", ms_mode_wc_po: "JCh pley-off", ms_mode_cl: "ChL", ms_mode_cl_po: "ChL pley-off",
+    ms_mode_el: "YeL", ms_mode_el_po: "YeL pley-off", ms_mode_ac: "OChL", ms_mode_ac_po: "OChL pley-off",
+    ms_mode_co: "KL", ms_mode_co_po: "KL pley-off", ms_mode_div: "Divizion", ms_mode_pt: "Xususiy turnir",
+    ms_err: {
+      ocr_unavailable: "Skrinshotni o'qish xizmati hozir ishlamayapti — natijani oddiy tartibda kiriting",
+      no_rows: "Skrinshotda o'yin topilmadi. Match History ekranini to'liq, aniq skrinshot qiling",
+      bad_image: "Bu rasm fayli emas", too_big: "Rasm juda katta", daily_limit: "Bugungi limit tugadi, ertaga urinib ko'ring",
+      expired: "Vaqt o'tib ketdi — skrinshotni qayta yuklang", no_my_nick: "Avval eFootball niknameingizni kiriting",
+      no_opp_nick: "Raqibingiz eFootball niknameini kiritmagan — natijani oddiy tartibda kiriting yoki raqibdan so'rang",
+      nick_mismatch: "Bu o'yinda siz va raqibingizning niknamelari topilmadi", bad_date: "Bu o'yin sanasi mos emas (o'yin ochilishidan oldin yoki juda eski)",
+      shot_used: "Bu o'yin avval boshqa natija uchun ishlatilgan", playoff_draw: "Pley-offda durang — penaltilar uchun natijani oddiy tartibda kiriting",
+      opp_other_score: "Raqibingiz boshqa hisob kiritgan. Uni rad eting — admin skrinshotni ko'rib hal qiladi",
+      my_other_score: "Siz avval boshqa hisob kiritgansiz", already_confirmed: "Bu o'yin natijasi allaqachon tasdiqlangan",
+      not_participant: "Siz bu o'yin ishtirokchisi emassiz", claim_exists: "Bu o'yin bo'yicha so'rov allaqachon yuborilgan",
+      no_images: "Kamida bitta skrinshot tanlang", bad_nick: "Nikname 2–24 belgidan iborat bo'lsin", same_nick: "Bu nikname allaqachon sizniki",
+      nick_taken: "Bu nikname boshqa ishtirokchiga tegishli. Xato bo'lsa — @Tojiyev_M ga yozing", insufficient: "eF Token yetarli emas",
+    },
+  },
+  ru: {
+    ms_btn_shot: "📸 Отправить скриншот", ms_btn_tech: "⚠️ Соперник не ответил / не играл",
+    ms_shot_title: "РЕЗУЛЬТАТ ПО СКРИНШОТУ",
+    ms_shot_hint: "eFootball → Extras → User Information → Match History: сделайте скриншот и загрузите. Бот проверит ники, дату и счёт и запишет результат сам.",
+    ms_pick_file: "🖼 Выбрать скриншот", ms_reading: "⏳ Распознаём…", ms_pick_row: "Выберите матч именно с этим соперником:",
+    ms_apply: "✅ Этот матч", ms_applying: "⏳ Записываем…", ms_done: "✅ Результат записан по скриншоту",
+    ms_done_pending: "✅ Отправлено — крупный счёт, подтвердит админ", ms_close: "Закрыть", ms_back: "← Другой скриншот",
+    ms_nick_title: "ВАШ НИК В eFOOTBALL", ms_nick_hint: "В eFootball → Extras, имя под вашим фото (например «Mukhammadjon04»). Пишите точно так же.",
+    ms_nick_ph: "Ник eFootball", ms_nick_save: "Сохранить", ms_nick_saved: "✅ Ник сохранён",
+    ms_nick_free: "Бесплатных смен в этом сезоне: {n}", ms_nick_paid: "Бесплатные смены закончились — {price} eF Token",
+    ms_nick_pay_q: "Бесплатные смены в этом сезоне закончились. Сменить за {price} eF Token?",
+    ms_nick_none: "не указан", ms_nick_need: "Сначала укажите ник eFootball",
+    ms_tech_title: "СОПЕРНИК НЕ ОТВЕТИЛ / НЕ ИГРАЛ",
+    ms_tech_hint: "Загрузите скриншоты переписки: вы писали сопернику 3 раза в разное время (с интервалом от 40 минут), до 3 фото. Админ проверит — при одобрении 3:0 в вашу пользу.",
+    ms_tech_pick: "🖼 Выбрать скриншоты", ms_tech_note: "Комментарий (необязательно)", ms_tech_send: "Отправить админу",
+    ms_tech_sent: "✅ Заявка отправлена админу", ms_tech_n: "Выбрано фото: {n}",
+    ms_in_title: "📸 Результат записан по скриншоту", ms_in_text: "{who} записал результат: {score} (ваши голы первыми).",
+    ms_in_left: "На спор осталось {h} ч", ms_in_ok: "Верно", ms_in_dispute: "Оспорить", ms_in_sent: "✅ Спор отправлен админу",
+    ms_in_q: "Оспорить этот результат? Админ проверит скриншот.",
+    ms_adm_title: "📸 СКРИНШОТЫ И ТЕХПОБЕДЫ", ms_adm_empty: "Нет заявок",
+    ms_adm_tech: "Заявка на техпобеду", ms_adm_dispute: "Спор по скриншоту", ms_adm_pending: "Крупный счёт (со скриншотом)",
+    ms_adm_show: "🖼 Показать фото", ms_adm_win: "Дать 3:0", ms_adm_reject: "Отклонить", ms_adm_uphold: "Результат верный",
+    ms_adm_fix: "Исправить", ms_adm_q_win: "Дать техпобеду 3:0 игроку {who}?", ms_adm_done: "✅ Готово",
+    ms_mode_league: "Лига", ms_mode_wc: "ЧМ", ms_mode_wc_po: "ЧМ плей-офф", ms_mode_cl: "ЛЧ", ms_mode_cl_po: "ЛЧ плей-офф",
+    ms_mode_el: "ЛЕ", ms_mode_el_po: "ЛЕ плей-офф", ms_mode_ac: "АЛЧ", ms_mode_ac_po: "АЛЧ плей-офф",
+    ms_mode_co: "ЛК", ms_mode_co_po: "ЛК плей-офф", ms_mode_div: "Дивизион", ms_mode_pt: "Частный турнир",
+    ms_err: {
+      ocr_unavailable: "Распознавание сейчас недоступно — внесите результат обычным способом",
+      no_rows: "Матчи на скриншоте не найдены. Сделайте чёткий скриншот всего экрана Match History",
+      bad_image: "Это не изображение", too_big: "Слишком большой файл", daily_limit: "Лимит на сегодня исчерпан",
+      expired: "Время истекло — загрузите скриншот снова", no_my_nick: "Сначала укажите ник eFootball",
+      no_opp_nick: "Соперник не указал ник eFootball — внесите результат обычным способом",
+      nick_mismatch: "В этом матче не найдены ники ваш и соперника", bad_date: "Дата матча не подходит",
+      shot_used: "Этот матч уже использован для другого результата", playoff_draw: "Ничья в плей-офф — внесите результат обычным способом (пенальти)",
+      opp_other_score: "Соперник внёс другой счёт. Отклоните его — админ решит по скриншоту",
+      my_other_score: "Вы уже внесли другой счёт", already_confirmed: "Результат уже подтверждён",
+      not_participant: "Вы не участник этого матча", claim_exists: "Заявка по этому матчу уже отправлена",
+      no_images: "Выберите хотя бы один скриншот", bad_nick: "Ник: 2–24 символа", same_nick: "Это уже ваш ник",
+      nick_taken: "Этот ник занят другим участником. Если это ошибка — напишите @Tojiyev_M", insufficient: "Недостаточно eF Token",
+    },
+  },
+  en: {
+    ms_btn_shot: "📸 Submit with screenshot", ms_btn_tech: "⚠️ Opponent didn't reply / play",
+    ms_shot_title: "RESULT BY SCREENSHOT",
+    ms_shot_hint: "eFootball → Extras → User Information → Match History: take a screenshot and upload it. The bot checks both nicknames, the date and the score, then records the result.",
+    ms_pick_file: "🖼 Choose screenshot", ms_reading: "⏳ Reading…", ms_pick_row: "Pick the match against this opponent:",
+    ms_apply: "✅ This match", ms_applying: "⏳ Saving…", ms_done: "✅ Result recorded from screenshot",
+    ms_done_pending: "✅ Sent — big score, an admin will confirm", ms_close: "Close", ms_back: "← Another screenshot",
+    ms_nick_title: "YOUR eFOOTBALL NICKNAME", ms_nick_hint: "In eFootball → Extras, the name under your picture (e.g. «Mukhammadjon04»). Type it exactly.",
+    ms_nick_ph: "eFootball nickname", ms_nick_save: "Save", ms_nick_saved: "✅ Nickname saved",
+    ms_nick_free: "Free changes left this season: {n}", ms_nick_paid: "No free changes left — {price} eF Token",
+    ms_nick_pay_q: "No free changes left this season. Change for {price} eF Token?",
+    ms_nick_none: "not set", ms_nick_need: "Set your eFootball nickname first",
+    ms_tech_title: "OPPONENT DIDN'T REPLY / PLAY",
+    ms_tech_hint: "Upload chat screenshots showing you messaged your opponent at 3 different times (at least 40 minutes apart), up to 3 images. An admin reviews it — if approved, 3:0 in your favour.",
+    ms_tech_pick: "🖼 Choose screenshots", ms_tech_note: "Note (optional)", ms_tech_send: "Send to admin",
+    ms_tech_sent: "✅ Request sent to admin", ms_tech_n: "{n} image(s) selected",
+    ms_in_title: "📸 Result recorded by screenshot", ms_in_text: "{who} recorded the result: {score} (your goals first).",
+    ms_in_left: "{h} h left to dispute", ms_in_ok: "Correct", ms_in_dispute: "Dispute", ms_in_sent: "✅ Dispute sent to admin",
+    ms_in_q: "Dispute this result? An admin will check the screenshot.",
+    ms_adm_title: "📸 SCREENSHOTS & TECH WINS", ms_adm_empty: "Nothing to review",
+    ms_adm_tech: "Tech-win request", ms_adm_dispute: "Screenshot result disputed", ms_adm_pending: "Big score (with screenshot)",
+    ms_adm_show: "🖼 Show image", ms_adm_win: "Give 3:0", ms_adm_reject: "Reject", ms_adm_uphold: "Result is correct",
+    ms_adm_fix: "Fix", ms_adm_q_win: "Give a 3:0 tech win to {who}?", ms_adm_done: "✅ Done",
+    ms_mode_league: "League", ms_mode_wc: "WC", ms_mode_wc_po: "WC play-off", ms_mode_cl: "CL", ms_mode_cl_po: "CL play-off",
+    ms_mode_el: "EL", ms_mode_el_po: "EL play-off", ms_mode_ac: "ACL", ms_mode_ac_po: "ACL play-off",
+    ms_mode_co: "ECL", ms_mode_co_po: "ECL play-off", ms_mode_div: "Division", ms_mode_pt: "Private tournament",
+    ms_err: {
+      ocr_unavailable: "Screenshot reading is unavailable now — submit the result the usual way",
+      no_rows: "No matches found. Take a clear screenshot of the whole Match History screen",
+      bad_image: "This is not an image", too_big: "File is too large", daily_limit: "Daily limit reached",
+      expired: "Time ran out — upload the screenshot again", no_my_nick: "Set your eFootball nickname first",
+      no_opp_nick: "Your opponent hasn't set an eFootball nickname — submit the usual way",
+      nick_mismatch: "Your and your opponent's nicknames weren't found in this match", bad_date: "The match date doesn't fit",
+      shot_used: "This match was already used for another result", playoff_draw: "Play-off draw — submit the usual way (penalties)",
+      opp_other_score: "Your opponent entered another score. Reject it — an admin will decide using the screenshot",
+      my_other_score: "You already entered a different score", already_confirmed: "This result is already confirmed",
+      not_participant: "You're not in this match", claim_exists: "A request for this match was already sent",
+      no_images: "Choose at least one screenshot", bad_nick: "Nickname must be 2–24 characters", same_nick: "That's already your nickname",
+      nick_taken: "This nickname belongs to another participant. If that's a mistake, message @Tojiyev_M", insufficient: "Not enough eF Token",
+    },
+  },
+};
+
+for (const lang of ["uz", "ru", "en"]) {
+  if (typeof TEXTS !== "undefined" && TEXTS[lang]) Object.assign(TEXTS[lang], MSHOT_TEXTS[lang]);
+}
+
+function msT(key, vars) {
+  let s = (APP.t && APP.t[key]) || (MSHOT_TEXTS.uz[key] ?? key);
+  if (vars) for (const k of Object.keys(vars)) s = s.split(`{${k}}`).join(String(vars[k]));
+  return s;
+}
+function msErr(e) {
+  const code = String((e && e.message) || e || "");
+  const map = (APP.t && APP.t.ms_err) || MSHOT_TEXTS.uz.ms_err;
+  const k = Object.keys(map).find(x => code === x || code.includes(x));
+  return "❌ " + (k ? map[k] : code);
+}

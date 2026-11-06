@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="shop.css?v=20261031a" />
   <link rel="stylesheet" href="cosmetics.css?v=20261031g" />
   <link rel="stylesheet" href="player_card.css?v=20261105b" />  <!-- 2026-11-04: shaxsiy o'yinchi kartasi -->
+  <link rel="stylesheet" href="mshot.css?v=20261106a" />  <!-- 2026-11-06: skrinshotli natija / texnik g'alaba -->
   <link rel="stylesheet" href="guide_bot.css?v=20261103d" />  <!-- 2026-11-03: yo'l ko'rsatuvchi robot «Robi» -->
 </head>
 <body>
@@ -292,6 +293,13 @@
           <details class="adm-group" open>
             <summary><span class="adm-group-ic">⏳</span><span data-i18n="admin_pending_title">ADMIN TASDIG'INI KUTAYOTGAN (KATTA HISOB)</span></summary>
             <div id="admin-pending-list" class="admin-players-list"></div>
+          </details>
+
+          <!-- 2026-11-06: skrinshotli natijaga e'tirozlar va «raqib o'ynamadi» so'rovlari (mshot_admin.js) —
+               bosh admin: hammasi; liga admini: o'z ligalari -->
+          <details class="adm-group" id="mshot-adm-group">
+            <summary><span class="adm-group-ic">📸</span><span>SKRINSHOT VA TEXNIK G'ALABA</span><span class="adm-group-sub" id="mshot-adm-count"></span></summary>
+            <div id="mshot-adm-list"></div>
           </details>
 
           <!-- 2026-10-14: kanalni tark etgan liga ishtirokchilari (channel_leavers.js) —
@@ -832,6 +840,13 @@
   <script src="player_card.js?v=20261105c"></script>
   <script src="player_card_edit.js?v=20261105a"></script>
   <script src="player_card_photo.js?v=20261105b"></script>  <!-- 2026-11-05: karta rasmini o'zi yuklash -->
+  <!-- 2026-11-06: natijani Match History skrinshoti bilan yozish, texnik g'alaba so'rovi, eF nikname (barcha rejimlar) -->
+  <script src="texts_mshot.js?v=20261106a"></script>
+  <script src="mshot.js?v=20261106a"></script>
+  <script src="mshot_nick.js?v=20261106a"></script>
+  <script src="mshot_tech.js?v=20261106a"></script>
+  <script src="mshot_incoming.js?v=20261106a"></script>
+  <script src="mshot_admin.js?v=20261106a"></script>
   <script src="worldcup.js?v=20261011a"></script>
   <script src="worldcup_matches.js?v=20261013g"></script>
   <script src="worldcup_admin.js?v=20261014i"></script>
