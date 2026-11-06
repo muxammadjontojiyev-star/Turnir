@@ -15,7 +15,7 @@ function msTechHtml() {
     <label class="btn btn--ghost ms-wide">${escHtml(msT("ms_tech_pick"))}
       <input type="file" accept="image/*" multiple id="ms-tech-files" hidden></label>
     <div class="ms-tech-n">${MST.files.length ? escHtml(msT("ms_tech_n", { n: MST.files.length })) : ""}</div>
-    <textarea class="modal-input ms-tech-note" id="ms-tech-note" maxlength="500" rows="2" placeholder="${escHtml(msT("ms_tech_note"))}"></textarea>
+    <textarea class="modal-input ms-tech-note" id="ms-tech-note" maxlength="500" rows="2" required placeholder="${escHtml(msT("ms_tech_note"))}"></textarea>
     <div class="modal-actions">
       <button class="btn btn--ghost" data-ms-tech="close">${escHtml(msT("ms_close"))}</button>
       <button class="btn btn--primary" data-ms-tech="send" ${MST.busy || !MST.files.length ? "disabled" : ""}>${escHtml(msT(MST.busy ? "ms_applying" : "ms_tech_send"))}</button>
@@ -33,8 +33,16 @@ function msTechOpen(c) {
   msModal("ms-tech", msTechHtml());
 }
 
+const MS_TECH_NOTE_MIN = 5;                          // izoh majburiy (server: match_claims.CLAIM_NOTE_MIN)
+
 async function msTechSend() {
   if (MST.busy || !MST.files.length) return;
+  const noteEl = document.getElementById("ms-tech-note");
+  if ((noteEl?.value || "").trim().length < MS_TECH_NOTE_MIN) {          // 2026-11-06 (egasi): izohsiz yuborilmaydi
+    showToast(msErr("no_note"));
+    noteEl?.focus();
+    return;
+  }
   MST.busy = true; msTechRender();
   try {
     const images = [];
