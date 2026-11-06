@@ -4,6 +4,9 @@
 
 const MSHOT_TEXTS = {
   uz: {
+    ms_done_await: "✅ Yuborildi — raqibingiz niknameini kiritmagan, u tasdiqlashi kerak (unga xabar ketdi)",
+    ms_aw_nick: "Skrinshotdagi eFootball niknameingiz:", ms_aw_accept: "Tasdiqlash", ms_aw_reject: "Noto'g'ri",
+    ms_aw_ok: "✅ Natija tasdiqlandi, niknameingiz saqlandi", ms_aw_reject_q: "Natija noto'g'rimi? U rad etiladi va skrinshot adminga yuboriladi.",
     ms_nick_link_sent: "🔗 So'rov nikname egasiga (birinchi akkauntingizga) yuborildi — o'sha akkauntdan tasdiqlang",
     ms_nick_pending: "Birinchi akkauntingiz tasdiqlashi kutilmoqda", ms_nick_linked: "Birinchi akkauntingizga ulangan (shu mavsum)",
     ms_link_title: "Ikkinchi akkauntingizmi?", ms_link_text: "{who} sizning eFootball niknameingizni o'z akkauntiga ulamoqchi. Bu sizning ikkinchi Telegram akkauntingizmi?",
@@ -48,6 +51,7 @@ const MSHOT_TEXTS = {
       no_opp_nick: "Raqibingiz eFootball niknameini kiritmagan — natijani oddiy tartibda kiriting yoki raqibdan so'rang",
       same_person: "Ikkala akkaunt bitta eFootball akkauntga ulangan — bu o'yin admin orqali hal qilinadi (@Tojiyev_M)",
       nick_link_full: "Bu niknamega allaqachon ikkinchi akkaunt ulangan",
+      nick_not_in_shot: "Bu nikname skrinshotdagi bilan mos emas — skrinshotdagi niknameingizni yozing",
       nick_mismatch: "Bu o'yinda siz va raqibingizning niknamelari topilmadi", bad_date: "Bu o'yin sanasi mos emas (o'yin ochilishidan oldin yoki juda eski)",
       mark_over_text: "Belgi chizig'i yozuvlar ustidan o'tib ketgan — o'yinni kengroq o'rab qayta yuboring yoki belgisiz yuborib ro'yxatdan tanlang",
       shot_used: "Bu o'yin avval boshqa natija uchun ishlatilgan", playoff_draw: "Pley-offda durang — «Penaltili durang — qo'lda kiritish» tugmasidan foydalaning",
@@ -60,6 +64,9 @@ const MSHOT_TEXTS = {
     },
   },
   ru: {
+    ms_done_await: "✅ Отправлено — соперник не указал ник, он должен подтвердить (ему отправлено сообщение)",
+    ms_aw_nick: "Ваш ник eFootball на скриншоте:", ms_aw_accept: "Подтвердить", ms_aw_reject: "Неверно",
+    ms_aw_ok: "✅ Результат подтверждён, ник сохранён", ms_aw_reject_q: "Результат неверный? Он будет отклонён, скриншот уйдёт админу.",
     ms_nick_link_sent: "🔗 Запрос отправлен владельцу ника (вашему первому аккаунту) — подтвердите там",
     ms_nick_pending: "Ожидает подтверждения с первого аккаунта", ms_nick_linked: "Привязан к первому аккаунту (на этот сезон)",
     ms_link_title: "Это ваш второй аккаунт?", ms_link_text: "{who} хочет привязать ваш ник eFootball к своему аккаунту. Это ваш второй Telegram-аккаунт?",
@@ -104,6 +111,7 @@ const MSHOT_TEXTS = {
       no_opp_nick: "Соперник не указал ник eFootball — внесите результат обычным способом",
       same_person: "Оба аккаунта привязаны к одному eFootball — матч решает админ (@Tojiyev_M)",
       nick_link_full: "К этому нику уже привязан второй аккаунт",
+      nick_not_in_shot: "Ник не совпадает со скриншотом — укажите ник как на скриншоте",
       nick_mismatch: "В этом матче не найдены ники ваш и соперника", bad_date: "Дата матча не подходит",
       mark_over_text: "Линия отметки закрыла текст — обведите матч шире или отправьте без отметки и выберите из списка",
       shot_used: "Этот матч уже использован для другого результата", playoff_draw: "Ничья в плей-офф — используйте «Ничья с пенальти — внести вручную»",
@@ -116,6 +124,9 @@ const MSHOT_TEXTS = {
     },
   },
   en: {
+    ms_done_await: "✅ Sent — your opponent hasn't set a nickname, they need to confirm (they were notified)",
+    ms_aw_nick: "Your eFootball nickname on the screenshot:", ms_aw_accept: "Confirm", ms_aw_reject: "Wrong",
+    ms_aw_ok: "✅ Result confirmed, nickname saved", ms_aw_reject_q: "Is the result wrong? It will be rejected and the screenshot sent to an admin.",
     ms_nick_link_sent: "🔗 Request sent to the nickname owner (your first account) — confirm it there",
     ms_nick_pending: "Waiting for confirmation from your first account", ms_nick_linked: "Linked to your first account (this season)",
     ms_link_title: "Your second account?", ms_link_text: "{who} wants to link your eFootball nickname to their account. Is this your second Telegram account?",
@@ -160,6 +171,7 @@ const MSHOT_TEXTS = {
       no_opp_nick: "Your opponent hasn't set an eFootball nickname — submit the usual way",
       same_person: "Both accounts share one eFootball account — an admin will decide (@Tojiyev_M)",
       nick_link_full: "A second account is already linked to this nickname",
+      nick_not_in_shot: "This nickname doesn't match the screenshot — type it as shown there",
       nick_mismatch: "Your and your opponent's nicknames weren't found in this match", bad_date: "The match date doesn't fit",
       mark_over_text: "Your mark covers the text — circle the match more widely, or send it unmarked and pick from the list",
       shot_used: "This match was already used for another result", playoff_draw: "Play-off draw — use «Play-off draw with penalties — enter manually»",

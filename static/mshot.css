@@ -88,3 +88,4 @@
 .msa-only { padding: 12px; margin-bottom: 10px; }
 .ms-nick--pending { background: rgba(255, 214, 102, .12); border-color: rgba(255, 214, 102, .4); }
 .msl-box { border-color: rgba(124, 92, 255, .55); bottom: calc(180px + env(safe-area-inset-bottom)); }
+.msi-nick { max-width: none; margin-top: 6px; }

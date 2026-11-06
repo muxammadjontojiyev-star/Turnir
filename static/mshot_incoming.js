@@ -20,12 +20,25 @@ function msiMarkSeen(id) {
 function msiRender() {
   document.getElementById("msi-box")?.remove();
   const seen = msiSeen();
-  const it = MSI.items.find(x => !seen.includes(x.id));
+  const it = MSI.items.find(x => x.await || !seen.includes(x.id));
   if (!it) return;
   const h = Math.max(1, Math.ceil((Number(it.left_s) || 0) / 3600));
   const box = document.createElement("div");
   box.id = "msi-box";
   box.className = "msi-box";
+  if (it.await) {                          // 2026-11-06: menda nikname yo'q edi — tasdiqlash + nikname saqlash
+    box.innerHTML = `<div class="msi-title">${escHtml(msT("ms_in_title"))} · ${escHtml(msT(`ms_mode_${it.mode}`))}</div>
+      <div class="msi-text">${escHtml(msT("ms_in_text", { who: it.nickname || "", score: `${it.my_goals}:${it.their_goals}` }))}</div>
+      <div class="msi-left">${escHtml(msT("ms_aw_nick"))}</div>
+      <div class="ms-nick ms-nick--form msi-nick"><input class="ms-nick-input" id="msi-nick" maxlength="24" value="${escHtml(it.opp_nick || "")}"
+        autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="msi-acts">
+        <button class="btn btn--danger" data-msi="reject" data-msi-id="${Number(it.id)}">${escHtml(msT("ms_aw_reject"))}</button>
+        <button class="btn btn--primary" data-msi="accept" data-msi-id="${Number(it.id)}">${escHtml(msT("ms_aw_accept"))}</button>
+      </div>`;
+    document.body.appendChild(box);
+    return;
+  }
   box.innerHTML = `<div class="msi-title">${escHtml(msT("ms_in_title"))} · ${escHtml(msT(`ms_mode_${it.mode}`))}</div>
     <div class="msi-text">${escHtml(msT("ms_in_text", { who: it.nickname || "", score: `${it.my_goals}:${it.their_goals}` }))}</div>
     <div class="msi-left">${escHtml(msT("ms_in_left", { h }))}</div>
@@ -50,6 +63,7 @@ document.addEventListener("click", async (e) => {
   if (!b || MSI.busy) return;
   const id = Number(b.dataset.msiId);
   if (b.dataset.msi === "ok") { msiMarkSeen(id); msiRender(); return; }
+  if (b.dataset.msi === "accept" || b.dataset.msi === "reject") { void msiAwait(b, id, b.dataset.msi === "accept"); return; }
   if (!window.confirm(msT("ms_in_q"))) return;
   MSI.busy = true; b.disabled = true;
   try {
@@ -61,5 +75,19 @@ document.addEventListener("click", async (e) => {
   } catch (err) { showToast(msErr(err)); b.disabled = false; }
   finally { MSI.busy = false; }
 });
+
+async function msiAwait(b, id, accept) {
+  if (!accept && !window.confirm(msT("ms_aw_reject_q"))) return;
+  const nick = (document.getElementById("msi-nick")?.value || "").trim();
+  MSI.busy = true; b.disabled = true;
+  try {
+    await apiFetch(`/mshot/${id}/${accept ? "accept" : "reject"}`, { method: "POST", body: accept ? JSON.stringify({ nick }) : undefined });
+    showToast(msT(accept ? "ms_aw_ok" : "ms_in_sent"));
+    MSI.items = MSI.items.filter(x => x.id !== id);
+    msiRender();
+    if (accept && typeof msNickLoad === "function") { await msNickLoad(true); if (typeof msNickPaintProfile === "function") msNickPaintProfile(); }
+  } catch (err) { showToast(msErr(err)); b.disabled = false; }
+  finally { MSI.busy = false; }
+}
 
 setTimeout(() => { void msiLoad(); setInterval(msiLoad, MSI_POLL_MS); }, MSI_START_MS);

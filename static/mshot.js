@@ -182,7 +182,7 @@ async function msShotApply(idx) {
     const r = await apiFetch("/mshot/apply", { method: "POST",
       body: JSON.stringify({ mode: MS.ctx.mode, match_id: MS.ctx.id, token: MS.token, row: idx }) });
     msCloseModal("ms-shot");
-    showToast(msT(r.status === "admin_pending" ? "ms_done_pending" : "ms_done"));
+    showToast(msT(r.status === "admin_pending" ? "ms_done_pending" : r.status === "await_opp" ? "ms_done_await" : "ms_done"));
     await msRefresh(MS.ctx.mode);
   } catch (e) {
     showToast(msErr(e));
