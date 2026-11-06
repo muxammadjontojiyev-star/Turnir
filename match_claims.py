@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 TECH_WIN = (3, 0)
 CLAIM_MAX_IMAGES = 3
 CLAIM_NOTE_MAX = 500
+CLAIM_NOTE_MIN = 5                     # 2026-11-06 (egasi): izoh MAJBURIY — kamida shuncha belgi
 CLAIM_IMG_MAX = 1400
 CLAIM_IMG_Q = 78
 CLAIM_DAILY_LIMIT = 5
@@ -54,6 +55,8 @@ def create_claim(user_id: int, mode: str, match_id: int, images: list[bytes], no
         return False, "not_participant"
     if not images:
         return False, "no_images"
+    if len((note or "").strip()) < CLAIM_NOTE_MIN:
+        return False, "no_note"                         # izoh majburiy (egasi, 2026-11-06)
     try:
         imgs = [_jpeg(b) for b in images[:CLAIM_MAX_IMAGES]]
     except Exception:
