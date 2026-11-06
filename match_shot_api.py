@@ -25,9 +25,9 @@ import base64
 import binascii
 import logging
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, Header, HTTPException
 
-from api import get_authenticated_admin, get_authenticated_super_admin, get_authenticated_user
+from api import get_authenticated_super_admin, get_authenticated_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -66,14 +66,24 @@ async def _tell(user_id: int, key: str, **fmt) -> None:
 
 
 async def _tell_admins(mode: str, match_id: int, key: str, **fmt) -> None:
+    """Bosh adminlar + o'sha liga (ligada) / rejim adminlari (match_modes.reviewer_tgs), har biri o'z tilida."""
     from match_modes import get_match, reviewer_tgs
     from notify import notify_user
+    from queries_users import get_user_by_telegram_id
+    from texts import t
     m = get_match(mode, match_id)
-    for tg in reviewer_tgs(mode, m or {}):
+    tgs = reviewer_tgs(mode, m or {})
+    sent = 0
+    for tg in tgs:
+        u = get_user_by_telegram_id(tg) or {}
+        lang = u.get("language")
+        where = t("mshot_where_league" if mode == "league" else "mshot_where_mode", lang or "uz")
         try:
-            await notify_user(tg, key, None, open_button_key="btn_open_app", **fmt)
+            sent += bool(await notify_user(tg, key, lang, open_button_key="btn_open_app",
+                                           mode=t(MODE_LABEL_KEY.format(mode), lang or "uz"), where=where, match=match_id, **fmt))
         except Exception as exc:
             logger.warning("MATCH SHOT: adminga xabar yuborilmadi (%s): %s", tg, exc)
+    logger.info("MATCH SHOT: %s #%s — %s: %s/%s adminga yuborildi (%s)", mode, match_id, key, sent, len(tgs), tgs)
 
 
 # ---------------- eF nikname ----------------
@@ -190,15 +200,30 @@ async def mshot_tech(mode: str = Body(..., embed=True), match_id: int = Body(...
 
 
 # ---------------- admin ----------------
+# 2026-11-06: bosh admin + tayinlangan liga / rejim adminlari (har kim faqat o'zinikini ko'radi — can_review)
+
+def get_any_admin(x_telegram_init_data: str = Header(...)) -> dict:
+    from admin_roles import VALID_SCOPES, is_scope_admin, is_super_admin
+    from api import get_or_create_user, verify_telegram_init_data
+    tg = verify_telegram_init_data(x_telegram_init_data)
+    tid = tg["id"]
+    if not (is_super_admin(tid) or any(is_scope_admin(tid, sc) for sc in VALID_SCOPES)):
+        raise HTTPException(status_code=403, detail="not_admin")
+    u = get_or_create_user(tid, tg.get("first_name", f"user_{tid}"), tg.get("username"))
+    return {**u, "telegram_id": tid}
+
 
 @router.get("/mshot/admin/list")
-def mshot_admin_list(admin: dict = Depends(get_authenticated_admin)):
+def mshot_admin_list(modes: str = "", admin: dict = Depends(get_any_admin)):
+    """modes — vergul bilan (masalan «cl,cl_po»): rejimning o'z Admin bo'limi uchun; bo'sh — hammasi."""
     from match_claims import admin_list
-    return {"items": admin_list(admin["telegram_id"])}
+    want = {m for m in modes.split(",") if m}
+    items = admin_list(admin["telegram_id"])
+    return {"items": [i for i in items if not want or i["mode"] in want]}
 
 
 @router.get("/mshot/admin/img/{kind}/{item_id}/{idx}")
-def mshot_admin_img(kind: str, item_id: int, idx: int, admin: dict = Depends(get_authenticated_admin)):
+def mshot_admin_img(kind: str, item_id: int, idx: int, admin: dict = Depends(get_any_admin)):
     from match_claims import admin_list, claim_image
     from match_shot import shot_image
     if not any(i["kind"] == kind and i["id"] == item_id for i in admin_list(admin["telegram_id"])):
@@ -212,11 +237,9 @@ def mshot_admin_img(kind: str, item_id: int, idx: int, admin: dict = Depends(get
 @router.post("/mshot/admin/decide")
 async def mshot_admin_decide(kind: str = Body(..., embed=True), id: int = Body(..., embed=True),
                              action: str = Body(..., embed=True), s1: int | None = Body(None, embed=True),
-                             s2: int | None = Body(None, embed=True), admin: dict = Depends(get_authenticated_admin)):
+                             s2: int | None = Body(None, embed=True), admin: dict = Depends(get_any_admin)):
     from match_claims import decide
-    from queries_users import get_user_by_telegram_id
-    me = get_user_by_telegram_id(admin["telegram_id"]) or {}
-    r = _fail(decide({**admin, "id": me.get("id")}, kind, id, action, s1, s2))
+    r = _fail(decide(admin, kind, id, action, s1, s2))
     it = r["item"]
     if kind == "tech":
         key = "mshot_notify_tech_ok" if r["result"] == "tech_win" else "mshot_notify_tech_no"
