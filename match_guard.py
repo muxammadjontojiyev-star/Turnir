@@ -1,7 +1,8 @@
 """
 match_guard.py — NATIJA FAQAT SKRINSHOT BILAN (2026-11-06, egasi: «natija kiritish faqat skrinshot orqali bo'lsin»).
 
-  * Kalit — app_flags.shot_only (standart YOQIQ). Bosh admin Admin → «📸 SKRINSHOT VA TEXNIK G'ALABA» da
+  * Kalit — app_flags.shot_only. 2026-11-06 dan O'CHIQ (egasi: «qo'lda kiritishni ham qo'shing» — ikkalasi ham
+    ishlaydi; migrate_flags bir marta o'chiradi). Bosh admin Admin → «📸 SKRINSHOT VA TEXNIK G'ALABA» da
     o'chira oladi (masalan, skrinshot o'qish xizmati ishlamay qolsa — favqulodda holat).
   * Yoqiq paytda barcha rejimlarning QO'LDA natija kiritish endpointlari (HTTP) rad etiladi: 400 «screenshot_only».
     Skrinshotli natija (match_shot.py) shu funksiyalarni Python ichidan chaqiradi — HTTP emas, shuning uchun o'tadi.
@@ -29,8 +30,16 @@ PT_RESULT_RE = re.compile(r"^/pt/match/\d+/result$")
 ERR_SHOT_ONLY = "screenshot_only"
 
 
+FLAG_RESET_MARK = "shot_only_reset_20261106"   # bir martalik: egasi «qo'lda kiritishni ham qo'shing» (2026-11-06)
+
+
 def migrate_flags(cur) -> None:
     cur.execute("CREATE TABLE IF NOT EXISTS app_flags (key TEXT PRIMARY KEY, value TEXT)")
+    # bir marta: qo'lda kiritish yana ochiladi (skrinshot ham qoladi). Keyin bosh admin xohlasa kalit bilan yopadi.
+    if not cur.execute("SELECT 1 FROM app_flags WHERE key = ?", (FLAG_RESET_MARK,)).fetchone():
+        cur.execute("INSERT INTO app_flags (key, value) VALUES (?, '0') ON CONFLICT(key) DO UPDATE SET value = '0'",
+                    (FLAG_SHOT_ONLY,))
+        cur.execute("INSERT INTO app_flags (key, value) VALUES (?, '1')", (FLAG_RESET_MARK,))
 
 
 def shot_only() -> bool:
