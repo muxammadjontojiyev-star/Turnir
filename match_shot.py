@@ -24,8 +24,11 @@ logger = logging.getLogger(__name__)
 
 TZ_LOCAL = timezone(timedelta(hours=5))   # Toshkent (o'yin vaqti skrinshotda telefon vaqtida)
 SHOT_MAX_AGE_H = 72               # shundan eski o'yin qabul qilinmaydi
-SHOT_FUTURE_MIN = 15              # telefon soati biroz oldinda bo'lsa
-OPEN_SLACK_MIN = 30               # o'yin ochilishidan shuncha oldin o'ynalgani ham qabul (soat farqi)
+# 2026-11-06 (egasi: «bugungi o'yinni o'tgan kungi deyapti»): eFootball Match History vaqti telefon / o'yin serveri
+# mintaqasida bo'lishi mumkin (Toshkentdan bir necha soat oldinda yoki orqada) — shuning uchun keng oyna.
+# Bir o'yinni ikki marta ishlatish baribir mumkin emas (_shot_used), shu sabab oyna kengligi xavfsiz.
+SHOT_FUTURE_MIN = 12 * 60         # o'yin vaqti Toshkentdan shuncha oldinda ko'rinishi mumkin (vaqt mintaqasi)
+OPEN_SLACK_MIN = 12 * 60          # o'yin ochilishidan shuncha oldin ko'ringani ham qabul (vaqt mintaqasi)
 DISPUTE_HOURS = 12
 NICK_MATCH_MIN = 0.86             # nikname o'xshashligi (OCR xatolari: «_» ↔ « », 0 ↔ O)
 READ_DAILY_LIMIT = 30
@@ -63,21 +66,35 @@ def _jpeg(raw: bytes) -> bytes:
 
 
 def _played_at(row: dict, opened: datetime | None) -> datetime | None:
-    """Skrinshot sanasi (Toshkent) — oyna ichida bo'lsa; dd/mm va mm/dd sinanadi."""
+    """Skrinshot sanasi (Toshkent) — oyna ichida bo'lsa; dd/mm va mm/dd sinanadi. Vaqt o'qilmagan bo'lsa —
+    o'sha kunning istalgan vaqti oynaga tushsa qabul (vaqt o'rniga oynadagi eng yaqin payt olinadi)."""
     now = datetime.now(TZ_LOCAL)
     lo = now - timedelta(hours=SHOT_MAX_AGE_H)
     if opened:
         lo = max(lo, opened - timedelta(minutes=OPEN_SLACK_MIN))
     hi = now + timedelta(minutes=SHOT_FUTURE_MIN)
-    a, b, y = re.split(r"[/.\-]", row["date"])
-    hh, mm = (row.get("time") or "00:00").split(":")
+    try:
+        a, b, y = re.split(r"[/.\-]", row["date"])
+    except ValueError:
+        return None
+    tm = row.get("time")
     for d, m in ((a, b), (b, a)):
         try:
-            dt = datetime(int(y), int(m), int(d), int(hh), int(mm), tzinfo=TZ_LOCAL)
+            if tm:
+                hh, mm = tm.split(":")
+                dt = datetime(int(y), int(m), int(d), int(hh), int(mm), tzinfo=TZ_LOCAL)
+                if lo <= dt <= hi:
+                    return dt
+            else:
+                day0 = datetime(int(y), int(m), int(d), tzinfo=TZ_LOCAL)
+                day1 = day0 + timedelta(days=1) - timedelta(minutes=1)
+                if day1 >= lo and day0 <= hi:
+                    return min(max(day0, lo), hi)
         except ValueError:
             continue
-        if lo <= dt <= hi:
-            return dt
+    logger.info("MATCH SHOT: sana oynadan tashqari — o'qildi %s %s; oyna %s … %s (ochilgan %s)",
+                row.get("date"), tm, lo.strftime("%d.%m %H:%M"), hi.strftime("%d.%m %H:%M"),
+                opened.strftime("%d.%m %H:%M") if opened else "-")
     return None
 
 
@@ -195,6 +212,8 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
         why, r = check_await(mode, match, user["id"], row, r["my_nick"])
     if why in ("nick_mismatch", "bad_date") and row.get("marked"):
         return False, "mark_over_text"                 # belgi chizig'i nikname/sana ustidan o'tib, o'qib bo'lmadi
+    if why == "bad_date":
+        return False, f"bad_date|{row.get('date', '')} {row.get('time') or ''}".strip()
     if why:
         return False, why
     fp = _fp(row, r["played"])
