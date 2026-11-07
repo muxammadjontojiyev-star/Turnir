@@ -3230,18 +3230,20 @@ function renderWebChatMessages(messages) {
   // Pastga skroll qilinganmi (yangi xabarda avtomatik pastga tushish uchun)
   const atBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 60;
 
-  box.innerHTML = messages.map(msg => {
+  box.innerHTML = messages.map((msg, i) => {
     const mine = msg.mine;
     const ticks = mine ? (msg.is_read ? "✓✓" : "✓") : "";
     const tickCls = (mine && msg.is_read) ? "webchat-ticks read" : "webchat-ticks";
     const time = formatChatTime(msg.created_at);
+    // 2026-11-07: kun almashganda sana ajratgichi — «Bugun» / «Kecha» / «5-noyabr» (chat_dates.js)
+    const daySep = typeof chatDaySepHtml === "function" ? chatDaySepHtml(messages, i) : "";
     const logo = findClubLogo(msg.club_name);
     const clubLogo = logo
       ? `<img class="webchat-club-logo" src="${escHtml(logo)}" alt="${escHtml(msg.club_name || "")}" title="${escHtml(msg.club_name || "")}">`
       : "";
     // 2026-10-11: rasm xabari (chat_images.js) — tarjima tugmasi chiqmaydi
     const isImg = typeof chatImageToken === "function" && !!chatImageToken(msg.text);
-    return `
+    return `${daySep}
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${clubLogo}
         <div class="webchat-bubble${mine ? "" : " has-tr"}${isImg ? " webchat-bubble--img" : ""}">

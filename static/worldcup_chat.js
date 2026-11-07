@@ -307,8 +307,9 @@ function wcRenderWebChatMessages(messages) {
   APP.chatLastMessages = messages;
   APP.chatRerender = wcRenderWebChatMessages;
 
-  box.innerHTML = messages.map(msg => {
+  box.innerHTML = messages.map((msg, i) => {
     const mine = msg.mine;
+    const daySep = typeof chatDaySepHtml === "function" ? chatDaySepHtml(messages, i) : "";   // 2026-11-07: sana
     const ticks = mine ? (msg.is_read ? "✓✓" : "✓") : "";
     const tickCls = (mine && msg.is_read) ? "webchat-ticks read" : "webchat-ticks";
     const time = (typeof formatChatTime === "function") ? formatChatTime(msg.created_at) : "";
@@ -316,7 +317,7 @@ function wcRenderWebChatMessages(messages) {
     const flagSpan = flag ? `<span class="webchat-club-logo" title="${escHtml(msg.club_name || "")}">${flag}</span>` : "";
     // 2026-10-11: rasm xabari (chat_images.js) — tarjima tugmasi chiqmaydi
     const isImg = typeof chatImageToken === "function" && !!chatImageToken(msg.text);
-    return `
+    return `${daySep}
       <div class="webchat-msg ${mine ? "mine" : "theirs"}">
         ${flagSpan}
         <div class="webchat-bubble${mine ? "" : " has-tr"}${isImg ? " webchat-bubble--img" : ""}">
