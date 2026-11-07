@@ -55,7 +55,8 @@ def tb_season_fixtures(division: int, round: int, league_id: int | None = None,
     s = tb_last_season(lid) if lid else None
     if not s:
         raise HTTPException(status_code=404, detail="no_season")
-    return {"division": division, "round": round, "fixtures": tb_round_fixtures(s["id"], division, round)}
+    from tb_form import decorate_fixtures               # 2026-11-07: o'yinchi bahosi (10 ball) va bahs MVP
+    return {"division": division, "round": round, "fixtures": decorate_fixtures(tb_round_fixtures(s["id"], division, round))}
 
 
 @router.get("/tb/my-games")
