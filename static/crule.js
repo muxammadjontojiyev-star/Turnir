@@ -225,6 +225,7 @@ if (typeof copyChatId === "function") {
 // ---------------- 4) YIRIK HISOB — skrinshot so'raladi (server: chat_gate.py «big_needs_shot|mode|id|s1|s2») ----------------
 // Qo'lda kiritilgan yirik hisob rad etiladi → skrinshot oynasi ochiladi; skrinshotdagi hisob bir xil bo'lsa — darhol tasdiq.
 const CR_BIG_CODE = "big_needs_shot|";
+const CR_BIG_FALLBACK = 5;                           // config.MAX_NORMAL_SCORE (server qiymati kelmasa)
 if (typeof apiFetch === "function") {
   const _crFetch = apiFetch;
   apiFetch = async function (path, opts) {                                  // eslint-disable-line no-global-assign
@@ -255,4 +256,18 @@ async function crBigShot(m) {
 async function _crMatchSide(m) {
   const st = await apiFetch(`/crule/${encodeURIComponent(m.mode)}/${m.id}`);
   return st && typeof st.me_p1 === "boolean" ? st.me_p1 : null;
+}
+
+// 2026-11-07: xususiy turnir ham — yirik hisob kiritilsa skrinshot oynasi (adminga yuborish so'rovi o'rniga).
+// pt_play.js ptSubmitResult o'ralgan (u 300 qatordan oshgan; global nom chaqiruv paytida o'qiladi). Server ham tekshiradi.
+if (typeof ptSubmitResult === "function") {
+  const _crPtSubmit = ptSubmitResult;
+  ptSubmitResult = function (tid, mid) {                                    // eslint-disable-line no-global-assign
+    const s1 = document.getElementById(`pt-s1-${mid}`)?.value, s2 = document.getElementById(`pt-s2-${mid}`)?.value;
+    const lim = (typeof PT !== "undefined" && PT.play && PT.play.max_normal_score) || CR_BIG_FALLBACK;
+    if (s1 && s2 && Math.max(Number(s1), Number(s2)) > lim && typeof msShotOpen === "function") {
+      return crBigShot({ mode: "pt", id: Number(mid), s1: Number(s1), s2: Number(s2) });   // promise — natija oynasi yopiladi
+    }
+    return _crPtSubmit(tid, mid);
+  };
 }

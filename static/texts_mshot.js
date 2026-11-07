@@ -197,6 +197,30 @@ const MSHOT_TEXTS = {
   },
 };
 
+// ---- 2026-11-07: yirik hisob — o'yin yakuni ekrani («Итог матча» / statistika lentasi) ham qabul qilinadi ----
+const MSHOT_RES_ADD = {
+  uz: { ms_row_result: "🏁 O'yin yakuni ekrani", ms_err_read_res_score_mismatch: "skrinshotda",
+    ms_big_expect: "Siz kiritgan hisob: {sc} (siz : raqib). Match History yoki o'yin tugagandagi yakun ekrani («Итог матча» / statistika) skrinshotini yuboring — hisob bir xil bo'lsa, natija darhol tasdiqlanadi.",
+    ms_err: { res_score_mismatch: "Skrinshotdagi hisob siz kiritgan hisob bilan bir xil emas — natija yozilmadi",
+      result_big_only: "O'yin yakuni ekrani faqat yirik hisobni tasdiqlash uchun. Oddiy natija uchun Match History skrinshotini yuboring",
+      no_rows: "Skrinshotda o'yin topilmadi. Match History (yoki yirik hisob uchun o'yin yakuni ekrani)ni to'liq, aniq skrinshot qiling" } },
+  ru: { ms_row_result: "🏁 Экран итога матча", ms_err_read_res_score_mismatch: "на скриншоте",
+    ms_big_expect: "Вы ввели счёт: {sc} (вы : соперник). Пришлите скриншот Match History или экрана итога матча («Итог матча» / статистика) — если счёт совпадёт, результат сразу подтвердится.",
+    ms_err: { res_score_mismatch: "Счёт на скриншоте не совпадает с введённым — результат не записан",
+      result_big_only: "Экран итога матча принимается только для подтверждения крупного счёта. Для обычного результата пришлите скриншот Match History",
+      no_rows: "Матч на скриншоте не найден. Сделайте чёткий скриншот всего экрана Match History (или итога матча — для крупного счёта)" } },
+  en: { ms_row_result: "🏁 Match result screen", ms_err_read_res_score_mismatch: "on the screenshot",
+    ms_big_expect: "You entered: {sc} (you : opponent). Send a screenshot of Match History or the post-match result screen (result / stats) — if the score matches, the result is confirmed right away.",
+    ms_err: { res_score_mismatch: "The screenshot score doesn't match the score you entered — result not recorded",
+      result_big_only: "The match result screen is only accepted to confirm a big score. For a normal result send a Match History screenshot",
+      no_rows: "No match found. Take a clear screenshot of the whole Match History screen (or the result screen for a big score)" } },
+};
+for (const lang of ["uz", "ru", "en"]) {
+  const { ms_err, ...rest } = MSHOT_RES_ADD[lang];
+  Object.assign(MSHOT_TEXTS[lang], rest);
+  MSHOT_TEXTS[lang].ms_err = Object.assign({}, MSHOT_TEXTS[lang].ms_err, ms_err);
+}
+
 for (const lang of ["uz", "ru", "en"]) {
   if (typeof TEXTS !== "undefined" && TEXTS[lang]) Object.assign(TEXTS[lang], MSHOT_TEXTS[lang]);
 }

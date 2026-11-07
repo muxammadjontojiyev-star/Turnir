@@ -120,7 +120,8 @@ function msCloseModal(id) { document.getElementById(id)?.remove(); }
 
 // ---- 📸 skrinshot oynasi ----
 function msRowInner(r) {
-  return `<span class="ms-row-dt">${escHtml(r.date)} ${escHtml(r.time || "")}</span>
+  const dt = r.kind === "result" ? msT("ms_row_result") : `${r.date} ${r.time || ""}`;   // 2026-11-07: o'yin yakuni ekrani
+  return `<span class="ms-row-dt">${escHtml(dt)}</span>
     <span class="ms-row-main"><b>${escHtml(r.left)}</b><span class="ms-row-sc">${Number(r.s_left)} – ${Number(r.s_right)}</span><b>${escHtml(r.right)}</b></span>`;
 }
 function msRowHtml(r, i) {
@@ -165,7 +166,8 @@ async function msShotOpen(c) {
 
 async function msShotRead(file) {
   if (!file || MS.busy) return;
-  if (typeof msNickHas === "function" && !msNickHas()) { showToast("❌ " + msT("ms_nick_need")); return; }
+  // 2026-11-07: yirik hisob (o'yin yakuni ekrani) — o'z niknamei shart emas
+  if (!MS.expect && typeof msNickHas === "function" && !msNickHas()) { showToast("❌ " + msT("ms_nick_need")); return; }
   MS.busy = true; msShotRender();
   try {
     const image = await msShrink(file);
