@@ -10,8 +10,9 @@ TEXNIK G'ALABA (3:0) — bot o'zi beradi, tugma bosilganda (chat_rules_api.py), 
      Raqib shundan keyin biror narsa yozgan bo'lsa — tex win yo'q (u javob bergan).
   4. «E'tiborsiz qoldirgan» emassiz: raqib sizga 3 xil vaqtda (oralig'i ≥40 daq) yozgan va siz orada javob
      bermagan bo'lsangiz — tex win SIZGA berilmaydi. Ikkalasi ham shunday bo'lsa — hech kimga yo'q, deadline'da 0:0.
-QO'LDA NATIJA (chat_gate.py): ikkala ishtirokchi shu o'yin chatida kamida 1 marta yozgan bo'lishi kerak
-  (raqib umuman yozmagan bo'lsa — faqat tex win 3:0; 5:0 kabi hiyla yopiladi). Raqib tasdiqlashiga ta'sir yo'q.
+QO'LDA NATIJA (chat_gate.py; 2026-11-07 egasi: «har qanday qo'lda natija»): bot chatida bir tomon xona ID yuborgan,
+  ikkinchi tomon uni chatda bosib nusxalagan bo'lishi kerak (chat_room.py). Aks holda — faqat tex win 3:0.
+  Raqib tasdiqlashi, skrinshotli natija, admin tuzatishlari — ta'sir yo'q.
 Deadline: liga/JCh/ChL/YeL/OChL/KL (+ pley-off) — har kuni 23:30; Divizion — o'yin kunidan keyingi kun 16:00;
 shaxsiy turnir — tashkilotchi belgilagan tur muddati (bo'lmasa — tex win yo'q).
 """
@@ -26,7 +27,6 @@ TECH_MIN_ATTEMPTS = 3          # nechta xil vaqtda yozish kerak
 TECH_GAP_MIN = 40              # urinishlar orasidagi minimal oraliq (daqiqa)
 TECH_CUTOFF_MIN = 30           # deadline'ga shuncha daqiqa qolgandan keyingi xabarlar sanalmaydi; tugma shundan ochiladi
 TECH_SCORE = 3                 # texnik g'alaba hisobi — 3:0 (undan ko'p emas)
-MANUAL_MIN_MSGS = 1            # qo'lda natija: har bir ishtirokchi chatda kamida shuncha xabar yozgan bo'lsin
 TZ = timezone(timedelta(hours=TOURNAMENT_TIMEZONE_OFFSET))
 DAILY_DEADLINE_MODES = {"league", "wc", "wc_po", "cl", "cl_po", "el", "el_po", "ac", "ac_po", "co", "co_po"}
 
@@ -162,7 +162,7 @@ def tech_check(mode: str, match: dict, me: int, now: datetime | None = None,
 
 
 def manual_check(mode: str, match: dict, me: int, now: datetime | None = None) -> tuple[bool, str, dict]:
-    """Qo'lda natija kiritish mumkinmi: kelishuv qulfi yo'q va ikkalasi ham chatda yozgan."""
+    """Qo'lda natija kiritish mumkinmi: kelishuv qulfi yo'q va xona ID almashilgan (yuborildi + raqib nusxaladi)."""
     from chat_agree import active_lock
     lock = active_lock(mode, int(match["id"]), now or now_local())
     if lock:
@@ -170,10 +170,6 @@ def manual_check(mode: str, match: dict, me: int, now: datetime | None = None) -
     p1, p2 = match.get("player1_id"), match.get("player2_id")
     if me not in (p1, p2):
         return True, "ok", {}                            # ishtirokchi emas — rejimning o'zi rad etadi
-    opp = p2 if me == p1 else p1
-    log = chat_log(mode, int(match["id"]))
-    mine = sum(1 for s, _ in log if s == me)
-    theirs = sum(1 for s, _ in log if s == opp)
-    if mine < MANUAL_MIN_MSGS or theirs < MANUAL_MIN_MSGS:
-        return False, ("chat_opp_silent" if mine >= MANUAL_MIN_MSGS else "chat_need_both"), {}
-    return True, "ok", {}
+    from chat_room import room_check
+    ok, why = room_check(mode, int(match["id"]), me, p2 if me == p1 else p1)
+    return ok, why, {}

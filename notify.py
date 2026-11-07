@@ -56,6 +56,10 @@ async def _send_message(chat_id: int, text: str,
         return False
 
 
+CHAT_MESSAGE_KEY = "notify_chat_message"
+ROOM_ID_MASK = "🎮 ••••••••"       # xona ID o'rniga (ilovada ko'rinadi)
+
+
 async def notify_user(telegram_id: int, text_key: str, language: str,
                       open_button_key: str | None = None, **fmt) -> bool:
     """
@@ -67,6 +71,10 @@ async def notify_user(telegram_id: int, text_key: str, language: str,
     """
     lang = language or DEFAULT_LANGUAGE
     message = t(text_key, lang)
+    if text_key == CHAT_MESSAGE_KEY and fmt.get("preview"):
+        # 2026-11-07: chatda yozilgan 8 xonali xona ID Telegram'da ko'rinmaydi — faqat ilovada nusxalanadi (chat_room.py)
+        from chat_room import ROOM_DIGITS_RE
+        fmt["preview"] = ROOM_DIGITS_RE.sub(ROOM_ID_MASK, str(fmt["preview"]))
     if fmt:
         try:
             message = message.format(**fmt)

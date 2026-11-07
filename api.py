@@ -3128,9 +3128,10 @@ async def post_match_room_code(
         try:
             recipient = get_user_by_telegram_id(info["recipient_telegram_id"])
             lang = recipient.get("language") if recipient else None
+            from match_modes import MODES as _RESULT_MODES   # 2026-11-07: natijali rejimlarda ID faqat ilovada (chat_room.py)
             await notify_user(
                 info["recipient_telegram_id"],
-                "notify_room_code",
+                "notify_room_code_app" if info["mode"] in _RESULT_MODES else "notify_room_code",
                 lang,
                 open_button_key="btn_open_app",
                 mode=t(MODE_NAME_KEYS.get(info["mode"], "mode_name_league"), lang),

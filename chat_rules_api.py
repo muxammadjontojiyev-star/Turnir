@@ -6,6 +6,7 @@ chat_rules_api.py — chat qoidalari API (2026-11-07). Qoidalar: chat_rules.py, 
                                            da'vogar kiritadi + raqib nomidan tasdiqlanadi — barcha tekshiruvlar ishlaydi)
   POST /crule/agree {mode, match_id, at} — boshqa vaqtga taklif («YYYY-MM-DDTHH:MM», Toshkent)
   POST /crule/agree/{id}/decide {accept} — raqib: qabul / rad; taklif qilgan o'zi: bekor qilish (accept=false)
+  POST /crule/room-copy {mode, match_id, code} — chatdagi xona ID nusxalandi (chat_room.py)
 """
 
 import asyncio
@@ -57,6 +58,15 @@ def crule_state(mode: str, match_id: int, user: dict = Depends(get_authenticated
     m_ok, m_why, _ = manual_check(mode, m, user["id"])
     return {"tech": {"ok": t_ok, "reason": t_why, **t_info}, "manual": {"ok": m_ok, "reason": m_why},
             "agree": state(mode, match_id, user["id"]), "status": m.get("status")}
+
+
+@router.post("/crule/room-copy")
+def crule_room_copy(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
+                    code: str = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
+    """Chatdagi xona ID bosildi (nusxalandi) — raqib yuborgan ID bo'lsa yoziladi (qo'lda natija sharti)."""
+    from chat_room import record_copy
+    ok, why = record_copy(mode, _match_or_404(mode, match_id), user["id"], code)
+    return {"ok": ok, "reason": why}
 
 
 @router.post("/crule/techwin")
