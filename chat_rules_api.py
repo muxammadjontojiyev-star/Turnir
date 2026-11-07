@@ -57,7 +57,8 @@ def crule_state(mode: str, match_id: int, user: dict = Depends(get_authenticated
     t_ok, t_why, t_info = tech_check(mode, m, user["id"])
     m_ok, m_why, _ = manual_check(mode, m, user["id"])
     return {"tech": {"ok": t_ok, "reason": t_why, **t_info}, "manual": {"ok": m_ok, "reason": m_why},
-            "agree": state(mode, match_id, user["id"]), "status": m.get("status")}
+            "agree": state(mode, match_id, user["id"]), "status": m.get("status"),
+            "me_p1": user["id"] == m.get("player1_id")}
 
 
 @router.post("/crule/room-copy")

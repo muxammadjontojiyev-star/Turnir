@@ -137,14 +137,17 @@ async def mshot_read(image: str = Body(..., embed=True), user: dict = Depends(ge
 @router.post("/mshot/apply")
 async def mshot_apply(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
                       token: str = Body(..., embed=True), row: int = Body(..., embed=True),
+                      expect_s1: int | None = Body(None, embed=True), expect_s2: int | None = Body(None, embed=True),
                       user: dict = Depends(get_authenticated_user)):
+    """expect_s1/expect_s2 — qo'lda kiritilgan yirik hisob (chat_gate.py): skrinshot shu bilan bir xil bo'lsin."""
     from chat_agree import active_lock
     from chat_rules import fmt_local
     from match_shot import _NICK_REMIND, DISPUTE_HOURS, apply_shot
     lk = active_lock(mode, match_id)                   # 2026-11-07: kelishilgan vaqtgacha natija yo'q
     if lk:
         raise HTTPException(status_code=400, detail=f"agree_locked|{fmt_local(lk)}")
-    ok, r = await apply_shot(user, mode, match_id, token, row)
+    expect = (int(expect_s1), int(expect_s2)) if expect_s1 is not None and expect_s2 is not None else None
+    ok, r = await apply_shot(user, mode, match_id, token, row, expect)
     for uid in list(_NICK_REMIND):                     # raqib niknameini kiritmagan — unga eslatma (bir marta)
         _NICK_REMIND.discard(uid)
         if uid not in _NICK_REMINDED:
@@ -163,13 +166,13 @@ async def mshot_apply(mode: str = Body(..., embed=True), match_id: int = Body(..
 
 @router.get("/mshot/incoming")
 def mshot_incoming(user: dict = Depends(get_authenticated_user)):
-    from match_shot import incoming
+    from match_shot_user import incoming
     return {"items": incoming(user["id"])}
 
 
 @router.post("/mshot/{shot_id}/dispute")
 async def mshot_dispute(shot_id: int, user: dict = Depends(get_authenticated_user)):
-    from match_shot import dispute
+    from match_shot_user import dispute
     r = _fail(dispute(user["id"], shot_id))
     await _tell_admins(r["mode"], r["match_id"], "mshot_admin_dispute", score=f"{r['score1']}:{r['score2']}")
     return {"status": "ok"}
@@ -230,7 +233,7 @@ def mshot_admin_list(modes: str = "", admin: dict = Depends(get_any_admin)):
 @router.get("/mshot/admin/img/{kind}/{item_id}/{idx}")
 def mshot_admin_img(kind: str, item_id: int, idx: int, admin: dict = Depends(get_any_admin)):
     from match_claims import admin_list, claim_image
-    from match_shot import shot_image
+    from match_shot_user import shot_image
     if not any(i["kind"] == kind and i["id"] == item_id for i in admin_list(admin["telegram_id"])):
         raise HTTPException(status_code=404, detail="not_found")
     img = shot_image(item_id) if kind == "shot" else claim_image(item_id, idx)

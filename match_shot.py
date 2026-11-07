@@ -199,7 +199,9 @@ def _garbled(row: dict) -> bool:
     return min(len(_key(row.get("left") or "")), len(_key(row.get("right") or ""))) < GARBLED_NICK_MIN
 
 
-async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: int) -> tuple[bool, str | dict]:
+async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: int,
+                     expect: tuple[int, int] | None = None) -> tuple[bool, str | dict]:
+    """expect — qo'lda kiritilgan YIRIK hisob (player1, player2): skrinshotdagi bilan bir xil bo'lsa — darhol tasdiq."""
     from match_modes import MODES, confirm_as, get_match, submit_as
     from queries_users import get_user_by_id
     rd = _READS.get(token)
@@ -234,6 +236,9 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
     finally:
         conn.close()
     s1, s2, opp = r["s1"], r["s2"], get_user_by_id(r["opponent_id"])
+    if expect is not None and (s1, s2) != tuple(expect):  # 2026-11-07: yirik hisob — skrinshot bilan bir xil bo'lsin
+        me1 = user["id"] == match["player1_id"]
+        return False, f"shot_score_mismatch|{s1 if me1 else s2}:{s2 if me1 else s1}"
     if awaiting:
         from match_shot_await import apply_await
         ok, res = await apply_await(user, mode, match, r, fp, rd["img"])
@@ -257,6 +262,9 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
         ok, res = await submit_as(mode, match_id, s1, s2, user)
         if ok and "admin_pending" not in str(res):
             ok, res = await confirm_as(mode, match_id, opp)
+        elif ok and expect is not None:                 # yirik hisob, skrinshot = kiritilgan → admin kutilmaydi
+            from match_modes import force_set
+            ok, res = force_set(mode, match_id, s1, s2)
     if not ok:
         return False, str(res)
     pending = "admin_pending" in str(res)
@@ -275,53 +283,3 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
     their = s2 if user["id"] == match["player1_id"] else s1
     return True, {"score1": s1, "score2": s2, "admin_pending": pending, "await_opp": False, "opponent": opp, "my": my, "their": their}
 
-
-def incoming(user_id: int) -> list[dict]:
-    """Men haqimda skrinshot bilan yozilgan, hali e'tiroz muddati o'tmagan natijalar."""
-    since = time.time() - DISPUTE_HOURS * 3600
-    conn = get_connection()
-    try:
-        rows = conn.execute("SELECT s.id, s.mode, s.match_id, s.score1, s.score2, s.played_at, s.created_at, "
-                            "s.uploader_id, u.nickname FROM match_shots s JOIN users u ON u.id = s.uploader_id "
-                            "WHERE s.opponent_id = ? AND s.status = 'applied' AND s.created_at > ? ORDER BY s.id DESC",
-                            (user_id, since)).fetchall()
-    finally:
-        conn.close()
-    from match_modes import get_match
-    out = []
-    for r in rows:
-        m = get_match(r["mode"], r["match_id"]) or {}
-        p1_me = m.get("player1_id") == user_id
-        out.append({"id": r["id"], "mode": r["mode"], "match_id": r["match_id"], "nickname": r["nickname"],
-                    "my_goals": r["score1"] if p1_me else r["score2"], "their_goals": r["score2"] if p1_me else r["score1"],
-                    "left_s": int(r["created_at"] + DISPUTE_HOURS * 3600 - time.time())})
-    from match_shot_await import incoming_await
-    return incoming_await(user_id) + out
-
-
-def dispute(user_id: int, shot_id: int) -> tuple[bool, str | dict]:
-    conn = get_connection()
-    try:
-        cur = conn.cursor()
-        r = cur.execute("SELECT * FROM match_shots WHERE id = ?", (shot_id,)).fetchone()
-        if not r or r["opponent_id"] != user_id:
-            return False, "not_found"
-        if r["status"] != "applied":
-            return False, "wrong_status"
-        if time.time() - r["created_at"] > DISPUTE_HOURS * 3600:
-            return False, "too_late"
-        cur.execute("UPDATE match_shots SET status = 'disputed', disputed_at = ? WHERE id = ? AND status = 'applied'",
-                    (time.time(), shot_id))
-        conn.commit()
-        return True, dict(r)
-    finally:
-        conn.close()
-
-
-def shot_image(shot_id: int) -> bytes | None:
-    conn = get_connection()
-    try:
-        r = conn.execute("SELECT img FROM match_shots WHERE id = ?", (shot_id,)).fetchone()
-        return r["img"] if r else None
-    finally:
-        conn.close()

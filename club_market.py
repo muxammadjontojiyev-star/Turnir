@@ -13,6 +13,8 @@ Klub olinganda eski egasi "tashlab ketgan" hisoblanadi (keyingi mavsumda navbatn
 (source='left'; channel_leave_bot / scan_channel_leavers); kanalga qaytsa — o'zi olib tashlanadi.
 Taklif faqat egasi hali shu ligada ro'yxatda bo'lsa amal qiladi (registrations bilan JOIN —
 admin almashtirsa yoki o'chirsa taklif o'zi yo'qoladi). Mavsum reset'ida jadval tozalanadi.
+2026-11-07 (egasi): ilovaga INACTIVE_DAYS (3) kundan ortiq kirmagan liga ishtirokchisining klubi ham avtomatik
+ro'yxatda (source='inactive', users.last_seen — har so'rovda yangilanadi); qaytib kirsa — o'zi olib tashlanadi.
 """
 
 import logging
@@ -23,6 +25,21 @@ logger = logging.getLogger(__name__)
 
 
 SRC_SELF, SRC_LEFT = "self", "left"     # o'zi topshirdi | kanalni tark etdi
+SRC_INACTIVE = "inactive"               # 2026-11-07: INACTIVE_DAYS kundan ortiq ilovaga kirmagan
+INACTIVE_DAYS = 3
+
+
+def sync_inactive(cur) -> None:
+    """Kirmaganlar klubini ro'yxatga qo'yadi, qaytib kirganlarnikini oladi (idempotent; o'zi/kanal manbasiga tegmaydi)."""
+    cutoff = f"-{int(INACTIVE_DAYS)} days"
+    cur.execute("INSERT OR IGNORE INTO club_offers (user_id, source) SELECT r.user_id, ? FROM registrations r "
+                "JOIN users u ON u.id = r.user_id WHERE u.last_seen IS NOT NULL AND u.last_seen < datetime('now', ?)",
+                (SRC_INACTIVE, cutoff))
+    added = cur.rowcount
+    cur.execute("DELETE FROM club_offers WHERE source = ? AND user_id IN (SELECT id FROM users WHERE last_seen IS NULL "
+                "OR last_seen >= datetime('now', ?))", (SRC_INACTIVE, cutoff))
+    if added > 0 or cur.rowcount > 0:
+        logger.info("Klub bozori: kirmaganlar — +%s / -%s", max(added, 0), max(cur.rowcount, 0))
 
 
 def init_club_market_table(cursor) -> None:
@@ -54,6 +71,8 @@ def club_offers_list(user: dict) -> dict:
     conn = get_connection()
     try:
         cur = conn.cursor()
+        sync_inactive(cur)
+        conn.commit()
         cur.execute(
             "SELECT o.user_id, o.created_at, o.source, u.nickname, u.username, r.league_id, r.club_name, "
             "l.name AS league_name, "
@@ -137,6 +156,8 @@ def club_offer_take(taker: dict, owner_user_id: int) -> tuple[bool, str | dict]:
     conn = get_connection()
     try:
         cur = conn.cursor()
+        sync_inactive(cur)                              # qaytib kirgan bo'lsa — klubi olinmaydi
+        conn.commit()
         row = cur.execute(
             "SELECT r.club_name, l.name AS league_name, u.telegram_id, u.language FROM club_offers o "
             "JOIN registrations r ON r.user_id = o.user_id JOIN leagues l ON l.id = r.league_id "

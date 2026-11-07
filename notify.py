@@ -73,8 +73,8 @@ async def notify_user(telegram_id: int, text_key: str, language: str,
     message = t(text_key, lang)
     if text_key == CHAT_MESSAGE_KEY and fmt.get("preview"):
         # 2026-11-07: chatda yozilgan 8 xonali xona ID Telegram'da ko'rinmaydi — faqat ilovada nusxalanadi (chat_room.py)
-        from chat_room import ROOM_DIGITS_RE
-        fmt["preview"] = ROOM_DIGITS_RE.sub(ROOM_ID_MASK, str(fmt["preview"]))
+        from chat_room import ROOM_DIGITS_RE, ROOM_SPLIT_RE
+        fmt["preview"] = ROOM_SPLIT_RE.sub(ROOM_ID_MASK, ROOM_DIGITS_RE.sub(ROOM_ID_MASK, str(fmt["preview"])))
     if fmt:
         try:
             message = message.format(**fmt)

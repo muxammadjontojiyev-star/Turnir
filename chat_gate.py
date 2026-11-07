@@ -3,9 +3,12 @@ chat_gate.py — QO'LDA NATIJA KIRITISH CHAT SHARTI (2026-11-07, chat_rules.manu
 
 Barcha rejimlarning qo'lda natija endpointlari (HTTP) tekshiriladi — rejim fayllariga tegilmaydi:
   * o'yinga kelishilgan vaqt hali kelmagan bo'lsa — rad («crule_err_agree_locked»);
-  * ikkala ishtirokchi shu o'yin chatida kamida 1 marta yozmagan bo'lsa — rad (raqib jim — faqat tex win 3:0).
+  * bot chatida xona ID almashilmagan bo'lsa (bir tomon yuborib, ikkinchisi chatdan nusxalamagan) — rad (chat_room.py).
 Xato matni foydalanuvchi tilida qaytadi (rejimlarning xato toast'i noma'lum kodni o'zicha ko'rsatadi).
 Tasdiqlash / rad etish, admin tuzatishlari, skrinshotli natija va tex win (Python ichidan chaqiriladi) — tegilmaydi.
+YIRIK HISOB (2026-11-07, egasi): biror tomon MAX_NORMAL_SCORE dan ko'p gol — qo'lda qabul qilinmaydi, «big_needs_shot|…»
+  kodi qaytadi → ilova skrinshot oynasini ochadi; skrinshotdagi hisob kiritilgan bilan bir xil bo'lsa — darhol tasdiq
+  (match_shot.apply_shot expect). Xususiy turnir — o'z tartibida (pt_bigscore).
 Ichki xato bo'lsa — so'rov o'tkaziladi (rejimning o'z tekshiruvlari ishlaydi) va logga yoziladi.
 """
 
@@ -26,6 +29,20 @@ PT_RESULT_RE = re.compile(r"^/pt/match/(\d+)/result$")
 ERR_KEY = "crule_err_{}"
 
 
+BIG_CODE = "big_needs_shot"      # frontend (crule.js) ushlaydi → skrinshot oynasi; matn emas, kod qaytadi
+BIG_SKIP_MODES = {"pt"}         # xususiy turnir: natija JSON tanada — o'z tartibi (pt_bigscore, tashkilotchi)
+
+
+def big_score(query: dict) -> tuple[int, int] | None:
+    """Qo'lda kiritilgan hisob YIRIK bo'lsa (rejimlardagi MAX_NORMAL_SCORE qoidasi) — (score1, score2)."""
+    from config import MAX_NORMAL_SCORE
+    try:
+        s1, s2 = int(query.get("score1")), int(query.get("score2"))
+    except (TypeError, ValueError):
+        return None
+    return (s1, s2) if max(s1, s2) > MAX_NORMAL_SCORE else None
+
+
 def target(method: str, path: str, query: dict) -> tuple[str | None, int | None]:
     if method != "POST":
         return None, None
@@ -42,7 +59,7 @@ def target(method: str, path: str, query: dict) -> tuple[str | None, int | None]
         return None, None
 
 
-def check(mode: str, match_id: int, init_data: str) -> str | None:
+def check(mode: str, match_id: int, init_data: str, query: dict | None = None) -> str | None:
     """Rad etish matni (foydalanuvchi tilida) yoki None — o'tkazish."""
     from fastapi import HTTPException
     from api import verify_telegram_init_data
@@ -58,6 +75,11 @@ def check(mode: str, match_id: int, init_data: str) -> str | None:
     match = get_match(mode, match_id)
     if not user or not match:
         return None
+    from chat_agree import active_lock
+    big = big_score(query or {}) if mode not in BIG_SKIP_MODES else None
+    if big and not active_lock(mode, match_id) and user["id"] in (match.get("player1_id"), match.get("player2_id")):
+        logger.info("CHAT SHARTI: %s #%s — yirik hisob %s:%s, skrinshot so'raladi", mode, match_id, *big)
+        return f"{BIG_CODE}|{mode}|{match_id}|{big[0]}|{big[1]}"   # 2026-11-07: yirik hisob — faqat skrinshot bilan
     ok, why, info = manual_check(mode, match, user["id"])
     if ok:
         return None
@@ -77,7 +99,8 @@ def install(app) -> None:
         mode, mid = target(request.method, request.url.path, dict(request.query_params))
         if mode:
             try:
-                err = await asyncio.to_thread(check, mode, mid, request.headers.get("x-telegram-init-data", ""))
+                err = await asyncio.to_thread(check, mode, mid, request.headers.get("x-telegram-init-data", ""),
+                                              dict(request.query_params))
             except Exception:
                 logger.exception("CHAT SHARTI: tekshiruv xatosi (%s #%s) — o'tkazildi", mode, mid)
                 err = None

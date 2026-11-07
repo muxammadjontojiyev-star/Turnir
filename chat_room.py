@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 ROOM_PREFIX_RE = re.compile(r"^🎮 Xona ID:\s*([A-Za-z0-9]{4,16})\s*$")   # room_code.ROOM_CODE_PREFIX bilan bir xil
 ROOM_DIGITS_RE = re.compile(r"(?<!\d)(\d{8})(?!\d)")                     # api.js chatTextWithCopyableIds bilan bir xil
+ROOM_SPLIT_RE = re.compile(r"(?<!\d)(?<!\d[ -])(\d{4})[ -](\d{4})(?![ -]?\d)")         # «4432 1462» / «4432-1462» (crule.js ham)
 ROOM_CODE_MAX = 16
 
 
@@ -32,7 +33,7 @@ def codes_in(text: str) -> set[str]:
     t = str(text or "").strip()
     m = ROOM_PREFIX_RE.match(t)
     out = {m.group(1).upper()} if m else set()
-    return out | {x for x in ROOM_DIGITS_RE.findall(t)}
+    return out | set(ROOM_DIGITS_RE.findall(t)) | {a + b for a, b in ROOM_SPLIT_RE.findall(t)}
 
 
 def sent_codes(mode: str, match_id: int) -> dict[int, set[str]]:

@@ -7,6 +7,9 @@ match_claims.py — «RAQIB YOZMADI / O'YNAMADI — TEXNIK G'ALABA» so'rovlari 
   * Shu ro'yxatda skrinshotli natijaga raqib bildirgan E'TIROZLAR ham (match_shots.status='disputed'):
     «Natija to'g'ri» yoki to'g'ri hisobni kiritib «Tuzatish».
 Jadvallar — match_claims, match_claim_images (migratsiya, qoida #31).
+2026-11-07 (egasi: «adminlardan 3:0 berish funksiyasi endi kerak emas»): texnik g'alaba endi BOT o'zi chat
+yozishmasi bo'yicha beradi (chat_rules.py). TECH_CLAIMS_ON = False — yangi so'rov qabul qilinmaydi, admin ro'yxatida
+ko'rinmaydi, ochiq qolganlari bir marta yopiladi ('closed'). E'tirozlar (skrinshotli natija) — avvalgidek.
 """
 
 import io
@@ -18,6 +21,7 @@ from models import get_connection
 logger = logging.getLogger(__name__)
 
 TECH_WIN = (3, 0)
+TECH_CLAIMS_ON = False                 # 2026-11-07: admin 3:0 so'rovlari o'chirildi (bot o'zi beradi — chat_rules.py)
 CLAIM_MAX_IMAGES = 3
 CLAIM_NOTE_MAX = 500
 CLAIM_NOTE_MIN = 5                     # 2026-11-06 (egasi): izoh MAJBURIY — kamida shuncha belgi
@@ -33,6 +37,8 @@ def migrate_match_claims(cur) -> None:
                 "status TEXT NOT NULL DEFAULT 'open', decided_by INTEGER, decided_at REAL, created_at REAL)")
     cur.execute("CREATE TABLE IF NOT EXISTS match_claim_images (claim_id INTEGER NOT NULL, idx INTEGER NOT NULL, "
                 "img BLOB, PRIMARY KEY (claim_id, idx))")
+    if not TECH_CLAIMS_ON:                              # ochiq qolgan eski so'rovlar yopiladi (idempotent)
+        cur.execute("UPDATE match_claims SET status = 'closed', decided_at = ? WHERE status = 'open'", (time.time(),))
 
 
 def _jpeg(raw: bytes) -> bytes:
@@ -46,6 +52,8 @@ def _jpeg(raw: bytes) -> bytes:
 
 def create_claim(user_id: int, mode: str, match_id: int, images: list[bytes], note: str) -> tuple[bool, str | dict]:
     from match_modes import MODES, get_match
+    if not TECH_CLAIMS_ON:
+        return False, "tech_removed"
     if mode not in MODES:
         return False, "bad_mode"
     m = get_match(mode, match_id)
@@ -106,7 +114,7 @@ def admin_list(telegram_id: int) -> list[dict]:
     finally:
         conn.close()
     out = []
-    for r in claims:
+    for r in (claims if TECH_CLAIMS_ON else []):
         m = get_match(r["mode"], r["match_id"])
         if m and can_review(telegram_id, r["mode"], m):
             out.append({"kind": "tech", **dict(r), "p1": m["player1_id"], "status_match": m.get("status")})
@@ -156,6 +164,8 @@ def decide(admin: dict, kind: str, item_id: int, action: str, s1: int | None = N
         return False, "match_not_found"
     if not can_review(admin["telegram_id"], r["mode"], m):
         return False, "forbidden"
+    if kind == "tech" and not TECH_CLAIMS_ON:
+        return False, "tech_removed"
     open_st = ("open",) if kind == "tech" else ("disputed", "admin_pending")
     if r["status"] not in open_st:
         return False, "already_decided"
