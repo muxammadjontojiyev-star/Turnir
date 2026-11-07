@@ -1180,6 +1180,7 @@ function navigateTo(sectionName) {
 
 let _toastTimer = null;
 
+const TOAST_BASE_MS = 2800, TOAST_MAX_MS = 9000, TOAST_SHORT_CHARS = 60, TOAST_MS_PER_CHAR = 45;
 function showToast(msg) {
   let toast = document.getElementById("toast");
   if (!toast) {
@@ -1190,7 +1191,10 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add("show");
   clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+  // 2026-11-07: uzun tushuntirishni o'qishga ulgurish uchun — matn uzunligiga qarab ko'proq turadi
+  const len = String(msg || "").length;
+  const ms = Math.min(TOAST_MAX_MS, TOAST_BASE_MS + Math.max(0, len - TOAST_SHORT_CHARS) * TOAST_MS_PER_CHAR);
+  _toastTimer = setTimeout(() => toast.classList.remove("show"), ms);
 }
 
 // ============================================================

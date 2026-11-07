@@ -16,7 +16,8 @@ const CR = { tech: null, busy: false, bar: null, timer: 0 };
 function crTechHtml(st) {
   const t = (st && st.tech) || {};
   const lines = [t.deadline && crT("cr_tech_deadline", { d: t.deadline }), t.opens_at && crT("cr_tech_opens", { t: t.opens_at }),
-    t.attempts != null && crT("cr_tech_attempts", { n: t.attempts })].filter(Boolean);
+    t.attempts != null && crT("cr_tech_attempts", { n: t.attempts }),
+    t.wait_until && crT("cr_tech_wait", { t: t.wait_until })].filter(Boolean);
   const why = st ? (t.ok ? "" : crErr(t.reason)) : crT("cr_wait");
   return `<div class="modal-title">${escHtml(crT("cr_tech_title"))}</div>
     <div class="ms-hint">${escHtml(crT("cr_tech_rule"))}</div>

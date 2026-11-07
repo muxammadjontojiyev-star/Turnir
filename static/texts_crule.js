@@ -10,7 +10,10 @@ const CRULE_TEXTS = {
     cr_tech_rule: "Bot faqat shu o'yinning BOT ichidagi chatini tekshiradi (Telegram shaxsiy yozishmasi hisobga olinmaydi). "
       + "Tex win (3:0) uchun: raqibning oxirgi xabaridan keyin unga 3 xil vaqtda yozgan bo'lishingiz kerak, oralig'i kamida "
       + "40 daqiqa; deadline'ga 30 daqiqa qolganda yozilganlari sanalmaydi. Raqib sizga 3 marta yozib, siz javob bermagan "
-      + "bo'lsangiz — tex win sizga berilmaydi.",
+      + "bo'lsangiz — tex win sizga berilmaydi. "
+      + "Yoki: chatdagi oxirgi xabar sizniki (raqibga javob), u deadline'ga 30 daqiqa qolishidan oldin yozilgan va raqib "
+      + "kamida 30 daqiqa javob bermagan bo'lsa — tex win sizga.",
+    cr_tech_wait: "Raqib javob bermasa, tugma {t} dan ishlaydi",
     cr_tech_deadline: "Deadline: {d}", cr_tech_opens: "Tugma ochiladi: {t}", cr_tech_attempts: "Sizning urinishlaringiz: {n} / 3",
     cr_tech_take: "✅ 3:0 olish", cr_tech_done: "✅ Texnik g'alaba yozildi: 3:0", cr_close: "Yopish", cr_wait: "⏳ Tekshirilmoqda…",
     cr_ag_btn: "📅 Boshqa vaqtga kelishish", cr_ag_hint: "Toshkent vaqti. Qabul qilinsa — shu vaqtgacha hech kim natija kirita olmaydi.",
@@ -28,6 +31,7 @@ const CRULE_TEXTS = {
       tech_you_ignored: "Raqibingiz sizga 3 xil vaqtda yozgan, siz javob bermagansiz — tex win sizga berilmaydi",
       tech_opp_replied: "Raqibingiz chatda javob bergan — tex win yo'q. Uning oxirgi xabaridan keyin yana 3 xil vaqtda yozing",
       tech_need_attempts: "Raqibga bot chatida 3 xil vaqtda (oralig'i kamida 40 daqiqa) yozmagansiz",
+      tech_wait_reply: "Raqibingizda javob berish uchun hali vaqt bor — 30 daqiqa o'tishini kuting",
       agree_in_past: "Bu vaqt o'tib ketgan", agree_too_far: "Juda uzoq vaqt (ko'pi bilan 7 kun)", agree_bad_time: "Vaqtni tanlang",
       agree_has_result: "Bu o'yinga natija kiritilgan — kelishuv kerak emas", agree_not_found: "Taklif topilmadi yoki eskirgan",
       not_participant: "Siz bu o'yin ishtirokchisi emassiz",
@@ -39,7 +43,10 @@ const CRULE_TEXTS = {
     cr_tech_rule: "Бот проверяет только чат этого матча ВНУТРИ бота (личная переписка в Telegram не учитывается). "
       + "Для техпобеды (3:0): после последнего сообщения соперника вы написали ему 3 раза в разное время, с интервалом "
       + "от 40 минут; сообщения за 30 минут до дедлайна не учитываются. Если соперник писал вам 3 раза, а вы не ответили — "
-      + "техпобеда вам не присуждается.",
+      + "техпобеда вам не присуждается. "
+      + "Или: последнее сообщение в чате ваше (ответ сопернику), написано раньше чем за 30 минут до дедлайна, и соперник "
+      + "не отвечает минимум 30 минут — техпобеда ваша.",
+    cr_tech_wait: "Если соперник не ответит, кнопка сработает с {t}",
     cr_tech_deadline: "Дедлайн: {d}", cr_tech_opens: "Кнопка откроется: {t}", cr_tech_attempts: "Ваши попытки: {n} / 3",
     cr_tech_take: "✅ Получить 3:0", cr_tech_done: "✅ Техпобеда записана: 3:0", cr_close: "Закрыть", cr_wait: "⏳ Проверка…",
     cr_ag_btn: "📅 Договориться о другом времени", cr_ag_hint: "Время Ташкента. Если примут — до этого времени никто не внесёт результат.",
@@ -57,6 +64,7 @@ const CRULE_TEXTS = {
       tech_you_ignored: "Соперник писал вам 3 раза в разное время, а вы не ответили — техпобеда вам не присуждается",
       tech_opp_replied: "Соперник ответил в чате — техпобеды нет. Напишите ещё 3 раза после его последнего сообщения",
       tech_need_attempts: "Вы не написали сопернику в чате бота 3 раза (с интервалом от 40 минут)",
+      tech_wait_reply: "У соперника ещё есть время ответить — подождите 30 минут",
       agree_in_past: "Это время уже прошло", agree_too_far: "Слишком далеко (не более 7 дней)", agree_bad_time: "Выберите время",
       agree_has_result: "Результат уже внесён — договорённость не нужна", agree_not_found: "Предложение не найдено или устарело",
       not_participant: "Вы не участник этого матча",
@@ -68,7 +76,10 @@ const CRULE_TEXTS = {
     cr_tech_rule: "The bot checks only this match's chat INSIDE the bot (private Telegram chats don't count). "
       + "For a tech win (3:0): after your opponent's last message you must have written to them at 3 different times, at "
       + "least 40 minutes apart; messages in the last 30 minutes before the deadline don't count. If your opponent wrote "
-      + "to you 3 times and you didn't reply, you don't get the tech win.",
+      + "to you 3 times and you didn't reply, you don't get the tech win. "
+      + "Or: the last message in the chat is yours (a reply to your opponent), written before the 30-minutes-to-deadline mark, "
+      + "and your opponent hasn't replied for at least 30 minutes — the tech win is yours.",
+    cr_tech_wait: "If your opponent doesn't reply, the button works from {t}",
     cr_tech_deadline: "Deadline: {d}", cr_tech_opens: "Button opens: {t}", cr_tech_attempts: "Your attempts: {n} / 3",
     cr_tech_take: "✅ Take 3:0", cr_tech_done: "✅ Tech win recorded: 3:0", cr_close: "Close", cr_wait: "⏳ Checking…",
     cr_ag_btn: "📅 Agree on another time", cr_ag_hint: "Tashkent time. If accepted, nobody can enter a result before then.",
@@ -86,6 +97,7 @@ const CRULE_TEXTS = {
       tech_you_ignored: "Your opponent wrote to you at 3 different times and you didn't reply — no tech win for you",
       tech_opp_replied: "Your opponent replied in the chat — no tech win. Write 3 more times after their last message",
       tech_need_attempts: "You haven't written to your opponent in the bot chat at 3 different times (40+ minutes apart)",
+      tech_wait_reply: "Your opponent still has time to reply — wait 30 minutes",
       agree_in_past: "That time has passed", agree_too_far: "Too far ahead (7 days max)", agree_bad_time: "Pick a time",
       agree_has_result: "A result is already entered — no agreement needed", agree_not_found: "Proposal not found or outdated",
       not_participant: "You're not a participant in this match",
