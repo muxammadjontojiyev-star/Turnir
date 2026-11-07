@@ -5,6 +5,7 @@
 //  tb_admin.js tbAdminRender() shu blokni qo'yadi: tbAdminSeasonHtml(). Global: TB, apiFetch, escHtml, showToast, tbErr.
 //  2026-10-16: barcha amallar tanlangan liga uchun (TB.adminLeagueId).
 //  2026-10-18: qur'a formasi — tb_admin_draw.js (Liga / UCL, N vs N).
+//  2026-11-07: faol mavsum davomida ham «📋 Keyingi mavsum rejasi»ni tuzib saqlash mumkin (qur'asiz).
 // =============================================================
 
 function tbAdminSeasonHtml() {
@@ -24,6 +25,7 @@ function tbAdminSeasonHtml() {
     acts = `<button class="btn btn--ghost" data-tbsa="advance">⏭ Joriy turni hozir yopish</button>
       <button class="btn btn--ghost tb-danger-btn" data-tbsa="finish">🏁 Mavsumni yakunlash</button>`;
   }
+  if (s) acts += `<details class="tb-plan-next"${TB.dplanOpen ? " open" : ""}><summary>📋 Keyingi mavsum rejasi</summary>${tbAdminDrawFormHtml(p, true)}</details>`;  // 2026-11-07
   return `<div class="section-label">MAVSUM</div>
     <div class="card tb-adm-season">
       <div class="tb-hint">${state}</div>

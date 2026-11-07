@@ -46,17 +46,17 @@
 .tb-chips--scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .tb-chips--scroll::-webkit-scrollbar { display: none; }
 .tb-chips--scroll .tb-chip { flex: 0 0 auto; }
-.tb-seg { position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px;
+.tb-asec { position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px;
   margin: 12px 0 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(16,12,22,.92);
   backdrop-filter: blur(8px); }
-.tb-seg-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 7px;
+.tb-asec-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 7px;
   border: none; border-radius: 10px; background: transparent; color: var(--text-secondary);
   font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: .3px; }
-.tb-seg-item > span { font-size: 17px; line-height: 1; }
-.tb-seg-item.active { color: #fff; background: linear-gradient(135deg, #b3202e, #e0782a); box-shadow: 0 4px 14px -6px rgba(224,120,42,.8); }
-.tb-seg-badge { position: absolute; top: 3px; right: 6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
+.tb-asec-item > span { font-size: 17px; line-height: 1; }
+.tb-asec-item.active { color: #fff; background: linear-gradient(135deg, #b3202e, #e0782a); box-shadow: 0 4px 14px -6px rgba(224,120,42,.8); }
+.tb-asec-badge { position: absolute; top: 3px; right: 6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
   background: var(--tb-red); color: #fff; font-size: 10px; line-height: 17px; text-align: center; }
-.tb-seg-body { animation: tbFade .18s ease; }
+.tb-asec-body { animation: tbFade .18s ease; }
 
 /* ---- Admin: team kartasidagi amallar — bir xil o'lchamdagi to'r ---- */
 .tb-act-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
@@ -172,3 +172,31 @@
 .tb-mvp { margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: 13px; text-align: center;
   background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.3); color: #ffe7a0; }
 .tb-mvp b { color: #fff; }
+
+/* ---- 2026-11-07: keyingi mavsum rejasi (tb_admin_draw.js) ---- */
+.tb-plan-label { margin: 12px 2px 6px; font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--tb-accent); }
+.tb-fmt-seg .tb-seg-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; }
+.tb-fmt-seg .tb-seg-btn small { font-size: 10.5px; font-weight: 500; opacity: .8; line-height: 1.25; }
+.tb-plan { margin: 4px 0 8px; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,.03); }
+.tb-plan--bad { color: #ffb4a8; border-color: rgba(255,90,70,.35); font-size: 13px; }
+.tb-plan-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;
+  font-weight: 700; font-size: 14px; color: var(--text-primary); }
+.tb-plan-h em { font-style: normal; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  background: rgba(255,255,255,.07); color: var(--text-secondary); }
+.tb-plan-step { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-top: 1px dashed rgba(255,255,255,.08); }
+.tb-plan-step:first-of-type { border-top: none; }
+.tb-plan-step i { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal;
+  font-size: 11px; font-weight: 700; color: #fff; background: var(--tb-accent); }
+.tb-plan-step span { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 13px; }
+.tb-plan-step small { font-size: 12px; line-height: 1.4; color: var(--text-secondary); }
+.tb-plan-total { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-secondary); }
+.tb-plan-total b { color: var(--text-primary); font-size: 14px; }
+.tb-plan-man, .tb-plan-next { margin: 6px 0 8px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); }
+.tb-plan-man summary, .tb-plan-next summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.tb-plan-man[open] summary, .tb-plan-next[open] summary { margin-bottom: 8px; }
+.tb-plan-foot { display: flex; flex-direction: column; gap: 8px; }
+.tb-plan-status { font-size: 12.5px; text-align: center; color: var(--text-secondary); }
+.tb-plan-status--ok { color: #7fe0a0; font-weight: 600; }
+.tb-plan-man .tb-adm-line { flex-direction: column; align-items: stretch; gap: 4px; }
+.tb-plan-man .tb-adm-line .modal-input { width: 100%; max-width: none; box-sizing: border-box; }

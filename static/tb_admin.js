@@ -60,15 +60,15 @@ function tbAdminRender() {
   if (!TB.adminSec) TB.adminSec = count("pending") ? "teams" : nRep ? "reports" : "teams";
   const segs = [["teams", "🛡", "Teamlar", count("pending")], ["season", "📅", "Mavsum", 0],
                 ["reports", "🚩", "Shikoyat", nRep], ["league", "⚙️", "Liga", 0]];
-  const seg = `<div class="tb-seg">${segs.map(([k, ic, l, n]) => `<button class="tb-seg-item${TB.adminSec === k ? " active" : ""}"
-      data-tb-asec="${k}"><span>${ic}</span>${escHtml(l)}${n ? `<b class="tb-seg-badge">${n}</b>` : ""}</button>`).join("")}</div>`;
+  const seg = `<div class="tb-asec">${segs.map(([k, ic, l, n]) => `<button class="tb-asec-item${TB.adminSec === k ? " active" : ""}"
+      data-tb-asec="${k}"><span>${ic}</span>${escHtml(l)}${n ? `<b class="tb-asec-badge">${n}</b>` : ""}</button>`).join("")}</div>`;
   let content;
   if (TB.adminSec === "season") content = typeof tbAdminSeasonHtml === "function" ? tbAdminSeasonHtml() : "";
   else if (TB.adminSec === "reports") content = typeof tbReportsAdminHtml === "function" ? tbReportsAdminHtml() : "";
   else if (TB.adminSec === "league") content = tbAdminLeaguesHtml("manage");
   else content = `<div class="tb-chips">${chips}</div>${tbAdminBulkBarHtml(list)}
     ${rows || `<div class="empty-state">Bu bo'limda team yo'q</div>`}`;
-  tbRender(`${chipsTop}${seg}<div class="tb-seg-body">${content}</div>`);
+  tbRender(`${chipsTop}${seg}<div class="tb-asec-body">${content}</div>`);
   if (typeof chatLoadImages === "function") chatLoadImages(document.querySelector("#tb-root .tb-body"));
 }
 
