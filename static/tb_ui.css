@@ -109,3 +109,66 @@
 .tb-lu-tog.on i { position: absolute; right: -5px; bottom: -5px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
   background: #fff; color: #b3202e; font-size: 11px; font-style: normal; line-height: 18px; text-align: center; font-weight: 800; }
 .tb-lu-tog.full { opacity: .35; border-style: solid; }
+
+/* ---- 2026-11-07 (2): 5 ta plitka — oxirgisi to'liq qator; a'zo qatori bosiladigan; tarkib ro'yxati ---- */
+.tb-tiles--5 .tb-tile:last-child { grid-column: span 2; min-height: 0; flex-direction: row; align-items: center; gap: 10px; }
+.tb-tiles--5 .tb-tile:last-child .tb-tile-ic { margin-bottom: 0; }
+.tb-tiles--5 .tb-tile:last-child .tb-tile-s { margin-left: auto; }
+.tb-tiles--3 .tb-tile:last-child { grid-column: span 2; min-height: 0; flex-direction: row; align-items: center; gap: 10px; }
+.tb-tiles--3 .tb-tile:last-child .tb-tile-ic { margin-bottom: 0; }
+.tb-tiles--3 .tb-tile:last-child .tb-tile-s { margin-left: auto; }
+.tb-member { flex-wrap: nowrap; }
+.tb-member--tap { cursor: pointer; border-radius: 12px; margin: 0 -8px; padding-left: 8px; padding-right: 8px;
+  transition: background .12s; -webkit-tap-highlight-color: transparent; }
+.tb-member--tap:active { background: rgba(255,181,71,.08); }
+.tb-member .tb-lu-tog { margin-left: auto; }
+.tb-mem-hint { margin: -2px 2px 8px; }
+.tb-lu-num { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #fff;
+  background: linear-gradient(135deg, #b3202e, #e0782a); }
+.tb-lu-tog--rm { border-style: solid; border-color: rgba(255,77,94,.4); background: rgba(255,77,94,.08); color: #ff9aa4; font-size: 22px; }
+.tb-empty-lu { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 22px 16px; }
+.tb-empty-lu > span { font-size: 34px; opacity: .8; }
+.tb-empty-lu b { font-family: var(--font-display); font-size: 17px; color: #fff; }
+.tb-empty-lu small { font-size: 13px; color: var(--text-secondary); line-height: 1.45; max-width: 290px; }
+.tb-empty-lu .btn { margin-top: 8px; width: 100%; }
+
+/* ---- a'zo amallari oynasi (pastdan chiqadi) ---- */
+.tb-sheet-wrap { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0); display: flex; align-items: flex-end;
+  transition: background .18s; }
+.tb-sheet-wrap.open { background: rgba(0,0,0,.55); }
+.tb-sheet { width: 100%; padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0;
+  background: #17121f; border-top: 1px solid rgba(255,140,90,.35); display: flex; flex-direction: column; gap: 10px;
+  transform: translateY(100%); transition: transform .2s ease; }
+.tb-sheet-wrap.open .tb-sheet { transform: none; }
+.tb-sheet-head { display: flex; align-items: center; gap: 10px; padding: 4px 2px 8px; border-bottom: 1px solid var(--border); }
+.tb-sheet-head > div { display: flex; flex-direction: column; }
+.tb-sheet-head b { color: #fff; font-size: 16px; }
+.tb-sheet-head small { color: var(--text-secondary); font-size: 12px; }
+.tb-sheet-btn { display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 14px; border: 1px solid var(--border);
+  background: rgba(255,255,255,.04); color: var(--text-primary); font-size: 15px; font-weight: 600; text-align: left; }
+.tb-sheet-btn--danger { color: #ff9aa4; border-color: rgba(255,77,94,.35); background: rgba(255,77,94,.06); }
+.tb-sheet-btn--ghost { justify-content: center; color: var(--text-secondary); }
+
+/* ---- 10 ballik baho, forma, MVP ---- */
+.tb-rt { display: inline-block; min-width: 30px; padding: 2px 5px; border-radius: 7px; font-style: normal; font-weight: 800;
+  font-size: 11px; text-align: center; color: #0d0d14; vertical-align: middle; font-family: var(--font-display); }
+.tb-rt--top { background: #3ddc84; }
+.tb-rt--good { background: #b8e04a; }
+.tb-rt--mid { background: #ffb547; }
+.tb-rt--low { background: #ff6b6b; }
+.tb-rt--none { background: rgba(255,255,255,.1); color: var(--text-secondary); }
+.tb-rt--big { min-width: 46px; padding: 6px 8px; font-size: 18px; border-radius: 11px; }
+.tb-form-legend { font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin: 0 2px 10px; }
+.tb-form-legend b { color: #3ddc84; }
+.tb-form-list { padding: 4px 12px; }
+.tb-form-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.tb-form-row:last-child { border-bottom: none; }
+.tb-form-n { width: 18px; text-align: center; font-family: var(--font-display); font-weight: 700; color: var(--text-secondary); }
+.tb-form-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tb-form-info b { color: #fff; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-form-info small { font-size: 11px; color: var(--text-secondary); }
+.tb-form-last { display: flex; gap: 4px; flex-wrap: wrap; }
+.tb-mvp { margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: 13px; text-align: center;
+  background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.3); color: #ffe7a0; }
+.tb-mvp b { color: #fff; }

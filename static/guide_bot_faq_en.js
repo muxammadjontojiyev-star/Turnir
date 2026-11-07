@@ -129,6 +129,8 @@ GBOT_FAQ.en = {
       a: "To create a team, get a **league link** from the league admin. To join a friend's team, ask the captain for the **invite link** — the captain gets it in My team → **«🔗 Invite»** → «Get link». If you have no team, the Team Battles section shows **«Teams you can join»** — message a captain of a team you like on Telegram with the **«✈️ Message»** button." },
     { id: "proof", ctx: ["tb"], q: "Do I need a screenshot?", k: ["!screenshot", "!screen", "!proof", "need"],
       a: "In Team battle the result is entered with a **screenshot of the final screen** — no screenshot, no result. In other modes too, take a screenshot after each match — it's proof in a dispute 📸" },
+    { id: "tb_rating", ctx: ["tb"], q: "How are player ratings and MVP calculated in Team Battles?", k: ["!rating", "!mvp", "!form", "!score out of"],
+      a: "Every 1v1 game is rated **out of 10**: it starts at 6.0, each goal scored **+0.5**, conceded **−0.5**, win **+1**, loss **−1**, clean sheet **+0.5**. **4+ goals with none conceded — 10**. Examples: 3:0 — 9.0, 2:1 — 7.5, 0:0 — 6.5, 0:1 — 4.5. The best rating in a match is the **⭐ MVP**. My team → **📈 Form** shows each player's average over the last 5 games." },
     { id: "tb_other", ctx: ["tb"], q: "What if someone else plays instead of my opponent?", k: ["!someone else", "!another person", "!instead"],
       a: "If in Team battle someone else plays instead of your opponent — don't play and tap the **🚩** button on the match card. An admin reviews the screenshot and chat and decides." },
     { id: "token", ctx: ["modes"], q: "What is eF Token?", k: ["!token", "!coin"],

@@ -22,6 +22,15 @@ Object.assign(TB_I18N.ru, {
   "Tarkibdan olindi": "Убран из состава", "✅ Tarkibga qo'shildi": "✅ Добавлен в состав", "Tarkibdan olish": "Убрать из состава",
   "Tarkibga qo'shish": "Добавить в состав",
   "Asosiy tarkibga liga belgilagan sondan ko'p kishi qo'shib bo'lmaydi": "Нельзя добавить в состав больше, чем задано лигой",
+  "Forma": "Форма", "Kim qanday o'ynayapti": "Кто как играет", "📈 FORMA": "📈 ФОРМА", "Asosiy tarkib hali bo'sh": "Основной состав пока пуст",
+  "A'zolar bo'limida o'yinchi o'ng tomonidagi «＋» ni bosing — u shu yerda paydo bo'ladi.": "В разделе «Участники» нажмите «＋» справа от игрока — он появится здесь.",
+  "Sardor tarkibni tuzganda shu yerda ko'rinadi.": "Появится здесь, когда капитан составит состав.", "👥 A'zolarga o'tish": "👥 К участникам",
+  "O'yinchi qatorini bosing — sardor qilish yoki teamdan chiqarish.": "Нажмите на игрока — сделать капитаном или исключить.",
+  "Sardor qilib tayinlash": "Назначить капитаном", "Teamdan chiqarish": "Исключить из команды", "Bekor qilish": "Отмена",
+  "Hali baholangan o'yin yo'q — birinchi tur o'ynalgach forma chiqadi": "Пока нет оценённых игр — форма появится после первого тура",
+  "o'yin yo'q": "нет игр", "⭐ MVP:": "⭐ MVP:",
+  "Har bir 1v1 o'yinga 10 ballik baho: g'alaba, urgan va o'tkazgan gollar, quruq o'yin hisobga olinadi. 4+ gol urib, gol o'tkazmagan —":
+    "Каждая игра 1 на 1 оценивается по 10-балльной шкале: учитываются победа, забитые и пропущенные голы, сухой матч. 4+ гола без пропущенных —",
 });
 Object.assign(TB_I18N.en, {
   "Taklif qilish": "Invite", "Asosiy tarkib": "Starting lineup", "A'zolar": "Members", "Team logosi": "Team logo",
@@ -42,8 +51,21 @@ Object.assign(TB_I18N.en, {
   "Tarkibdan olindi": "Removed from lineup", "✅ Tarkibga qo'shildi": "✅ Added to lineup", "Tarkibdan olish": "Remove from lineup",
   "Tarkibga qo'shish": "Add to lineup",
   "Asosiy tarkibga liga belgilagan sondan ko'p kishi qo'shib bo'lmaydi": "You can't add more players than the league allows",
+  "Forma": "Form", "Kim qanday o'ynayapti": "Who's playing how", "📈 FORMA": "📈 FORM", "Asosiy tarkib hali bo'sh": "The lineup is empty",
+  "A'zolar bo'limida o'yinchi o'ng tomonidagi «＋» ni bosing — u shu yerda paydo bo'ladi.": "In Members, tap «＋» to the right of a player — they'll appear here.",
+  "Sardor tarkibni tuzganda shu yerda ko'rinadi.": "It will appear here once the captain sets the lineup.", "👥 A'zolarga o'tish": "👥 Go to members",
+  "O'yinchi qatorini bosing — sardor qilish yoki teamdan chiqarish.": "Tap a player — make captain or remove from the team.",
+  "Sardor qilib tayinlash": "Make captain", "Teamdan chiqarish": "Remove from team", "Bekor qilish": "Cancel",
+  "Hali baholangan o'yin yo'q — birinchi tur o'ynalgach forma chiqadi": "No rated games yet — form appears after the first round",
+  "o'yin yo'q": "no games", "⭐ MVP:": "⭐ MVP:",
+  "Har bir 1v1 o'yinga 10 ballik baho: g'alaba, urgan va o'tkazgan gollar, quruq o'yin hisobga olinadi. 4+ gol urib, gol o'tkazmagan —":
+    "Every 1v1 game is rated out of 10: the result, goals scored and conceded, and clean sheets count. 4+ goals with none conceded —",
 });
 TB_I18N_PATTERNS.unshift(
+  [/^\. Forma — oxirgi (\d+) o'yin o'rtachasi\.$/, ". Форма — среднее за последние $1 игр.", ". Form is the average of the last $1 games."],
+  [/^(\d+) o'yin · (\d+)G (\d+)D (\d+)M · (\d+):(\d+)(.*)$/, "$1 игр · $2В $3Н $4П · $5:$6$7", "$1 games · $2W $3D $4L · $5:$6$7"],
+  [/^Asosiy tarkib to'liq emas: (\d+)\/(\d+)\. A'zolar bo'limidan «＋» bilan qo'shing\.$/,
+    "Состав неполный: $1/$2. Добавьте через «＋» в разделе «Участники».", "Lineup incomplete: $1/$2. Add players with «＋» in Members."],
   [/^«＋» — tarkibga qo'shish · kamida (\d+) kishi kerak$/, "«＋» — добавить в состав · нужно минимум $1", "«＋» — add to lineup · at least $1 needed"],
   [/^Kamida (\d+) kishi kerak — hozir (\d+) ta\. Tarkib to'lmaguncha bahsda texnik mag'lubiyat beriladi\.$/,
     "Нужно минимум $1 — сейчас $2. Пока состав не заполнен, в матчах засчитывается техническое поражение.",

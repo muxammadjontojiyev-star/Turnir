@@ -131,6 +131,8 @@ GBOT_FAQ.uz = {
       a: "Team ochish uchun liga adminidan **liga havolasini** oling. Do'stingiz teamiga qo'shilish uchun sardordan **taklif havolasini** so'rang. Sardor uni Teamim → **«🔗 Taklif qilish»** → «Havolani olish»dan oladi. Teamingiz yo'q bo'lsa, Teamlar jangi bo'limida **«Qo'shilish mumkin bo'lgan teamlar»** ro'yxati chiqadi — yoqqan teamning sardoriga **«✈️ Yozish»** tugmasi orqali Telegram'da yozing." },
     { id: "proof", ctx: ["tb"], q: "Skrinshot kerakmi?", k: ["!skrinshot", "!screenshot", "!rasm", "dalil", "kerak"],
       a: "Teamlar jangida natija **yakun ekrani skrinshoti** bilan kiritiladi — skrinshotsiz qabul qilinmaydi. Boshqa rejimlarda ham har o'yindan keyin skrinshot olib qo'ying — nizo bo'lsa dalil bo'ladi 📸" },
+    { id: "tb_rating", ctx: ["tb"], q: "Teamlar jangida o'yinchi bahosi va MVP qanday hisoblanadi?", k: ["!baho", "!ball", "!mvp", "!forma", "!reyting"],
+      a: "Har bir 1v1 o'yinga **10 ballik baho** beriladi: 6.0 dan boshlanadi, har bir urgan gol **+0.5**, o'tkazgan gol **−0.5**, g'alaba **+1**, mag'lubiyat **−1**, gol o'tkazmasangiz **+0.5**. **4+ gol urib, gol o'tkazmagan — 10**. Misollar: 3:0 — 9.0, 2:1 — 7.5, 0:0 — 6.5, 0:1 — 4.5. Bahsdagi eng yuqori baho — **⭐ MVP**. Teamim → **📈 Forma** da har bir o'yinchining oxirgi 5 o'yindagi o'rtacha bahosi ko'rinadi." },
     { id: "tb_other", ctx: ["tb"], q: "Raqib o'rniga boshqa odam o'ynasa-chi?", k: ["!boshqa odam", "!begona", "!ornida", "!ornga"],
       a: "Teamlar jangida raqib o'rniga boshqa odam kirsa — o'ynamang va **«🚩 Boshqa odam o'ynadi»**ni bosing. Admin skrinshot va chatni ko'rib qaror qiladi." },
     { id: "token", ctx: ["modes"], q: "eF Token nima?", k: ["!token", "!eftoken", "!tanga"],

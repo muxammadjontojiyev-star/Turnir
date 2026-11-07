@@ -112,15 +112,17 @@ function tbsFixtureHtml(f, open) {
   const games = (f.games || []).map(g => {
     const sc = g.status === "confirmed" ? `${g.score1}:${g.score2}` : g.status === "awaiting_confirmation" ? "⏳" : "–";
     const gid = TB.me && tbCanManageCur() ? `<i class="tb-pair-id">#${g.id}</i>` : "";
-    return `<div class="tb-pair">${gid}<span>${escHtml(g.home)}</span><b>${sc}</b><span>${escHtml(g.away)}</span></div>`;
+    const rt = (r) => (typeof tbRatingHtml === "function" && r != null ? tbRatingHtml(r) : "");   // 2026-11-07: 10 ballik baho
+    return `<div class="tb-pair">${gid}<span>${escHtml(g.home)} ${rt(g.r1)}</span><b>${sc}</b><span>${rt(g.r2)} ${escHtml(g.away)}</span></div>`;
   }).join("");
+  const mvp = f.mvp ? `<div class="tb-mvp">⭐ MVP: <b>${escHtml(f.mvp.name)}</b> ${typeof tbRatingHtml === "function" ? tbRatingHtml(f.mvp.rating) : f.mvp.rating}</div>` : "";
   return `<details class="card tb-fx"${open ? " open" : ""}>
       <summary class="tb-fx-head">
         <span class="tb-fx-team">${tbsTeam(f.home_team, f.home_emoji, f.home_team_id, f.home_logo_ver)}</span>
         <span class="tb-fx-score${f.status === "finished" ? " done" : ""}">${score}</span>
         <span class="tb-fx-team tb-fx-team--away">${tbsTeam(f.away_team, f.away_emoji, f.away_team_id, f.away_logo_ver)}</span>
       </summary>
-      ${tech}${games ? `<div class="tb-pairs">${games}</div>` : (f.status === "scheduled" ? `<div class="tb-hint tb-hint--center">Juftliklar tur ochilganda tuziladi</div>` : "")}
+      ${tech}${games ? `<div class="tb-pairs">${games}</div>${mvp}` : (f.status === "scheduled" ? `<div class="tb-hint tb-hint--center">Juftliklar tur ochilganda tuziladi</div>` : "")}
     </details>`;
 }
 
