@@ -72,6 +72,13 @@ function crBarHtml(st) {
   const a = (st && st.agree) || {};
   const p = a.proposal, g = a.agreed;
   if (!st || st.status !== "pending") return "";
+  const cd = st.concede;                             // «win sizga» (chat_concede.py) — kelishuvdan ustun
+  if (cd && cd.mine) {
+    return `<div class="cr-ag-row cr-cd"><span>${escHtml(crT("cr_cd_ask"))}</span>
+      <button class="cr-ag-b cr-ag-b--ok" data-cr-cd="1" data-id="${Number(cd.msg_id)}">${escHtml(crT("cr_cd_yes"))}</button>
+      <button class="cr-ag-b" data-cr-cd="0" data-id="${Number(cd.msg_id)}">${escHtml(crT("cr_cd_no"))}</button></div>`;
+  }
+  if (cd && !cd.mine) return `<div class="cr-ag-row cr-cd"><span>${escHtml(crT("cr_cd_theirs"))}</span></div>`;
   if (p && !p.mine) {
     return `<div class="cr-ag-row"><span>${escHtml(crT("cr_ag_theirs", { at: p.at }))}</span>
       <button class="cr-ag-b cr-ag-b--ok" data-cr-ag="accept" data-id="${Number(p.id)}">${escHtml(crT("cr_ag_accept"))}</button>
@@ -129,6 +136,21 @@ function crSyncChat() {
   CR.timer = setInterval(() => { if (CR.bar && !CR.bar.form) void crLoadBar(); }, CR_POLL_MS);
 }
 
+async function crConcede(btn) {                      // «win sizga»: Ha — raqibga darhol 3:0, Yo'q — taslim emas
+  const b = CR.bar;
+  if (!b || CR.busy) return;
+  const accept = btn.dataset.crCd === "1";
+  if (accept && !window.confirm(crT("cr_cd_q"))) return;
+  CR.busy = true; btn.disabled = true;
+  try {
+    await apiFetch("/crule/concede", { method: "POST",
+      body: JSON.stringify({ mode: b.mode, match_id: b.id, msg_id: Number(btn.dataset.id), accept }) });
+    showToast(crT(accept ? "cr_cd_done" : "cr_cd_declined"));
+    if (accept && typeof msRefresh === "function") void msRefresh(b.mode);
+  } catch (e) { showToast(crErr(e)); }
+  finally { CR.busy = false; await crLoadBar(); }
+}
+
 async function crAgreeAct(btn) {
   const b = CR.bar;
   if (!b || CR.busy) return;
@@ -164,6 +186,8 @@ document.addEventListener("click", (e) => {
     if (cr.dataset.cr === "take") void crTechTake();
     return;
   }
+  const cd = e.target.closest ? e.target.closest("[data-cr-cd]") : null;
+  if (cd) { e.preventDefault(); e.stopPropagation(); void crConcede(cd); return; }
   const ag = e.target.closest ? e.target.closest("[data-cr-ag]") : null;
   if (ag) { e.preventDefault(); e.stopPropagation(); void crAgreeAct(ag); }
 }, true);

@@ -60,7 +60,7 @@ async function msaLoad(group, force = true) {
   const cnt = group.querySelector(".msa-count");
   if (cnt) cnt.textContent = items.length ? String(items.length) : "";
   if (!box) return;
-  const head = modes ? "" : await msaOnlyHtml();
+  const head = modes ? "" : (await msaOnlyHtml()) + (typeof crAdminHtml === "function" ? await crAdminHtml() : "");   // 2026-11-07: javob kechikishi chegarasi
   box.innerHTML = head + (items.length ? items.map(msaItemHtml).join("")
     : `<div class="adm-pp-hint">${escHtml(msT("ms_adm_empty"))}</div>`);
 }

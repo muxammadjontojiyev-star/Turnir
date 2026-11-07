@@ -29,3 +29,7 @@ a.profile-username[href^="https://t.me/"], a.prize-holder-link[href^="https://t.
 .webchat-day { position: sticky; top: 4px; z-index: 2; display: flex; justify-content: center; margin: 10px 0 6px; pointer-events: none; }
 .webchat-day > span { font-size: 12px; font-weight: 600; padding: 3px 11px; border-radius: 999px;
   background: rgba(20, 22, 48, .82); color: rgba(255, 255, 255, .85); backdrop-filter: blur(6px); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.cr-cd > span { color: var(--gold, #f5b942); }
+.cra-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.cra-row .cra-h { width: 80px; text-align: center; margin: 0; }
+.cra-row .btn { margin-left: auto; }
