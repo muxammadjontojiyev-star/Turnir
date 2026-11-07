@@ -172,3 +172,25 @@ new MutationObserver(() => {                         // throttle — chat har 2 
   if (_crT) return;
   _crT = requestAnimationFrame(() => { _crT = 0; crSyncChat(); });
 }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+
+// ---------------- 3) XONA ID — chatdan nusxalash yoziladi (qo'lda natija sharti, server: chat_room.py) ----------------
+// «🎮 Xona ID: <kod>» (har qanday 4–16 belgili kod) ham bosiluvchan bo'ladi; 8 xonali sonlarni api.js o'zi o'raydi.
+const CR_ROOM_RE = /^(🎮 Xona ID:\s*)([A-Za-z0-9]{4,16})$/;
+if (typeof chatTextWithCopyableIds === "function") {
+  const _crCopyable = chatTextWithCopyableIds;
+  chatTextWithCopyableIds = function (escapedText) {                       // eslint-disable-line no-global-assign
+    return _crCopyable(escapedText).replace(CR_ROOM_RE,
+      (_a, pre, id) => `${pre}<span class="chat-copy-id" data-copy-id="${id}">${id}</span>`);
+  };
+}
+if (typeof copyChatId === "function") {
+  const _crCopy = copyChatId;
+  copyChatId = function (id) {                                              // eslint-disable-line no-global-assign
+    _crCopy(id);
+    if (!CR.bar) crSyncChat();
+    const b = CR.bar;
+    if (!b || !id) return;
+    apiFetch("/crule/room-copy", { method: "POST", body: JSON.stringify({ mode: b.mode, match_id: b.id, code: String(id) }) })
+      .catch(() => {});
+  };
+}
