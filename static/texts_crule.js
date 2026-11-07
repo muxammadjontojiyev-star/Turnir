@@ -6,6 +6,7 @@
 const CRULE_TEXTS = {
   uz: {
     cr_tech_title: "RAQIB YOZMADI / O'YNAMADI",
+    cr_big_toast: "📸 Yirik hisob — o'yinning Match History skrinshotini yuklang. Hisob bir xil bo'lsa, natija darhol tasdiqlanadi.",
     cr_tech_rule: "Bot faqat shu o'yinning BOT ichidagi chatini tekshiradi (Telegram shaxsiy yozishmasi hisobga olinmaydi). "
       + "Tex win (3:0) uchun: raqibning oxirgi xabaridan keyin unga 3 xil vaqtda yozgan bo'lishingiz kerak, oralig'i kamida "
       + "40 daqiqa; deadline'ga 30 daqiqa qolganda yozilganlari sanalmaydi. Raqib sizga 3 marta yozib, siz javob bermagan "
@@ -34,6 +35,7 @@ const CRULE_TEXTS = {
   },
   ru: {
     cr_tech_title: "СОПЕРНИК НЕ ОТВЕТИЛ / НЕ ИГРАЛ",
+    cr_big_toast: "📸 Крупный счёт — загрузите скриншот Match History. Если счёт совпадёт, результат сразу подтвердится.",
     cr_tech_rule: "Бот проверяет только чат этого матча ВНУТРИ бота (личная переписка в Telegram не учитывается). "
       + "Для техпобеды (3:0): после последнего сообщения соперника вы написали ему 3 раза в разное время, с интервалом "
       + "от 40 минут; сообщения за 30 минут до дедлайна не учитываются. Если соперник писал вам 3 раза, а вы не ответили — "
@@ -62,6 +64,7 @@ const CRULE_TEXTS = {
   },
   en: {
     cr_tech_title: "OPPONENT DIDN'T REPLY / PLAY",
+    cr_big_toast: "📸 Big score — upload the Match History screenshot. If the score matches, the result is confirmed right away.",
     cr_tech_rule: "The bot checks only this match's chat INSIDE the bot (private Telegram chats don't count). "
       + "For a tech win (3:0): after your opponent's last message you must have written to them at 3 different times, at "
       + "least 40 minutes apart; messages in the last 30 minutes before the deadline don't count. If your opponent wrote "

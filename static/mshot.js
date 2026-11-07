@@ -8,7 +8,7 @@
 
 const MS_IMG_MAX = 1800;          // skrinshot shu o'lchamgacha kichraytiriladi (o'qish uchun yetarli)
 const MS_IMG_Q = 0.88;
-const MS = { ctx: null, rows: null, token: null, busy: false, only: true, pick: null };
+const MS = { ctx: null, rows: null, token: null, busy: false, only: true, pick: null, expect: null };   // expect — yirik hisob (crule.js)
 const MS_PLAYOFF = new Set(["wc_po", "cl_po", "el_po", "ac_po", "co_po"]);
 
 // «Natija faqat skrinshot bilan» (bosh admin kaliti, match_guard.py) — yoqiq bo'lsa qo'lda kiritish yashiriladi
@@ -149,7 +149,8 @@ function msShotHtml() {
     : `<div class="ms-hint">${escHtml(msT("ms_pick_row"))}</div>
        <div class="ms-rows">${rows.map(msRowHtml).join("")}</div>
        <button class="btn btn--ghost ms-wide" data-ms="again">${escHtml(msT("ms_back"))}</button>`;
-  return `<div class="modal-title">${escHtml(msT("ms_shot_title"))}</div>
+  const ex = MS.expect ? `<div class="ms-hint ms-hint--big">${escHtml(msT("ms_big_expect", { sc: MS.expect.label }))}</div>` : "";
+  return `<div class="modal-title">${escHtml(msT("ms_shot_title"))}</div>${ex}
     ${typeof msNickInlineHtml === "function" ? msNickInlineHtml() : ""}
     ${body}
     <div class="modal-actions"><button class="btn btn--ghost" data-ms="close">${escHtml(msT("ms_close"))}</button></div>`;
@@ -157,7 +158,7 @@ function msShotHtml() {
 function msShotRender() { if (document.getElementById("ms-shot")) msModal("ms-shot", msShotHtml()); }
 
 async function msShotOpen(c) {
-  MS.ctx = c; MS.rows = null; MS.token = null; MS.busy = false; MS.pick = null;
+  MS.ctx = c; MS.rows = null; MS.token = null; MS.busy = false; MS.pick = null; MS.expect = c.expect || null;
   if (typeof msNickLoad === "function") await msNickLoad();
   msModal("ms-shot", msShotHtml());
 }
@@ -181,7 +182,8 @@ async function msShotApply(idx) {
   MS.busy = true; msShotRender();
   try {
     const r = await apiFetch("/mshot/apply", { method: "POST",
-      body: JSON.stringify({ mode: MS.ctx.mode, match_id: MS.ctx.id, token: MS.token, row: idx }) });
+      body: JSON.stringify({ mode: MS.ctx.mode, match_id: MS.ctx.id, token: MS.token, row: idx,
+        ...(MS.expect ? { expect_s1: MS.expect.s1, expect_s2: MS.expect.s2 } : {}) }) });
     msCloseModal("ms-shot");
     showToast(msT(r.status === "admin_pending" ? "ms_done_pending" : r.status === "await_opp" ? "ms_done_await" : "ms_done"));
     await msRefresh(MS.ctx.mode);

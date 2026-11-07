@@ -2828,25 +2828,8 @@ function openMatchChat(matchId) {
   if (!APP.chatOpened) APP.chatOpened = new Set();
   APP.chatOpened.add(matchId);
 
-  // Raqib chatiga o'tamiz — avval username (t.me/username, qotmaydi), bo'lmasa telegram_id (zaxira)
-  const tg = window.Telegram?.WebApp;
-  if (opp.username) {
-    const link = `https://t.me/${String(opp.username).replace(/^@/, "")}`;
-    if (tg && typeof tg.openTelegramLink === "function") {
-      try { tg.openTelegramLink(link); } catch (_) { window.open(link, "_blank"); }
-    } else {
-      window.open(link, "_blank");
-    }
-  } else if (opp.tg) {
-    const tgLink = `tg://user?id=${opp.tg}`;
-    if (tg && typeof tg.openLink === "function") {
-      try { tg.openLink(tgLink); } catch (_) { window.open(tgLink, "_blank"); }
-    } else {
-      window.open(tgLink, "_blank");
-    }
-  } else {
-    showToast(t.opp_no_contact || "Raqib bilan bog'lanib bo'lmaydi");
-  }
+  // 2026-11-07 (egasi): Telegram shaxsiy chat o'rniga — faqat BOT chati (natija chat yozishmasiga qarab, chat_rules.py)
+  openWebChat(matchId, (t && t.webchat_opponent) || "Raqib");
 
   // Ro'yxatni yangilaymiz — endi bu match uchun "Natija" tugmasi chiqadi
   loadMyMatches();

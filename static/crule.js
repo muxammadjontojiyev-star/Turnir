@@ -176,11 +176,13 @@ new MutationObserver(() => {                         // throttle — chat har 2 
 // ---------------- 3) XONA ID — chatdan nusxalash yoziladi (qo'lda natija sharti, server: chat_room.py) ----------------
 // «🎮 Xona ID: <kod>» (har qanday 4–16 belgili kod) ham bosiluvchan bo'ladi; 8 xonali sonlarni api.js o'zi o'raydi.
 const CR_ROOM_RE = /^(🎮 Xona ID:\s*)([A-Za-z0-9]{4,16})$/;
+const CR_SPLIT_RE = /(?<!\d)(?<!\d[ -])(\d{4})([ -])(\d{4})(?![ -]?\d)/g;           // «4432 1462» — server: chat_room.ROOM_SPLIT_RE
 if (typeof chatTextWithCopyableIds === "function") {
   const _crCopyable = chatTextWithCopyableIds;
   chatTextWithCopyableIds = function (escapedText) {                       // eslint-disable-line no-global-assign
     return _crCopyable(escapedText).replace(CR_ROOM_RE,
-      (_a, pre, id) => `${pre}<span class="chat-copy-id" data-copy-id="${id}">${id}</span>`);
+      (_a, pre, id) => `${pre}<span class="chat-copy-id" data-copy-id="${id}">${id}</span>`)
+      .replace(CR_SPLIT_RE, (_a, a, sep, b) => `<span class="chat-copy-id" data-copy-id="${a}${b}">${a}${sep}${b}</span>`);
   };
 }
 if (typeof copyChatId === "function") {
@@ -193,4 +195,39 @@ if (typeof copyChatId === "function") {
     apiFetch("/crule/room-copy", { method: "POST", body: JSON.stringify({ mode: b.mode, match_id: b.id, code: String(id) }) })
       .catch(() => {});
   };
+}
+
+// ---------------- 4) YIRIK HISOB — skrinshot so'raladi (server: chat_gate.py «big_needs_shot|mode|id|s1|s2») ----------------
+// Qo'lda kiritilgan yirik hisob rad etiladi → skrinshot oynasi ochiladi; skrinshotdagi hisob bir xil bo'lsa — darhol tasdiq.
+const CR_BIG_CODE = "big_needs_shot|";
+if (typeof apiFetch === "function") {
+  const _crFetch = apiFetch;
+  apiFetch = async function (path, opts) {                                  // eslint-disable-line no-global-assign
+    try {
+      return await _crFetch(path, opts);
+    } catch (e) {
+      const msg = String((e && e.message) || "");
+      if (!msg.startsWith(CR_BIG_CODE) || typeof msShotOpen !== "function") throw e;
+      const [, mode, id, s1, s2] = msg.split("|");
+      const m = { mode, id: Number(id), s1: Number(s1), s2: Number(s2) };
+      void crBigShot(m);
+      throw new Error(crT("cr_big_toast"));
+    }
+  };
+}
+
+async function crBigShot(m) {
+  let me1 = true;                                    // «siz : raqib» ko'rinishi uchun — men player1 manmi
+  try {
+    const st = await _crMatchSide(m);
+    if (st != null) me1 = st;
+  } catch (_) { /* ko'rinish uchun, majburiy emas */ }
+  const label = me1 ? `${m.s1}:${m.s2}` : `${m.s2}:${m.s1}`;
+  if (typeof closeResultModal === "function") { try { closeResultModal(); } catch (_) { /* boshqa rejim oynasi */ } }
+  await msShotOpen({ mode: m.mode, id: m.id, expect: { s1: m.s1, s2: m.s2, label } });
+}
+
+async function _crMatchSide(m) {
+  const st = await apiFetch(`/crule/${encodeURIComponent(m.mode)}/${m.id}`);
+  return st && typeof st.me_p1 === "boolean" ? st.me_p1 : null;
 }

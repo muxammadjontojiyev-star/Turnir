@@ -15,3 +15,13 @@
   background: rgba(0,0,0,.2); color: inherit; font-size: 13px; color-scheme: dark; }
 .cr-ag-hint { flex-basis: 100%; opacity: .6; font-size: 11px; }
 .ms-box [data-cr="take"]:disabled { opacity: .45; }
+/* 2026-11-07 (egasi): Telegram shaxsiy chat tugmalari barcha rejimlarda olib tashlandi — faqat bot chati.
+   «Raqib chatiga yozish» (t.me) va «bog'lanib bo'lmaydi» yozuvi; «Chatni ochish» va «🎮 Xona ID yuborish» qoladi. */
+.opp-chat-btn:not(.opp-webchat-btn):not(.opp-room-btn), .opp-no-contact { display: none !important; }
+/* O'yinchi profillari / tezkor o'yin / jamoaviy bahs: «✈️ Telegram» tugmalari yashiriladi, @username — oddiy matn */
+#div-player-tg, [data-qm-tg], [data-tbs-tg] { display: none !important; }
+[data-ac-tg], [data-cl-tg], [data-el-tg], [data-co-tg],
+a.profile-username[href^="https://t.me/"], a.prize-holder-link[href^="https://t.me/"] {
+  pointer-events: none !important; cursor: default !important; text-decoration: none !important;
+}
+.ms-hint--big { color: var(--gold, #f5b942); font-weight: 600; }

@@ -5,7 +5,8 @@
 const MSHOT_TEXTS = {
   uz: {
     ms_or_hint: "Yoki Match History skrinshoti bilan — raqib tasdig'ini kutmasdan darhol yoziladi:",
-    ms_err_read: "bot o'qigan sana", ms_err_read_nick_mismatch: "ro'yxatdagi nikname(lar)",
+    ms_err_read: "bot o'qigan sana", ms_err_read_nick_mismatch: "ro'yxatdagi nikname(lar)", ms_err_read_shot_score_mismatch: "skrinshotda (siz : raqib)",
+    ms_big_expect: "Siz kiritgan hisob: {sc} (siz : raqib). Skrinshotdagi hisob shu bilan bir xil bo'lsa — natija darhol tasdiqlanadi.",
     ms_done_await: "✅ Yuborildi — raqibingiz niknameini kiritmagan, u tasdiqlashi kerak (unga xabar ketdi)",
     ms_aw_nick: "Skrinshotdagi eFootball niknameingiz:", ms_aw_accept: "Tasdiqlash", ms_aw_reject: "Noto'g'ri",
     ms_aw_ok: "✅ Natija tasdiqlandi, niknameingiz saqlandi", ms_aw_reject_q: "Natija noto'g'rimi? U rad etiladi va skrinshot adminga yuboriladi.",
@@ -54,6 +55,7 @@ const MSHOT_TEXTS = {
       same_person: "Ikkala akkaunt bitta eFootball akkauntga ulangan — bu o'yin admin orqali hal qilinadi (@Tojiyev_M)",
       nick_link_full: "Bu niknamega allaqachon ikkinchi akkaunt ulangan",
       nick_not_in_shot: "Bu nikname skrinshotdagi bilan mos emas — skrinshotdagi niknameingizni yozing",
+      shot_score_mismatch: "Skrinshotdagi hisob siz kiritgan hisob bilan bir xil emas — natija yozilmadi",
       nick_mismatch: "Skrinshotdagi niknamelar botga kiritilgan niknamelarga mos emas — nikname to'g'ri yozilganini yoki o'yin shu raqib bilan ekanini tekshiring", bad_date: "Bu o'yin vaqti mos emas: o'yin ochilishidan oldin yoki 3 kundan eski",
       mark_over_text: "Belgi chizig'i yozuvlar ustidan o'tib ketgan — o'yinni kengroq o'rab qayta yuboring yoki belgisiz yuborib ro'yxatdan tanlang",
       shot_used: "Bu o'yin avval boshqa natija uchun ishlatilgan", playoff_draw: "Pley-offda durang — «Penaltili durang — qo'lda kiritish» tugmasidan foydalaning",
@@ -67,7 +69,8 @@ const MSHOT_TEXTS = {
   },
   ru: {
     ms_or_hint: "Или скриншотом Match History — запишется сразу, без ожидания подтверждения:",
-    ms_err_read: "бот прочитал дату", ms_err_read_nick_mismatch: "ники в системе",
+    ms_err_read: "бот прочитал дату", ms_err_read_nick_mismatch: "ники в системе", ms_err_read_shot_score_mismatch: "на скриншоте (вы : соперник)",
+    ms_big_expect: "Вы ввели счёт: {sc} (вы : соперник). Если на скриншоте такой же счёт — результат сразу подтвердится.",
     ms_done_await: "✅ Отправлено — соперник не указал ник, он должен подтвердить (ему отправлено сообщение)",
     ms_aw_nick: "Ваш ник eFootball на скриншоте:", ms_aw_accept: "Подтвердить", ms_aw_reject: "Неверно",
     ms_aw_ok: "✅ Результат подтверждён, ник сохранён", ms_aw_reject_q: "Результат неверный? Он будет отклонён, скриншот уйдёт админу.",
@@ -116,6 +119,7 @@ const MSHOT_TEXTS = {
       same_person: "Оба аккаунта привязаны к одному eFootball — матч решает админ (@Tojiyev_M)",
       nick_link_full: "К этому нику уже привязан второй аккаунт",
       nick_not_in_shot: "Ник не совпадает со скриншотом — укажите ник как на скриншоте",
+      shot_score_mismatch: "Счёт на скриншоте не совпадает с введённым — результат не записан",
       nick_mismatch: "Ники на скриншоте не совпадают с никами в боте — проверьте написание ника или что матч с этим соперником", bad_date: "Дата матча не подходит",
       mark_over_text: "Линия отметки закрыла текст — обведите матч шире или отправьте без отметки и выберите из списка",
       shot_used: "Этот матч уже использован для другого результата", playoff_draw: "Ничья в плей-офф — используйте «Ничья с пенальти — внести вручную»",
@@ -129,7 +133,8 @@ const MSHOT_TEXTS = {
   },
   en: {
     ms_or_hint: "Or with a Match History screenshot — recorded at once, no waiting for confirmation:",
-    ms_err_read: "date read by the bot", ms_err_read_nick_mismatch: "registered nickname(s)",
+    ms_err_read: "date read by the bot", ms_err_read_nick_mismatch: "registered nickname(s)", ms_err_read_shot_score_mismatch: "on the screenshot (you : opponent)",
+    ms_big_expect: "You entered: {sc} (you : opponent). If the screenshot shows the same score, the result is confirmed right away.",
     ms_done_await: "✅ Sent — your opponent hasn't set a nickname, they need to confirm (they were notified)",
     ms_aw_nick: "Your eFootball nickname on the screenshot:", ms_aw_accept: "Confirm", ms_aw_reject: "Wrong",
     ms_aw_ok: "✅ Result confirmed, nickname saved", ms_aw_reject_q: "Is the result wrong? It will be rejected and the screenshot sent to an admin.",
@@ -178,6 +183,7 @@ const MSHOT_TEXTS = {
       same_person: "Both accounts share one eFootball account — an admin will decide (@Tojiyev_M)",
       nick_link_full: "A second account is already linked to this nickname",
       nick_not_in_shot: "This nickname doesn't match the screenshot — type it as shown there",
+      shot_score_mismatch: "The screenshot score doesn't match the score you entered — result not recorded",
       nick_mismatch: "The nicknames on the screenshot don't match those set in the bot — check the spelling or that this match is with this opponent", bad_date: "The match date doesn't fit",
       mark_over_text: "Your mark covers the text — circle the match more widely, or send it unmarked and pick from the list",
       shot_used: "This match was already used for another result", playoff_draw: "Play-off draw — use «Play-off draw with penalties — enter manually»",
