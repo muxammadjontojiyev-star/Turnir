@@ -31,7 +31,7 @@ ERR_KEY = "crule_err_{}"
 
 
 BIG_CODE = "big_needs_shot"      # frontend (crule.js) ushlaydi → skrinshot oynasi; matn emas, kod qaytadi
-BIG_SKIP_MODES = {"pt"}         # xususiy turnir: natija JSON tanada — o'z tartibi (pt_bigscore, tashkilotchi)
+BIG_SKIP_MODES = {"pt"}         # xususiy turnir: natija JSON tanada — yirik hisob kodi endpointning o'zida (pt_api_play)
 
 
 def big_score(query: dict) -> tuple[int, int] | None:

@@ -46,9 +46,11 @@ def dispute(user_id: int, shot_id: int) -> tuple[bool, str | dict]:
         cur.execute("UPDATE match_shots SET status = 'disputed', disputed_at = ? WHERE id = ? AND status = 'applied'",
                     (time.time(), shot_id))
         conn.commit()
-        return True, dict(r)
     finally:
         conn.close()
+    from match_shot_side import forget_names            # 2026-11-07: o'yin yakuni ekranidan o'rganilgan team nomlari
+    forget_names(dict(r))
+    return True, dict(r)
 
 
 def shot_image(shot_id: int) -> bytes | None:

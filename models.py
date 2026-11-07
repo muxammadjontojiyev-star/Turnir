@@ -1324,6 +1324,8 @@ def init_db():
         migrate_match_shots(_c.cursor())
         from match_shot_await import migrate_shot_await     # 2026-11-06: raqib niknamesi yo'q — u tasdiqlaydi
         migrate_shot_await(_c.cursor())
+        from match_shot_side import migrate_side            # 2026-11-07: o'yin yakuni ekrani — o'rganilgan team nomlari
+        migrate_side(_c.cursor())
         migrate_match_claims(_c.cursor())
         from match_guard import migrate_flags               # 2026-11-06: «natija faqat skrinshot bilan» kaliti
         migrate_flags(_c.cursor())

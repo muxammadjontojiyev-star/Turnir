@@ -110,6 +110,10 @@ async def pt_match_result(match_id: int, score1: int = Body(..., embed=True),
                           score2: int = Body(..., embed=True), user: dict = Depends(get_authenticated_user)):
     """Xato: match_not_found, not_participant, not_running, round_closed, already_submitted -> 400"""
     validate_scores(score1, score2)
+    from pt_bigscore import is_big_score
+    if is_big_score(score1, score2):                   # 2026-11-07: yirik hisob — faqat skrinshot bilan (barcha rejimlar kabi,
+        raise HTTPException(status_code=400,           # chat_gate.BIG_CODE; crule.js skrinshot oynasini ochadi), adminga xabarsiz
+                            detail=f"big_needs_shot|pt|{match_id}|{score1}|{score2}")
     from pt_results import pt_submit_result
     ok, r = pt_submit_result(match_id, user["id"], score1, score2)
     if not ok:

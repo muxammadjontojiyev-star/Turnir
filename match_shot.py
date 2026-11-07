@@ -9,6 +9,9 @@ aynan o'ynalgan qatorni tanlaydi (apply_shot) → bot tekshiradi:
 → natija DARHOL tasdiqlanadi (rejimning o'z submit + raqib nomidan confirm, match_modes). Raqibga xabar —
 DISPUTE_HOURS ichida «E'tiroz» bosa oladi → o'yin skrinshot bilan adminga (match_claims.py ro'yxati).
 Pley-offda durang (penaltilar) — hozircha skrinshot bilan EMAS (egasi namunani yuboradi), oddiy tartibda.
+2026-11-07: YIRIK hisob (MAX_NORMAL_SCORE dan ko'p) skrinshot bilan tasdiqlansa — darhol force_set, adminga xabar yo'q;
+o'yin yakuni ekrani («Итог матча» / statistika lentasi) ham qabul qilinadi — faqat yirik hisob uchun (match_shot_result,
+match_shot_side).
 """
 
 import io
@@ -18,6 +21,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
 
+from config import MAX_NORMAL_SCORE
 from models import get_connection
 
 logger = logging.getLogger(__name__)
@@ -122,6 +126,10 @@ async def read_shot(user_id: int, raw: bytes) -> tuple[bool, str | dict]:
     try:
         img = await asyncio.to_thread(_jpeg, raw)
         rows = await asyncio.to_thread(read_rows, raw)
+        if not rows:                                    # 2026-11-07: o'yin yakuni ekrani (yirik hisob, match_shot_result)
+            from match_shot_result import read_result
+            res = await asyncio.to_thread(read_result, raw)
+            rows = [res] if res else []
     except RuntimeError:
         return False, "ocr_unavailable"
     except Exception:
@@ -191,14 +199,6 @@ def _check_row(mode: str, match: dict, user_id: int, row: dict) -> tuple[str | N
     return None, {"s1": s1, "s2": s2, "opponent_id": opp, "played": played}
 
 
-GARBLED_NICK_MIN = 3                                   # bundan qisqa nikname — belgi chizig'i yozuvni yopgan
-
-
-def _garbled(row: dict) -> bool:
-    """Qator nikname(lar)i o'qilmay qolganmi (belgi chizig'i ustidan o'tgan)."""
-    return min(len(_key(row.get("left") or "")), len(_key(row.get("right") or ""))) < GARBLED_NICK_MIN
-
-
 async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: int,
                      expect: tuple[int, int] | None = None) -> tuple[bool, str | dict]:
     """expect — qo'lda kiritilgan YIRIK hisob (player1, player2): skrinshotdagi bilan bir xil bo'lsa — darhol tasdiq."""
@@ -215,26 +215,17 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
     if match.get("status") == "confirmed":
         return False, "already_confirmed"
     row = rd["rows"][row_idx]
-    why, r = _check_row(mode, match, user["id"], row)
-    awaiting = why == "no_opp_nick"
-    if awaiting:                                        # raqib niknamesi yo'q — u tasdiqlaydi (match_shot_await)
-        from match_shot_await import check_await
-        why, r = check_await(mode, match, user["id"], row, r["my_nick"])
-    if why == "nick_mismatch" and row.get("marked") and _garbled(row):
-        return False, "mark_over_text"                 # belgi chizig'i nikname ustidan o'tib, o'qib bo'lmadi
-    if why == "nick_mismatch":                          # 2026-11-06: haqiqiy sabab yashirilmaydi — ro'yxatdagi niknamelar
-        return False, f"nick_mismatch|{(r or {}).get('detail', '')}".rstrip("|")
-    if why == "bad_date":
-        return False, f"bad_date|{row.get('date', '')} {row.get('time') or ''}".strip()
-    if why:
-        return False, why
-    fp = _fp(row, r["played"])
-    conn = get_connection()
-    try:
-        if _shot_used(conn, row, r["played"]):
-            return False, "shot_used"
-    finally:
-        conn.close()
+    if row.get("kind") == "result":                     # 2026-11-07: o'yin yakuni ekrani — faqat yirik hisob (match_shot_side)
+        from match_shot_side import check_result, result_fp
+        why, r = check_result(match, user["id"], row, expect)
+        if why:
+            return False, why
+        r["played"], fp, awaiting = datetime.now(TZ_LOCAL), result_fp(row), False
+    else:
+        from match_shot_hist import history_check
+        why, r, awaiting, fp = history_check(mode, match, user["id"], row)
+        if why:
+            return False, why
     s1, s2, opp = r["s1"], r["s2"], get_user_by_id(r["opponent_id"])
     if expect is not None and (s1, s2) != tuple(expect):  # 2026-11-07: yirik hisob — skrinshot bilan bir xil bo'lsin
         me1 = user["id"] == match["player1_id"]
@@ -250,21 +241,19 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
         return True, {"score1": s1, "score2": s2, "admin_pending": res["admin_pending"], "await_opp": res["await_opp"],
                       "opponent": opp, "my": my, "their": their, "opp_nick": r["opp_nick"]}
     sub = match.get("submitted_by")
-    if sub and sub == opp["id"]:
-        if (match.get("score1"), match.get("score2")) != (s1, s2):
-            return False, "opp_other_score"           # raqib boshqa hisob kiritgan — rad eting, admin hal qiladi
+    if sub and (match.get("score1"), match.get("score2")) != (s1, s2):
+        return False, "opp_other_score" if sub == opp["id"] else "my_other_score"   # boshqa hisob kiritilgan — admin hal qiladi
+    if max(s1, s2) > MAX_NORMAL_SCORE:                  # 2026-11-07: yirik hisob skrinshot bilan isbotlandi — darhol tasdiq,
+        from match_modes import force_set               # rejim submit'i chaqirilmaydi → adminga «yirik hisob» xabari yo'q
+        ok, res = force_set(mode, match_id, s1, s2)
+    elif sub and sub == opp["id"]:
         ok, res = await confirm_as(mode, match_id, user)
     elif sub and sub == user["id"]:
-        if (match.get("score1"), match.get("score2")) != (s1, s2):
-            return False, "my_other_score"
         ok, res = await confirm_as(mode, match_id, opp)
     else:
         ok, res = await submit_as(mode, match_id, s1, s2, user)
         if ok and "admin_pending" not in str(res):
             ok, res = await confirm_as(mode, match_id, opp)
-        elif ok and expect is not None:                 # yirik hisob, skrinshot = kiritilgan → admin kutilmaydi
-            from match_modes import force_set
-            ok, res = force_set(mode, match_id, s1, s2)
     if not ok:
         return False, str(res)
     pending = "admin_pending" in str(res)
@@ -278,6 +267,9 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
     finally:
         conn.close()
     _READS.pop(token, None)
+    if row.get("kind") == "result":
+        from match_shot_side import learn_names
+        learn_names(match, row, s1, s2)
     logger.info("MATCH SHOT: %s #%s — %s:%s (user %s, skrinshot)", mode, match_id, s1, s2, user["id"])
     my = s1 if user["id"] == match["player1_id"] else s2
     their = s2 if user["id"] == match["player1_id"] else s1

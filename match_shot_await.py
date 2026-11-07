@@ -59,14 +59,22 @@ def check_await(mode: str, match: dict, user_id: int, row: dict, my_nick: str) -
     return None, {"s1": s1, "s2": s2, "opponent_id": opp, "played": played, "opp_nick": opp_nick}
 
 
+def _big(s1, s2) -> bool:
+    from config import MAX_NORMAL_SCORE
+    return max(int(s1 or 0), int(s2 or 0)) > MAX_NORMAL_SCORE
+
+
 async def apply_await(user: dict, mode: str, match: dict, r: dict, fp: str, img: bytes) -> tuple[bool, str | dict]:
     from match_modes import submit_as
     if match.get("submitted_by"):
         return False, "opp_other_score" if match["submitted_by"] != user["id"] else "my_other_score"
-    ok, res = await submit_as(mode, match["id"], r["s1"], r["s2"], user)
-    if not ok:
-        return False, str(res)
-    pending = "admin_pending" in str(res)
+    if _big(r["s1"], r["s2"]):                          # 2026-11-07: yirik hisob — rejimga yozilmaydi (adminga xabar yo'q),
+        pending = False                                 # raqib tasdiqlaganda darhol force_set (accept_await)
+    else:
+        ok, res = await submit_as(mode, match["id"], r["s1"], r["s2"], user)
+        if not ok:
+            return False, str(res)
+        pending = "admin_pending" in str(res)
     conn = get_connection()
     try:
         conn.execute("INSERT INTO match_shots (mode, match_id, uploader_id, opponent_id, score1, score2, played_at, fp, "
@@ -141,7 +149,11 @@ async def accept_await(user: dict, shot_id: int, nick: str) -> tuple[bool, str |
         return False, res
     if isinstance(res, dict) and res.get("pending"):
         return False, "nick_taken"
-    ok, res = await confirm_as(r["mode"], r["match_id"], user)
+    if _big(r["score1"], r["score2"]):
+        from match_modes import force_set
+        ok, res = force_set(r["mode"], r["match_id"], r["score1"], r["score2"])
+    else:
+        ok, res = await confirm_as(r["mode"], r["match_id"], user)
     if not ok:
         return False, str(res)
     _set_status(shot_id, "applied")
