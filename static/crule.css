@@ -1,0 +1,17 @@
+/* crule.css — chat qoidalari (2026-11-07): tex win oynasi, chat ichidagi «boshqa vaqtga kelishish» qatori */
+.cr-facts { font-size: 13px; line-height: 1.5; margin: 8px 0; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.06); }
+.cr-why { font-size: 13px; margin: 6px 0 2px; color: var(--green, #3ecf8e); }
+.cr-why--no { color: var(--danger, #ff6b6b); }
+.cr-ag { padding: 6px 10px 0; font-size: 12px; }
+.cr-ag:empty { display: none; }
+.cr-ag-row, .cr-ag-form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cr-ag-row > span { flex: 1 1 140px; min-width: 0; opacity: .9; }
+.cr-ag-lock { color: var(--gold, #f5b942); }
+.cr-ag-b { border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: inherit;
+  border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.cr-ag-b--ok { border-color: var(--cyan, #4f8cff); background: rgba(79,140,255,.18); }
+.cr-ag-b:disabled { opacity: .5; }
+.cr-ag-at { flex: 1 1 160px; min-width: 0; padding: 5px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.2); color: inherit; font-size: 13px; color-scheme: dark; }
+.cr-ag-hint { flex-basis: 100%; opacity: .6; font-size: 11px; }
+.ms-box [data-cr="take"]:disabled { opacity: .45; }

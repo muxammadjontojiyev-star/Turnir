@@ -203,7 +203,9 @@ document.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     const c = { mode: slot.dataset.msMode, id: Number(slot.dataset.msId) };
     if (b.dataset.ms === "shot") void msShotOpen(c);
-    if (b.dataset.ms === "tech" && typeof msTechOpen === "function") void msTechOpen(c);
+    if (b.dataset.ms === "tech") {                   // 2026-11-07: bot chat yozishmasini o'zi tekshiradi (crule.js)
+      if (typeof crTechOpen === "function") void crTechOpen(c); else if (typeof msTechOpen === "function") void msTechOpen(c);
+    }
     if (b.dataset.ms === "pen") { slot.closest(".modal")?.classList.remove("ms-only"); b.remove(); }   // pley-off durang
     return;
   }
