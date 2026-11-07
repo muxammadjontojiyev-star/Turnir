@@ -24,7 +24,8 @@ TB_LINEUP_FLOOR = 3                 # liga sozlamasi: asosiy tarkib kamida shunc
 TB_LINEUP_CEIL = 30                 # liga sozlamasi: asosiy tarkib ko'pi bilan
 _CODE_RE = re.compile(r"^[A-Za-z0-9_-]{4,40}$")
 _LEAGUE_COLS = ("l.id, l.name, l.emoji, l.logo_ver, l.admin_user_id, l.lineup_min, l.lineup_max, l.division_size, "
-                "l.created_at, u.nickname AS admin_nickname, u.username AS admin_username")
+                "l.created_at, u.nickname AS admin_nickname, u.username AS admin_username, "
+                "l.public_teams")                       # 2026-11-07: teamsizlarga ko'rinadimi (tb_public.py)
 
 
 def parse_tb_league_payload(payload: str | None) -> str | None:

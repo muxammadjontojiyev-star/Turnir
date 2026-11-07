@@ -165,3 +165,10 @@ def init_tb_tables() -> None:
         conn.close()
     from tb_models_league import migrate_leagues
     migrate_leagues()                       # 2026-10-16: ligalar (idempotent)
+    from tb_public import migrate_public    # 2026-11-07: teamsizlarga ko'rinadigan ligalar (tb_leagues.public_teams)
+    _c = get_connection()
+    try:
+        migrate_public(_c.cursor())
+        _c.commit()
+    finally:
+        _c.close()

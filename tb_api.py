@@ -206,6 +206,9 @@ def tb_admin_delete_ep(team_id: int = Body(..., embed=True),
                        admin: dict = Depends(get_authenticated_user)):
     from tb_manage import tb_admin_delete, tb_team_league
     require_manage(admin, tb_team_league(team_id))
+    if is_super_admin(admin["telegram_id"]):           # 2026-11-07: bosh admin — istalgan holatda (tb_force.py)
+        from tb_force import force_delete_team
+        return _ok(force_delete_team(team_id))
     return _ok(tb_admin_delete(team_id))
 
 
@@ -215,5 +218,11 @@ def tb_admin_delete_bulk(league_id: int = Body(..., embed=True), ids: list[int] 
     """2026-10-16: liga admini / bosh admin — tanlangan teamlarni bir yo'la o'chirish."""
     from tb_manage import tb_admin_delete_many
     require_manage(admin, league_id)
+    if is_super_admin(admin["telegram_id"]):           # 2026-11-07: bosh admin — mavsumda qatnashganlar ham
+        from tb_core import tb_team_league_id
+        from tb_force import force_delete_team
+        ok_ids = [i for i in dict.fromkeys(int(x) for x in ids or [])
+                  if tb_team_league_id(i) == league_id and force_delete_team(i)[0]]
+        return {"status": "ok", "deleted": len(ok_ids), "failed": [i for i in ids if i not in ok_ids]}
     r = _ok(tb_admin_delete_many(ids, league_id))
     return {"status": "ok", "deleted": len(r["deleted"]), "failed": r["failed"]}

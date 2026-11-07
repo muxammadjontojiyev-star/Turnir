@@ -79,8 +79,8 @@ async def tb_admin_league_set_admin(league_id: int = Body(..., embed=True),
 @router.post("/tb/admin/leagues/delete")
 def tb_admin_league_delete(league_id: int = Body(..., embed=True),
                            admin: dict = Depends(get_authenticated_super_admin)):
-    from tb_leagues import tb_league_delete
-    return _ok(tb_league_delete(league_id))
+    from tb_force import force_delete_league          # 2026-11-07: bosh admin — istalgan holatda (teamlar, mavsumlar bilan)
+    return _ok(force_delete_league(league_id))
 
 
 @router.post("/tb/admin/leagues/bulk-settings")
