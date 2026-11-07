@@ -180,7 +180,7 @@ def _check_row(mode: str, match: dict, user_id: int, row: dict) -> tuple[str | N
     straight = min(nick_sim(row["left"], nicks[p1]), nick_sim(row["right"], nicks[p2]))
     swapped = min(nick_sim(row["left"], nicks[p2]), nick_sim(row["right"], nicks[p1]))
     if max(straight, swapped) < NICK_MATCH_MIN:
-        return "nick_mismatch", {}
+        return "nick_mismatch", {"detail": f"{nicks[p1]} / {nicks[p2]}"}   # ro'yxatdagi niknamelar — foydalanuvchiga
     s1, s2 = (row["s_left"], row["s_right"]) if straight >= swapped else (row["s_right"], row["s_left"])
     played = _played_at(row, _opened(match))
     if played is None:
@@ -189,6 +189,14 @@ def _check_row(mode: str, match: dict, user_id: int, row: dict) -> tuple[str | N
     if MODES[mode]["playoff"] and s1 == s2:
         return "playoff_draw", {}
     return None, {"s1": s1, "s2": s2, "opponent_id": opp, "played": played}
+
+
+GARBLED_NICK_MIN = 3                                   # bundan qisqa nikname — belgi chizig'i yozuvni yopgan
+
+
+def _garbled(row: dict) -> bool:
+    """Qator nikname(lar)i o'qilmay qolganmi (belgi chizig'i ustidan o'tgan)."""
+    return min(len(_key(row.get("left") or "")), len(_key(row.get("right") or ""))) < GARBLED_NICK_MIN
 
 
 async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: int) -> tuple[bool, str | dict]:
@@ -210,8 +218,10 @@ async def apply_shot(user: dict, mode: str, match_id: int, token: str, row_idx: 
     if awaiting:                                        # raqib niknamesi yo'q — u tasdiqlaydi (match_shot_await)
         from match_shot_await import check_await
         why, r = check_await(mode, match, user["id"], row, r["my_nick"])
-    if why in ("nick_mismatch", "bad_date") and row.get("marked"):
-        return False, "mark_over_text"                 # belgi chizig'i nikname/sana ustidan o'tib, o'qib bo'lmadi
+    if why == "nick_mismatch" and row.get("marked") and _garbled(row):
+        return False, "mark_over_text"                 # belgi chizig'i nikname ustidan o'tib, o'qib bo'lmadi
+    if why == "nick_mismatch":                          # 2026-11-06: haqiqiy sabab yashirilmaydi — ro'yxatdagi niknamelar
+        return False, f"nick_mismatch|{(r or {}).get('detail', '')}".rstrip("|")
     if why == "bad_date":
         return False, f"bad_date|{row.get('date', '')} {row.get('time') or ''}".strip()
     if why:

@@ -741,6 +741,8 @@ TEXTS = {
 # 2026-11-06: skrinshotli natija / texnik g'alaba xabarlari (alohida fayl — texts.py katta)
 from texts_mshot import MSHOT_TEXTS  # noqa: E402
 TEXTS.update(MSHOT_TEXTS)
+from texts_crule import CRULE_TEXTS  # noqa: E402  (2026-11-07: chat qoidalari)
+TEXTS.update(CRULE_TEXTS)
 
 def t(key: str, language: str) -> str:
     """

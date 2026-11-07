@@ -3803,3 +3803,7 @@ from match_shot_api import router as match_shot_router  # noqa: E402  (2026-11-0
 app.include_router(match_shot_router)
 from match_guard import install as install_shot_only_guard  # noqa: E402  (2026-11-06: natija faqat skrinshot bilan)
 install_shot_only_guard(app)
+from chat_rules_api import router as chat_rules_router  # noqa: E402  (2026-11-07: tex win chat bo'yicha, kelishuv)
+app.include_router(chat_rules_router)
+from chat_gate import install as install_chat_gate  # noqa: E402  (2026-11-07: qo'lda natija — chat sharti)
+install_chat_gate(app)

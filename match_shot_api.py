@@ -138,7 +138,12 @@ async def mshot_read(image: str = Body(..., embed=True), user: dict = Depends(ge
 async def mshot_apply(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
                       token: str = Body(..., embed=True), row: int = Body(..., embed=True),
                       user: dict = Depends(get_authenticated_user)):
+    from chat_agree import active_lock
+    from chat_rules import fmt_local
     from match_shot import _NICK_REMIND, DISPUTE_HOURS, apply_shot
+    lk = active_lock(mode, match_id)                   # 2026-11-07: kelishilgan vaqtgacha natija yo'q
+    if lk:
+        raise HTTPException(status_code=400, detail=f"agree_locked|{fmt_local(lk)}")
     ok, r = await apply_shot(user, mode, match_id, token, row)
     for uid in list(_NICK_REMIND):                     # raqib niknameini kiritmagan — unga eslatma (bir marta)
         _NICK_REMIND.discard(uid)

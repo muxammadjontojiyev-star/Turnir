@@ -37,16 +37,16 @@ def check_await(mode: str, match: dict, user_id: int, row: dict, my_nick: str) -
     opp = p2 if user_id == p1 else p1
     sl, sr = nick_sim(row["left"], my_nick), nick_sim(row["right"], my_nick)
     if max(sl, sr) < NICK_MATCH_MIN:
-        return "nick_mismatch", {}
+        return "nick_mismatch", {"detail": my_nick}      # skrinshotda sizning niknameingiz topilmadi
     me_left = sl >= sr
     opp_nick = " ".join((row["right"] if me_left else row["left"]).split())
     if not opp_nick:
-        return "nick_mismatch", {}
+        return "nick_mismatch", {"detail": my_nick}
     conn = get_connection()
     try:                                                 # skrinshotdagi raqib — boshqa ro'yxatdagi ishtirokchi emasmi
         for r in conn.execute("SELECT user_id, nick FROM ef_nicknames WHERE user_id NOT IN (?, ?)", (user_id, opp)):
             if nick_sim(opp_nick, r["nick"]) >= NICK_MATCH_MIN:
-                return "nick_mismatch", {}
+                return "nick_mismatch", {"detail": f"{my_nick} / {r['nick']}"}   # o'yin boshqa ishtirokchi bilan
     finally:
         conn.close()
     my_goals, opp_goals = (row["s_left"], row["s_right"]) if me_left else (row["s_right"], row["s_left"])
