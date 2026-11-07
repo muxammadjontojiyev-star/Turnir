@@ -47,6 +47,14 @@ async def _check_and_notify_once() -> None:
     Bir martalik tekshiruv: yangi tur ochilgan ligalarga xabar yuboradi.
     Xato bo'lsa jim yutiladi (bitta liga qolganlarini to'xtatmasligi kerak).
     """
+    # === 0) 2026-11-07: DEADLINE ARAFASIDA AVTOMATIK TEX WIN (chat yozishmasi bo'yicha, chat_auto.py) ===
+    # Rejimlar deadline'da o'yinni yopishidan OLDIN (deadline'ga 3 daqiqa qolganda) — haqli tomonga 3:0.
+    try:
+        from chat_auto import sweep as chat_tech_sweep
+        await chat_tech_sweep()
+    except Exception as exc:
+        logger.error("Scheduler: avtomatik tex win xatosi: %s", exc)
+
     # === 1) AVTOMATIK TASDIQLASH — BARCHA qur'a o'tkazilgan ligalar uchun ===
     # MUHIM: bu blok xabar yuborishdan MUSTAQIL. Ilgari auto_resolve faqat
     # "yangi tur ochilgan" ligalar tsikli ichida chaqirilardi; oxirgi tur (38)

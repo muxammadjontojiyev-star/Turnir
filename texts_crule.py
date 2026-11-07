@@ -82,6 +82,26 @@ CRULE_TEXTS = {
         LANGUAGE_EN: "⚠️ {mode}: you didn't reply to your opponent in the bot chat (they wrote at 3 different times). "
                      "The bot recorded a technical defeat: 0:3.",
     },
+    "crule_notify_tech_auto_won": {
+        LANGUAGE_UZ: "✅ {mode}: raqibingiz bot chatida javob bermadi — deadline'da bot sizga texnik g'alaba yozdi: 3:0.",
+        LANGUAGE_RU: "✅ {mode}: соперник не ответил в чате бота — в дедлайн бот засчитал вам техпобеду: 3:0.",
+        LANGUAGE_EN: "✅ {mode}: your opponent didn't reply in the bot chat — at the deadline the bot recorded a tech win for you: 3:0.",
+    },
+    "crule_notify_concede_won": {
+        LANGUAGE_UZ: "✅ {mode}: raqibingiz g'alabani sizga berdi («win sizga») — natija 3:0 yozildi.",
+        LANGUAGE_RU: "✅ {mode}: соперник отдал вам победу — записан результат 3:0.",
+        LANGUAGE_EN: "✅ {mode}: your opponent gave you the win — a 3:0 result was recorded.",
+    },
+    "crule_notify_concede_lost": {
+        LANGUAGE_UZ: "ℹ️ {mode}: siz g'alabani raqibingizga berdingiz — natija 0:3 yozildi.",
+        LANGUAGE_RU: "ℹ️ {mode}: вы отдали победу сопернику — записан результат 0:3.",
+        LANGUAGE_EN: "ℹ️ {mode}: you gave the win to your opponent — a 0:3 result was recorded.",
+    },
+    "crule_err_concede_only_30": {
+        LANGUAGE_UZ: "🏳️ Raqibingiz chatda g'alabani sizga bergan — xona ID siz faqat 3:0 (sizning foydangizga) kiritiladi.",
+        LANGUAGE_RU: "🏳️ Соперник в чате отдал вам победу — без ID комнаты можно внести только 3:0 в вашу пользу.",
+        LANGUAGE_EN: "🏳️ Your opponent gave you the win in the chat — without a room ID only 3:0 in your favour can be entered.",
+    },
     "crule_admin_tech": {
         LANGUAGE_UZ: "ℹ️ {mode} · o'yin #{match}: bot chat yozishmasi bo'yicha texnik g'alaba berdi — {winner} 3:0. "
                      "Xato bo'lsa, rejim admin bo'limida hisobni tuzating.",

@@ -9,6 +9,7 @@ Tasdiqlash / rad etish, admin tuzatishlari, skrinshotli natija va tex win (Pytho
 YIRIK HISOB (2026-11-07, egasi): biror tomon MAX_NORMAL_SCORE dan ko'p gol — qo'lda qabul qilinmaydi, «big_needs_shot|…»
   kodi qaytadi → ilova skrinshot oynasini ochadi; skrinshotdagi hisob kiritilgan bilan bir xil bo'lsa — darhol tasdiq
   (match_shot.apply_shot expect). Xususiy turnir — o'z tartibida (pt_bigscore).
+«WIN SIZGA» (chat_concede.py): raqib taslim iborasini yozgan (rad etmagan) bo'lsa — xona ID siz FAQAT o'z foydangizga 3:0.
 Ichki xato bo'lsa — so'rov o'tkaziladi (rejimning o'z tekshiruvlari ishlaydi) va logga yoziladi.
 """
 
@@ -41,6 +42,18 @@ def big_score(query: dict) -> tuple[int, int] | None:
     except (TypeError, ValueError):
         return None
     return (s1, s2) if max(s1, s2) > MAX_NORMAL_SCORE else None
+
+
+def _concede_30(mode: str, match: dict, me: int, query: dict) -> bool:
+    """Raqib «win sizga» degan va men aynan o'z foydamga 3:0 kiritayapman (chat_concede.py)."""
+    from chat_concede import waiver_for
+    from chat_rules import TECH_SCORE
+    try:
+        s1, s2 = int(query.get("score1")), int(query.get("score2"))
+    except (TypeError, ValueError):
+        return False
+    want = (TECH_SCORE, 0) if me == match.get("player1_id") else (0, TECH_SCORE)
+    return (s1, s2) == want and waiver_for(mode, match, me)
 
 
 def target(method: str, path: str, query: dict) -> tuple[str | None, int | None]:
@@ -83,6 +96,12 @@ def check(mode: str, match_id: int, init_data: str, query: dict | None = None) -
     ok, why, info = manual_check(mode, match, user["id"])
     if ok:
         return None
+    if why.startswith("room_") and _concede_30(mode, match, user["id"], query or {}):
+        return None                                      # raqib «win sizga» degan — xona ID siz faqat 3:0
+    if why.startswith("room_"):
+        from chat_concede import waiver_for
+        if waiver_for(mode, match, user["id"]):
+            why = "concede_only_30"
     logger.info("CHAT SHARTI: %s #%s — user %s qo'lda natija rad: %s", mode, match_id, user["id"], why)
     text = t(ERR_KEY.format(why), user.get("language") or "uz")
     try:

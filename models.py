@@ -1331,6 +1331,8 @@ def init_db():
         migrate_agreements(_c.cursor())
         from chat_room import migrate_room_copies           # 2026-11-07: xona ID chatdan nusxalandi (qo'lda natija sharti)
         migrate_room_copies(_c.cursor())
+        from chat_concede import migrate_concessions        # 2026-11-07: «win sizga» — raqibga 3:0
+        migrate_concessions(_c.cursor())
         from season_break import migrate_season_break       # 2026-11-01: mavsumlar orasidagi tanaffus (ustun)
         from club_priority import migrate_priority_switch   # 2026-11-01: navbat kaliti (bosh admin paneli)
         migrate_priority_switch(_c.cursor())

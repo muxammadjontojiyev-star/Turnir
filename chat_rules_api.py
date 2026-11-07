@@ -14,7 +14,7 @@ import logging
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 
-from api import get_authenticated_user
+from api import get_authenticated_super_admin, get_authenticated_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -47,6 +47,17 @@ async def _tell(user_id: int, key: str, mode: str, **fmt) -> None:
         logger.warning("CHAT QOIDA: xabar yuborilmadi (%s, %s): %s", user_id, key, exc)
 
 
+def _concede_state(mode: str, m: dict, me: int) -> dict | None:
+    """«Win sizga»: mine — men yozganman (so'rov chiqadi), theirs — raqib yozgan (men faqat 3:0 kirita olaman)."""
+    from chat_concede import open_concession
+    if m.get("status") != "pending":
+        return None
+    c = open_concession(mode, m)
+    if not c:
+        return None
+    return {"msg_id": c["msg_id"], "mine": c["user_id"] == me, "text": c["text"]}
+
+
 @router.get("/crule/{mode}/{match_id}")
 def crule_state(mode: str, match_id: int, user: dict = Depends(get_authenticated_user)):
     from chat_agree import state
@@ -58,6 +69,7 @@ def crule_state(mode: str, match_id: int, user: dict = Depends(get_authenticated
     m_ok, m_why, _ = manual_check(mode, m, user["id"])
     return {"tech": {"ok": t_ok, "reason": t_why, **t_info}, "manual": {"ok": m_ok, "reason": m_why},
             "agree": state(mode, match_id, user["id"]), "status": m.get("status"),
+            "concede": _concede_state(mode, m, user["id"]),
             "me_p1": user["id"] == m.get("player1_id")}
 
 
@@ -73,32 +85,52 @@ def crule_room_copy(mode: str = Body(..., embed=True), match_id: int = Body(...,
 @router.post("/crule/techwin")
 async def crule_techwin(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
                         user: dict = Depends(get_authenticated_user)):
-    from chat_rules import TECH_SCORE, tech_check
-    from match_modes import confirm_as, get_match, submit_as
-    from match_shot_api import _tell_admins
-    from queries_users import get_user_by_id
+    from chat_auto import apply_techwin
+    from chat_rules import tech_check
     lock = _LOCKS.setdefault((mode, int(match_id)), asyncio.Lock())
     async with lock:                                    # ikki marta bosilsa — ikkinchisi «natija bor» deydi
-        m = _match_or_404(mode, match_id)
-        ok, why, _ = tech_check(mode, m, user["id"])
+        ok, why, _ = tech_check(mode, _match_or_404(mode, match_id), user["id"])
         if not ok:
             raise HTTPException(status_code=400, detail=why)
-        me_p1 = user["id"] == m["player1_id"]
-        opp_id = m["player2_id"] if me_p1 else m["player1_id"]
-        s1, s2 = (TECH_SCORE, 0) if me_p1 else (0, TECH_SCORE)
-        ok, res = await submit_as(mode, match_id, s1, s2, user)
-        if not ok:
-            raise HTTPException(status_code=400, detail=res)
-        opp = get_user_by_id(opp_id)
-        ok2, res2 = await confirm_as(mode, match_id, opp) if opp else (False, "opponent_not_found")
-        if not ok2:                                     # kiritildi, tasdiq bo'lmadi — deadline'da avtomatik tasdiqlanadi
-            logger.error("CHAT QOIDA: tex win tasdiqlanmadi %s #%s: %s", mode, match_id, res2)
-        logger.info("CHAT QOIDA: TEX WIN %s #%s — user %s 3:0 (tasdiq: %s)", mode, match_id, user["id"], ok2)
-    await _tell(opp_id, "crule_notify_tech_lost", mode)
-    await _tell_admins(mode, match_id, "crule_admin_tech",
-                       winner=user.get("nickname") or user.get("username") or str(user["id"]))
-    final = get_match(mode, match_id) or {}
-    return {"status": final.get("status"), "score1": s1, "score2": s2}
+        ok, res = await apply_techwin(mode, match_id, user["id"], "button")
+    if not ok:
+        raise HTTPException(status_code=400, detail=res)
+    return res
+
+
+@router.post("/crule/concede")
+async def crule_concede(mode: str = Body(..., embed=True), match_id: int = Body(..., embed=True),
+                        msg_id: int = Body(..., embed=True), accept: bool = Body(..., embed=True),
+                        user: dict = Depends(get_authenticated_user)):
+    """«Win sizga» deb yozgan o'yinchi: «Ha» — raqibga darhol 3:0; «Yo'q» — taslim emas (chat_concede.py)."""
+    from chat_auto import apply_techwin
+    from chat_concede import decide
+    m = _match_or_404(mode, match_id)
+    if m.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="tech_has_result")
+    ok, r = decide(mode, m, user["id"], msg_id, accept)
+    if not ok:
+        raise HTTPException(status_code=400, detail=r)
+    if not accept:
+        return {"status": "declined"}
+    ok, res = await apply_techwin(mode, match_id, r["winner_id"], "concede")
+    if not ok:
+        raise HTTPException(status_code=400, detail=res)
+    return res
+
+
+@router.get("/crule/config")
+def crule_config(user: dict = Depends(get_authenticated_user)):
+    from chat_rules import REPLY_MAX_H_MAX, REPLY_MAX_H_MIN, reply_max_h
+    return {"reply_max_h": reply_max_h(), "min": REPLY_MAX_H_MIN, "max": REPLY_MAX_H_MAX}
+
+
+@router.post("/crule/admin/config")
+def crule_admin_config(reply_max_h: int = Body(..., embed=True), admin: dict = Depends(get_authenticated_super_admin)):
+    from chat_rules import set_reply_max_h
+    h = set_reply_max_h(reply_max_h)
+    logger.info("CHAT QOIDA: javob kechikishi chegarasi — %s soat (admin %s)", h, admin.get("id"))
+    return {"reply_max_h": h}
 
 
 @router.post("/crule/agree")
