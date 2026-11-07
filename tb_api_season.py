@@ -110,8 +110,20 @@ async def tb_game_confirm(game_id: int = Body(..., embed=True), accept: bool = B
 
 @router.get("/tb/admin/season/preview")
 def tb_admin_preview(league_id: int, admin: dict = Depends(get_authenticated_user)):
+    from tb_plan import get_plan
     from tb_season import tb_season_preview
-    return tb_season_preview(require_manage(admin, league_id))
+    d = tb_season_preview(require_manage(admin, league_id))
+    d["plan"] = get_plan(league_id)                     # 2026-11-07: saqlangan keyingi mavsum rejasi (tb_plan.py)
+    return d
+
+
+@router.post("/tb/admin/league/draw-plan")
+def tb_admin_draw_plan(league_id: int = Body(..., embed=True), format: str = Body(..., embed=True),
+                       match_size: int | None = Body(None, embed=True), manual: dict | None = Body(None, embed=True),
+                       admin: dict = Depends(get_authenticated_user)):
+    """2026-11-07: liga admini — keyingi mavsum formati va «N vs N» ni saqlaydi; manual=None — UCL avtomatik."""
+    from tb_plan import save_plan
+    return _ok(save_plan(require_manage(admin, league_id), format, match_size, manual))
 
 
 @router.post("/tb/admin/season/create")
