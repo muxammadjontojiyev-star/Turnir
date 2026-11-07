@@ -161,13 +161,15 @@ function tbTeamHeadHtml(t) {
 
 function tbMemberRowHtml(m, t, captainView) {
   const role = m.role === "captain" ? `<span class="tb-badge tb-badge--cap">SARDOR</span>` : "";
-  const lu = m.in_lineup ? `<span class="tb-badge tb-badge--lu">#${m.lineup_pos}</span>` : "";
+  const lu = m.in_lineup && !captainView ? `<span class="tb-badge tb-badge--lu">#${m.lineup_pos}</span>` : "";
   const acts = captainView && m.role !== "captain"             // 2026-11-07: ixcham ikonkali tugmalar
     ? `<div class="tb-member-acts">
          <button class="tb-icon-btn" data-tb-cap="${m.user_id}" title="Sardor qilish" aria-label="Sardor qilish">👑</button>
          <button class="tb-icon-btn tb-icon-btn--danger" data-tb-kick="${m.user_id}" title="Chiqarish" aria-label="Chiqarish">✖</button>
        </div>` : "";
+  const luBtn = captainView && typeof tbLineupToggleHtml === "function" ? tbLineupToggleHtml(m, t) : "";   // 2026-11-07: ＋
   return `<div class="tb-member">
+      ${luBtn}
       ${tbAvatarHtml(m)}
       <div class="tb-member-info">${tbNameHtml(m)}${role}${lu}
         ${captainView && m.telegram_id ? `<span class="tb-member-id">ID ${escHtml(String(m.telegram_id))}</span>` : ""}</div>

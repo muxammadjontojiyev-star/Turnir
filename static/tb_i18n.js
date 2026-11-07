@@ -266,7 +266,7 @@ const TB_ERR = {
   not_captain: "Bu amal faqat sardorga ruxsat etilgan",
   member_not_found: "A'zo topilmadi",
   cannot_remove_self: "O'zingizni chiqara olmaysiz",
-  lineup_size: "Asosiy tarkib soni chegaradan tashqarida",
+  lineup_size: "Asosiy tarkibga liga belgilagan sondan ko'p kishi qo'shib bo'lmaydi",   // 2026-11-07
   lineup_duplicate: "Tarkibda takror o'yinchi bor",
   lineup_not_member: "Tarkibda teamga a'zo bo'lmagan o'yinchi bor",
   bot_username_missing: "Bot nomi sozlanmagan (BOT_USERNAME)",

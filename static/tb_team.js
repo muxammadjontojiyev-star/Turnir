@@ -15,7 +15,7 @@ function tbCapLineupHtml(t) {
   }
   const { lineup_min: lmin, lineup_max: lmax } = TB.me;
   const n = TB.lineupSel.length;
-  const okN = n >= lmin && n <= lmax;
+  const okN = n <= lmax;                               // 2026-11-07: minimumdan kami ham saqlanadi (ogohlantirish bilan)
   const rows = t.members.map(m => {
     const pos = TB.lineupSel.indexOf(m.user_id);
     return `<button class="tb-lu-row${pos >= 0 ? " on" : ""}" data-tb-lu="${m.user_id}">
@@ -33,6 +33,7 @@ function tbCapLineupHtml(t) {
       <div class="tb-hint">O'yinchini bosing — tarkibga qo'shiladi (bosish tartibi = tarkib tartibi). Qayta bossangiz olib tashlanadi.</div>
       <div class="tb-lu-list">${rows}</div>
       <button class="btn btn--primary" data-tb="lu-save" ${okN ? "" : "disabled"}>💾 Tarkibni saqlash</button>
+      ${n < lmin ? `<div class="tb-warn">Kamida ${lmin} kishi kerak — hozir ${n} ta. Tarkib to'lmaguncha bahsda texnik mag'lubiyat beriladi.</div>` : ""}
       ${t.members.length < lmin ? `<div class="tb-warn">Tarkib uchun kamida ${lmin} a'zo kerak — hozir ${t.members.length} ta. Ko'proq do'st taklif qiling.</div>` : ""}
     </div>`;
 }

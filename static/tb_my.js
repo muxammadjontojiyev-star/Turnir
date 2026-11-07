@@ -17,6 +17,7 @@ const TB_MY_SECS = {
 function tbMySecDefault(t) {
   const lineup = t.members.filter(m => m.in_lineup).length;
   if (t.is_captain && t.members.length < TB.me.lineup_min) return "invite";      // a'zo yetmaydi — avval taklif
+  if (t.is_captain && lineup < TB.me.lineup_min) return "members";             // «＋» bilan tarkib yig'ish
   return lineup < TB.me.lineup_min ? "lineup" : "members";
 }
 
@@ -50,7 +51,44 @@ function tbMyPanelHtml(key, t) {
     return `${short}<div class="card tb-list">${lineup.length ? lineup.map(m => tbMemberRowHtml(m, t, false)).join("")
       : `<div class="tb-hint">Tarkib hali tuzilmagan</div>`}</div>`;
   }
-  return `<div class="card tb-list">${t.members.map(m => tbMemberRowHtml(m, t, cap)).join("")}</div>`;
+  const head = cap ? tbLineupBarHtml(t) : "";
+  return `${head}<div class="card tb-list">${t.members.map(m => tbMemberRowHtml(m, t, cap)).join("")}</div>`;
+}
+
+// ---- 2026-11-07 (egasi): sardor a'zolar ro'yxatidan «＋» bilan asosiy tarkibga qo'shadi; liga maksimumidan ko'p — yo'q ----
+function tbLineupIds(t) {
+  return t.members.filter(m => m.in_lineup).sort((a, b) => a.lineup_pos - b.lineup_pos).map(m => m.user_id);
+}
+
+function tbLineupBarHtml(t) {
+  const n = tbLineupIds(t).length, { lineup_min: lmin, lineup_max: lmax } = TB.me;
+  const cls = n > lmax ? "tb-bad" : n >= lmin ? "tb-ok" : "tb-bad";
+  return `<div class="tb-lu-bar">
+      <span>Asosiy tarkib: <b class="${cls}">${n}</b> / ${lmax}</span>
+      <small>${n >= lmax ? "Tarkib to'ldi" : `«＋» — tarkibga qo'shish${n < lmin ? ` · kamida ${lmin} kishi kerak` : ""}`}</small>
+    </div>`;
+}
+
+function tbLineupToggleHtml(m, t) {
+  const ids = tbLineupIds(t);
+  const pos = ids.indexOf(m.user_id);
+  if (pos >= 0) {
+    return `<button class="tb-lu-tog on" data-tb-lutog="${m.user_id}" title="Tarkibdan olish" aria-label="Tarkibdan olish">✓<i>${pos + 1}</i></button>`;
+  }
+  const full = ids.length >= TB.me.lineup_max;
+  return `<button class="tb-lu-tog${full ? " full" : ""}" data-tb-lutog="${m.user_id}" ${full ? "disabled" : ""}
+      title="${full ? "Tarkib to'ldi" : "Tarkibga qo'shish"}" aria-label="Tarkibga qo'shish">＋</button>`;
+}
+
+async function tbLineupToggle(btn) {
+  const t = TB.me && TB.me.team;
+  if (!t || !t.is_captain || btn.disabled) return;
+  const id = +btn.dataset.tbLutog;
+  const ids = tbLineupIds(t);
+  const next = ids.includes(id) ? ids.filter(x => x !== id) : ids.concat(id);
+  if (next.length > TB.me.lineup_max) { tbToast(`Ko'pi bilan ${TB.me.lineup_max} kishi`); return; }
+  const ok = await tbAction("/tb/lineup", { user_ids: next }, ids.includes(id) ? "Tarkibdan olindi" : "✅ Tarkibga qo'shildi", btn);
+  if (ok) TB.mySec = "members";
 }
 
 function tbMyTeamHtml(t) {
@@ -74,6 +112,8 @@ function tbMyTeamHtml(t) {
 }
 
 document.addEventListener("click", (e) => {
+  const tog = e.target.closest ? e.target.closest("#tb-root [data-tb-lutog]") : null;
+  if (tog) { e.preventDefault(); e.stopPropagation(); void tbLineupToggle(tog); return; }
   const tile = e.target.closest ? e.target.closest("#tb-root [data-tb-sec]") : null;
   if (!tile || !TB.me || !TB.me.team) return;
   TB.mySec = tile.dataset.tbSec;

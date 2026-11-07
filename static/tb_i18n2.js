@@ -18,6 +18,10 @@ Object.assign(TB_I18N.ru, {
     "Напишите капитану понравившейся команды — он пришлёт вам ссылку-приглашение.",
   "✈️ Yozish": "✈️ Написать", "Siz hali hech qaysi ligada emassiz": "Вы пока не состоите ни в одной лиге",
   "Sardor bilan bog'lanib bo'lmaydi": "С капитаном нельзя связаться", "Chiqarish": "Исключить",
+  "Asosiy tarkib:": "Основной состав:", "Tarkib to'ldi": "Состав заполнен", "«＋» — tarkibga qo'shish": "«＋» — добавить в состав",
+  "Tarkibdan olindi": "Убран из состава", "✅ Tarkibga qo'shildi": "✅ Добавлен в состав", "Tarkibdan olish": "Убрать из состава",
+  "Tarkibga qo'shish": "Добавить в состав",
+  "Asosiy tarkibga liga belgilagan sondan ko'p kishi qo'shib bo'lmaydi": "Нельзя добавить в состав больше, чем задано лигой",
 });
 Object.assign(TB_I18N.en, {
   "Taklif qilish": "Invite", "Asosiy tarkib": "Starting lineup", "A'zolar": "Members", "Team logosi": "Team logo",
@@ -34,8 +38,16 @@ Object.assign(TB_I18N.en, {
     "Message the captain of a team you like — they'll send you an invite link.",
   "✈️ Yozish": "✈️ Message", "Siz hali hech qaysi ligada emassiz": "You're not in any league yet",
   "Sardor bilan bog'lanib bo'lmaydi": "The captain can't be contacted", "Chiqarish": "Remove",
+  "Asosiy tarkib:": "Starting lineup:", "Tarkib to'ldi": "Lineup is full", "«＋» — tarkibga qo'shish": "«＋» — add to lineup",
+  "Tarkibdan olindi": "Removed from lineup", "✅ Tarkibga qo'shildi": "✅ Added to lineup", "Tarkibdan olish": "Remove from lineup",
+  "Tarkibga qo'shish": "Add to lineup",
+  "Asosiy tarkibga liga belgilagan sondan ko'p kishi qo'shib bo'lmaydi": "You can't add more players than the league allows",
 });
 TB_I18N_PATTERNS.unshift(
+  [/^«＋» — tarkibga qo'shish · kamida (\d+) kishi kerak$/, "«＋» — добавить в состав · нужно минимум $1", "«＋» — add to lineup · at least $1 needed"],
+  [/^Kamida (\d+) kishi kerak — hozir (\d+) ta\. Tarkib to'lmaguncha bahsda texnik mag'lubiyat beriladi\.$/,
+    "Нужно минимум $1 — сейчас $2. Пока состав не заполнен, в матчах засчитывается техническое поражение.",
+    "At least $1 needed — now $2. Until the lineup is full, matches are counted as technical defeats."],
   [/^(\d+) kishi$/, "$1 чел.", "$1 people"],
   [/^Ikki team bahsida o'yinchilar 1v1 o'ynaydi — ko'p g'alaba olgan team yutadi\. Asosiy tarkib: (\d+)–(\d+) kishi\.$/,
     "В матче двух команд игроки играют 1 на 1 — побеждает команда с большим числом побед. Основной состав: $1–$2 игроков.",
