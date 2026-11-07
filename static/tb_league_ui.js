@@ -16,20 +16,21 @@ function tbNoTeamHtml() {
   if (!TB.createEmoji) TB.createEmoji = em[0];
   const L = TB.joinLeague;
   const lmin = L ? L.lineup_min : TB.me.lineup_min, lmax = L ? L.lineup_max : TB.me.lineup_max;
+  // 2026-11-07: dizayn — ixcham kirish + 2 ta aniq yo'l + ochiq ligalar teamlari (tb_public.js)
   const hero = `
     <div class="card tb-hero">
       <div class="tb-hero-kicker">${ICON.get("swords", 16)} TEAMLAR JANGI</div>
       <div class="tb-hero-title">Jamoangizni yig'ing va jangga kiring</div>
-      <ul class="tb-hero-list">
-        <li>Team ochasiz yoki do'stingiz teamiga taklif havolasi orqali qo'shilasiz.</li>
-        <li>Sardor asosiy tarkibni tuzadi (${lmin}–${lmax} kishi).</li>
-        <li>Ikki team bahsida o'yinchilar 1v1 o'ynaydi — ko'p g'alaba olgan team yutadi.</li>
-        <li>Teamlar divizionlarda liga formatida bellashadi.</li>
-      </ul>
+      <div class="tb-hero-sub">Ikki team bahsida o'yinchilar 1v1 o'ynaydi — ko'p g'alaba olgan team yutadi. Asosiy tarkib: ${lmin}–${lmax} kishi.</div>
+    </div>
+    <div class="tb-ways">
+      <div class="tb-way"><span class="tb-way-ic">🤝</span><b>Teamga qo'shilish</b>
+        <span>Do'stingizdan taklif havolasini so'rang yoki pastdagi teamlar sardoriga yozing.</span></div>
+      <div class="tb-way"><span class="tb-way-ic">⚔️</span><b>O'z teamingizni ochish</b>
+        <span>${L ? "Pastdagi formada team nomini yozing." : "Liga adminidan liga havolasini oling."}</span></div>
     </div>`;
   if (!L) {
-    return hero + `<div class="card tb-note">Team ochish uchun liga adminidan liga havolasini oling.</div>
-      <div class="tb-hint tb-hint--center">Do'stingiz teamiga qo'shilish uchun undan taklif havolasini so'rang.</div>`;
+    return hero + (typeof tbPublicBoxHtml === "function" ? tbPublicBoxHtml() : "");
   }
   return hero + `
     <div class="section-label">LIGA</div>
@@ -42,5 +43,5 @@ function tbNoTeamHtml() {
       <div class="tb-hint">Team admin tasdig'idan keyin turnirda qatnashadi. A'zolarni hozirdan yig'ishingiz mumkin.</div>
       <div class="tb-hint">Team logosini ochilgandan keyin galereyadan qo'yasiz.</div>
     </div>
-    <div class="tb-hint tb-hint--center">Do'stingiz teamiga qo'shilish uchun undan taklif havolasini so'rang.</div>`;
+    ${typeof tbPublicBoxHtml === "function" ? tbPublicBoxHtml() : ""}`;
 }

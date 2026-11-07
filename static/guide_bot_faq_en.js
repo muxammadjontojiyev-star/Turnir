@@ -126,7 +126,7 @@ GBOT_FAQ.en = {
     { id: "tb_what", ctx: ["tb", "hub"], q: "What is Team battle?", k: ["!team", "!battle", "!squad"],
       a: "🛡 **Team battle** — playing as a team: when two teams meet, players play 1v1, and the team with more wins takes it. A match win is 3 points, a draw 1. One round a day, deadline 23:30." },
     { id: "tb_join", ctx: ["tb"], q: "How do I create a team?", k: ["team", "!captain", "join", "link", "!create team", "!creat"],
-      a: "To create a team, get a **league link** from the league admin. To join a friend's team, ask the captain for the **invite link** — the captain gets it in My team → «Get link»." },
+      a: "To create a team, get a **league link** from the league admin. To join a friend's team, ask the captain for the **invite link** — the captain gets it in My team → **«🔗 Invite»** → «Get link». If you have no team, the Team Battles section shows **«Teams you can join»** — message a captain of a team you like on Telegram with the **«✈️ Message»** button." },
     { id: "proof", ctx: ["tb"], q: "Do I need a screenshot?", k: ["!screenshot", "!screen", "!proof", "need"],
       a: "In Team battle the result is entered with a **screenshot of the final screen** — no screenshot, no result. In other modes too, take a screenshot after each match — it's proof in a dispute 📸" },
     { id: "tb_other", ctx: ["tb"], q: "What if someone else plays instead of my opponent?", k: ["!someone else", "!another person", "!instead"],

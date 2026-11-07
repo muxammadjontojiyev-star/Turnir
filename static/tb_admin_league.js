@@ -21,54 +21,63 @@ async function tbAdminLeaguesLoad() {
 
 function tbAdminCurLeague() { return (TB.adminLeagues || []).find(l => l.id === TB.adminLeagueId) || null; }
 
-function tbAdminLeaguesHtml() {
+// 2026-11-07: dizayn — part "chips" (tepada: liga tanlash) va "manage" (⚙️ Liga bo'limi: havola, sozlamalar, admin)
+function tbAdminLeaguesHtml(part) {
   const list = TB.adminLeagues || [];
-  const chips = list.map(l => `<button class="tb-chip${l.id === TB.adminLeagueId ? " active" : ""}" data-tbl-pick="${l.id}">
-      ${tbLogo("league", l.id, l.logo_ver, l.emoji, "tb-logo--xs")} ${escHtml(l.name)}${l.pending ? ` <b class="tb-chip-badge">${l.pending}</b>` : ""}</button>`).join("");
-  const add = TB.me.is_super ? `<button class="tb-chip tb-chip--add" data-tbl="new">➕ Liga</button>` : "";
-  let html = `<div class="section-label">LIGALAR</div><div class="tb-chips">${chips}${add}</div>`;
-  if (TB.me.is_super && TB.adminLeagueForm) {
-    html += `<div class="card tb-form">
-        <input id="tbl-new-name" class="modal-input" maxlength="${TB.me.name_max}" placeholder="Liga nomi">
-        <input id="tbl-new-admin" class="modal-input" placeholder="Liga admini: @username yoki Telegram ID">
-        <button class="btn btn--primary" data-tbl="create">🏆 Liga ochish</button>
-        <div class="tb-hint">Admin keyin ham tayinlanishi mumkin. U botga /start bosgan bo'lishi kerak. Logo — ochilgandan keyin Sozlamalarda (galereyadan).</div>
-      </div>`;
+  if (part !== "manage") {
+    const chips = list.map(l => `<button class="tb-chip${l.id === TB.adminLeagueId ? " active" : ""}" data-tbl-pick="${l.id}">
+        ${tbLogo("league", l.id, l.logo_ver, l.emoji, "tb-logo--xs")} ${escHtml(l.name)}${l.pending ? ` <b class="tb-chip-badge">${l.pending}</b>` : ""}</button>`).join("");
+    const add = TB.me.is_super ? `<button class="tb-chip tb-chip--add" data-tbl="new">➕ Liga</button>` : "";
+    let html = `<div class="section-label">LIGALAR</div><div class="tb-chips tb-chips--scroll">${chips}${add}</div>`;
+    if (TB.me.is_super && TB.adminLeagueForm) {
+      html += `<div class="card tb-form">
+          <input id="tbl-new-name" class="modal-input" maxlength="${TB.me.name_max}" placeholder="Liga nomi">
+          <input id="tbl-new-admin" class="modal-input" placeholder="Liga admini: @username yoki Telegram ID">
+          <button class="btn btn--primary" data-tbl="create">🏆 Liga ochish</button>
+          <div class="tb-hint">Admin keyin ham tayinlanishi mumkin. U botga /start bosgan bo'lishi kerak. Logo — ochilgandan keyin Sozlamalarda (galereyadan).</div>
+        </div>`;
+    }
+    if (!list.length) html += `<div class="empty-state">Hali liga yo'q${TB.me.is_super ? " — «➕ Liga» bilan oching" : ""}</div>`;
+    return html;
   }
-  if (!list.length) return html + `<div class="empty-state">Hali liga yo'q${TB.me.is_super ? " — «➕ Liga» bilan oching" : ""}</div>`;
-  if (TB.me.is_super) html += tbAdminBulkHtml(list.length);
   const l = tbAdminCurLeague();
-  if (!l) return html;
+  if (!l) return "";
   const admin = l.admin_username || l.admin_nickname ? tbWho({ username: l.admin_username, nickname: l.admin_nickname }) : "— (faqat bosh admin)";
-  html += `<div class="card tb-adm-league">
+  const pub = !!l.public_teams;
+  return `<div class="card tb-adm-league">
       <div class="tb-adm-league-head">${tbLogo("league", l.id, l.logo_ver, l.emoji, "tb-logo--lg")}<div><b>${escHtml(l.name)}</b>
         <small>Admin: ${escHtml(admin)} · ${l.teams} team${l.pending ? ` · ${l.pending} ariza` : ""}</small></div></div>
-      <div class="tb-adm-acts">
-        <button class="btn btn--primary" data-tbl="link">🔗 Liga havolasi</button>
-      </div>
+      <button class="btn btn--primary" data-tbl="link">🔗 Liga havolasi</button>
       <div id="tbl-link-box">${TB.adminLeagueLink ? tbAdminLinkHtml() : ""}</div>
-      <details class="tb-adm-settings"><summary>⚙️ Sozlamalar</summary>
-        <input id="tbl-name" class="modal-input" maxlength="${TB.me.name_max}" value="${escHtml(l.name)}" placeholder="Liga nomi">
-        <div class="tb-form-label">Liga logosi</div>${tbLogoPickerHtml("league", l.id, l.logo_ver, l.emoji)}
-        <div class="tb-adm-line"><span>Asosiy tarkib: kamida</span><input id="tbl-lmin" class="modal-input" type="number" min="3" max="30" value="${l.lineup_min}"></div>
-        <div class="tb-adm-line"><span>Asosiy tarkib: ko'pi bilan</span><input id="tbl-lmax" class="modal-input" type="number" min="3" max="30" value="${l.lineup_max}"></div>
-        <div class="tb-adm-line"><span>Divizion hajmi</span><input id="tbl-div" class="modal-input" type="number" min="4" max="20" value="${l.division_size}"></div>
-        <button class="btn btn--primary" data-tbl="save">💾 Saqlash</button>
-        <div class="tb-hint">Tarkib minimumidan kam o'yinchisi bor team bahsda texnik mag'lubiyat oladi.</div>
-      </details>
-      ${TB.me.is_super ? `<details class="tb-adm-settings"><summary>🛡 Liga admini (bosh admin)</summary>
-        <input id="tbl-admin" class="modal-input" placeholder="@username yoki Telegram ID (bo'sh — olib tashlash)">
-        <button class="btn btn--ghost" data-tbl="set-admin">Tayinlash</button>
-        <button class="btn btn--ghost tb-danger-btn" data-tbl="delete">🗑 Ligani o'chirish</button>
-        <div class="tb-hint">Faqat teamsiz va mavsumsiz liga o'chiriladi.</div>
-      </details>` : ""}
-    </div>`;
-  return html;
+    </div>
+    ${TB.me.is_super ? `<div class="card tb-switch-card">
+      <div><b>👁 Teamsizlarga ko'rsatish</b>
+        <small>Yoqilsa, teami yo'q foydalanuvchilar shu liga teamlarini ko'radi va sardorga Telegram'da yoza oladi.</small></div>
+      <button class="tb-switch${pub ? " on" : ""}" data-tbl="public" data-on="${pub ? "0" : "1"}" aria-label="public"><span></span></button>
+    </div>` : ""}
+    <details class="card tb-adm-settings"><summary>⚙️ Sozlamalar</summary>
+      <input id="tbl-name" class="modal-input" maxlength="${TB.me.name_max}" value="${escHtml(l.name)}" placeholder="Liga nomi">
+      <div class="tb-form-label">Liga logosi</div>${tbLogoPickerHtml("league", l.id, l.logo_ver, l.emoji)}
+      <div class="tb-adm-line"><span>Asosiy tarkib: kamida</span><input id="tbl-lmin" class="modal-input" type="number" min="3" max="30" value="${l.lineup_min}"></div>
+      <div class="tb-adm-line"><span>Asosiy tarkib: ko'pi bilan</span><input id="tbl-lmax" class="modal-input" type="number" min="3" max="30" value="${l.lineup_max}"></div>
+      <div class="tb-adm-line"><span>Divizion hajmi</span><input id="tbl-div" class="modal-input" type="number" min="4" max="20" value="${l.division_size}"></div>
+      <button class="btn btn--primary" data-tbl="save">💾 Saqlash</button>
+      <div class="tb-hint">Tarkib minimumidan kam o'yinchisi bor team bahsda texnik mag'lubiyat oladi.</div>
+    </details>
+    ${TB.me.is_super ? `${tbAdminBulkHtml(list.length)}
+    <details class="card tb-adm-settings"><summary>🛡 Liga admini</summary>
+      <input id="tbl-admin" class="modal-input" placeholder="@username yoki Telegram ID (bo'sh — olib tashlash)">
+      <button class="btn btn--ghost" data-tbl="set-admin">Tayinlash</button>
+    </details>
+    <details class="tb-danger-zone"><summary>⚠️ Xavfli amallar</summary>
+      <div class="tb-hint">Liga istalgan holatda o'chiriladi: barcha teamlari, a'zolari, mavsumlari, bahslari va o'yinlari bilan birga. Qaytarib bo'lmaydi!</div>
+      <button class="btn btn--ghost tb-danger-btn" data-tbl="delete">🗑 Ligani o'chirish</button>
+    </details>` : ""}`;
 }
 
 // 2026-10-26: bosh admin — sozlamalarni barcha ligalarga birdan qo'llash
 function tbAdminBulkHtml(n) {
-  return `<details class="card tb-adm-settings tb-adm-bulk"><summary>🌐 Barcha ligalarga qo'llash (${n} ta liga)</summary>
+  return `<details class="card tb-adm-settings tb-adm-bulk"><summary>🌐 Barcha ligalarga qo'llash (${n} ta)</summary>
       <div class="tb-adm-line"><span>Asosiy tarkib: kamida</span><input id="tbl-b-lmin" class="modal-input" type="number" min="3" max="30" placeholder="—"></div>
       <div class="tb-adm-line"><span>Asosiy tarkib: ko'pi bilan</span><input id="tbl-b-lmax" class="modal-input" type="number" min="3" max="30" placeholder="—"></div>
       <div class="tb-adm-line"><span>Divizion hajmi</span><input id="tbl-b-div" class="modal-input" type="number" min="4" max="20" placeholder="—"></div>
@@ -131,8 +140,13 @@ async function tbAdminLeagueAct(a, btn) {
     const r = await tbAdminLeaguePost("/tb/admin/leagues/admin", { league_id: lid, admin_who: val("tbl-admin") || null },
       "✅ Liga admini yangilandi", btn);
     if (r) await tbAdminLoad();
+  } else if (a === "public") {                       // 2026-11-07: teamsizlarga ko'rsatish (tb_public.py)
+    const r = await tbAdminLeaguePost("/tb/admin/league/public", { league_id: lid, on: btn.dataset.on === "1" },
+      btn.dataset.on === "1" ? "✅ Liga teamlari teamsizlarga ko'rinadi" : "Liga teamlari yashirildi", btn);
+    if (r) await tbAdminLoad();
   } else if (a === "delete") {
-    if (!tbConfirm("Liga o'chirilsinmi?")) return;
+    const l = tbAdminCurLeague();
+    if (!tbConfirm(`«${l ? l.name : ""}» ligasi butunlay o'chirilsinmi? Barcha teamlar, a'zolar, mavsumlar va o'yinlar ham o'chadi. Qaytarib bo'lmaydi!`)) return;
     const r = await tbAdminLeaguePost("/tb/admin/leagues/delete", { league_id: lid }, "Liga o'chirildi", btn);
     if (r) { TB.adminLeagueId = null; await tbAdminLoad(); }
   } else if (a === "link" || a === "regen") {

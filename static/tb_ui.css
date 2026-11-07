@@ -1,0 +1,98 @@
+/* ==========================================================================
+   tb_ui.css — "TEAMLAR JANGI" YANGI TUGMALAR TUZILISHI (2026-11-07, egasi: «juda chiroyli, hammaga tushunarli va
+   qulay»). style.css dagi TB uslubi (qizil-olov + oltin, --tb-accent) ustiga: plitkalar, panel, bo'limlar paneli,
+   bir xil o'lchamli amal tugmalari, kalit (switch), xavfli zona, teamsizlar uchun ochiq teamlar ro'yxati.
+   ========================================================================== */
+
+/* ---- «Teamim»: plitkalar (2×2 yoki 1×2) ---- */
+.tb-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 12px; }
+.tb-tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left;
+  padding: 13px 12px 12px; border-radius: 16px; border: 1px solid var(--border); color: var(--text-primary);
+  background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); min-height: 86px;
+  transition: transform .12s, border-color .15s, box-shadow .15s; -webkit-tap-highlight-color: transparent; }
+.tb-tile:active { transform: scale(.97); }
+.tb-tile-ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; font-size: 18px;
+  background: rgba(255,181,71,.12); margin-bottom: 4px; }
+.tb-tile-t { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: #fff; line-height: 1.15; }
+.tb-tile-s { font-size: 12px; color: var(--text-secondary); }
+.tb-tile.active { border-color: var(--tb-accent);
+  background: radial-gradient(120% 120% at 0% 0%, rgba(255,181,71,.2), transparent 60%), rgba(255,181,71,.05);
+  box-shadow: 0 6px 20px -10px rgba(255,150,60,.9), 0 0 0 1px rgba(255,181,71,.35) inset; }
+.tb-tile.active .tb-tile-ic { background: var(--tb-accent); }
+.tb-tile.warn .tb-tile-s { color: #ff9aa4; font-weight: 600; }
+.tb-tile.warn::after { content: ""; position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--tb-red); box-shadow: 0 0 8px var(--tb-red); }
+
+.tb-panel { margin-bottom: 14px; animation: tbFade .18s ease; }
+.tb-panel-title { font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--tb-accent); margin: 0 2px 8px; }
+@keyframes tbFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* a'zo qatoridagi ixcham ikonka tugmalar */
+.tb-member-acts { margin-left: auto; }
+.tb-icon-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,.04);
+  font-size: 15px; display: grid; place-items: center; color: var(--text-primary); }
+.tb-icon-btn--danger { color: #ff9aa4; border-color: rgba(255,77,94,.35); }
+
+/* ---- xavfli zona (pastda, yig'ilgan) ---- */
+.tb-danger-zone { margin: 18px 0 6px; padding: 10px 12px; border-radius: 14px; border: 1px dashed rgba(255,77,94,.35);
+  background: rgba(255,77,94,.04); }
+.tb-danger-zone > summary { cursor: pointer; font-size: 13px; color: #ff9aa4; list-style: none; font-weight: 600; }
+.tb-danger-zone > summary::-webkit-details-marker { display: none; }
+.tb-danger-zone[open] > summary { margin-bottom: 8px; }
+.tb-danger-zone .tb-danger-btn { margin-top: 10px; }
+
+/* ---- Admin: bo'limlar paneli ---- */
+.tb-chips--scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.tb-chips--scroll::-webkit-scrollbar { display: none; }
+.tb-chips--scroll .tb-chip { flex: 0 0 auto; }
+.tb-seg { position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px;
+  margin: 12px 0 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(16,12,22,.92);
+  backdrop-filter: blur(8px); }
+.tb-seg-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 7px;
+  border: none; border-radius: 10px; background: transparent; color: var(--text-secondary);
+  font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: .3px; }
+.tb-seg-item > span { font-size: 17px; line-height: 1; }
+.tb-seg-item.active { color: #fff; background: linear-gradient(135deg, #b3202e, #e0782a); box-shadow: 0 4px 14px -6px rgba(224,120,42,.8); }
+.tb-seg-badge { position: absolute; top: 3px; right: 6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
+  background: var(--tb-red); color: #fff; font-size: 10px; line-height: 17px; text-align: center; }
+.tb-seg-body { animation: tbFade .18s ease; }
+
+/* ---- Admin: team kartasidagi amallar — bir xil o'lchamdagi to'r ---- */
+.tb-act-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.tb-act { padding: 10px 8px; border-radius: 11px; border: 1px solid var(--border); background: rgba(255,255,255,.04);
+  color: var(--text-primary); font-size: 13px; font-weight: 600; }
+.tb-act--ok { color: #6ee7a8; border-color: rgba(110,231,168,.4); background: rgba(110,231,168,.07); }
+.tb-act--warn { color: #ffd479; border-color: rgba(255,212,121,.35); background: rgba(255,212,121,.05); }
+.tb-act--danger { color: #ff9aa4; border-color: rgba(255,77,94,.35); background: rgba(255,77,94,.05); }
+.tb-act:disabled { opacity: .5; }
+
+/* ---- Kalit (switch) kartasi ---- */
+.tb-switch-card { display: flex; align-items: center; gap: 12px; }
+.tb-switch-card > div { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.tb-switch-card small { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.tb-switch { flex: 0 0 auto; width: 50px; height: 28px; border-radius: 999px; border: 1px solid var(--border);
+  background: rgba(255,255,255,.08); position: relative; transition: background .15s; }
+.tb-switch > span { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #c8c8d8;
+  transition: transform .15s, background .15s; }
+.tb-switch.on { background: linear-gradient(90deg, #b3202e, #e0782a); border-color: transparent; }
+.tb-switch.on > span { transform: translateX(22px); background: #fff; }
+
+/* ---- Teami yo'q: ixcham kirish + 2 yo'l + ochiq teamlar ---- */
+.tb-hero-sub { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+.tb-ways { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 4px; }
+.tb-way { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; border: 1px solid var(--border);
+  background: rgba(255,255,255,.03); font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.tb-way b { font-family: var(--font-display); font-size: 15px; color: #fff; }
+.tb-way-ic { font-size: 22px; }
+.tb-pub-hint { margin: -2px 2px 10px; }
+.tb-pub-league { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffe0b8; margin: 12px 2px 6px; }
+.tb-pub-list { padding: 4px 12px; }
+.tb-pub-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.tb-pub-row:last-child { border-bottom: none; }
+.tb-pub-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tb-pub-info b { color: #fff; font-size: 14px; }
+.tb-pub-info span { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-pub-msg { flex: 0 0 auto; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(80,170,255,.45);
+  background: rgba(80,170,255,.12); color: #9fd2ff; font-size: 13px; font-weight: 600; }
+.tb-pub-empty { margin-top: 8px; }

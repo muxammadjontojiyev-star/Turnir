@@ -35,8 +35,7 @@ function tbAdminSeasonHtml() {
           <button class="tb-mini tb-mini--ok" data-tbsa="setgame">Qo'yish</button>
         </div>
         <div class="tb-hint">O'yin ID — Jadval → tur bahsidagi juftlik raqami (#).</div>` : ""}
-    </div>
-    <div class="section-label">TEAMLAR</div>`;
+    </div>`;                                            // 2026-11-07: «TEAMLAR» sarlavhasi olib tashlandi (bo'limlar paneli)
 }
 
 async function tbAdminSeasonLoad() {

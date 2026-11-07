@@ -7,7 +7,8 @@
 //  tb.js dan KEYIN ulanadi. Global: TB, tbAction, tbErr, tbWho, apiFetch, escHtml, showToast.
 // =============================================================
 
-function tbCaptainBlocksHtml(t) {
+// 2026-11-07: dizayn — sardor bloklari alohida panellar (tb_my.js plitkalari ochadi)
+function tbCapLineupHtml(t) {
   if (!TB.lineupSel) {
     TB.lineupSel = t.members.filter(m => m.in_lineup)
       .sort((a, b) => a.lineup_pos - b.lineup_pos).map(m => m.user_id);
@@ -24,14 +25,6 @@ function tbCaptainBlocksHtml(t) {
       </button>`;
   }).join("");
   return `
-    <div class="section-label">TEAM LOGOSI</div>
-    <div class="card">${tbLogoPickerHtml("team", t.id, t.logo_ver, t.emoji)}</div>
-    <div class="section-label">TAKLIF HAVOLASI</div>
-    <div class="card tb-invite">
-      <div class="tb-hint">Havolani do'stlaringizga yuboring — bosgan kishi teamingizga qo'shiladi.</div>
-      <div id="tb-invite-box"><button class="btn btn--primary" data-tb="invite">🔗 Havolani olish</button></div>
-    </div>
-    <div class="section-label">ASOSIY TARKIB</div>
     <div class="card tb-lineup">
       <div class="tb-lu-head">
         <span>Tanlangan: <b class="${okN ? "tb-ok" : "tb-bad"}">${n}</b> / ${lmin}–${lmax}</span>
@@ -42,6 +35,18 @@ function tbCaptainBlocksHtml(t) {
       <button class="btn btn--primary" data-tb="lu-save" ${okN ? "" : "disabled"}>💾 Tarkibni saqlash</button>
       ${t.members.length < lmin ? `<div class="tb-warn">Tarkib uchun kamida ${lmin} a'zo kerak — hozir ${t.members.length} ta. Ko'proq do'st taklif qiling.</div>` : ""}
     </div>`;
+}
+
+function tbCapInviteHtml() {
+  return `
+    <div class="card tb-invite">
+      <div class="tb-hint">Havolani do'stlaringizga yuboring — bosgan kishi teamingizga qo'shiladi.</div>
+      <div id="tb-invite-box"><button class="btn btn--primary" data-tb="invite">🔗 Havolani olish</button></div>
+    </div>`;
+}
+
+function tbCapLogoHtml(t) {
+  return `<div class="card">${tbLogoPickerHtml("team", t.id, t.logo_ver, t.emoji)}</div>`;
 }
 
 function tbBindCaptain() { /* bosishlar tbHandleClick -> tbCaptainClick orqali (delegation) */ }

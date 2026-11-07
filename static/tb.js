@@ -131,6 +131,7 @@ function tbRenderTab() {
   if (TB.tab === "table" && typeof tbTableLoad === "function") { void tbTableLoad(); return; }
   if (TB.tab === "admin" && typeof tbAdminLoad === "function") { void tbAdminLoad(); return; }
   tbRender(TB.me.team ? tbMyTeamHtml(TB.me.team) : tbNoTeamHtml());
+  if (!TB.me.team && typeof tbPublicMount === "function") void tbPublicMount();   // 2026-11-07: ochiq ligalar teamlari
   if (TB.me.team && TB.me.team.is_captain && typeof tbBindCaptain === "function") tbBindCaptain();
 }
 
@@ -161,10 +162,10 @@ function tbTeamHeadHtml(t) {
 function tbMemberRowHtml(m, t, captainView) {
   const role = m.role === "captain" ? `<span class="tb-badge tb-badge--cap">SARDOR</span>` : "";
   const lu = m.in_lineup ? `<span class="tb-badge tb-badge--lu">#${m.lineup_pos}</span>` : "";
-  const acts = captainView && m.role !== "captain"
+  const acts = captainView && m.role !== "captain"             // 2026-11-07: ixcham ikonkali tugmalar
     ? `<div class="tb-member-acts">
-         <button class="tb-mini" data-tb-cap="${m.user_id}">Sardor qilish</button>
-         <button class="tb-mini tb-mini--danger" data-tb-kick="${m.user_id}">Chiqarish</button>
+         <button class="tb-icon-btn" data-tb-cap="${m.user_id}" title="Sardor qilish" aria-label="Sardor qilish">👑</button>
+         <button class="tb-icon-btn tb-icon-btn--danger" data-tb-kick="${m.user_id}" title="Chiqarish" aria-label="Chiqarish">✖</button>
        </div>` : "";
   return `<div class="tb-member">
       ${tbAvatarHtml(m)}
@@ -174,25 +175,7 @@ function tbMemberRowHtml(m, t, captainView) {
     </div>`;
 }
 
-function tbMyTeamHtml(t) {
-  const cap = t.is_captain;
-  const lmin = TB.me.lineup_min;
-  const lineup = t.members.filter(m => m.in_lineup).sort((a, b) => a.lineup_pos - b.lineup_pos);
-  const short = lineup.length < lmin
-    ? `<div class="tb-warn">Asosiy tarkib to'liq emas: ${lineup.length}/${lmin}. ${cap ? "Tarkibni tuzing." : "Sardor tarkibni tuzishi kerak."}</div>` : "";
-  return `
-    ${tbTeamHeadHtml(t)}
-    ${t.status === "pending" ? `<div class="tb-note">Team admin tasdig'ini kutmoqda. Shu vaqtda a'zolarni yig'ib, tarkibni tuzib qo'ying.</div>` : ""}
-    ${cap && typeof tbCaptainBlocksHtml === "function" ? tbCaptainBlocksHtml(t) : `
-      <div class="section-label">ASOSIY TARKIB (${lineup.length})</div>
-      ${short}
-      <div class="card tb-list">${lineup.length ? lineup.map(m => tbMemberRowHtml(m, t, false)).join("") : `<div class="tb-hint">Tarkib hali tuzilmagan</div>`}</div>`}
-    <div class="section-label">A'ZOLAR (${t.members.length})</div>
-    <div class="card tb-list">${t.members.map(m => tbMemberRowHtml(m, t, cap)).join("")}</div>
-    ${cap
-      ? `<button class="btn btn--ghost tb-danger-btn" data-tb="dissolve">Teamni tarqatish</button>`
-      : `<button class="btn btn--ghost tb-danger-btn" data-tb="leave">Teamdan chiqish</button>`}`;
-}
+// tbMyTeamHtml — tb_my.js (2026-11-07: plitkalar + panel dizayni)
 
 // ---------------- Teamlar ro'yxati ----------------
 async function tbLoadTeams() {
@@ -210,8 +193,11 @@ async function tbLoadTeams() {
       <span class="tb-row-info"><b>${escHtml(t.name)}${t.titles_count ? ` <i class="tb-title-cnt">🏆${t.titles_count > 1 ? "×" + t.titles_count : ""}</i>` : ""}</b><span>Sardor: ${escHtml(tbWho({ username: t.captain_username, nickname: t.captain_nickname }))}</span></span>
       <span class="tb-row-count">${t.members_count}<small>a'zo</small></span>
     </button>`).join("");
-  tbRender(`<div class="section-label">TASDIQLANGAN TEAMLAR (${TB.teams.length})</div>
-    ${rows || `<div class="empty-state">${tbCurLeague() ? "Hozircha tasdiqlangan team yo'q" : "Siz hali hech qaysi ligada emassiz"}</div>`}`);
+  const noLeague = !tbCurLeague() && typeof tbPublicBoxHtml === "function";    // 2026-11-07: teamsiz — ochiq ligalar
+  tbRender(noLeague ? tbPublicBoxHtml() + `<div class="empty-state tb-pub-empty">Siz hali hech qaysi ligada emassiz</div>`
+    : `<div class="section-label">TASDIQLANGAN TEAMLAR (${TB.teams.length})</div>
+    ${rows || `<div class="empty-state">Hozircha tasdiqlangan team yo'q</div>`}`);
+  if (noLeague) void tbPublicMount();
 }
 
 async function tbOpenTeam(id) {

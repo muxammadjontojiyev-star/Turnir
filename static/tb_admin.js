@@ -27,6 +27,8 @@ async function tbAdminLoad() {
 }
 
 function tbAdminRender() {
+  if (TB.adminFilter === "pending" && !TB.adminFilterUser                  // 2026-11-07: ariza yo'q — bo'sh ro'yxat emas
+      && !(TB.adminTeams || []).some(t => t.status === "pending")) TB.adminFilter = "all";
   const f = TB.adminFilter;
   const list = TB.adminTeams.filter(t => f === "all" || t.status === f);
   const count = (s) => TB.adminTeams.filter(t => s === "all" || t.status === s).length;
@@ -44,20 +46,29 @@ function tbAdminRender() {
         <span class="tb-status tb-status--${t.status}">${t.status === "pending" ? "⏳" : t.status === "approved" ? "✅" : "❌"}</span>
       </div>
       ${t.reject_reason ? `<div class="tb-hint">Sabab: ${escHtml(t.reject_reason)}</div>` : ""}
-      <div class="tb-adm-acts">
-        ${t.status !== "approved" ? `<button class="tb-mini tb-mini--ok" data-tb-adm="approve" data-id="${t.id}">✅ Tasdiqlash</button>` : ""}
-        ${t.status !== "rejected" ? `<button class="tb-mini tb-mini--danger" data-tb-adm="reject" data-id="${t.id}">❌ Rad etish</button>` : ""}
-        <button class="tb-mini" data-tb-adm="view" data-id="${t.id}">👥 A'zolar</button>
-        <button class="tb-mini tb-mini--danger" data-tb-adm="delete" data-id="${t.id}">🗑 O'chirish</button>
+      <div class="tb-act-grid">
+        ${t.status !== "approved" ? `<button class="tb-act tb-act--ok" data-tb-adm="approve" data-id="${t.id}">✅ Tasdiqlash</button>` : ""}
+        ${t.status !== "rejected" ? `<button class="tb-act tb-act--warn" data-tb-adm="reject" data-id="${t.id}">❌ Rad etish</button>` : ""}
+        <button class="tb-act" data-tb-adm="view" data-id="${t.id}">👥 A'zolar</button>
+        <button class="tb-act tb-act--danger" data-tb-adm="delete" data-id="${t.id}">🗑 O'chirish</button>
       </div>
     </div></div>`).join("");
-  const leagues = tbAdminLeaguesHtml();
-  if (!TB.adminLeagueId) { tbRender(leagues); return; }
-  const season = typeof tbAdminSeasonHtml === "function" ? tbAdminSeasonHtml() : "";
-  const reports = typeof tbReportsAdminHtml === "function" ? tbReportsAdminHtml() : "";
-  tbRender(`${leagues}${season}${reports}<div class="tb-chips">${chips}</div>
-    ${tbAdminBulkBarHtml(list)}
-    ${rows || `<div class="empty-state">Bu bo'limda team yo'q</div>`}`);
+  // 2026-11-07: dizayn — tepada liga tanlash, ostida bo'limlar paneli; bir vaqtda bitta bo'lim (tushunarli, qisqa)
+  const chipsTop = tbAdminLeaguesHtml("chips");
+  if (!TB.adminLeagueId) { tbRender(chipsTop); return; }
+  const nRep = (TB.adminReports || []).length;
+  if (!TB.adminSec) TB.adminSec = count("pending") ? "teams" : nRep ? "reports" : "teams";
+  const segs = [["teams", "🛡", "Teamlar", count("pending")], ["season", "📅", "Mavsum", 0],
+                ["reports", "🚩", "Shikoyat", nRep], ["league", "⚙️", "Liga", 0]];
+  const seg = `<div class="tb-seg">${segs.map(([k, ic, l, n]) => `<button class="tb-seg-item${TB.adminSec === k ? " active" : ""}"
+      data-tb-asec="${k}"><span>${ic}</span>${escHtml(l)}${n ? `<b class="tb-seg-badge">${n}</b>` : ""}</button>`).join("")}</div>`;
+  let content;
+  if (TB.adminSec === "season") content = typeof tbAdminSeasonHtml === "function" ? tbAdminSeasonHtml() : "";
+  else if (TB.adminSec === "reports") content = typeof tbReportsAdminHtml === "function" ? tbReportsAdminHtml() : "";
+  else if (TB.adminSec === "league") content = tbAdminLeaguesHtml("manage");
+  else content = `<div class="tb-chips">${chips}</div>${tbAdminBulkBarHtml(list)}
+    ${rows || `<div class="empty-state">Bu bo'limda team yo'q</div>`}`;
+  tbRender(`${chipsTop}${seg}<div class="tb-seg-body">${content}</div>`);
   if (typeof chatLoadImages === "function") chatLoadImages(document.querySelector("#tb-root .tb-body"));
 }
 
@@ -84,7 +95,9 @@ async function tbAdminBulkDelete(btn) {
   const visible = new Set(tbAdminVisible().map(t => t.id));
   const ids = [...(TB.adminSel || [])].filter(id => visible.has(id));
   if (!ids.length) return;
-  if (!confirm(`${ids.length} ta team butunlay o'chirilsinmi? Barcha a'zolari chiqariladi. Mavsumda qatnashgan teamlar o'chirilmaydi.`)) return;
+  if (!confirm(TB.me.is_super
+    ? `${ids.length} ta team butunlay o'chirilsinmi? A'zolari, bahslari, o'yinlari va chempionliklari ham o'chadi. Qaytarib bo'lmaydi!`
+    : `${ids.length} ta team butunlay o'chirilsinmi? Barcha a'zolari chiqariladi. Mavsumda qatnashgan teamlar o'chirilmaydi.`)) return;
   btn.disabled = true;
   btn.textContent = "⏳";
   try {
@@ -105,7 +118,9 @@ async function tbAdminAct(kind, id, btn) {
     if (reason === null) return;
     path = "/tb/admin/review"; body = { team_id: id, approve: false, reason };
   } else if (kind === "delete") {
-    if (!confirm("Team butunlay o'chirilsinmi? Barcha a'zolar chiqariladi.")) return;
+    if (!confirm(TB.me.is_super                       // 2026-11-07: bosh admin — istalgan holatda (tb_force.py)
+      ? "Team butunlay o'chirilsinmi? A'zolar, mavsumdagi bahslari, o'yinlari va chempionliklari ham o'chadi. Qaytarib bo'lmaydi!"
+      : "Team butunlay o'chirilsinmi? Barcha a'zolar chiqariladi.")) return;
     path = "/tb/admin/delete"; body = { team_id: id };
   } else return;
   btn.disabled = true;
@@ -121,8 +136,10 @@ async function tbAdminAct(kind, id, btn) {
 
 document.addEventListener("click", (e) => {
   if (!e.target.closest) return;
+  const sec = e.target.closest("#tb-root [data-tb-asec]");
+  if (sec) { TB.adminSec = sec.dataset.tbAsec; tbAdminRender(); window.scrollTo(0, 0); return; }
   const chip = e.target.closest("#tb-root [data-tb-af]");
-  if (chip) { TB.adminFilter = chip.dataset.tbAf; TB.adminSel = new Set(); tbAdminRender(); return; }
+  if (chip) { TB.adminFilter = chip.dataset.tbAf; TB.adminFilterUser = true; TB.adminSel = new Set(); tbAdminRender(); return; }
   const pick = e.target.closest("#tb-root [data-tb-pick]");
   if (pick) {
     if (!TB.adminSel) TB.adminSel = new Set();

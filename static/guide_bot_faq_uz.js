@@ -128,7 +128,7 @@ GBOT_FAQ.uz = {
     { id: "tb_what", ctx: ["tb", "hub"], q: "Teamlar jangi nima?", k: ["!team", "!jamoa", "!jang"],
       a: "🛡 **Teamlar jangi** — jamoa bo'lib o'ynash: ikki team bahsida o'yinchilar 1v1 o'ynaydi, ko'p g'alaba olgan team yutadi. Bahs uchun g'alaba — 3 ochko, durang — 1. Tur kuniga 1 ta, deadline 23:30." },
     { id: "tb_join", ctx: ["tb"], q: "Team qanday ochiladi?", k: ["team", "jamoa", "!sardor", "qoshil", "havola", "!ochil", "!ochish", "!ocha", "!tuz"],
-      a: "Team ochish uchun liga adminidan **liga havolasini** oling. Do'stingiz teamiga qo'shilish uchun sardordan **taklif havolasini** so'rang. Sardor uni Teamim → «Havolani olish»dan oladi." },
+      a: "Team ochish uchun liga adminidan **liga havolasini** oling. Do'stingiz teamiga qo'shilish uchun sardordan **taklif havolasini** so'rang. Sardor uni Teamim → **«🔗 Taklif qilish»** → «Havolani olish»dan oladi. Teamingiz yo'q bo'lsa, Teamlar jangi bo'limida **«Qo'shilish mumkin bo'lgan teamlar»** ro'yxati chiqadi — yoqqan teamning sardoriga **«✈️ Yozish»** tugmasi orqali Telegram'da yozing." },
     { id: "proof", ctx: ["tb"], q: "Skrinshot kerakmi?", k: ["!skrinshot", "!screenshot", "!rasm", "dalil", "kerak"],
       a: "Teamlar jangida natija **yakun ekrani skrinshoti** bilan kiritiladi — skrinshotsiz qabul qilinmaydi. Boshqa rejimlarda ham har o'yindan keyin skrinshot olib qo'ying — nizo bo'lsa dalil bo'ladi 📸" },
     { id: "tb_other", ctx: ["tb"], q: "Raqib o'rniga boshqa odam o'ynasa-chi?", k: ["!boshqa odam", "!begona", "!ornida", "!ornga"],
