@@ -102,7 +102,8 @@ def tb_transfer_captain(captain_id: int, new_user_id: int) -> tuple[bool, str | 
 
 def tb_set_lineup(captain_id: int, user_ids: list[int]) -> tuple[bool, str | dict]:
     """
-    Asosiy tarkib (tartib bilan). Sabablar: not_captain, lineup_size, lineup_duplicate, lineup_not_member.
+    Asosiy tarkib (tartib bilan; 0..lineup_max kishi). Sabablar: not_captain, lineup_size (maksimumdan ko'p),
+    lineup_duplicate, lineup_not_member.
     """
     ids = [int(x) for x in (user_ids or [])]
     if len(set(ids)) != len(ids):
@@ -115,7 +116,9 @@ def tb_set_lineup(captain_id: int, user_ids: list[int]) -> tuple[bool, str | dic
             _finish(cur, False)
             return False, "not_captain"
         lmin, lmax = _league_limits(cur, team_id)          # 2026-10-16: liga sozlamasi
-        if len(ids) < lmin or len(ids) > lmax:
+        # 2026-11-07 (egasi: a'zolar ro'yxatidan «＋» bilan bittalab qo'shish): minimumdan kam tarkib ham saqlanadi
+        # (ogohlantirish UI da; bahsda tarkibi yetmagan team baribir texnik mag'lubiyat oladi). Maksimum — qat'iy.
+        if len(ids) > lmax:
             _finish(cur, False)
             return False, "lineup_size"
         cur.execute("SELECT user_id FROM tb_members WHERE team_id = ?", (team_id,))
